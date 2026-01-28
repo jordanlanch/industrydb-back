@@ -1,0 +1,6 @@
+ID,Name,Industry,Country,City,Address,Postal Code,Phone,Email,Website,Latitude,Longitude,Verified,Quality Score,Created At
+5,Black Rose Tattoos,tattoo,US,Seattle,,,+1-206-555-0105,bookings@blackrose.com,,0.000000,0.000000,true,85,2026-01-26T20:35:10Z
+4,The Tattoo Parlor,tattoo,US,Miami,,,+1-305-555-0104,info@tattooparlor.com,,0.000000,0.000000,true,85,2026-01-26T20:35:10Z
+3,Sacred Ink,tattoo,US,Chicago,,,+1-312-555-0103,hello@sacredink.com,,0.000000,0.000000,true,85,2026-01-26T20:35:10Z
+2,Dragon Tattoo,tattoo,US,Los Angeles,,,+1-323-555-0102,contact@dragontattoo.com,,0.000000,0.000000,true,85,2026-01-26T20:35:10Z
+1,Ink Masters Studio,tattoo,US,New York,,,+1-212-555-0101,info@inkmasters.com,,0.000000,0.000000,true,85,2026-01-26T20:35:10Z
