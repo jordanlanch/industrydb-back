@@ -94,6 +94,77 @@ industrydb/
 └─────────────────────────────────────────────────────────────┘
 ```
 
+## Internationalization (i18n)
+
+**Implemented:** 2026-01-29
+
+IndustryDB supports multiple languages using **next-intl** with URL-based locale routing.
+
+### Supported Languages
+- 🇺🇸 **English (en)** - Default
+- 🇪🇸 **Spanish (es)**
+- 🇫🇷 **French (fr)**
+
+### URL Structure
+```
+/en/dashboard          # English
+/es/dashboard          # Spanish
+/fr/dashboard          # French
+/dashboard             # Redirects to /en/dashboard (default)
+```
+
+### Features
+- **URL-based routing:** Clean URLs with locale prefix (`/es/dashboard`)
+- **Language switcher:** Component in footer, preserves path when switching
+- **351+ translation keys** per language
+- **12 pages translated:** All auth + dashboard pages
+- **Dynamic pluralization:** ICU MessageFormat support
+- **Accessibility:** All ARIA labels translated
+
+### Architecture
+```
+frontend/
+├── middleware.ts              # Locale routing
+├── i18n.ts                   # i18n config
+├── messages/
+│   ├── en.json               # English (351 keys)
+│   ├── es.json               # Spanish (351 keys)
+│   └── fr.json               # French (351 keys)
+└── src/app/
+    ├── layout.tsx            # Root layout
+    └── [locale]/             # Locale-based routing
+        ├── (auth)/           # Login, register, etc.
+        └── dashboard/        # All dashboard pages
+```
+
+### Usage in Components
+```tsx
+import { useTranslations } from 'next-intl'
+
+function MyComponent() {
+  const t = useTranslations('namespace')
+
+  return (
+    <>
+      <h1>{t('title')}</h1>
+      <p>{t('found', { count: results.length })}</p>
+    </>
+  )
+}
+```
+
+### Adding New Languages
+1. Create `messages/{locale}.json`
+2. Add locale to `i18n.ts` locales array
+3. Add to language switcher component
+4. Translate all keys in new file
+
+### Pages Translated
+**Authentication (5):** login, register, forgot-password, verify-email, reset-password
+**Dashboard (7):** home, leads, exports, analytics, api-keys, saved-searches, settings
+
+**Documentation:** See [I18N_IMPLEMENTATION_REPORT.md](I18N_IMPLEMENTATION_REPORT.md) for detailed information.
+
 ## Development Workflow
 
 ### Available Slash Commands
@@ -249,7 +320,7 @@ curl -H "X-API-Key: idb_abc123..." https://api.industrydb.io/api/v1/leads
 **Implemented:** 2026-01-26
 
 CORS is configured with strict origin restrictions:
-- **Development:** `http://localhost:3001`
+- **Development:** `http://localhost:5678`
 - **Production:** `https://industrydb.io`, `https://www.industrydb.io`
 
 Allowed methods: GET, POST, PUT, PATCH, DELETE
@@ -295,7 +366,7 @@ Stripe billing portal return URLs are validated to prevent open redirect attacks
 1. **Protocol whitelist:** Only `http` and `https` (blocks javascript:, data:, ftp:, file:)
 2. **No userinfo:** Rejects URLs with username/password (prevents phishing: `https://attacker@industrydb.io`)
 3. **Host whitelist:**
-   - Development: `localhost:3001`
+   - Development: `localhost:5678`
    - Production: `industrydb.io`, `www.industrydb.io`
 4. **Safe fallback:** Returns `https://industrydb.io/dashboard/settings/billing` if validation fails
 
@@ -473,7 +544,7 @@ go test ./pkg/api/handlers/user_test.go -v -run TestExportPersonalData
 
 # Manual test
 curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  http://localhost:8081/api/v1/user/data-export \
+  http://localhost:7890/api/v1/user/data-export \
   -o my-data.json
 ```
 
@@ -551,7 +622,7 @@ Users can permanently delete their account and all associated data, complying wi
 **Testing:**
 ```bash
 # Backend test
-curl -X DELETE http://localhost:8081/api/v1/user/account \
+curl -X DELETE http://localhost:7890/api/v1/user/account \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"password":"your_password"}'
@@ -732,7 +803,7 @@ GET /api/v1/user/audit-logs?limit=50
 ```bash
 # View your own audit logs
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-  http://localhost:8081/api/v1/user/audit-logs?limit=10
+  http://localhost:7890/api/v1/user/audit-logs?limit=10
 
 # Check database directly
 psql -h localhost -U industrydb -d industrydb \
@@ -884,19 +955,19 @@ The IndustryDB Team
 **Testing:**
 ```bash
 # 1. Register new user
-curl -X POST http://localhost:8081/api/v1/auth/register \
+curl -X POST http://localhost:7890/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{"name":"Test","email":"test@example.com","password":"password123"}'
 
 # 2. Check console logs for verification link
-# Look for: "Verification URL: http://localhost:3001/verify-email/{token}"
+# Look for: "Verification URL: http://localhost:5678/verify-email/{token}"
 
 # 3. Verify email
-curl http://localhost:8081/api/v1/auth/verify-email/{token}
+curl http://localhost:7890/api/v1/auth/verify-email/{token}
 # Response: {"message":"Email verified successfully"}
 
 # 4. Resend verification (if needed)
-curl -X POST http://localhost:8081/api/v1/auth/resend-verification \
+curl -X POST http://localhost:7890/api/v1/auth/resend-verification \
   -H "Authorization: Bearer YOUR_JWT"
 ```
 
@@ -973,7 +1044,7 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 
 # API
 API_PORT=8080
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:5678
 ```
 
 ## Testing
