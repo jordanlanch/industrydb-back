@@ -12,7 +12,7 @@ package main
 // @license.name MIT
 // @license.url https://opensource.org/licenses/MIT
 
-// @host localhost:8081
+// @host localhost:7890
 // @BasePath /api/v1
 
 // @securityDefinitions.apikey BearerAuth
@@ -101,7 +101,8 @@ func main() {
 	// CORS with restricted origins
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{
-			"http://localhost:3001",      // Development
+			"http://localhost:5678",      // Development (root docker-compose)
+			"http://localhost:5566",      // Development (modular frontend docker-compose)
 			"https://industrydb.io",      // Production
 			"https://www.industrydb.io",  // Production WWW
 		},
@@ -393,7 +394,7 @@ func main() {
 	log.Printf("🚀 IndustryDB API starting on %s", address)
 	log.Printf("📝 Log level: %s, Log format: %s", cfg.LogLevel, cfg.LogFormat)
 	log.Printf("🔐 JWT expiration: %d hours", cfg.JWTExpirationHours)
-	log.Printf("🌍 CORS: http://localhost:3001, https://industrydb.io, https://www.industrydb.io")
+	log.Printf("🌍 CORS: http://localhost:5678, https://industrydb.io, https://www.industrydb.io")
 	log.Printf("🛡️  Rate limiting: %d req/min (burst: %d)", cfg.RateLimitRequestsPerMinute, cfg.RateLimitBurst)
 	log.Printf("🔒 Auth endpoints: login (5/min), register (3/hour), webhook (100/min)")
 

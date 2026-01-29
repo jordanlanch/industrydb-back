@@ -44,7 +44,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.LoginRequest"
+                            "$ref": "#/definitions/models.LoginRequest"
                         }
                     }
                 ],
@@ -52,25 +52,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Login successful",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.AuthResponse"
+                            "$ref": "#/definitions/models.AuthResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Invalid credentials",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
@@ -96,7 +96,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.RegisterRequest"
+                            "$ref": "#/definitions/models.RegisterRequest"
                         }
                     }
                 ],
@@ -104,25 +104,25 @@ const docTemplate = `{
                     "200": {
                         "description": "User registered successfully",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.AuthResponse"
+                            "$ref": "#/definitions/models.AuthResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "User already exists",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
@@ -196,25 +196,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Search results",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.LeadListResponse"
+                            "$ref": "#/definitions/models.LeadListResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Usage limit exceeded",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
@@ -258,19 +258,62 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Lead not found",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse"
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/user/onboarding/complete": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Mark the user's onboarding wizard as completed",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Mark onboarding as completed",
+                "responses": {
+                    "200": {
+                        "description": "Onboarding completed",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
@@ -278,13 +321,16 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "github_com_jordanlanch_industrydb_pkg_models.AppliedFilters": {
+        "models.AppliedFilters": {
             "type": "object",
             "properties": {
                 "city": {
                     "type": "string"
                 },
                 "country": {
+                    "type": "string"
+                },
+                "cuisine_type": {
                     "type": "string"
                 },
                 "has_email": {
@@ -296,23 +342,38 @@ const docTemplate = `{
                 "industry": {
                     "type": "string"
                 },
+                "specialties": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "sport_type": {
+                    "type": "string"
+                },
+                "sub_niche": {
+                    "type": "string"
+                },
+                "tattoo_style": {
+                    "type": "string"
+                },
                 "verified": {
                     "type": "boolean"
                 }
             }
         },
-        "github_com_jordanlanch_industrydb_pkg_models.AuthResponse": {
+        "models.AuthResponse": {
             "type": "object",
             "properties": {
                 "token": {
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.UserInfo"
+                    "$ref": "#/definitions/models.UserInfo"
                 }
             }
         },
-        "github_com_jordanlanch_industrydb_pkg_models.ErrorResponse": {
+        "models.ErrorResponse": {
             "type": "object",
             "properties": {
                 "error": {
@@ -323,24 +384,24 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jordanlanch_industrydb_pkg_models.LeadListResponse": {
+        "models.LeadListResponse": {
             "type": "object",
             "properties": {
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.LeadResponse"
+                        "$ref": "#/definitions/models.LeadResponse"
                     }
                 },
                 "filters": {
-                    "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.AppliedFilters"
+                    "$ref": "#/definitions/models.AppliedFilters"
                 },
                 "pagination": {
-                    "$ref": "#/definitions/github_com_jordanlanch_industrydb_pkg_models.PaginationInfo"
+                    "$ref": "#/definitions/models.PaginationInfo"
                 }
             }
         },
-        "github_com_jordanlanch_industrydb_pkg_models.LeadResponse": {
+        "models.LeadResponse": {
             "type": "object",
             "properties": {
                 "address": {
@@ -353,6 +414,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "created_at": {
+                    "type": "string"
+                },
+                "cuisine_type": {
                     "type": "string"
                 },
                 "email": {
@@ -388,6 +452,21 @@ const docTemplate = `{
                         "type": "string"
                     }
                 },
+                "specialties": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "sport_type": {
+                    "type": "string"
+                },
+                "sub_niche": {
+                    "type": "string"
+                },
+                "tattoo_style": {
+                    "type": "string"
+                },
                 "verified": {
                     "type": "boolean"
                 },
@@ -396,7 +475,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jordanlanch_industrydb_pkg_models.LoginRequest": {
+        "models.LoginRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -411,7 +490,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jordanlanch_industrydb_pkg_models.PaginationInfo": {
+        "models.PaginationInfo": {
             "type": "object",
             "properties": {
                 "has_next": {
@@ -434,7 +513,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jordanlanch_industrydb_pkg_models.RegisterRequest": {
+        "models.RegisterRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -455,7 +534,7 @@ const docTemplate = `{
                 }
             }
         },
-        "github_com_jordanlanch_industrydb_pkg_models.UserInfo": {
+        "models.UserInfo": {
             "type": "object",
             "properties": {
                 "email": {
@@ -501,7 +580,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8081",
+	Host:             "localhost:7890",
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "IndustryDB API",

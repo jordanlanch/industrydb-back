@@ -1,10 +1,12 @@
 basePath: /api/v1
 definitions:
-  github_com_jordanlanch_industrydb_pkg_models.AppliedFilters:
+  models.AppliedFilters:
     properties:
       city:
         type: string
       country:
+        type: string
+      cuisine_type:
         type: string
       has_email:
         type: boolean
@@ -12,35 +14,45 @@ definitions:
         type: boolean
       industry:
         type: string
+      specialties:
+        items:
+          type: string
+        type: array
+      sport_type:
+        type: string
+      sub_niche:
+        type: string
+      tattoo_style:
+        type: string
       verified:
         type: boolean
     type: object
-  github_com_jordanlanch_industrydb_pkg_models.AuthResponse:
+  models.AuthResponse:
     properties:
       token:
         type: string
       user:
-        $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.UserInfo'
+        $ref: '#/definitions/models.UserInfo'
     type: object
-  github_com_jordanlanch_industrydb_pkg_models.ErrorResponse:
+  models.ErrorResponse:
     properties:
       error:
         type: string
       message:
         type: string
     type: object
-  github_com_jordanlanch_industrydb_pkg_models.LeadListResponse:
+  models.LeadListResponse:
     properties:
       data:
         items:
-          $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.LeadResponse'
+          $ref: '#/definitions/models.LeadResponse'
         type: array
       filters:
-        $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.AppliedFilters'
+        $ref: '#/definitions/models.AppliedFilters'
       pagination:
-        $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.PaginationInfo'
+        $ref: '#/definitions/models.PaginationInfo'
     type: object
-  github_com_jordanlanch_industrydb_pkg_models.LeadResponse:
+  models.LeadResponse:
     properties:
       address:
         type: string
@@ -49,6 +61,8 @@ definitions:
       country:
         type: string
       created_at:
+        type: string
+      cuisine_type:
         type: string
       email:
         type: string
@@ -72,12 +86,22 @@ definitions:
         additionalProperties:
           type: string
         type: object
+      specialties:
+        items:
+          type: string
+        type: array
+      sport_type:
+        type: string
+      sub_niche:
+        type: string
+      tattoo_style:
+        type: string
       verified:
         type: boolean
       website:
         type: string
     type: object
-  github_com_jordanlanch_industrydb_pkg_models.LoginRequest:
+  models.LoginRequest:
     properties:
       email:
         type: string
@@ -87,7 +111,7 @@ definitions:
     - email
     - password
     type: object
-  github_com_jordanlanch_industrydb_pkg_models.PaginationInfo:
+  models.PaginationInfo:
     properties:
       has_next:
         type: boolean
@@ -102,7 +126,7 @@ definitions:
       total_pages:
         type: integer
     type: object
-  github_com_jordanlanch_industrydb_pkg_models.RegisterRequest:
+  models.RegisterRequest:
     properties:
       email:
         type: string
@@ -117,7 +141,7 @@ definitions:
     - name
     - password
     type: object
-  github_com_jordanlanch_industrydb_pkg_models.UserInfo:
+  models.UserInfo:
     properties:
       email:
         type: string
@@ -134,7 +158,7 @@ definitions:
       usage_limit:
         type: integer
     type: object
-host: localhost:8081
+host: localhost:7890
 info:
   contact:
     email: support@industrydb.io
@@ -159,26 +183,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.LoginRequest'
+          $ref: '#/definitions/models.LoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Login successful
           schema:
-            $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.AuthResponse'
+            $ref: '#/definitions/models.AuthResponse'
         "400":
           description: Invalid request
           schema:
-            $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
         "401":
           description: Invalid credentials
           schema:
-            $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
       summary: Login user
       tags:
       - Authentication
@@ -193,26 +217,26 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.RegisterRequest'
+          $ref: '#/definitions/models.RegisterRequest'
       produces:
       - application/json
       responses:
         "200":
           description: User registered successfully
           schema:
-            $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.AuthResponse'
+            $ref: '#/definitions/models.AuthResponse'
         "400":
           description: Invalid request
           schema:
-            $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
         "409":
           description: User already exists
           schema:
-            $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
       summary: Register a new user
       tags:
       - Authentication
@@ -259,19 +283,19 @@ paths:
         "200":
           description: Search results
           schema:
-            $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.LeadListResponse'
+            $ref: '#/definitions/models.LeadListResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
         "403":
           description: Usage limit exceeded
           schema:
-            $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Search for business leads
@@ -299,20 +323,47 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
         "404":
           description: Lead not found
           schema:
-            $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/github_com_jordanlanch_industrydb_pkg_models.ErrorResponse'
+            $ref: '#/definitions/models.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Get lead by ID
       tags:
       - Leads
+  /user/onboarding/complete:
+    post:
+      consumes:
+      - application/json
+      description: Mark the user's onboarding wizard as completed
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Onboarding completed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Mark onboarding as completed
+      tags:
+      - User
 securityDefinitions:
   ApiKeyAuth:
     description: API Key for programmatic access (Business tier only)
