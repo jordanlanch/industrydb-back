@@ -1117,11 +1117,85 @@ git commit -m "feat: add user registration endpoint
 
 ## Industries Supported
 
-- Tattoo Studios (`shop=tattoo`)
-- Beauty Salons (`shop=beauty`)
-- Barber Shops (`shop=hairdresser`)
-- Gyms/Fitness (`leisure=fitness_centre`)
-- Restaurants (`amenity=restaurant`)
+**20 Industries** with comprehensive global coverage:
+
+**Personal Care Services:**
+- Tattoo Studios (`tattoo`)
+- Beauty Salons (`beauty`)
+- Barber Shops (`barber`)
+- Nail Salons (`nail_salon`)
+- Spas (`spa`)
+- Massage Therapy (`massage`)
+
+**Health & Fitness:**
+- Gyms/Fitness Centers (`gym`)
+- Dentists (`dentist`)
+- Pharmacies (`pharmacy`)
+
+**Food & Beverage:**
+- Restaurants (`restaurant`)
+- Cafes (`cafe`)
+- Bars (`bar`)
+- Bakeries (`bakery`)
+
+**Automotive:**
+- Car Repair (`car_repair`)
+- Car Wash (`car_wash`)
+- Car Dealers (`car_dealer`)
+
+**Professional Services:**
+- Lawyers (`lawyer`)
+- Accountants (`accountant`)
+
+**Retail:**
+- Clothing Stores (`clothing`)
+- Convenience Stores (`convenience`)
+
+## Data Coverage
+**Implemented:** 2026-01-29
+
+IndustryDB contains **82,740 verified business leads** from **184 countries** across **20 industries**, sourced from OpenStreetMap.
+
+### Global Statistics
+- **Total Leads:** 82,740
+- **Countries:** 184 (near-global coverage)
+- **Industries:** 20 comprehensive categories
+- **Average Quality Score:** 49.9/100
+- **With Contact Info:** 68.5% (phone, email, or website)
+
+### Top 10 Countries by Lead Count
+1. 🇳🇱 **Netherlands:** 6,033 leads
+2. 🇦🇹 **Austria:** 3,091 leads
+3. 🇩🇪 **Germany:** 2,970 leads
+4. 🇹🇼 **Taiwan:** 2,786 leads
+5. 🇹🇷 **Turkey:** 2,574 leads
+6. 🇭🇺 **Hungary:** 2,291 leads
+7. 🇨🇱 **Chile:** 2,281 leads
+8. 🇮🇪 **Ireland:** 2,259 leads
+9. 🇨🇭 **Switzerland:** 2,254 leads
+10. 🇦🇷 **Argentina:** 2,030 leads
+
+### Regional Distribution
+- **Europe:** 55.1% (45,600+ leads)
+- **Asia:** 19.1% (15,800+ leads)
+- **Americas:** 14.9% (12,300+ leads)
+- **Oceania:** 6.8% (5,600+ leads)
+- **Africa:** 4.1% (3,400+ leads)
+
+### Colombia Market Data
+- **Total Leads:** 922
+- **Cities:** 150+
+- **Top Industries:** car_repair (219), cafe (118), dentist (107), nail_salon (105), gym (93)
+- **Top Cities:** Bogotá (372), Medellín (206), Cali (137)
+
+### Data Quality
+- **With Email:** 9.4% (7,810 leads)
+- **With Phone:** 34.4% (28,453 leads)
+- **With Website:** 28.0% (23,178 leads)
+- **Complete Address:** 84.5% (70,000+ leads)
+- **Geolocation:** 100% (latitude/longitude for all leads)
+
+**For detailed import statistics, see [DATA_IMPORT_REPORT.md](/DATA_IMPORT_REPORT.md)**
 
 ## Performance & Caching
 **Implemented:** 2026-01-28

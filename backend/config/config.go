@@ -80,17 +80,17 @@ func Load() *Config {
 		APIEnvironment: getEnv("API_ENVIRONMENT", "development"),
 
 		// Database
-		DatabaseURL: getEnv("DATABASE_URL", "postgres://industrydb:localdev@localhost:5433/industrydb?sslmode=disable"),
+		DatabaseURL: getEnv("DATABASE_URL", "postgres://industrydb:localdev@localhost:5544/industrydb?sslmode=disable"),
 		DBHost:      getEnv("DB_HOST", "localhost"),
-		DBPort:      getEnv("DB_PORT", "5433"),
+		DBPort:      getEnv("DB_PORT", "5544"),
 		DBUser:      getEnv("DB_USER", "industrydb"),
 		DBPassword:  getEnv("DB_PASSWORD", "localdev"),
 		DBName:      getEnv("DB_NAME", "industrydb"),
 
 		// Redis
-		RedisURL:      getEnv("REDIS_URL", "redis://localhost:6380"),
+		RedisURL:      getEnv("REDIS_URL", "redis://localhost:6677"),
 		RedisHost:     getEnv("REDIS_HOST", "localhost"),
-		RedisPort:     getEnv("REDIS_PORT", "6380"),
+		RedisPort:     getEnv("REDIS_PORT", "6677"),
 		RedisPassword: getEnv("REDIS_PASSWORD", ""),
 
 		// JWT
@@ -110,7 +110,7 @@ func Load() *Config {
 		StripePriceBusiness:  getEnv("STRIPE_PRICE_BUSINESS", ""),
 
 		// Frontend
-		FrontendURL: getEnv("FRONTEND_URL", "http://localhost:3001"),
+		FrontendURL: getEnv("FRONTEND_URL", "http://localhost:5678"),
 
 		// Logging
 		LogLevel:  getEnv("LOG_LEVEL", "info"),

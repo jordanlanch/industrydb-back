@@ -7,20 +7,23 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jordanlanch/industrydb/pkg/cache"
+	"github.com/jordanlanch/industrydb/pkg/domain"
 )
 
 // TokenBlacklist manages revoked JWT tokens
 type TokenBlacklist struct {
-	cache *cache.Client
+	cache domain.CacheRepository
 }
 
 // NewTokenBlacklist creates a new token blacklist
-func NewTokenBlacklist(cache *cache.Client) *TokenBlacklist {
+func NewTokenBlacklist(cache domain.CacheRepository) *TokenBlacklist {
 	return &TokenBlacklist{
 		cache: cache,
 	}
 }
+
+// Verify TokenBlacklist implements domain.TokenBlacklist at compile time
+var _ domain.TokenBlacklist = (*TokenBlacklist)(nil)
 
 // Add adds a token to the blacklist with expiration
 func (b *TokenBlacklist) Add(ctx context.Context, token string, expiration time.Duration) error {

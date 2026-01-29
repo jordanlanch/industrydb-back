@@ -48,6 +48,7 @@ import (
 	"github.com/jordanlanch/industrydb/pkg/email"
 	"github.com/jordanlanch/industrydb/pkg/export"
 	"github.com/jordanlanch/industrydb/pkg/industries"
+	"github.com/jordanlanch/industrydb/pkg/jobs"
 	"github.com/jordanlanch/industrydb/pkg/leads"
 	custommiddleware "github.com/jordanlanch/industrydb/pkg/middleware"
 	"github.com/jordanlanch/industrydb/pkg/organization"
@@ -208,6 +209,14 @@ func main() {
 	apiKeyService := apikey.NewService(db.Ent)
 	industriesService := industries.NewService(db.Ent, redisClient)
 
+	// Initialize cron manager for data acquisition jobs
+	cronManager := jobs.NewCronManager(db.Ent, redisClient, log.Default())
+	if err := cronManager.SetupJobs(); err != nil {
+		log.Fatalf("❌ Failed to setup cron jobs: %v", err)
+	}
+	cronManager.Start()
+	log.Printf("✅ Cron jobs started successfully")
+
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(db.Ent, cfg, tokenBlacklist, redisClient, auditLogger, emailService)
 	leadHandler := handlers.NewLeadHandler(leadService, analyticsService)
@@ -220,6 +229,7 @@ func main() {
 	organizationHandler := handlers.NewOrganizationHandler(organizationService)
 	apiKeyHandler := handlers.NewAPIKeyHandler(apiKeyService)
 	industriesHandler := handlers.NewIndustryHandler(industriesService)
+	jobsHandler := handlers.NewJobsHandler(cronManager.GetMonitor())
 
 	// Authentication routes (public)
 	authRoutes := v1.Group("/auth")
@@ -249,6 +259,7 @@ func main() {
 		leadsGroup := protected.Group("/leads")
 		{
 			leadsGroup.GET("", leadHandler.Search)
+			leadsGroup.GET("/preview", leadHandler.Preview) // Must be before /:id to avoid route conflict
 			leadsGroup.GET("/:id", leadHandler.GetByID)
 		}
 
@@ -326,6 +337,17 @@ func main() {
 			adminGroup.GET("/users/:id", adminHandler.GetUser)
 			adminGroup.PATCH("/users/:id", adminHandler.UpdateUser)
 			adminGroup.DELETE("/users/:id", adminHandler.SuspendUser)
+
+			// Data acquisition job routes
+			jobsGroup := adminGroup.Group("/jobs")
+			{
+				jobsGroup.POST("/detect-low-data", jobsHandler.DetectLowDataHandler)
+				jobsGroup.POST("/detect-missing", jobsHandler.DetectMissingHandler)
+				jobsGroup.POST("/trigger-fetch", jobsHandler.TriggerFetchHandler)
+				jobsGroup.POST("/trigger-batch-fetch", jobsHandler.TriggerBatchFetchHandler)
+				jobsGroup.GET("/stats", jobsHandler.GetPopulationStatsHandler)
+				jobsGroup.POST("/auto-populate", jobsHandler.AutoPopulateHandler)
+			}
 		}
 	}
 
@@ -338,6 +360,7 @@ func main() {
 	industriesGroup := v1.Group("/industries")
 	{
 		industriesGroup.GET("", industriesHandler.ListIndustries)
+		industriesGroup.GET("/with-leads", industriesHandler.ListIndustriesWithLeads)
 		industriesGroup.GET("/:id", industriesHandler.GetIndustry)
 		industriesGroup.GET("/:id/sub-niches", industriesHandler.GetSubNiches)
 	}
@@ -397,6 +420,8 @@ func main() {
 	log.Printf("🌍 CORS: http://localhost:5678, https://industrydb.io, https://www.industrydb.io")
 	log.Printf("🛡️  Rate limiting: %d req/min (burst: %d)", cfg.RateLimitRequestsPerMinute, cfg.RateLimitBurst)
 	log.Printf("🔒 Auth endpoints: login (5/min), register (3/hour), webhook (100/min)")
+	log.Printf("⏰ Cron jobs: Daily 2AM (populate low-data), Weekly Sunday 3AM (populate missing), Daily 4AM (stats)")
+	log.Printf("📊 Admin endpoints: /api/v1/admin/jobs/* (detect, trigger, stats, auto-populate)")
 
 	// Graceful shutdown
 	go func() {
@@ -411,6 +436,10 @@ func main() {
 	<-quit
 
 	log.Println("🛑 Shutting down server...")
+
+	// Stop cron jobs
+	cronManager.Stop()
+	log.Println("✅ Cron jobs stopped")
 
 	// Gracefully shutdown with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

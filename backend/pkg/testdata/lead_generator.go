@@ -129,6 +129,302 @@ var businessNameParts = map[string]struct {
 		Prefixes: []string{"Professional", "Expert", "Premier", "Elite", "Quality", "Precision", "Complete", "Total", "Advanced", "Modern"},
 		Suffixes: []string{"Accounting", "CPA", "Tax Services", "Accounting Firm", "Financial Services", "Bookkeeping"},
 	},
+
+	// Personal Care & Beauty - Additional
+	"hair_salon": {
+		Prefixes: []string{"Salon", "Style", "Chic", "Elite", "Modern", "Classic", "Glamour", "Trend", "Fashion", "Beautiful"},
+		Suffixes: []string{"Hair Salon", "Hair Studio", "Hair Design", "Hairstyling", "Hair Care", "Hair & Beauty"},
+	},
+	"tanning_salon": {
+		Prefixes: []string{"Sun", "Bronze", "Golden", "Tropical", "Paradise", "Sunshine", "Island", "Beach", "Glow", "Tan"},
+		Suffixes: []string{"Tanning Salon", "Tanning Studio", "Tan", "Sunbeds", "Tanning Center", "Tanning Lounge"},
+	},
+	"cosmetics": {
+		Prefixes: []string{"Beauty", "Glamour", "Luxury", "Pure", "Divine", "Radiant", "Elegant", "Chic", "Premium", "Elite"},
+		Suffixes: []string{"Cosmetics", "Beauty Products", "Makeup", "Beauty Store", "Cosmetics Shop", "Beauty Boutique"},
+	},
+	"perfumery": {
+		Prefixes: []string{"Essence", "Aroma", "Scent", "Fragrance", "Parfum", "Luxury", "Elite", "Divine", "Pure", "Classic"},
+		Suffixes: []string{"Perfumery", "Fragrances", "Scents", "Perfume Shop", "Perfume Boutique", "Aromas"},
+	},
+	"waxing_salon": {
+		Prefixes: []string{"Smooth", "Silk", "Pure", "Perfect", "Bare", "Soft", "Flawless", "Clean", "Natural", "Beauty"},
+		Suffixes: []string{"Waxing", "Wax Studio", "Hair Removal", "Waxing Salon", "Wax Bar", "Waxing Center"},
+	},
+
+	// Health & Wellness - Additional
+	"chiropractor": {
+		Prefixes: []string{"Align", "Wellness", "Spine", "Health", "Active", "Complete", "Total", "Advanced", "Modern", "Family"},
+		Suffixes: []string{"Chiropractic", "Chiropractor", "Spine Care", "Wellness Center", "Chiropractic Clinic", "Health"},
+	},
+	"optician": {
+		Prefixes: []string{"Vision", "Clear", "Perfect", "Eye", "Sight", "Premier", "Elite", "Modern", "Professional", "Quality"},
+		Suffixes: []string{"Opticians", "Eyewear", "Vision Center", "Eye Care", "Optical", "Eyeglasses"},
+	},
+	"clinic": {
+		Prefixes: []string{"Family", "Community", "Health", "Medical", "Care", "Wellness", "Advanced", "Complete", "Premier", "Quality"},
+		Suffixes: []string{"Clinic", "Medical Clinic", "Health Center", "Healthcare", "Medical Care", "Family Practice"},
+	},
+	"hospital": {
+		Prefixes: []string{"General", "Regional", "Community", "Medical", "Health", "University", "Memorial", "St.", "City", "County"},
+		Suffixes: []string{"Hospital", "Medical Center", "Health System", "Healthcare", "Medical Campus"},
+	},
+	"veterinary": {
+		Prefixes: []string{"Pet", "Animal", "Caring", "Companion", "Family", "Advanced", "Complete", "Quality", "Premier", "Modern"},
+		Suffixes: []string{"Veterinary", "Animal Hospital", "Vet Clinic", "Pet Care", "Animal Care", "Veterinary Services"},
+	},
+	"yoga_studio": {
+		Prefixes: []string{"Zen", "Peaceful", "Harmony", "Balance", "Flow", "Pure", "Mindful", "Serenity", "Bliss", "Om"},
+		Suffixes: []string{"Yoga", "Yoga Studio", "Yoga Center", "Yoga & Wellness", "Yoga Practice", "Yoga Space"},
+	},
+	"pilates_studio": {
+		Prefixes: []string{"Core", "Balance", "Strength", "Pure", "Elite", "Modern", "Classical", "Zen", "Flow", "Peak"},
+		Suffixes: []string{"Pilates", "Pilates Studio", "Pilates Center", "Core Fitness", "Pilates & Wellness"},
+	},
+	"physical_therapy": {
+		Prefixes: []string{"Active", "Motion", "Recovery", "Restore", "Advanced", "Complete", "Premier", "Quality", "Total", "Modern"},
+		Suffixes: []string{"Physical Therapy", "PT", "Therapy", "Rehab", "Rehabilitation", "Therapy Center"},
+	},
+
+	// Food & Beverage - Additional
+	"fast_food": {
+		Prefixes: []string{"Quick", "Express", "Fast", "Speed", "Rapid", "Instant", "Super", "Mega", "Ultimate", "Best"},
+		Suffixes: []string{"Fast Food", "Quick Eats", "Express", "Burgers", "Food", "Grill"},
+	},
+	"ice_cream": {
+		Prefixes: []string{"Sweet", "Frozen", "Creamy", "Cold", "Chill", "Frosty", "Cool", "Tasty", "Yummy", "Delicious"},
+		Suffixes: []string{"Ice Cream", "Creamery", "Ice Cream Shop", "Frozen Treats", "Gelato", "Ice Cream Parlor"},
+	},
+	"juice_bar": {
+		Prefixes: []string{"Fresh", "Pure", "Healthy", "Green", "Organic", "Natural", "Vital", "Energy", "Juice", "Raw"},
+		Suffixes: []string{"Juice Bar", "Juice", "Smoothies", "Juicery", "Juice & Smoothie", "Fresh Juice"},
+	},
+	"pizza": {
+		Prefixes: []string{"Pizza", "Slice", "Tony's", "Luigi's", "Mario's", "New York", "Chicago", "Italian", "Gourmet", "Authentic"},
+		Suffixes: []string{"Pizza", "Pizzeria", "Pizza House", "Pizza Kitchen", "Pizza Place", "Pizza Shop"},
+	},
+	"sushi": {
+		Prefixes: []string{"Sushi", "Tokyo", "Osaka", "Zen", "Sakura", "Koi", "Dragon", "Samurai", "Shogun", "Imperial"},
+		Suffixes: []string{"Sushi", "Sushi Bar", "Japanese Restaurant", "Sushi House", "Sushi Kitchen", "Japanese Cuisine"},
+	},
+	"brewery": {
+		Prefixes: []string{"Craft", "Artisan", "Local", "Barrel", "Hop", "Malt", "Brew", "Iron", "Stone", "Mountain"},
+		Suffixes: []string{"Brewery", "Brewing Company", "Craft Beer", "Brewhouse", "Beer Co", "Ale House"},
+	},
+	"winery": {
+		Prefixes: []string{"Valley", "Estate", "Vineyard", "Hillside", "Heritage", "Noble", "Reserve", "Private", "Grand", "Royal"},
+		Suffixes: []string{"Winery", "Vineyards", "Estate Wines", "Wine Cellars", "Vintners", "Wine Company"},
+	},
+	"food_truck": {
+		Prefixes: []string{"Street", "Mobile", "Gourmet", "Urban", "Rolling", "Tasty", "Flavor", "Hungry", "Food", "Wheels"},
+		Suffixes: []string{"Food Truck", "Kitchen", "Eats", "Street Food", "Mobile Kitchen", "Food Wheels"},
+	},
+	"catering": {
+		Prefixes: []string{"Elegant", "Premier", "Gourmet", "Deluxe", "Classic", "Elite", "Quality", "Perfect", "Royal", "Grand"},
+		Suffixes: []string{"Catering", "Catering Services", "Event Catering", "Catering Company", "Events", "Catering Co"},
+	},
+	"deli": {
+		Prefixes: []string{"Corner", "Local", "Artisan", "Gourmet", "Classic", "European", "Fresh", "Quality", "Premium", "Fine"},
+		Suffixes: []string{"Deli", "Delicatessen", "Market", "Food Market", "Specialty Foods", "Gourmet Market"},
+	},
+
+	// Automotive - Additional
+	"tire_shop": {
+		Prefixes: []string{"Tire", "Wheel", "Quick", "Express", "Premier", "Quality", "Pro", "Expert", "Complete", "Total"},
+		Suffixes: []string{"Tire Shop", "Tire Center", "Tires", "Tire Service", "Wheels", "Tire & Auto"},
+	},
+	"auto_parts": {
+		Prefixes: []string{"Auto", "Quality", "Premier", "Advanced", "Complete", "Total", "Express", "Quick", "Pro", "Expert"},
+		Suffixes: []string{"Auto Parts", "Parts", "Auto Supplies", "Car Parts", "Automotive Parts", "Parts Center"},
+	},
+	"gas_station": {
+		Prefixes: []string{"Quick", "Express", "Fast", "Speed", "24/7", "Corner", "Main", "Central", "City", "Highway"},
+		Suffixes: []string{"Gas Station", "Fuel", "Gas & Go", "Service Station", "Fuel Stop", "Gas Mart"},
+	},
+	"motorcycle_dealer": {
+		Prefixes: []string{"Speed", "Thunder", "Iron", "Chrome", "Eagle", "Harley", "Custom", "Sport", "Power", "Freedom"},
+		Suffixes: []string{"Motorcycles", "Cycles", "Motorcycle Sales", "Bike Shop", "Motorsports", "Powersports"},
+	},
+	"rv_dealer": {
+		Prefixes: []string{"Adventure", "Freedom", "Camping", "Travel", "Journey", "Road", "Happy", "Premier", "Quality", "Best"},
+		Suffixes: []string{"RV Sales", "RV Center", "RV Dealer", "RVs", "Motorhomes", "Campers"},
+	},
+
+	// Retail - Additional
+	"florist": {
+		Prefixes: []string{"Bloom", "Petal", "Blossom", "Garden", "Fresh", "Floral", "Rose", "Violet", "Daisy", "Lily"},
+		Suffixes: []string{"Florist", "Flowers", "Floral Design", "Flower Shop", "Bouquets", "Arrangements"},
+	},
+	"bookstore": {
+		Prefixes: []string{"Page", "Novel", "Chapter", "Story", "Book", "Reader", "Literary", "Classic", "Modern", "Corner"},
+		Suffixes: []string{"Bookstore", "Books", "Bookshop", "Book House", "Reading Room", "Book Center"},
+	},
+	"electronics": {
+		Prefixes: []string{"Tech", "Digital", "Electronic", "Gadget", "Modern", "Advanced", "Smart", "Cyber", "High-Tech", "Future"},
+		Suffixes: []string{"Electronics", "Tech Store", "Technology", "Electronics Store", "Tech Shop", "Gadgets"},
+	},
+	"furniture": {
+		Prefixes: []string{"Home", "Modern", "Classic", "Contemporary", "Elegant", "Quality", "Fine", "Custom", "Designer", "Urban"},
+		Suffixes: []string{"Furniture", "Furnishings", "Home Store", "Furniture Gallery", "Home Decor", "Furniture Outlet"},
+	},
+	"hardware": {
+		Prefixes: []string{"Home", "Builder", "Ace", "True", "City", "Country", "Pro", "Quality", "Complete", "Total"},
+		Suffixes: []string{"Hardware", "Hardware Store", "Home Improvement", "Building Supply", "Hardware & Tools"},
+	},
+	"jewelry": {
+		Prefixes: []string{"Diamond", "Gold", "Silver", "Precious", "Fine", "Elegant", "Luxury", "Royal", "Estate", "Classic"},
+		Suffixes: []string{"Jewelry", "Jewelers", "Jewelry Store", "Fine Jewelry", "Gems", "Jewelry Gallery"},
+	},
+	"gift_shop": {
+		Prefixes: []string{"Gift", "Treasure", "Special", "Unique", "Perfect", "Sweet", "Charming", "Lovely", "Delightful", "Amazing"},
+		Suffixes: []string{"Gift Shop", "Gifts", "Gift Gallery", "Gift Boutique", "Gifts & More", "Gift Store"},
+	},
+	"toy_store": {
+		Prefixes: []string{"Toy", "Fun", "Kids", "Play", "Tiny", "Little", "Wonder", "Magic", "Happy", "Joyful"},
+		Suffixes: []string{"Toy Store", "Toys", "Toy Shop", "Toy Box", "Toy Kingdom", "Toy World"},
+	},
+	"pet_store": {
+		Prefixes: []string{"Pet", "Paws", "Furry", "Happy", "Healthy", "Pampered", "Critter", "Animal", "Pet", "Companion"},
+		Suffixes: []string{"Pet Store", "Pet Shop", "Pet Supplies", "Pets", "Pet Care", "Pet Market"},
+	},
+	"bicycle_shop": {
+		Prefixes: []string{"Cycle", "Bike", "Pedal", "Wheel", "Speed", "Pro", "Mountain", "Road", "Sport", "Gear"},
+		Suffixes: []string{"Bicycle Shop", "Bikes", "Cycle Center", "Bicycle Store", "Cycling", "Bike Shop"},
+	},
+	"sporting_goods": {
+		Prefixes: []string{"Sport", "Athletic", "Pro", "Champion", "Victory", "Team", "Performance", "Active", "Fitness", "Game"},
+		Suffixes: []string{"Sporting Goods", "Sports", "Sports Store", "Athletic Store", "Sports Equipment", "Sportswear"},
+	},
+	"music_store": {
+		Prefixes: []string{"Music", "Sound", "Melody", "Harmony", "Tune", "Note", "Rock", "Guitar", "Piano", "Instrument"},
+		Suffixes: []string{"Music Store", "Music Shop", "Music Center", "Instruments", "Music House", "Music Gallery"},
+	},
+	"art_supply": {
+		Prefixes: []string{"Art", "Creative", "Artist", "Canvas", "Palette", "Studio", "Craft", "Color", "Design", "Artistic"},
+		Suffixes: []string{"Art Supply", "Art Store", "Art Shop", "Art Materials", "Art & Craft", "Art Studio"},
+	},
+	"stationery": {
+		Prefixes: []string{"Paper", "Write", "Pen", "Office", "Note", "Quality", "Fine", "Classic", "Modern", "Professional"},
+		Suffixes: []string{"Stationery", "Office Supply", "Paper Store", "Stationery Shop", "Office Supplies", "Paper Goods"},
+	},
+	"garden_center": {
+		Prefixes: []string{"Green", "Garden", "Plant", "Nature", "Bloom", "Grow", "Fresh", "Botanical", "Nursery", "Greenhouse"},
+		Suffixes: []string{"Garden Center", "Nursery", "Garden Shop", "Plants", "Garden Supply", "Garden Store"},
+	},
+
+	// Professional Services - Additional
+	"real_estate": {
+		Prefixes: []string{"Premier", "Elite", "Quality", "Best", "Top", "First", "Prime", "Century", "Realty", "Home"},
+		Suffixes: []string{"Real Estate", "Realty", "Properties", "Real Estate Agency", "Realtors", "Property Services"},
+	},
+	"insurance": {
+		Prefixes: []string{"Safe", "Secure", "Trust", "Shield", "Guardian", "Reliable", "Premier", "Quality", "Complete", "Total"},
+		Suffixes: []string{"Insurance", "Insurance Agency", "Insurance Services", "Insurance Group", "Assurance"},
+	},
+	"financial_advisor": {
+		Prefixes: []string{"Wealth", "Premier", "Elite", "Quality", "Trust", "Capital", "Strategic", "Prosperity", "Vision", "Summit"},
+		Suffixes: []string{"Financial Advisors", "Wealth Management", "Financial Services", "Financial Planning", "Investment Advisors"},
+	},
+	"notary": {
+		Prefixes: []string{"Professional", "Reliable", "Certified", "Quick", "Mobile", "Express", "Quality", "Premier", "Complete", "Total"},
+		Suffixes: []string{"Notary Public", "Notary Services", "Notary", "Notarization", "Notary Office"},
+	},
+	"tax_service": {
+		Prefixes: []string{"Professional", "Expert", "Premier", "Quality", "Complete", "Total", "Express", "Quick", "Reliable", "Accurate"},
+		Suffixes: []string{"Tax Services", "Tax Preparation", "Tax Advisors", "Tax Professionals", "Tax Center", "Tax Solutions"},
+	},
+	"marketing_agency": {
+		Prefixes: []string{"Creative", "Digital", "Brand", "Strategic", "Modern", "Innovative", "Premier", "Elite", "Pro", "Dynamic"},
+		Suffixes: []string{"Marketing", "Marketing Agency", "Advertising", "Marketing Solutions", "Marketing Group", "Media"},
+	},
+	"photography": {
+		Prefixes: []string{"Picture", "Portrait", "Photo", "Image", "Capture", "Lens", "Focus", "Frame", "Vision", "Creative"},
+		Suffixes: []string{"Photography", "Photo Studio", "Photography Services", "Photos", "Photographers", "Photo Lab"},
+	},
+	"printing": {
+		Prefixes: []string{"Quick", "Express", "Fast", "Print", "Copy", "Digital", "Quality", "Premier", "Professional", "Complete"},
+		Suffixes: []string{"Printing", "Print Shop", "Copy Center", "Print Services", "Printers", "Printing Services"},
+	},
+	"event_planning": {
+		Prefixes: []string{"Perfect", "Elegant", "Premier", "Elite", "Classic", "Dream", "Special", "Unique", "Creative", "Exceptional"},
+		Suffixes: []string{"Event Planning", "Events", "Event Services", "Event Planners", "Event Coordination", "Event Design"},
+	},
+	"travel_agency": {
+		Prefixes: []string{"Travel", "Journey", "Adventure", "Explore", "Discover", "Vacation", "Getaway", "Dream", "World", "Global"},
+		Suffixes: []string{"Travel Agency", "Travel", "Travel Services", "Tours", "Travel Consultants", "Travel Planners"},
+	},
+
+	// Hospitality
+	"hotel": {
+		Prefixes: []string{"Grand", "Royal", "Plaza", "Marriott", "Hilton", "Sheraton", "Hyatt", "Embassy", "Holiday", "Comfort"},
+		Suffixes: []string{"Hotel", "Inn", "Suites", "Resort", "Lodge", "Palace"},
+	},
+	"motel": {
+		Prefixes: []string{"Roadside", "Highway", "Rest", "Travelers", "Budget", "Comfort", "Quality", "Sleep", "Stay", "Wayside"},
+		Suffixes: []string{"Motel", "Motor Inn", "Motor Lodge", "Inn", "Lodge"},
+	},
+	"hostel": {
+		Prefixes: []string{"Backpackers", "Travelers", "Budget", "Youth", "Friendly", "Cozy", "Happy", "Social", "Urban", "Downtown"},
+		Suffixes: []string{"Hostel", "Backpackers", "Accommodation", "Lodge", "Guest House"},
+	},
+	"bed_breakfast": {
+		Prefixes: []string{"Cozy", "Charming", "Historic", "Victorian", "Country", "Manor", "Inn", "Garden", "Cottage", "Homestead"},
+		Suffixes: []string{"B&B", "Bed & Breakfast", "Inn", "Guest House", "Lodge"},
+	},
+	"vacation_rental": {
+		Prefixes: []string{"Beach", "Mountain", "Lake", "Vacation", "Holiday", "Getaway", "Paradise", "Dream", "Luxury", "Private"},
+		Suffixes: []string{"Vacation Rental", "Holiday Home", "Rental", "Vacation Home", "Retreat"},
+	},
+	"campground": {
+		Prefixes: []string{"Pine", "Forest", "Lake", "River", "Mountain", "Sunset", "Wilderness", "Nature", "Scenic", "Happy"},
+		Suffixes: []string{"Campground", "Camping", "Camp", "Campsite", "Camping Resort"},
+	},
+	"rv_park": {
+		Prefixes: []string{"Sunset", "Mountain", "Lake", "Happy", "Paradise", "Riverside", "Valley", "Desert", "Forest", "Country"},
+		Suffixes: []string{"RV Park", "RV Resort", "RV Campground", "Motor Home Park", "RV Camp"},
+	},
+	"resort": {
+		Prefixes: []string{"Paradise", "Grand", "Luxury", "Royal", "Tropical", "Beach", "Mountain", "Spa", "Premier", "Executive"},
+		Suffixes: []string{"Resort", "Resort & Spa", "Beach Resort", "Golf Resort", "Vacation Resort"},
+	},
+
+	// Home Services
+	"plumber": {
+		Prefixes: []string{"Rapid", "Expert", "Pro", "Quality", "Reliable", "24/7", "Emergency", "Master", "Licensed", "Professional"},
+		Suffixes: []string{"Plumbing", "Plumbers", "Plumbing Services", "Pipe Repair", "Drain Cleaning", "Plumbing Solutions"},
+	},
+	"electrician": {
+		Prefixes: []string{"Expert", "Professional", "Licensed", "Master", "Quality", "Reliable", "24/7", "Emergency", "Complete", "Total"},
+		Suffixes: []string{"Electrical", "Electrician", "Electrical Services", "Electric", "Electrical Contractors", "Electrical Solutions"},
+	},
+	"hvac": {
+		Prefixes: []string{"Comfort", "Climate", "Air", "Heating", "Cooling", "Quality", "Premier", "Expert", "Professional", "Reliable"},
+		Suffixes: []string{"HVAC", "Heating & Cooling", "Climate Control", "HVAC Services", "Air Conditioning", "Heating Services"},
+	},
+	"locksmith": {
+		Prefixes: []string{"Quick", "Emergency", "24/7", "Mobile", "Express", "Professional", "Master", "Reliable", "Secure", "Safe"},
+		Suffixes: []string{"Locksmith", "Lock Services", "Locksmith Services", "Lock & Key", "Security", "Locks"},
+	},
+	"roofing": {
+		Prefixes: []string{"Quality", "Premier", "Professional", "Expert", "Reliable", "Complete", "Total", "Master", "Elite", "Advanced"},
+		Suffixes: []string{"Roofing", "Roofers", "Roofing Services", "Roof Repair", "Roofing Contractors", "Roofing Solutions"},
+	},
+	"painting": {
+		Prefixes: []string{"Professional", "Quality", "Expert", "Premier", "Complete", "Total", "Custom", "Precision", "Master", "Elite"},
+		Suffixes: []string{"Painting", "Painters", "Painting Services", "Paint Contractors", "Painting Solutions", "House Painters"},
+	},
+	"cleaning": {
+		Prefixes: []string{"Sparkle", "Clean", "Fresh", "Pure", "Professional", "Quality", "Expert", "Premier", "Complete", "Total"},
+		Suffixes: []string{"Cleaning", "Cleaning Services", "Cleaners", "Janitorial", "Maid Service", "Housekeeping"},
+	},
+	"landscaping": {
+		Prefixes: []string{"Green", "Lawn", "Garden", "Landscape", "Nature", "Quality", "Premier", "Professional", "Expert", "Complete"},
+		Suffixes: []string{"Landscaping", "Lawn Care", "Landscape Services", "Landscapers", "Landscape Design", "Yard Services"},
+	},
+	"pest_control": {
+		Prefixes: []string{"Pest", "Bug", "Termite", "Critter", "Safe", "Eco", "Green", "Professional", "Quality", "Reliable"},
+		Suffixes: []string{"Pest Control", "Exterminators", "Pest Services", "Pest Management", "Exterminating", "Pest Solutions"},
+	},
 }
 
 // GenerateBusinessName creates industry-specific realistic business names

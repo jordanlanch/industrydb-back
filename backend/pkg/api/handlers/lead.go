@@ -236,3 +236,48 @@ func (h *LeadHandler) GetByID(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, lead)
 }
+
+// Preview godoc
+// @Summary Preview search results without charging credits
+// @Description Get estimated count and statistics for a search without spending credits. Useful for seeing data availability before performing an actual search.
+// @Tags Leads
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param industry query string false "Industry filter (tattoo, beauty, gym, restaurant)"
+// @Param country query string false "Country code (US, GB, ES, etc.)"
+// @Param city query string false "City name"
+// @Param has_email query boolean false "Filter by email presence"
+// @Param has_phone query boolean false "Filter by phone presence"
+// @Success 200 {object} models.LeadPreviewResponse "Preview statistics"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /leads/preview [get]
+func (h *LeadHandler) Preview(c echo.Context) error {
+	// Get user ID from context (authentication required, but no credit charge)
+	_, ok := c.Get("user_id").(int)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, models.ErrorResponse{
+			Error: "unauthorized",
+		})
+	}
+
+	// Parse query parameters (same as Search)
+	var req models.LeadSearchRequest
+	if err := c.Bind(&req); err != nil {
+		return errors.ValidationError(c, err)
+	}
+
+	// Validate request
+	if err := h.validator.Struct(req); err != nil {
+		return errors.ValidationError(c, err)
+	}
+
+	// Execute preview (NO credit charge, NO usage check)
+	preview, err := h.leadService.Preview(c.Request().Context(), req)
+	if err != nil {
+		return errors.InternalError(c, err)
+	}
+
+	return c.JSON(http.StatusOK, preview)
+}

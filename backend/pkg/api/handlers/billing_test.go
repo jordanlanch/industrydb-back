@@ -22,10 +22,16 @@ func TestValidateReturnURL(t *testing.T) {
 			reason:   "Empty URL should return default",
 		},
 		{
-			name:     "localhost development URL is allowed",
-			input:    "http://localhost:3001/dashboard/settings/billing",
-			expected: "http://localhost:3001/dashboard/settings/billing",
-			reason:   "Localhost development URL should be allowed",
+			name:     "localhost development URL is allowed (root setup)",
+			input:    "http://localhost:5678/dashboard/settings/billing",
+			expected: "http://localhost:5678/dashboard/settings/billing",
+			reason:   "Localhost development URL (root setup) should be allowed",
+		},
+		{
+			name:     "localhost development URL is allowed (modular setup)",
+			input:    "http://localhost:5566/dashboard/settings/billing",
+			expected: "http://localhost:5566/dashboard/settings/billing",
+			reason:   "Localhost development URL (modular setup) should be allowed",
 		},
 		{
 			name:     "production URL is allowed",
@@ -100,8 +106,9 @@ func TestValidateReturnURL(t *testing.T) {
 func TestValidateReturnURL_Whitelist(t *testing.T) {
 	// Test that ONLY whitelisted hosts are allowed
 	allowedURLs := []string{
-		"http://localhost:3001/any/path",
-		"https://localhost:3001/any/path",
+		"http://localhost:5678/any/path",
+		"http://localhost:5566/any/path",
+		"https://localhost:5678/any/path",
 		"http://industrydb.io/any/path",
 		"https://industrydb.io/any/path",
 		"http://www.industrydb.io/any/path",

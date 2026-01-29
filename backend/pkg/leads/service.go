@@ -208,6 +208,146 @@ func (s *Service) generateCacheKey(req models.LeadSearchRequest) string {
 		req.Page, req.Limit)
 }
 
+// Preview generates preview statistics for a search without charging credits
+func (s *Service) Preview(ctx context.Context, req models.LeadSearchRequest) (*models.LeadPreviewResponse, error) {
+	// Generate cache key for preview
+	cacheKey := fmt.Sprintf("leads:preview:%s:%s:%s:%s:%s:%s:%s",
+		req.Industry, req.SubNiche, req.Country, req.City,
+		fmt.Sprintf("%v", req.HasEmail),
+		fmt.Sprintf("%v", req.HasPhone),
+		fmt.Sprintf("%v", req.Verified))
+
+	// Try to get from cache (15 minutes - longer than search since it's cheaper)
+	if cached, err := s.cache.Get(ctx, cacheKey); err == nil && cached != "" {
+		var response models.LeadPreviewResponse
+		if err := json.Unmarshal([]byte(cached), &response); err == nil {
+			return &response, nil
+		}
+	}
+
+	// Build base query (same filters as Search)
+	query := s.db.Lead.Query()
+
+	// Apply filters
+	if req.Industry != "" {
+		query = query.Where(lead.IndustryEQ(lead.Industry(req.Industry)))
+	}
+	if req.SubNiche != "" {
+		query = query.Where(lead.SubNicheEQ(req.SubNiche))
+	}
+	if req.CuisineType != "" {
+		query = query.Where(lead.CuisineTypeEQ(req.CuisineType))
+	}
+	if req.SportType != "" {
+		query = query.Where(lead.SportTypeEQ(req.SportType))
+	}
+	if req.TattooStyle != "" {
+		query = query.Where(lead.TattooStyleEQ(req.TattooStyle))
+	}
+	if req.Country != "" {
+		query = query.Where(lead.CountryEQ(req.Country))
+	}
+	if req.City != "" {
+		query = query.Where(lead.CityEQ(req.City))
+	}
+	if req.HasEmail != nil && *req.HasEmail {
+		query = query.Where(lead.EmailNEQ(""), lead.EmailNotNil())
+	}
+	if req.HasPhone != nil && *req.HasPhone {
+		query = query.Where(lead.PhoneNEQ(""), lead.PhoneNotNil())
+	}
+	if req.Verified != nil {
+		query = query.Where(lead.VerifiedEQ(*req.Verified))
+	}
+
+	// Get total count
+	totalCount, err := query.Count(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to count leads: %w", err)
+	}
+
+	// If no results, return early
+	if totalCount == 0 {
+		response := &models.LeadPreviewResponse{
+			EstimatedCount:  0,
+			WithEmailCount:  0,
+			WithEmailPct:    0,
+			WithPhoneCount:  0,
+			WithPhonePct:    0,
+			VerifiedCount:   0,
+			VerifiedPct:     0,
+			QualityScoreAvg: 0,
+		}
+		// Cache for 15 minutes
+		if responseJSON, err := json.Marshal(response); err == nil {
+			_ = s.cache.Set(ctx, cacheKey, responseJSON, 15*time.Minute)
+		}
+		return response, nil
+	}
+
+	// Count leads with email (using clone to avoid modifying original query)
+	withEmailCount, err := query.Clone().
+		Where(lead.EmailNEQ(""), lead.EmailNotNil()).
+		Count(ctx)
+	if err != nil {
+		withEmailCount = 0
+	}
+
+	// Count leads with phone
+	withPhoneCount, err := query.Clone().
+		Where(lead.PhoneNEQ(""), lead.PhoneNotNil()).
+		Count(ctx)
+	if err != nil {
+		withPhoneCount = 0
+	}
+
+	// Count verified leads
+	verifiedCount, err := query.Clone().
+		Where(lead.VerifiedEQ(true)).
+		Count(ctx)
+	if err != nil {
+		verifiedCount = 0
+	}
+
+	// Calculate average quality score
+	// We'll fetch all quality scores and calculate average in memory
+	// (Ent doesn't have aggregate functions built-in)
+	leads, err := query.Clone().
+		Select(lead.FieldQualityScore).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query quality scores: %w", err)
+	}
+
+	var qualityScoreSum float64
+	for _, l := range leads {
+		qualityScoreSum += float64(l.QualityScore)
+	}
+	qualityScoreAvg := 0.0
+	if len(leads) > 0 {
+		qualityScoreAvg = qualityScoreSum / float64(len(leads))
+	}
+
+	// Build response
+	response := &models.LeadPreviewResponse{
+		EstimatedCount:  totalCount,
+		WithEmailCount:  withEmailCount,
+		WithEmailPct:    float64(withEmailCount) / float64(totalCount) * 100,
+		WithPhoneCount:  withPhoneCount,
+		WithPhonePct:    float64(withPhoneCount) / float64(totalCount) * 100,
+		VerifiedCount:   verifiedCount,
+		VerifiedPct:     float64(verifiedCount) / float64(totalCount) * 100,
+		QualityScoreAvg: qualityScoreAvg,
+	}
+
+	// Cache the response for 15 minutes
+	if responseJSON, err := json.Marshal(response); err == nil {
+		_ = s.cache.Set(ctx, cacheKey, responseJSON, 15*time.Minute)
+	}
+
+	return response, nil
+}
+
 // InvalidateCache invalidates all lead search caches
 func (s *Service) InvalidateCache(ctx context.Context) error {
 	// Delete all keys matching "leads:*" pattern

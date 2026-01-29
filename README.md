@@ -39,8 +39,8 @@ make dev
 ```
 
 That's it! The application will be running at:
-- **Frontend:** http://localhost:3001
-- **Backend API:** http://localhost:8081
+- **Frontend:** http://localhost:5678
+- **Backend API:** http://localhost:7890
 
 ---
 
@@ -121,10 +121,10 @@ make stop
 │  (Internal network only)   │                           │
 │                             │                           │
 │  [Go Backend] ──────────────┘                           │
-│  Port 8081 (Hot Reload)    │                           │
+│  Port 7890 (Hot Reload)    │                           │
 │                             │                           │
 │  [Next.js Frontend] ────────┘                           │
-│  Port 3001 (Hot Reload)                                │
+│  Port 5678 (Hot Reload)                                │
 │                                                         │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -243,11 +243,11 @@ Key environment variables (see `.env.example` for full list):
 
 ```env
 # API
-API_PORT=8081
+API_PORT=7890
 
 # Frontend
-FRONTEND_URL=http://localhost:3001
-NEXT_PUBLIC_API_URL=http://localhost:8081
+FRONTEND_URL=http://localhost:5678
+NEXT_PUBLIC_API_URL=http://localhost:7890
 
 # Database (internal)
 DATABASE_URL=postgres://industrydb:localdev@db:5432/industrydb?sslmode=disable
@@ -287,13 +287,13 @@ When you edit `.tsx`, `.ts`, `.jsx`, `.js` files:
 
 ### Port Already in Use
 
-If ports 8081 or 3001 are already in use, you can change them in `.env`:
+If ports 7890 or 5678 are already in use, you can change them in `.env`:
 
 ```env
-API_PORT=8082
+API_PORT=8080  # Change the mapped port in docker-compose.yml
 ```
 
-And update `docker-compose.yml` ports section.
+And update `docker-compose.yml` ports section (lines 67 and 96).
 
 ### Container Won't Start
 
@@ -331,7 +331,7 @@ make dev
 - [CLAUDE.md](./CLAUDE.md) - Complete project guide
 - [TODO.md](./TODO.md) - Task tracking
 - [PROJECT_STATUS_AND_PLAN.md](./PROJECT_STATUS_AND_PLAN.md) - Implementation plan
-- [API Documentation](http://localhost:8081/docs) (Coming soon)
+- [API Documentation](http://localhost:7890/docs) - Swagger UI
 
 ---
 

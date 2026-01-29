@@ -13,7 +13,7 @@ services:
       POSTGRES_DB: industrydb
       PGDATA: /var/lib/postgresql/data/pgdata
     ports:
-      - "5432:5432"  # Exposed for direct access
+      - "5544:5432"  # Exposed for direct access (changed to avoid conflict with external PostgreSQL)
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ../scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
@@ -34,7 +34,7 @@ services:
     image: redis:7-alpine
     container_name: industrydb-redis
     ports:
-      - "6380:6379"  # Exposed for direct access (changed to avoid conflict)
+      - "6677:6379"  # Exposed for direct access (changed to avoid conflict with other services)
     volumes:
       - redis_data:/data
     networks:
@@ -65,7 +65,7 @@ services:
       - API_HOST=0.0.0.0
       - API_PORT=8080
       - API_ENVIRONMENT=development
-      - FRONTEND_URL=http://localhost:3001
+      - FRONTEND_URL=http://localhost:5566
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
       - STRIPE_PRICE_STARTER=${STRIPE_PRICE_STARTER:-}
@@ -77,7 +77,7 @@ services:
       - RATE_LIMIT_BURST=10
       - STORAGE_LOCAL_PATH=./data/exports
     ports:
-      - "8081:8080"  # Map host 8081 to container 8080
+      - "9988:8080"  # Map host 9988 to container 8080 (changed to avoid conflict with orchestrator-ugc)
     volumes:
       - .:/app
       - backend_cache:/go/pkg/mod

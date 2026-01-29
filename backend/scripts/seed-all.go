@@ -17,38 +17,113 @@ import (
 
 // Industry configuration: how many leads to generate per industry
 var industryConfig = map[string]int{
-	// Personal Care & Beauty (5 industries): 200 leads each = 1,000 total
-	"tattoo": 200,
-	"beauty": 200,
-	"barber": 200,
-	"spa":    200,
-	"nail":   200,
+	// Personal Care & Beauty (10 industries): 150 leads each = 1,500 total
+	"tattoo":        150,
+	"beauty":        150,
+	"barber":        150,
+	"spa":           150,
+	"nail_salon":    150,
+	"hair_salon":    150,
+	"tanning_salon": 150,
+	"cosmetics":     150,
+	"perfumery":     150,
+	"waxing_salon":  150,
 
-	// Health & Wellness (4 industries): 150 leads each = 600 total
-	"dentist":  150,
-	"pharmacy": 150,
-	"massage":  150,
-	"gym":      150,
+	// Health & Wellness (12 industries): 120 leads each = 1,440 total
+	"gym":              120,
+	"dentist":          120,
+	"pharmacy":         120,
+	"massage":          120,
+	"chiropractor":     120,
+	"optician":         120,
+	"clinic":           120,
+	"hospital":         120,
+	"veterinary":       120,
+	"yoga_studio":      120,
+	"pilates_studio":   120,
+	"physical_therapy": 120,
 
-	// Food & Beverage (4 industries): 150 leads each = 600 total
-	"restaurant": 150,
-	"cafe":       150,
-	"bar":        150,
-	"bakery":     150,
+	// Food & Beverage (14 industries): 120 leads each = 1,680 total
+	"restaurant": 120,
+	"cafe":       120,
+	"bar":        120,
+	"bakery":     120,
+	"fast_food":  120,
+	"ice_cream":  120,
+	"juice_bar":  120,
+	"pizza":      120,
+	"sushi":      120,
+	"brewery":    120,
+	"winery":     120,
+	"food_truck": 120,
+	"catering":   120,
+	"deli":       120,
 
-	// Automotive (3 industries): 100 leads each = 300 total
-	"car_repair": 100,
-	"car_wash":   100,
-	"car_dealer": 100,
+	// Automotive (8 industries): 100 leads each = 800 total
+	"car_repair":        100,
+	"car_wash":          100,
+	"car_dealer":        100,
+	"tire_shop":         100,
+	"auto_parts":        100,
+	"gas_station":       100,
+	"motorcycle_dealer": 100,
+	"rv_dealer":         100,
 
-	// Retail (2 industries): 100 leads each = 200 total
-	"clothing":    100,
-	"convenience": 100,
+	// Retail (17 industries): 100 leads each = 1,700 total
+	"clothing":      100,
+	"convenience":   100,
+	"florist":       100,
+	"bookstore":     100,
+	"electronics":   100,
+	"furniture":     100,
+	"hardware":      100,
+	"jewelry":       100,
+	"gift_shop":     100,
+	"toy_store":     100,
+	"pet_store":     100,
+	"bicycle_shop":  100,
+	"sporting_goods": 100,
+	"music_store":   100,
+	"art_supply":    100,
+	"stationery":    100,
+	"garden_center": 100,
 
-	// Professional Services (2 industries): 100 leads each = 200 total
-	"lawyer":     100,
-	"accountant": 100,
+	// Professional Services (12 industries): 100 leads each = 1,200 total
+	"lawyer":            100,
+	"accountant":        100,
+	"real_estate":       100,
+	"insurance":         100,
+	"financial_advisor": 100,
+	"notary":            100,
+	"tax_service":       100,
+	"marketing_agency":  100,
+	"photography":       100,
+	"printing":          100,
+	"event_planning":    100,
+	"travel_agency":     100,
+
+	// Hospitality (8 industries): 100 leads each = 800 total
+	"hotel":            100,
+	"motel":            100,
+	"hostel":           100,
+	"bed_breakfast":    100,
+	"vacation_rental":  100,
+	"campground":       100,
+	"rv_park":          100,
+	"resort":           100,
+
+	// Home Services (9 industries): 100 leads each = 900 total
+	"plumber":      100,
+	"electrician":  100,
+	"hvac":         100,
+	"locksmith":    100,
+	"roofing":      100,
+	"painting":     100,
+	"cleaning":     100,
+	"landscaping":  100,
+	"pest_control": 100,
 }
+// TOTAL: 10,020 leads across 80 industries
 
 type progressBar struct {
 	total   int

@@ -106,3 +106,15 @@ type UsageInfo struct {
 	ResetAt    string `json:"reset_at"`
 	Tier       string `json:"tier"`
 }
+
+// LeadPreviewResponse represents search preview statistics (without charging credits)
+type LeadPreviewResponse struct {
+	EstimatedCount  int     `json:"estimated_count"`
+	WithEmailCount  int     `json:"with_email_count"`
+	WithEmailPct    float64 `json:"with_email_pct"`
+	WithPhoneCount  int     `json:"with_phone_count"`
+	WithPhonePct    float64 `json:"with_phone_pct"`
+	VerifiedCount   int     `json:"verified_count"`
+	VerifiedPct     float64 `json:"verified_pct"`
+	QualityScoreAvg float64 `json:"quality_score_avg"`
+}

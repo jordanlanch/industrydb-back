@@ -255,6 +255,87 @@ func (s *Service) GetSubNichesWithCounts(ctx context.Context, industryID string)
 	return result, nil
 }
 
+// IndustryWithCount represents an industry with lead count
+type IndustryWithCount struct {
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Category    string   `json:"category"`
+	Icon        string   `json:"icon"`
+	Description string   `json:"description"`
+	LeadCount   int      `json:"lead_count"`
+	Countries   []string `json:"countries"`
+}
+
+// GetIndustriesWithLeadCounts returns only industries that have leads with counts
+func (s *Service) GetIndustriesWithLeadCounts(ctx context.Context) ([]IndustryWithCount, error) {
+	cacheKey := "industries:with-leads"
+
+	// Check cache first
+	if cached, err := s.cache.Get(ctx, cacheKey); err == nil && cached != "" {
+		var result []IndustryWithCount
+		if err := json.Unmarshal([]byte(cached), &result); err == nil {
+			return result, nil
+		}
+	}
+
+	// Get detailed info for each industry with leads
+	var result []IndustryWithCount
+
+	// Get all industries from leads
+	industries, err := s.db.Lead.Query().
+		GroupBy(lead.FieldIndustry).
+		Strings(ctx)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get industries: %w", err)
+	}
+
+	for _, industryID := range industries {
+		// Get industry details
+		industryInfo, err := s.db.Industry.Get(ctx, industryID)
+		if err != nil {
+			// Skip if industry not found in config
+			continue
+		}
+
+		// Count leads for this industry
+		count, err := s.db.Lead.Query().
+			Where(lead.IndustryEQ(lead.Industry(industryID))).
+			Count(ctx)
+
+		if err != nil || count == 0 {
+			continue
+		}
+
+		// Get unique countries for this industry
+		countries, err := s.db.Lead.Query().
+			Where(lead.IndustryEQ(lead.Industry(industryID))).
+			GroupBy(lead.FieldCountry).
+			Strings(ctx)
+
+		if err != nil {
+			countries = []string{}
+		}
+
+		result = append(result, IndustryWithCount{
+			ID:          industryInfo.ID,
+			Name:        industryInfo.Name,
+			Category:    industryInfo.Category,
+			Icon:        industryInfo.Icon,
+			Description: industryInfo.Description,
+			LeadCount:   count,
+			Countries:   countries,
+		})
+	}
+
+	// Cache the response for 5 minutes
+	if responseJSON, err := json.Marshal(result); err == nil {
+		_ = s.cache.Set(ctx, cacheKey, responseJSON, 5*time.Minute)
+	}
+
+	return result, nil
+}
+
 // InvalidateCache invalidates all industry-related caches
 func (s *Service) InvalidateCache(ctx context.Context) error {
 	// Delete all keys matching "industries:*" pattern

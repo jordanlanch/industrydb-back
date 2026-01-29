@@ -54,7 +54,8 @@ func validateReturnURL(returnURL string) string {
 
 	// Whitelist of allowed hosts (DDD: bounded context - billing domain)
 	allowedHosts := []string{
-		"localhost:3001",      // Development
+		"localhost:5678",      // Development (root docker-compose)
+		"localhost:5566",      // Development (modular setup)
 		"industrydb.io",       // Production
 		"www.industrydb.io",   // Production WWW
 	}

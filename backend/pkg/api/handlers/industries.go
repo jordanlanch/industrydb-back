@@ -39,6 +39,26 @@ func (h *IndustryHandler) ListIndustries(c echo.Context) error {
 	})
 }
 
+// ListIndustriesWithLeads returns only industries that have leads with counts
+// GET /api/v1/industries/with-leads
+func (h *IndustryHandler) ListIndustriesWithLeads(c echo.Context) error {
+	ctx := c.Request().Context()
+
+	// Get industries with lead counts
+	industriesWithCounts, err := h.industryService.GetIndustriesWithLeadCounts(ctx)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, map[string]string{
+			"error":   "failed to fetch industries",
+			"message": err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"industries": industriesWithCounts,
+		"total":      len(industriesWithCounts),
+	})
+}
+
 // GetIndustry returns a single industry by ID
 // GET /api/v1/industries/:id
 func (h *IndustryHandler) GetIndustry(c echo.Context) error {

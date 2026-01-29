@@ -21,18 +21,42 @@ func (Lead) Fields() []ent.Field {
 			Comment("Business name"),
 		field.Enum("industry").
 			Values(
-				// Personal Care & Beauty
+				// Personal Care & Beauty (10)
 				"tattoo", "beauty", "barber", "spa", "nail_salon",
-				// Health & Wellness
+				"hair_salon", "tanning_salon", "cosmetics", "perfumery", "waxing_salon",
+
+				// Health & Wellness (12)
 				"gym", "dentist", "pharmacy", "massage",
-				// Food & Beverage
+				"chiropractor", "optician", "clinic", "hospital", "veterinary",
+				"yoga_studio", "pilates_studio", "physical_therapy",
+
+				// Food & Beverage (14)
 				"restaurant", "cafe", "bar", "bakery",
-				// Automotive
+				"fast_food", "ice_cream", "juice_bar", "pizza", "sushi",
+				"brewery", "winery", "food_truck", "catering", "deli",
+
+				// Automotive (8)
 				"car_repair", "car_wash", "car_dealer",
-				// Retail
+				"tire_shop", "auto_parts", "gas_station", "motorcycle_dealer", "rv_dealer",
+
+				// Retail (17)
 				"clothing", "convenience",
-				// Professional Services
+				"florist", "bookstore", "electronics", "furniture", "hardware",
+				"jewelry", "gift_shop", "toy_store", "pet_store", "bicycle_shop",
+				"sporting_goods", "music_store", "art_supply", "stationery", "garden_center",
+
+				// Professional Services (12)
 				"lawyer", "accountant",
+				"real_estate", "insurance", "financial_advisor", "notary", "tax_service",
+				"marketing_agency", "photography", "printing", "event_planning", "travel_agency",
+
+				// Hospitality (8)
+				"hotel", "motel", "hostel", "bed_breakfast", "vacation_rental",
+				"campground", "rv_park", "resort",
+
+				// Home Services (9)
+				"plumber", "electrician", "hvac", "locksmith", "roofing",
+				"painting", "cleaning", "landscaping", "pest_control",
 			).
 			Comment("Industry type"),
 		field.String("country").

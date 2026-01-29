@@ -103,9 +103,9 @@ func (c *Client) SetWithCompression(ctx context.Context, key string, value inter
 }
 
 // GetMulti gets multiple values by keys (pipeline for better performance)
-func (c *Client) GetMulti(ctx context.Context, keys ...string) ([]string, error) {
+func (c *Client) GetMulti(ctx context.Context, keys []string) (map[string]string, error) {
 	if len(keys) == 0 {
-		return []string{}, nil
+		return map[string]string{}, nil
 	}
 
 	pipe := c.Redis.Pipeline()
@@ -120,15 +120,16 @@ func (c *Client) GetMulti(ctx context.Context, keys ...string) ([]string, error)
 		return nil, fmt.Errorf("failed to execute pipeline: %w", err)
 	}
 
-	results := make([]string, len(keys))
+	results := make(map[string]string, len(keys))
 	for i, cmd := range cmds {
 		val, err := cmd.Result()
 		if err == redis.Nil {
-			results[i] = "" // Key not found
+			// Key not found, skip it
+			continue
 		} else if err != nil {
 			return nil, fmt.Errorf("failed to get key %s: %w", keys[i], err)
 		} else {
-			results[i] = val
+			results[keys[i]] = val
 		}
 	}
 
