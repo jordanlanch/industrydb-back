@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"sort"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/jordanlanch/industrydb/ent"
@@ -46,6 +47,16 @@ func (h *FilterHandler) GetCountries(c echo.Context) error {
 	})
 }
 
+// normalizeCity normalizes city name by trimming whitespace and title casing
+func normalizeCity(city string) string {
+	trimmed := strings.TrimSpace(city)
+	if trimmed == "" {
+		return ""
+	}
+	// Title case: "new york" -> "New York"
+	return strings.Title(strings.ToLower(trimmed))
+}
+
 // GetCities returns list of cities, optionally filtered by country
 // GET /api/v1/leads/filters/cities?country=US
 func (h *FilterHandler) GetCities(c echo.Context) error {
@@ -59,8 +70,12 @@ func (h *FilterHandler) GetCities(c echo.Context) error {
 		query = query.Where(lead.CountryEQ(country))
 	}
 
+	// Get all cities (may include duplicates due to whitespace/case issues)
 	var cities []string
-	err := query.Select(lead.FieldCity).GroupBy(lead.FieldCity).Scan(ctx, &cities)
+	err := query.Select(lead.FieldCity).
+		Where(lead.CityNEQ("")).
+		GroupBy(lead.FieldCity).
+		Scan(ctx, &cities)
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, map[string]string{
@@ -68,12 +83,33 @@ func (h *FilterHandler) GetCities(c echo.Context) error {
 		})
 	}
 
+	// Deduplicate and normalize cities using a map
+	uniqueCities := make(map[string]string)
+	for _, city := range cities {
+		normalized := normalizeCity(city)
+		if normalized == "" {
+			continue
+		}
+		// Use lowercase as key for deduplication
+		key := strings.ToLower(normalized)
+		// Keep first occurrence (they should all normalize to same value anyway)
+		if _, exists := uniqueCities[key]; !exists {
+			uniqueCities[key] = normalized
+		}
+	}
+
+	// Extract unique normalized cities
+	result := make([]string, 0, len(uniqueCities))
+	for _, city := range uniqueCities {
+		result = append(result, city)
+	}
+
 	// Sort alphabetically
-	sort.Strings(cities)
+	sort.Strings(result)
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"cities":  cities,
-		"total":   len(cities),
+		"cities":  result,
+		"total":   len(result),
 		"country": country,
 	})
 }
