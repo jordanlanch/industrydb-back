@@ -12,6 +12,8 @@ import (
 
 	"github.com/jordanlanch/industrydb/ent"
 	"github.com/jordanlanch/industrydb/ent/export"
+	"github.com/jordanlanch/industrydb/ent/usagelog"
+	"github.com/jordanlanch/industrydb/pkg/analytics"
 	"github.com/jordanlanch/industrydb/pkg/leads"
 	"github.com/jordanlanch/industrydb/pkg/models"
 	"github.com/xuri/excelize/v2"
@@ -19,20 +21,22 @@ import (
 
 // Service handles export business logic
 type Service struct {
-	db          *ent.Client
-	leadService *leads.Service
-	storagePath string
+	db               *ent.Client
+	leadService      *leads.Service
+	analyticsService *analytics.Service
+	storagePath      string
 }
 
 // NewService creates a new export service
-func NewService(db *ent.Client, leadService *leads.Service, storagePath string) *Service {
+func NewService(db *ent.Client, leadService *leads.Service, analyticsService *analytics.Service, storagePath string) *Service {
 	// Ensure storage directory exists
 	os.MkdirAll(storagePath, 0755)
 
 	return &Service{
-		db:          db,
-		leadService: leadService,
-		storagePath: storagePath,
+		db:               db,
+		leadService:      leadService,
+		analyticsService: analyticsService,
+		storagePath:      storagePath,
 	}
 }
 
@@ -131,6 +135,19 @@ func (s *Service) processExport(exportID, userID int, req models.ExportRequest) 
 		SetFilePath(filepath).
 		SetFileURL(fmt.Sprintf("/api/v1/exports/%d/download", exportID)).
 		SaveX(ctx)
+
+	// Log analytics with actual lead count
+	metadata := map[string]interface{}{
+		"format":     req.Format,
+		"max_leads":  req.MaxLeads,
+		"filters":    req.Filters,
+		"lead_count": len(results.Data),
+		"export_id":  exportID,
+	}
+	if err := s.analyticsService.LogUsage(ctx, userID, usagelog.ActionExport, len(results.Data), metadata); err != nil {
+		// Log error but don't fail the export
+		fmt.Printf("Failed to log export analytics: %v\n", err)
+	}
 }
 
 // generateCSV generates a CSV file from leads

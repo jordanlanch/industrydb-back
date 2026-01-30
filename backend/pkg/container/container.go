@@ -137,10 +137,11 @@ func (c *Container) initServices() {
 	c.IndustriesService = industries.NewService(c.DB.Ent, cacheClient)
 	c.OrganizationService = organization.NewService(c.DB.Ent)
 
-	// Export service (needs concrete lead service)
+	// Export service (needs concrete lead service and analytics service)
 	c.ExportService = export.NewService(
 		c.DB.Ent,
 		c.LeadService,
+		c.AnalyticsService,
 		c.Config.StorageLocalPath,
 	)
 

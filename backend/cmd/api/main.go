@@ -194,7 +194,8 @@ func main() {
 
 	// Initialize services
 	leadService := leads.NewService(db.Ent, redisClient)
-	exportService := export.NewService(db.Ent, leadService, cfg.StorageLocalPath)
+	analyticsService := analytics.NewService(db.Ent)
+	exportService := export.NewService(db.Ent, leadService, analyticsService, cfg.StorageLocalPath)
 	billingService := billing.NewService(db.Ent, leadService, &billing.StripeConfig{
 		SecretKey:       cfg.StripeSecretKey,
 		WebhookSecret:   cfg.StripeWebhookSecret,
@@ -204,7 +205,6 @@ func main() {
 		SuccessURL:      cfg.FrontendURL + "/dashboard/settings/billing?success=true",
 		CancelURL:       cfg.FrontendURL + "/dashboard/settings/billing?canceled=true",
 	})
-	analyticsService := analytics.NewService(db.Ent)
 	organizationService := organization.NewService(db.Ent)
 	apiKeyService := apikey.NewService(db.Ent)
 	industriesService := industries.NewService(db.Ent, redisClient)

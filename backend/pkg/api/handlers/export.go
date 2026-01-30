@@ -1,13 +1,11 @@
 package handlers
 
 import (
-	"context"
 	"net/http"
 	"path/filepath"
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/jordanlanch/industrydb/ent/usagelog"
 	"github.com/jordanlanch/industrydb/pkg/analytics"
 	"github.com/jordanlanch/industrydb/pkg/api/errors"
 	"github.com/jordanlanch/industrydb/pkg/export"
@@ -58,17 +56,7 @@ func (h *ExportHandler) Create(c echo.Context) error {
 		return errors.InternalError(c, err)
 	}
 
-	// Log usage for analytics (async, don't block on error)
-	go func() {
-		metadata := map[string]interface{}{
-			"format":     req.Format,
-			"max_leads":  req.MaxLeads,
-			"filters":    req.Filters,
-			"lead_count": exportResp.LeadCount,
-		}
-		h.analyticsService.LogUsage(context.Background(), userID, usagelog.ActionExport, exportResp.LeadCount, metadata)
-	}()
-
+	// Analytics will be logged after export completes (in export service)
 	return c.JSON(http.StatusCreated, exportResp)
 }
 
