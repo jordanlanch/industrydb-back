@@ -40,12 +40,16 @@ func (h *IndustryHandler) ListIndustries(c echo.Context) error {
 }
 
 // ListIndustriesWithLeads returns only industries that have leads with counts
-// GET /api/v1/industries/with-leads
+// GET /api/v1/industries/with-leads?country=CO&city=Bogota
 func (h *IndustryHandler) ListIndustriesWithLeads(c echo.Context) error {
 	ctx := c.Request().Context()
 
-	// Get industries with lead counts
-	industriesWithCounts, err := h.industryService.GetIndustriesWithLeadCounts(ctx)
+	// Get optional filter parameters
+	country := c.QueryParam("country")
+	city := c.QueryParam("city")
+
+	// Get industries with lead counts (filtered)
+	industriesWithCounts, err := h.industryService.GetIndustriesWithLeadCounts(ctx, country, city)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, map[string]string{
 			"error":   "failed to fetch industries",
@@ -56,6 +60,10 @@ func (h *IndustryHandler) ListIndustriesWithLeads(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"industries": industriesWithCounts,
 		"total":      len(industriesWithCounts),
+		"filters": map[string]string{
+			"country": country,
+			"city":    city,
+		},
 	})
 }
 

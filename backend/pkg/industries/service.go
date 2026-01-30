@@ -267,8 +267,16 @@ type IndustryWithCount struct {
 }
 
 // GetIndustriesWithLeadCounts returns only industries that have leads with counts
-func (s *Service) GetIndustriesWithLeadCounts(ctx context.Context) ([]IndustryWithCount, error) {
+// Optionally filtered by country and city
+func (s *Service) GetIndustriesWithLeadCounts(ctx context.Context, country, city string) ([]IndustryWithCount, error) {
+	// Build cache key with filters
 	cacheKey := "industries:with-leads"
+	if country != "" {
+		cacheKey = fmt.Sprintf("%s:country=%s", cacheKey, country)
+	}
+	if city != "" {
+		cacheKey = fmt.Sprintf("%s:city=%s", cacheKey, city)
+	}
 
 	// Check cache first
 	if cached, err := s.cache.Get(ctx, cacheKey); err == nil && cached != "" {
@@ -281,8 +289,17 @@ func (s *Service) GetIndustriesWithLeadCounts(ctx context.Context) ([]IndustryWi
 	// Get detailed info for each industry with leads
 	var result []IndustryWithCount
 
-	// Get all industries from leads
-	industries, err := s.db.Lead.Query().
+	// Build base query with filters
+	baseQuery := s.db.Lead.Query()
+	if country != "" {
+		baseQuery = baseQuery.Where(lead.CountryEQ(country))
+	}
+	if city != "" {
+		baseQuery = baseQuery.Where(lead.CityEQ(city))
+	}
+
+	// Get all industries from leads (with filters applied)
+	industries, err := baseQuery.
 		GroupBy(lead.FieldIndustry).
 		Strings(ctx)
 
@@ -298,18 +315,34 @@ func (s *Service) GetIndustriesWithLeadCounts(ctx context.Context) ([]IndustryWi
 			continue
 		}
 
-		// Count leads for this industry
-		count, err := s.db.Lead.Query().
-			Where(lead.IndustryEQ(lead.Industry(industryID))).
-			Count(ctx)
+		// Build filtered query for count
+		countQuery := s.db.Lead.Query().
+			Where(lead.IndustryEQ(lead.Industry(industryID)))
+		if country != "" {
+			countQuery = countQuery.Where(lead.CountryEQ(country))
+		}
+		if city != "" {
+			countQuery = countQuery.Where(lead.CityEQ(city))
+		}
 
+		// Count leads for this industry (with filters)
+		count, err := countQuery.Count(ctx)
 		if err != nil || count == 0 {
 			continue
 		}
 
-		// Get unique countries for this industry
-		countries, err := s.db.Lead.Query().
-			Where(lead.IndustryEQ(lead.Industry(industryID))).
+		// Build filtered query for countries
+		countriesQuery := s.db.Lead.Query().
+			Where(lead.IndustryEQ(lead.Industry(industryID)))
+		if country != "" {
+			countriesQuery = countriesQuery.Where(lead.CountryEQ(country))
+		}
+		if city != "" {
+			countriesQuery = countriesQuery.Where(lead.CityEQ(city))
+		}
+
+		// Get unique countries for this industry (with filters)
+		countries, err := countriesQuery.
 			GroupBy(lead.FieldCountry).
 			Strings(ctx)
 
