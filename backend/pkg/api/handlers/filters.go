@@ -2,12 +2,15 @@ package handlers
 
 import (
 	"net/http"
+	"regexp"
 	"sort"
 	"strings"
+	"unicode"
 
 	"github.com/labstack/echo/v4"
 	"github.com/jordanlanch/industrydb/ent"
 	"github.com/jordanlanch/industrydb/ent/lead"
+	"golang.org/x/text/unicode/norm"
 )
 
 // FilterHandler handles filter options requests
@@ -18,6 +21,30 @@ type FilterHandler struct {
 // NewFilterHandler creates a new filter handler
 func NewFilterHandler(db *ent.Client) *FilterHandler {
 	return &FilterHandler{db: db}
+}
+
+var (
+	// adminSuffixRegex matches administrative suffixes like "D.C.", "D.C", ", D.C.", ", D.C"
+	// Compiled once for performance
+	adminSuffixRegex = regexp.MustCompile(`(?i),?\s*D\.C\.?$`)
+)
+
+// removeAccents removes diacritical marks from Unicode strings
+// Example: "Bogotá" → "Bogota", "São Paulo" → "Sao Paulo"
+func removeAccents(s string) string {
+	// NFD (Canonical Decomposition) breaks "é" into "e" + combining acute
+	t := norm.NFD.String(s)
+
+	// Filter out combining marks (accents)
+	result := strings.Map(func(r rune) rune {
+		if unicode.Is(unicode.Mn, r) { // Mn = Mark, Nonspacing
+			return -1 // Remove combining characters
+		}
+		return r
+	}, t)
+
+	// NFC (Canonical Composition) recomposes characters
+	return norm.NFC.String(result)
 }
 
 // GetCountries returns list of unique countries with lead data
@@ -47,14 +74,25 @@ func (h *FilterHandler) GetCountries(c echo.Context) error {
 	})
 }
 
-// normalizeCity normalizes city name by trimming whitespace and title casing
+// normalizeCity normalizes city name for deduplication
+// Handles: whitespace, accents, case, administrative suffixes
 func normalizeCity(city string) string {
+	// 1. Trim whitespace
 	trimmed := strings.TrimSpace(city)
 	if trimmed == "" {
 		return ""
 	}
-	// Title case: "new york" -> "New York"
-	return strings.Title(strings.ToLower(trimmed))
+
+	// 2. Remove accents (Bogotá → Bogota)
+	noAccents := removeAccents(trimmed)
+
+	// 3. Remove administrative suffixes
+	// Handles: "D.C.", "D.C", ", D.C.", ", D.C"
+	noSuffix := adminSuffixRegex.ReplaceAllString(noAccents, "")
+	noSuffix = strings.TrimSpace(noSuffix) // Trim again after suffix removal
+
+	// 4. Title case for consistency
+	return strings.Title(strings.ToLower(noSuffix))
 }
 
 // GetCities returns list of cities, optionally filtered by country
