@@ -1,0 +1,16 @@
+ID,Name,Industry,Country,City,Address,Postal Code,Phone,Email,Website,Latitude,Longitude,Verified,Quality Score,Created At
+1040,Kieser Training,gym,DE,Frankfurt Am Main,2 Marienstraße,,+49 69 23 06 46,,,50.112167,8.668763,false,70,2026-01-29T17:44:58Z
+1058,Kieser Training,gym,DE,Freiburg Im Breisgau,10-14 Grünwälderstraße,,+49 761 271 350,freiburg1@kieser-training.com,https://www.kieser-training.de/studios/freiburg/,47.993995,7.850370,false,100,2026-01-29T17:44:58Z
+1074,Rückgrat,gym,DE,Mullheim Im Markgraflerland,1 Am Torhaus,,+49 7631 172640,info@rueckgrat-muellheim.de,https://rueckgrat-muellheim.de/,47.812362,7.610631,false,100,2026-01-29T17:44:58Z
+1093,Fit+,gym,DE,Furtwangen Im Schwarzwald,3 Friedrichstraße,,,,https://furtwangen.fitplus-club.de/,48.052499,8.205462,false,50,2026-01-29T17:44:58Z
+1121,McFit,gym,DE,Mulheim An Der Ruhr,13 Humboldtring,,,,,51.437574,6.952698,false,35,2026-01-29T17:44:58Z
+1057,Kieser Training,gym,DE,Tubingen,7 Hügelstraße,,+49 7071 9798981,,https://www.kieser-training.de/studios/tuebingen/,48.514620,9.068943,false,80,2026-01-29T17:44:58Z
+1059,Kieser Training,gym,DE,Friedrichshafen,6 Allmandstraße,,+49 7541 399 010,friedrichshafen1@kieser-training.com,http://www.kieser-training.de/studios/friedrichshafen/friedrichshafen,47.655241,9.480803,false,100,2026-01-29T17:44:58Z
+1060,Kieser Training,gym,DE,Saarbrucken,13 Käthe-Kollwitz-Straße,,,,,49.238078,6.961263,false,35,2026-01-29T17:44:58Z
+1061,Kieser Training,gym,DE,Trier,52 Herzogenbuscher Straße,,,,,49.770350,6.661827,false,35,2026-01-29T17:44:58Z
+1062,7 Fit,gym,DE,Bruhl,9 Markt,,+49 2232 567536,info@7fit.de,https://www.7fit.de,50.828479,6.904463,false,100,2026-01-29T17:44:58Z
+1063,Kindler Reha Fit,gym,DE,Altdorf,7 Kristallstraße,,+49 871 9357526,,https://www.kindler-reha-fit.de/standorte/landshut-altdorf/,48.546372,12.095175,false,80,2026-01-29T17:44:58Z
+1064,LIFDT,gym,DE,Neuss,26 Friedrichstraße,,+49 2131 2944914,,https://www.lifdt-fitness-neuss.de/,51.194012,6.692734,false,80,2026-01-29T17:44:58Z
+1065,Twin Taekwondo - München Ost,gym,DE,Munchen,69 Josephsburgstraße,,,,,48.125567,11.636589,false,35,2026-01-29T17:44:58Z
+1066,XTRASPORT,gym,DE,Detmold,41 Orbker Straße,,,,,51.947923,8.844231,false,35,2026-01-29T17:44:58Z
+1067,Toemek Sport,gym,DE,Munchen,8 Paradiesstraße,,+49 89 1212 8513,,https://www.tomeksports.de,48.146438,11.594326,false,80,2026-01-29T17:44:58Z
