@@ -1437,6 +1437,207 @@ go test -v ./pkg/api/handlers/billing_test.go -run TestValidateReturnURL
 
 All tests pass ✅ (TDD: Red → Green → Refactor cycle)
 
+### Organizations (Team Collaboration)
+**Implemented:** 2026-01-29
+
+Organizations enable team collaboration, allowing multiple users to share leads, exports, and billing under a single account.
+
+**Features:**
+- Multi-user team accounts
+- Role-based access control (Owner, Admin, Member)
+- Member invitation system
+- Shared usage limits
+- Organization-specific billing
+
+**Roles:**
+- **Owner** - Full control, cannot be removed, can delete organization
+- **Admin** - Manage members, update organization settings
+- **Member** - Access shared resources (read-only)
+
+#### API Endpoints
+
+**POST /api/v1/organizations**
+Create a new organization.
+
+**Request:**
+```json
+{
+  "name": "Acme Corp",
+  "subscription_tier": "business"
+}
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "Acme Corp",
+  "slug": "acme-corp",
+  "owner_id": 123,
+  "subscription_tier": "business",
+  "usage_limit": 10000,
+  "current_usage": 0,
+  "created_at": "2026-01-29T10:00:00Z",
+  "updated_at": "2026-01-29T10:00:00Z"
+}
+```
+
+**GET /api/v1/organizations**
+List all organizations for the current user.
+
+**Response:**
+```json
+{
+  "organizations": [
+    {
+      "id": 1,
+      "name": "Acme Corp",
+      "slug": "acme-corp",
+      "role": "owner",
+      "subscription_tier": "business",
+      "member_count": 5
+    }
+  ],
+  "count": 1
+}
+```
+
+**GET /api/v1/organizations/:id**
+Get organization details.
+
+**PATCH /api/v1/organizations/:id**
+Update organization (name, slug). Requires Owner or Admin role.
+
+**DELETE /api/v1/organizations/:id**
+Delete organization. Requires Owner role.
+
+#### Member Management
+
+**GET /api/v1/organizations/:id/members**
+List all members of the organization.
+
+**Response:**
+```json
+{
+  "members": [
+    {
+      "user_id": 123,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "role": "owner",
+      "joined_at": "2026-01-29T10:00:00Z"
+    },
+    {
+      "user_id": 124,
+      "name": "Jane Smith",
+      "email": "jane@example.com",
+      "role": "member",
+      "joined_at": "2026-01-29T11:00:00Z"
+    }
+  ],
+  "count": 2
+}
+```
+
+**POST /api/v1/organizations/:id/invite**
+Invite a user to the organization by email.
+
+**Request:**
+```json
+{
+  "email": "newuser@example.com",
+  "role": "member"
+}
+```
+
+**DELETE /api/v1/organizations/:id/members/:user_id**
+Remove a member from the organization. Cannot remove the owner.
+
+**PATCH /api/v1/organizations/:id/members/:user_id**
+Update member role.
+
+**Request:**
+```json
+{
+  "role": "admin"
+}
+```
+
+#### Database Schema
+
+**Organizations Table:**
+```go
+type Organization struct {
+    ID               int
+    Name             string
+    Slug             string  // URL-friendly identifier
+    OwnerID          int
+    SubscriptionTier string  // free, starter, pro, business
+    UsageLimit       int
+    CurrentUsage     int
+    CreatedAt        time.Time
+    UpdatedAt        time.Time
+}
+```
+
+**OrganizationMembers Table:**
+```go
+type OrganizationMember struct {
+    OrganizationID int
+    UserID         int
+    Role           string  // owner, admin, member
+    JoinedAt       time.Time
+}
+```
+
+#### Implementation
+
+**Backend:**
+- Schema: `backend/ent/schema/organization.go`, `backend/ent/schema/organizationmember.go`
+- Service: `backend/pkg/organization/service.go` (12 methods)
+- Handler: `backend/pkg/api/handlers/organization.go` (9 endpoints)
+- Routes: Registered in `backend/cmd/api/main.go` (lines 336-350)
+
+**Frontend:**
+- List page: `frontend/src/app/[locale]/dashboard/organizations/page.tsx`
+- Details page: `frontend/src/app/[locale]/dashboard/organizations/[id]/page.tsx`
+- Service: `frontend/src/services/organization.service.ts`
+
+**Usage Example:**
+```bash
+# Create organization
+curl -X POST http://localhost:7890/api/v1/organizations \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"My Team","subscription_tier":"pro"}'
+
+# List members
+curl http://localhost:7890/api/v1/organizations/1/members \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Invite member
+curl -X POST http://localhost:7890/api/v1/organizations/1/invite \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"teammate@example.com","role":"member"}'
+```
+
+**Security:**
+- All endpoints require JWT authentication
+- Role-based authorization (owner/admin required for modifications)
+- Users can only access organizations they belong to
+- Invitation system with email verification
+- Slug uniqueness validation
+
+**Future Enhancements:**
+- Organization-specific saved searches (#223)
+- Organization-specific exports (#194)
+- Organization billing management (#195)
+- Organization switcher UI component (#203, #204)
+- Organization context store (#202)
+- Invitation modal (#201)
+- Role-based middleware (#191, #192)
+
 ## Legal Compliance
 
 ### Terms of Service Acceptance
