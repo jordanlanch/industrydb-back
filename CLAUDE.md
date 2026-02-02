@@ -32,7 +32,7 @@ make import-db
 ```
 industrydb/
 ├── CLAUDE.md              # This file - main project guide
-├── TODO.md                # Master task list
+├── TODO.md                # Legacy task list (deprecated - use Notion)
 ├── docker-compose.yml     # Service orchestration
 ├── Makefile              # Common commands
 ├── .env.example          # Environment variables template
@@ -61,6 +61,659 @@ industrydb/
 │
 └── data/                 # Data output directory
 ```
+
+## 📋 Project Management with Notion
+
+**🚨 CRITICAL RULE: NOTION ONLY FOR TASK MANAGEMENT 🚨**
+
+Notion is the **ONLY and SINGLE source of truth** for:
+- ✅ All project documentation
+- ✅ **Task management (NO other system allowed)**
+- ✅ Backlog and sprint planning
+- ✅ Progress tracking and metrics
+- ✅ Team collaboration and updates
+
+**⚠️ STRICTLY FORBIDDEN:**
+- ❌ **DO NOT use TaskMaster** (Claude Code's internal task system)
+- ❌ **DO NOT use TaskCreate/TaskUpdate/TaskList** tools
+- ❌ **DO NOT create tasks** outside of Notion
+- ❌ **DO NOT track progress** in any system other than Notion
+- ❌ **DO NOT use TODO.md** (deprecated, legacy only)
+
+**✅ REQUIRED BEHAVIOR:**
+- ✅ **ALWAYS consult Notion** before starting any work
+- ✅ **ALWAYS update Notion** when starting/completing tasks
+- ✅ **ALWAYS link commits** to Notion task IDs
+- ✅ **ALWAYS add completion notes** in Notion
+- ✅ **ONLY work on tasks** that exist in Notion backlog
+
+**Why Notion Only?**
+- Single source of truth for entire team
+- Visual Kanban/Scrum boards by department
+- Better collaboration and transparency
+- Proper sprint/phase planning with dependencies
+- Professional project management (not internal tool)
+- Accessible to non-technical stakeholders
+
+**Workspace:** https://www.notion.so/IndustryDB-Business-Data-SaaS-Platform-2faae93b443d81b4aa83e5a01fe900d4
+
+### Task Management Philosophy
+
+**Before starting ANY task:**
+1. ✅ **Open Notion workspace** and navigate to Project Management page
+2. ✅ **Check backlog database** for next priority task (filter by Priority/Status)
+3. ✅ **Read full task card** including acceptance criteria, dependencies, estimates
+4. ✅ **Review related documentation** in Notion (API docs, architecture, security guidelines)
+5. ✅ **Update task status in Notion** (Pending → In Progress)
+6. ✅ **Create implementation plan** following TDD/DDD principles (document in task comments)
+7. ✅ **Execute with tests** (unit tests + e2e tests, 80% coverage minimum)
+8. ✅ **Update task status in Notion** (In Progress → Done)
+9. ✅ **Add completion notes** in Notion (what was done, blockers encountered, decisions made)
+10. ✅ **Commit with conventional commit** message linking to Notion task
+11. ✅ **Move to next task** in Notion backlog
+
+### Notion Workspace Structure
+
+#### 1. Executive Dashboard
+**Page ID:** `2faae93b443d81df8f66cba6514b9fd4`
+- Project overview and metrics
+- Critical blockers (4 production blockers)
+- Progress tracking (55/287 tasks = 19%)
+- Architecture diagram
+
+#### 2. Product Department
+**Page ID:** `2faae93b443d81f0b952df8fddc10014`
+- Features inventory (19 features database)
+- Product roadmap (Q1-Q4 2026)
+- Pages inventory (33 pages)
+- i18n statistics
+
+#### 3. Engineering Department
+**Page ID:** `2faae93b443d81428570e8314e920628`
+- API endpoints database (65+ endpoints)
+- Database schema (11 entities)
+- Security features checklist
+- Performance optimization guide
+
+#### 4. Operations/DevOps Department
+**Page ID:** `2faae93b443d81129f70cab7f7b495cc`
+- Production readiness checklist
+- Deployment guides (local, Docker, K8s)
+- Environment variables
+- Monitoring strategy
+
+#### 5. Business/Sales Department
+**Page ID:** `2faae93b443d819a991fc8ebbe57c74b`
+- Pricing strategy (4 tiers)
+- Data coverage (82,740 leads, 184 countries)
+- Industries catalog (20 industries)
+- Revenue projections
+
+#### 6. Legal/Compliance Department
+**Page ID:** `2faae93b443d811bb1b3f97701addffb`
+- GDPR compliance (7 articles implemented)
+- Audit logs (21 event types)
+- Legal documents (Privacy Policy, ToS)
+- Security compliance
+
+#### 7. Project Management Department
+**Page ID:** `2faae93b443d813284d8fd0ec713a126`
+- **Master TODO Database** (287 tasks with Kanban views)
+- Project timeline (5 phases)
+- Progress dashboard
+- Project history (activity log)
+- Risk register
+
+### Kanban/Scrum Boards by Department
+
+**Master TODO Database Views:**
+
+1. **All Tasks (Default Table)**
+   - Columns: Task Name | Category | Priority | Status | Phase | Estimate | Owner | Dependencies | Due Date
+   - Total: 287 tasks
+
+2. **Critical Blockers (Board)**
+   - Filter: Priority = Critical, Status ≠ Complete
+   - Columns: Pending | In Progress | Blocked | Done
+   - Current: 4 critical blockers
+
+3. **By Department (Board)**
+   - Group by: Category (Backend, Frontend, Infrastructure, Legal, Testing, Documentation)
+   - Backend: 80 tasks (45 complete = 56%)
+   - Frontend: 60 tasks (0 complete = 0%)
+   - Infrastructure: 35 tasks (0 complete = 0%)
+   - Legal: 22 tasks (10 complete = 45%)
+   - Testing: 30 tasks (0 complete = 0%)
+   - Documentation: 20 tasks (0 complete = 0%)
+
+4. **By Sprint (Timeline)**
+   - Phase 1: Critical Blockers (Weeks 1-3) - 76% complete
+   - Phase 2: Essential UX (Weeks 4-6) - 0% complete
+   - Phase 3: Advanced Features (Weeks 7-9) - 0% complete
+   - Phase 4: Production Readiness (Weeks 10-12) - 0% complete
+   - Phase 5: Launch (Weeks 13-16) - 0% complete
+
+5. **By Owner (Board)**
+   - Group by: Owner
+   - Filter: Status = In Progress OR Pending
+
+6. **Completed (Table)**
+   - Filter: Status = Complete
+   - Sort by: Completion date (desc)
+   - Total: 55 completed tasks
+
+### Workflow: Starting a New Task
+
+**⚠️ MANDATORY: All task management ONLY in Notion**
+
+```bash
+# ========================================
+# STEP 1: CONSULT NOTION (ALWAYS FIRST)
+# ========================================
+# Open Notion Project Management page:
+# https://www.notion.so/2faae93b443d813284d8fd0ec713a126
+
+# Navigate to appropriate view:
+# - "Critical Blockers" board for urgent tasks
+# - "By Department" board for specific area work
+# - "By Sprint" timeline for current sprint tasks
+# - "All Tasks" table for complete overview
+
+# Filter by:
+# - Status = Pending (not started yet)
+# - Priority = Critical OR High (most important)
+# - Dependencies = None OR all dependencies complete
+# - Owner = Unassigned OR assigned to you
+
+# Sort by:
+# - Priority (desc) - Critical first
+# - Due Date (asc) - Urgent first
+# - Phase (asc) - Current phase first
+
+# ========================================
+# STEP 2: SELECT AND CLAIM TASK IN NOTION
+# ========================================
+# Click on task card to open
+# Read ALL sections:
+# - Task Name and Description
+# - Acceptance Criteria (must be 100% clear)
+# - Dependencies (verify all are complete)
+# - Estimate (how long it should take)
+# - Notes (any important context)
+
+# Update task in Notion:
+# - Set Owner = Your name
+# - Set Status = In Progress
+# - Add comment: "Starting work on [date]"
+
+# ========================================
+# STEP 3: REVIEW RELATED DOCS IN NOTION
+# ========================================
+# Navigate to relevant department page:
+# - Backend task → Engineering Department
+# - Frontend task → Product Department
+# - Infrastructure task → Operations Department
+# - Legal task → Legal Department
+
+# Review:
+# - API endpoints (if backend task)
+# - Database schema (if data model task)
+# - Feature specs (if frontend task)
+# - Security guidelines (ALWAYS read this)
+# - Architecture patterns (follow established patterns)
+
+# ========================================
+# STEP 4: CHECK CODEBASE CONTEXT
+# ========================================
+cd /home/jordanlanch/work/sideProjects/industrydb
+make dev  # Start services if needed
+
+# Step 5: Create implementation plan
+# - Break down into subtasks
+# - Identify files to modify
+# - Design approach following SOLID/DDD
+# - Plan TDD cycle (Red → Green → Refactor)
+
+# Step 6: Execute with TDD
+# Example for new feature:
+# 1. Write failing test (Red)
+go test ./pkg/myfeature/... -v -run TestNewFeature
+
+# 2. Implement minimum code (Green)
+# (code implementation)
+
+# 3. Refactor (keep tests passing)
+# (code refactoring)
+
+# 4. Verify coverage
+go test ./pkg/myfeature/... -v -cover
+# Target: 80% coverage minimum
+
+# ========================================
+# STEP 7: UPDATE NOTION TASK (CRITICAL)
+# ========================================
+# Open task card in Notion
+# When complete, update ALL fields:
+# - Status = Done
+# - Completed Date = Today
+# - Add completion comment with:
+#   - What was implemented
+#   - Test coverage achieved (%)
+#   - Any blockers encountered
+#   - Decisions made (and why)
+#   - Files modified
+#   - Related Notion pages updated
+
+# Example completion comment:
+# """
+# ✅ COMPLETED - 2026-02-02
+#
+# Implementation:
+# - Added JWT blacklist with Redis
+# - Implemented logout endpoint
+# - Added middleware for token validation
+#
+# Testing:
+# - Unit tests: 12 tests, 92% coverage
+# - Integration tests: 4 scenarios
+# - Manual testing: logout flow works
+#
+# Files Modified:
+# - backend/pkg/auth/service.go
+# - backend/pkg/middleware/jwt.go
+# - backend/cmd/api/main.go
+#
+# Documentation Updated:
+# - Engineering > API Endpoints > Auth
+#
+# Commit: abc123def
+# """
+
+# ========================================
+# STEP 8: COMMIT WITH CONVENTIONAL COMMIT
+# ========================================
+git add -A
+git commit -m "feat: implement JWT blacklist for logout
+
+- Add Redis blacklist for revoked tokens
+- Create logout endpoint (/api/v1/auth/logout)
+- Add middleware to check blacklist on each request
+- Implement TTL matching JWT expiration
+- Add unit tests (92% coverage)
+- Add integration tests for logout flow
+- Update API documentation in Notion
+
+Related: Notion Task [Task Name] in Project Management
+"
+
+# ========================================
+# STEP 9: MOVE TO NEXT TASK IN NOTION
+# ========================================
+# Return to Step 1
+# Open Notion backlog again
+# Select next priority task
+# Repeat workflow
+```
+
+### Task Status Management in Notion
+
+**Status Workflow:**
+```
+Pending → In Progress → Done
+   ↓           ↓
+Blocked    Canceled
+```
+
+**When to use each status:**
+- **Pending:** Task not started, waiting to be picked up
+- **In Progress:** Currently working on it (set Owner + add comment)
+- **Blocked:** Cannot proceed due to dependency/blocker (add comment explaining why)
+- **Done:** Completed with all acceptance criteria met + tests passing
+- **Canceled:** Task no longer needed (add comment explaining why)
+
+**Rules:**
+- ✅ ONLY change to "In Progress" when you actually start work
+- ✅ MUST add comment when changing status
+- ✅ MUST set Owner when moving to "In Progress"
+- ✅ MUST verify acceptance criteria before marking "Done"
+- ✅ MUST add completion notes when marking "Done"
+- ❌ NEVER mark "Done" without tests passing
+- ❌ NEVER skip status updates in Notion
+
+### Development Principles (ALWAYS Follow)
+
+#### 1. Clean Architecture
+**Layers (dependency flows inward):**
+```
+External APIs/UI
+       ↓
+Interface Adapters (Handlers, Controllers)
+       ↓
+Business Logic (Use Cases, Services)
+       ↓
+Domain Models (Entities, Value Objects)
+```
+
+**Example:**
+```go
+// ✅ GOOD: Clean separation
+// Domain (backend/pkg/leads/models.go)
+type Lead struct {
+    ID       string
+    Name     string
+    Industry string
+}
+
+// Use Case (backend/pkg/leads/service.go)
+func (s *Service) SearchLeads(ctx context.Context, filters Filters) ([]Lead, error) {
+    // Business logic here
+}
+
+// Handler (backend/pkg/api/handlers/leads.go)
+func (h *Handler) SearchLeads(c echo.Context) error {
+    filters := parseFilters(c)
+    leads, err := h.service.SearchLeads(ctx, filters)
+    // HTTP-specific handling
+}
+```
+
+#### 2. SOLID Principles
+
+**Single Responsibility:**
+```go
+// ❌ BAD: Handler does too much
+func (h *Handler) CreateUser(c echo.Context) error {
+    // Parsing, validation, DB access, email sending - TOO MUCH
+}
+
+// ✅ GOOD: Each layer has one responsibility
+func (h *Handler) CreateUser(c echo.Context) error {
+    req := h.parser.Parse(c)              // Parse
+    if err := h.validator.Validate(req); // Validate
+    user, err := h.service.Create(req)    // Business logic
+    h.emailer.SendWelcome(user)           // Side effect
+    return c.JSON(200, user)              // Response
+}
+```
+
+**Open/Closed:**
+```go
+// ✅ GOOD: Open for extension, closed for modification
+type ExportStrategy interface {
+    Export(leads []Lead) ([]byte, error)
+}
+
+type CSVExporter struct{}
+func (e *CSVExporter) Export(leads []Lead) ([]byte, error) { }
+
+type ExcelExporter struct{}
+func (e *ExcelExporter) Export(leads []Lead) ([]byte, error) { }
+
+// Adding JSON export doesn't require modifying existing code
+type JSONExporter struct{}
+func (e *JSONExporter) Export(leads []Lead) ([]byte, error) { }
+```
+
+**Dependency Inversion:**
+```go
+// ❌ BAD: Depends on concrete implementation
+type Service struct {
+    db *ent.Client  // Tied to Ent
+}
+
+// ✅ GOOD: Depends on abstraction
+type LeadRepository interface {
+    Create(ctx context.Context, lead *Lead) error
+    FindByID(ctx context.Context, id string) (*Lead, error)
+}
+
+type Service struct {
+    repo LeadRepository  // Can swap implementations
+}
+```
+
+#### 3. TDD Workflow (Red-Green-Refactor)
+
+**Always write tests BEFORE implementation:**
+
+```go
+// Step 1: RED - Write failing test
+func TestSearchLeads_WithFilters(t *testing.T) {
+    service := setupTestService()
+
+    filters := Filters{
+        Industry: "tattoo",
+        Country:  "US",
+    }
+
+    leads, err := service.SearchLeads(context.Background(), filters)
+
+    assert.NoError(t, err)
+    assert.Len(t, leads, 5)
+    assert.Equal(t, "tattoo", leads[0].Industry)
+}
+
+// Run test → FAILS (method doesn't exist)
+// go test ./pkg/leads/... -v -run TestSearchLeads_WithFilters
+
+// Step 2: GREEN - Write minimum code to pass
+func (s *Service) SearchLeads(ctx context.Context, filters Filters) ([]Lead, error) {
+    // Simplest implementation that passes test
+    return s.repo.Search(ctx, filters)
+}
+
+// Run test → PASSES
+// go test ./pkg/leads/... -v -run TestSearchLeads_WithFilters
+
+// Step 3: REFACTOR - Improve code quality
+func (s *Service) SearchLeads(ctx context.Context, filters Filters) ([]Lead, error) {
+    // Add caching
+    cacheKey := filters.CacheKey()
+    if cached, ok := s.cache.Get(cacheKey); ok {
+        return cached.([]Lead), nil
+    }
+
+    // Add validation
+    if err := filters.Validate(); err != nil {
+        return nil, err
+    }
+
+    // Search with timeout
+    ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+    defer cancel()
+
+    leads, err := s.repo.Search(ctx, filters)
+    if err != nil {
+        return nil, err
+    }
+
+    // Cache result
+    s.cache.Set(cacheKey, leads, 5*time.Minute)
+
+    return leads, nil
+}
+
+// Run test → STILL PASSES
+```
+
+#### 4. DDD (Domain-Driven Design)
+
+**Ubiquitous Language:**
+```go
+// ✅ Use business terms in code
+type Lead struct {          // Not "BusinessData"
+    Industry    string      // Not "Category"
+    QualityScore int        // Not "Rating"
+}
+
+// ✅ Method names match business operations
+func (s *Service) ExportLeads(...)  // Not "GetData"
+func (s *Service) SearchLeads(...)  // Not "Query"
+```
+
+**Bounded Contexts:**
+```
+industrydb/backend/pkg/
+├── leads/          # Lead Management Context
+│   ├── models.go   # Domain models
+│   ├── service.go  # Business logic
+│   └── repository.go
+├── billing/        # Billing Context
+│   ├── subscription.go
+│   └── invoice.go
+└── auth/           # Authentication Context
+    ├── user.go
+    └── jwt.go
+```
+
+**Aggregates:**
+```go
+// Lead is aggregate root
+type Lead struct {
+    ID       string
+    Name     string
+    Contacts []Contact  // Value objects
+    Address  Address    // Value object
+}
+
+// Always access Contacts through Lead (preserve invariants)
+func (l *Lead) AddContact(c Contact) error {
+    if len(l.Contacts) >= 10 {
+        return errors.New("max 10 contacts per lead")
+    }
+    l.Contacts = append(l.Contacts, c)
+    return nil
+}
+```
+
+### Code Quality Standards
+
+**Every pull request must:**
+- ✅ Pass all existing tests (no regressions)
+- ✅ Add tests for new code (80% coverage minimum)
+- ✅ Follow SOLID principles (reviewed in PR)
+- ✅ Use Clean Architecture (layers respected)
+- ✅ Include API documentation (if API changed)
+- ✅ Update Notion task status (link in commit message)
+- ✅ Pass linters (golangci-lint, ESLint)
+
+**Code review checklist:**
+```markdown
+## Code Review Checklist
+
+### Architecture
+- [ ] Follows Clean Architecture (correct layer)
+- [ ] Respects SOLID principles (especially SRP, DIP)
+- [ ] Bounded context boundaries respected (DDD)
+
+### Testing
+- [ ] Unit tests cover happy path + edge cases
+- [ ] Integration tests for external dependencies
+- [ ] E2E tests for user workflows
+- [ ] Coverage ≥ 80% for new code
+
+### Security
+- [ ] Input validation (all user input)
+- [ ] Error handling (no sensitive info leaked)
+- [ ] Context timeouts (all DB/external calls)
+- [ ] Rate limiting (if API endpoint)
+
+### Performance
+- [ ] Database queries optimized (indexes used)
+- [ ] Caching implemented (if appropriate)
+- [ ] No N+1 queries
+- [ ] Context cancellation handled
+
+### Documentation
+- [ ] API docs updated (if endpoints changed)
+- [ ] Notion task updated (status + notes)
+- [ ] Code comments for complex logic
+- [ ] README updated (if setup changed)
+```
+
+### Migration from TODO.md to Notion
+
+**STATUS:** 🚧 In Progress
+
+**TODO.md is DEPRECATED:**
+- ⚠️ File: `TODO.md` is **legacy only** (for historical reference)
+- ❌ DO NOT update TODO.md
+- ❌ DO NOT read TODO.md for current tasks
+- ✅ USE Notion Project Management page instead
+
+**Migration Process:**
+1. **Read TODO.md** (287 tasks documented)
+2. **Parse structure** (categories, priorities, phases)
+3. **Create Notion database** with properties:
+   - Task Name, Category, Priority, Status, Phase
+   - Estimate, Owner, Dependencies, Due Date
+   - Acceptance Criteria, Notes, Created/Completed dates
+4. **Migrate all 287 tasks** to Notion using API
+5. **Create 11 views** (Kanban by dept, Timeline, etc.)
+6. **Verify migration** (all tasks, metadata, dependencies)
+7. **Mark TODO.md as deprecated** (add notice at top)
+
+**Migration Script:** `scripts/migrate_todo_to_notion.py` (to be created)
+
+**After Migration:**
+- TODO.md becomes read-only archive
+- All new tasks created in Notion only
+- Notion becomes single source of truth
+
+### Task Backlog (287 Tasks Total)
+
+**⚠️ CRITICAL: View ONLY in Notion**
+
+**Notion Project Management Page:**
+https://www.notion.so/2faae93b443d813284d8fd0ec713a126
+
+**Backlog Summary (as of last sync):**
+
+**By Category:**
+- Backend: 80 tasks (56% complete) - **45 done, 35 pending**
+- Frontend: 60 tasks (0% complete) - **0 done, 60 pending** 🔴 **HIGH PRIORITY**
+- Infrastructure: 35 tasks (0% complete) - **0 done, 35 pending**
+- Legal: 22 tasks (45% complete) - **10 done, 12 pending**
+- Testing: 30 tasks (0% complete) - **0 done, 30 pending** 🔴 **HIGH PRIORITY**
+- Documentation: 20 tasks (0% complete) - **0 done, 20 pending**
+
+**By Priority:**
+- 🔴 Critical: 45 tasks (23 complete = 51%)
+- 🟠 High: 78 tasks (27 complete = 35%)
+- 🟡 Medium: 89 tasks (5 complete = 6%)
+- 🟢 Low: 75 tasks (0 complete = 0%)
+
+**By Status:**
+- ✅ Done: 55 tasks (19%)
+- 🟡 In Progress: 8 tasks (3%)
+- ⏸️ Blocked: 0 tasks (0%)
+- 📋 Pending: 224 tasks (78%)
+
+**Current Sprint (Phase 1 - Weeks 1-3):**
+- ✅ Security backend: 45/45 tasks (100%) - **COMPLETE**
+- ⏳ Legal compliance: 10/18 tasks (56%) - **IN PROGRESS**
+- 🔴 **4 Critical Blockers** preventing production:
+  1. Email service integration (SendGrid/AWS SES) - 4-8h
+  2. Database SSL certificates - 2-4h
+  3. JWT secret rotation (Secrets Manager) - 4-6h
+  4. Stripe production keys - 2-3h
+
+**Next Sprint (Phase 2 - Weeks 4-6):**
+- UI/UX polish: 22 tasks
+- Admin dashboard: 15 tasks
+- Error boundaries: 8 tasks
+- Form validation: 12 tasks
+- Accessibility (WCAG): 18 tasks
+
+**For:**
+- ✅ Complete task list with acceptance criteria
+- ✅ Dependencies and blockers
+- ✅ Estimates and deadlines
+- ✅ Visual Kanban boards by department
+- ✅ Sprint timeline view
+- ✅ Progress tracking
+
+**→ ALWAYS consult Notion Project Management page**
 
 ## Tech Stack
 
