@@ -30,6 +30,19 @@ func NewExportHandler(exportService *export.Service, analyticsService *analytics
 }
 
 // Create handles creating a new export
+// @Summary Create new export
+// @Description Create a new data export in CSV or Excel format with optional filters
+// @Tags Exports
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body models.ExportRequest true "Export configuration"
+// @Success 201 {object} models.ExportResponse "Export created successfully"
+// @Failure 400 {object} models.ErrorResponse "Invalid request"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 402 {object} models.ErrorResponse "Usage limit exceeded"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /exports [post]
 func (h *ExportHandler) Create(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
@@ -61,6 +74,18 @@ func (h *ExportHandler) Create(c echo.Context) error {
 }
 
 // Get handles retrieving a single export
+// @Summary Get export details
+// @Description Get detailed information about a specific export including status and download URL
+// @Tags Exports
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Export ID"
+// @Success 200 {object} models.ExportResponse "Export details"
+// @Failure 400 {object} models.ErrorResponse "Invalid export ID"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 404 {object} models.ErrorResponse "Export not found"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /exports/{id} [get]
 func (h *ExportHandler) Get(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
@@ -93,6 +118,17 @@ func (h *ExportHandler) Get(c echo.Context) error {
 }
 
 // List handles listing all exports for the current user
+// @Summary List user exports
+// @Description Get paginated list of all exports created by the current user
+// @Tags Exports
+// @Produce json
+// @Security BearerAuth
+// @Param page query int false "Page number (default: 1)"
+// @Param limit query int false "Items per page (default: 20, max: 100)"
+// @Success 200 {object} map[string]interface{} "List of exports with pagination"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /exports [get]
 func (h *ExportHandler) List(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
@@ -127,6 +163,18 @@ func (h *ExportHandler) List(c echo.Context) error {
 }
 
 // Download handles downloading an export file
+// @Summary Download export file
+// @Description Download the generated CSV or Excel file for a specific export
+// @Tags Exports
+// @Produce application/octet-stream
+// @Security BearerAuth
+// @Param id path int true "Export ID"
+// @Success 200 {file} file "Export file (CSV or Excel)"
+// @Failure 400 {object} models.ErrorResponse "Invalid export ID"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 404 {object} models.ErrorResponse "Export not found or file unavailable"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /exports/{id}/download [get]
 func (h *ExportHandler) Download(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
