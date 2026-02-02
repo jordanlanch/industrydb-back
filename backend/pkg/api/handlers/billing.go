@@ -72,6 +72,18 @@ func validateReturnURL(returnURL string) string {
 }
 
 // CreateCheckout handles creating a checkout session
+// @Summary Create Stripe checkout session
+// @Description Create a new Stripe checkout session to upgrade/downgrade subscription tier
+// @Tags Billing
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body models.CheckoutRequest true "Checkout configuration with subscription tier"
+// @Success 200 {object} map[string]string "Checkout session created with URL"
+// @Failure 400 {object} models.ErrorResponse "Invalid request"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /billing/checkout [post]
 func (h *BillingHandler) CreateCheckout(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
@@ -102,6 +114,16 @@ func (h *BillingHandler) CreateCheckout(c echo.Context) error {
 }
 
 // CreatePortalSession handles creating a customer portal session
+// @Summary Create Stripe customer portal session
+// @Description Create a session to access Stripe customer portal for managing subscriptions, payment methods, and billing history
+// @Tags Billing
+// @Produce json
+// @Security BearerAuth
+// @Param return_url query string false "URL to return to after portal session (validated against whitelist)"
+// @Success 200 {object} map[string]string "Portal session created with URL"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /billing/portal [post]
 func (h *BillingHandler) CreatePortalSession(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
@@ -124,6 +146,17 @@ func (h *BillingHandler) CreatePortalSession(c echo.Context) error {
 }
 
 // HandleWebhook handles Stripe webhook events
+// @Summary Handle Stripe webhook
+// @Description Process Stripe webhook events for subscription updates, payment confirmations, and cancellations
+// @Tags Billing
+// @Accept json
+// @Produce json
+// @Param Stripe-Signature header string true "Stripe webhook signature for verification"
+// @Param payload body object true "Stripe webhook event payload"
+// @Success 200 {object} models.SuccessResponse "Webhook processed successfully"
+// @Failure 400 {object} models.ErrorResponse "Invalid request or missing signature"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /webhook/stripe [post]
 func (h *BillingHandler) HandleWebhook(c echo.Context) error {
 	// Get raw body
 	body, err := io.ReadAll(c.Request().Body)
@@ -155,6 +188,12 @@ func (h *BillingHandler) HandleWebhook(c echo.Context) error {
 }
 
 // GetPricing handles returning pricing information
+// @Summary Get pricing tiers
+// @Description Get all available subscription tiers with pricing, features, and limits
+// @Tags Billing
+// @Produce json
+// @Success 200 {object} map[string]interface{} "Pricing information for all tiers"
+// @Router /billing/pricing [get]
 func (h *BillingHandler) GetPricing(c echo.Context) error {
 	pricing := h.billingService.GetPricing()
 	return c.JSON(http.StatusOK, pricing)
