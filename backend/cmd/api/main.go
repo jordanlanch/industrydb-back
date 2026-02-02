@@ -52,6 +52,7 @@ import (
 	"github.com/jordanlanch/industrydb/pkg/leads"
 	custommiddleware "github.com/jordanlanch/industrydb/pkg/middleware"
 	"github.com/jordanlanch/industrydb/pkg/organization"
+	"github.com/jordanlanch/industrydb/pkg/savedsearch"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -238,6 +239,7 @@ func main() {
 	organizationService := organization.NewService(db.Ent)
 	apiKeyService := apikey.NewService(db.Ent)
 	industriesService := industries.NewService(db.Ent, redisClient)
+	savedSearchService := savedsearch.NewService(db.Ent)
 
 	// Initialize cron manager for data acquisition jobs
 	cronManager := jobs.NewCronManager(db.Ent, redisClient, log.Default())
@@ -260,6 +262,7 @@ func main() {
 	apiKeyHandler := handlers.NewAPIKeyHandler(apiKeyService)
 	industriesHandler := handlers.NewIndustryHandler(industriesService)
 	jobsHandler := handlers.NewJobsHandler(cronManager.GetMonitor())
+	savedSearchHandler := handlers.NewSavedSearchHandler(savedSearchService)
 
 	// Authentication routes (public)
 	authRoutes := v1.Group("/auth")
@@ -356,6 +359,16 @@ func main() {
 			apiKeyGroup.POST("/:id/revoke", apiKeyHandler.Revoke)
 			apiKeyGroup.PATCH("/:id", apiKeyHandler.UpdateName)
 			apiKeyGroup.DELETE("/:id", apiKeyHandler.Delete)
+		}
+
+		// Saved Searches routes
+		savedSearchGroup := protected.Group("/saved-searches")
+		{
+			savedSearchGroup.POST("", savedSearchHandler.Create)
+			savedSearchGroup.GET("", savedSearchHandler.List)
+			savedSearchGroup.GET("/:id", savedSearchHandler.Get)
+			savedSearchGroup.PATCH("/:id", savedSearchHandler.Update)
+			savedSearchGroup.DELETE("/:id", savedSearchHandler.Delete)
 		}
 
 		// Admin routes (require admin role)
