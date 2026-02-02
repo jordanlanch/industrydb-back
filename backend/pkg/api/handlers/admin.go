@@ -33,6 +33,16 @@ func NewAdminHandler(db *ent.Client, auditLogger *audit.Service) *AdminHandler {
 }
 
 // GetStats returns platform statistics
+// @Summary Get platform statistics
+// @Description Get aggregated statistics about users, subscriptions, and exports (admin only)
+// @Tags Admin
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{} "Platform statistics"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 403 {object} models.ErrorResponse "Forbidden - Admin access required"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /admin/stats [get]
 func (h *AdminHandler) GetStats(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(c.Request().Context(), 10*time.Second)
 	defer cancel()
@@ -100,6 +110,21 @@ func (h *AdminHandler) GetStats(c echo.Context) error {
 }
 
 // ListUsers returns paginated list of users
+// @Summary List all users
+// @Description Get paginated list of users with optional filters (admin only)
+// @Tags Admin
+// @Produce json
+// @Security BearerAuth
+// @Param page query int false "Page number (default: 1)"
+// @Param limit query int false "Items per page (default: 50, max: 100)"
+// @Param tier query string false "Filter by subscription tier (free, starter, pro, business)"
+// @Param verified query string false "Filter by email verification (true, false)"
+// @Param role query string false "Filter by user role (user, admin, superadmin)"
+// @Success 200 {object} map[string]interface{} "List of users with pagination"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 403 {object} models.ErrorResponse "Forbidden - Admin access required"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /admin/users [get]
 func (h *AdminHandler) ListUsers(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(c.Request().Context(), 10*time.Second)
 	defer cancel()
@@ -180,6 +205,19 @@ func (h *AdminHandler) ListUsers(c echo.Context) error {
 }
 
 // GetUser returns detailed user information
+// @Summary Get user details
+// @Description Get detailed information about a specific user including subscriptions, exports, and recent audit logs (admin only)
+// @Tags Admin
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "User ID"
+// @Success 200 {object} map[string]interface{} "User details"
+// @Failure 400 {object} models.ErrorResponse "Invalid user ID"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 403 {object} models.ErrorResponse "Forbidden - Admin access required"
+// @Failure 404 {object} models.ErrorResponse "User not found"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /admin/users/{id} [get]
 func (h *AdminHandler) GetUser(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(c.Request().Context(), 5*time.Second)
 	defer cancel()
@@ -234,6 +272,21 @@ type UpdateUserRequest struct {
 }
 
 // UpdateUser allows admin to update user details
+// @Summary Update user
+// @Description Update user subscription tier, role, email verification status, or usage limit (admin only)
+// @Tags Admin
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "User ID"
+// @Param request body UpdateUserRequest true "User update data"
+// @Success 200 {object} models.UserResponse "Updated user"
+// @Failure 400 {object} models.ErrorResponse "Invalid request"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 403 {object} models.ErrorResponse "Forbidden - Admin access required"
+// @Failure 404 {object} models.ErrorResponse "User not found"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /admin/users/{id} [patch]
 func (h *AdminHandler) UpdateUser(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(c.Request().Context(), 5*time.Second)
 	defer cancel()
@@ -296,6 +349,19 @@ func (h *AdminHandler) UpdateUser(c echo.Context) error {
 }
 
 // SuspendUser suspends a user account (soft delete)
+// @Summary Suspend user account
+// @Description Suspend (soft delete) a user account - cannot suspend yourself or superadmins (admin only)
+// @Tags Admin
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "User ID"
+// @Success 200 {object} map[string]string "User suspended successfully"
+// @Failure 400 {object} models.ErrorResponse "Cannot suspend own account or superadmin"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 403 {object} models.ErrorResponse "Forbidden - Admin access required"
+// @Failure 404 {object} models.ErrorResponse "User not found"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /admin/users/{id} [delete]
 func (h *AdminHandler) SuspendUser(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(c.Request().Context(), 5*time.Second)
 	defer cancel()
