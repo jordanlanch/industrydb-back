@@ -62,98 +62,94 @@ industrydb/
 └── data/                 # Data output directory
 ```
 
-## 📋 Project Management with Notion
+## 📋 Project Management with TaskMaster
 
-**🚨 CRITICAL RULE: NOTION ONLY FOR TASK MANAGEMENT 🚨**
+**🚨 CRITICAL: TaskMaster es la ÚNICA herramienta de gestión de tareas 🚨**
 
-Notion is the **ONLY and SINGLE source of truth** for:
-- ✅ All project documentation
-- ✅ **Task management (NO other system allowed)**
-- ✅ Backlog and sprint planning
-- ✅ Progress tracking and metrics
-- ✅ Team collaboration and updates
+**TaskMaster (Gestión Completa de Tareas):**
+- ✅ **Backlog completo del proyecto** (287 tareas de TODO.md)
+- ✅ **Tracking de progreso** con estados (pending, in_progress, completed)
+- ✅ **Organización por categorías** (Backend, Frontend, Infrastructure, Legal, etc.)
+- ✅ **Priorización** (Critical, High, Medium, Low)
+- ✅ **Dependencias entre tareas**
+- ✅ **Estimaciones de tiempo**
+- ✅ **Fuente única de verdad** para gestión de tareas
 
-**⚠️ DUAL SYSTEM APPROACH:**
+**Notion (SOLO Documentación):**
+- ✅ Documentación de features y API endpoints
+- ✅ Guías de arquitectura y deployment
+- ✅ Sales playbooks y business docs
+- ✅ Референce documentation para desarrolladores
+- ❌ **NO gestión de tareas**
+- ❌ **NO backlog de tareas**
+- ❌ **NO Kanban boards de tareas**
+- ❌ **NO sprint planning**
 
-**Notion (Team Source of Truth):**
-- ✅ Official task backlog for entire team
-- ✅ Project status and metrics
-- ✅ Department Kanban boards
-- ✅ Sprint/phase planning
-- ✅ Team collaboration and updates
-- ✅ Stakeholder visibility
+**Workflow Correcto:**
 
-**TaskMaster (Claude's Planning Tool):**
-- ✅ Used by Claude for **work breakdown** when planning
-- ✅ Creating execution map for complex tasks
-- ✅ Tracking implementation steps during execution
-- ✅ Temporary task decomposition
-- ❌ NOT for official team tracking
-- ❌ NOT a replacement for Notion
+1. **Consultar TaskMaster (SIEMPRE PRIMERO):**
+   ```bash
+   # Ver todas las tareas
+   TaskList
 
-**Workflow Integration:**
+   # Filtrar por estado
+   TaskList | grep "pending"
 
-1. **Planning Phase (Use TaskMaster):**
-   - Read task from Notion
-   - Use TaskCreate to break down into subtasks
-   - Create implementation roadmap
-   - Organize work steps
+   # Ver tarea específica
+   TaskGet <task_id>
+   ```
 
-2. **Execution Phase (Use Both):**
-   - Update Notion task: Status = In Progress
-   - Work through TaskMaster subtasks
-   - Complete implementation with TDD/DDD
+2. **Seleccionar tarea de alta prioridad:**
+   - Prioridad: Critical o High
+   - Estado: Pending
+   - Sin dependencias bloqueantes
 
-3. **Completion Phase (Update Notion):**
-   - Mark Notion task as Done
-   - Add completion notes to Notion
-   - Link commit to Notion task
-   - TaskMaster tasks can be cleared
+3. **Marcar como In Progress:**
+   ```bash
+   TaskUpdate <task_id> --status in_progress
+   ```
 
-**Example:**
+4. **Ejecutar con TDD/DDD:**
+   - Escribir tests (Red)
+   - Implementar código mínimo (Green)
+   - Refactorizar (Refactor)
+   - Alcanzar 80% coverage
 
-**Notion Task:**
-```
-Task: "Implement JWT blacklist for logout"
-Status: Pending → In Progress (when starting)
-Acceptance Criteria: [...]
-```
+5. **Marcar como Completed:**
+   ```bash
+   TaskUpdate <task_id> --status completed
+   ```
 
-**Claude creates TaskMaster breakdown:**
-```
-TaskCreate:
-1. Write failing tests for blacklist (TDD - Red)
-2. Implement Redis blacklist service
-3. Add logout endpoint handler
-4. Add middleware to check blacklist
-5. Refactor and optimize (TDD - Green/Refactor)
-6. Update API docs in Notion
-7. Update Notion task to Done
-```
+6. **Commit convencional:**
+   ```bash
+   git commit -m "feat: implement X
 
-**Result:**
-- Notion shows: "Task completed ✅"
-- Notion has: Completion notes + commit link
-- Team sees: Progress in official boards
-- TaskMaster: Can be cleared (temporary)
+   - Implementation details
+   - Tests added (85% coverage)
 
-**Why Dual System?**
-- **Notion:** Official team collaboration + stakeholder visibility
-- **TaskMaster:** Claude's internal planning + execution tracking
-- Best of both: Professional PM + AI execution assistance
+   TaskMaster: #<task_id>"
+   ```
 
-**✅ ALLOWED:**
-- ✅ Use TaskCreate to break down complex Notion tasks
-- ✅ Use TaskUpdate to track implementation progress
-- ✅ Use TaskList to see current work breakdown
-- ✅ Clear TaskMaster tasks after Notion update
+7. **Siguiente tarea:**
+   - Volver a paso 1
 
-**❌ FORBIDDEN:**
-- ❌ Create tasks in TaskMaster that don't exist in Notion
-- ❌ Mark Notion task as Done without updating Notion
-- ❌ Use TaskMaster as only tracking system
-- ❌ Skip Notion updates when completing work
-- ❌ Use TODO.md for new tasks (deprecated)
+**Migración desde TODO.md:**
+
+TODO.md tiene **287 tareas** que deben crearse en TaskMaster:
+- Backend: 80 tareas (56% complete)
+- Frontend: 60 tareas (0% complete) 🔴 PRIORITY
+- Infrastructure: 35 tareas (0% complete)
+- Legal: 22 tareas (45% complete)
+- Testing: 30 tareas (0% complete) 🔴 PRIORITY
+- Documentation: 20 tareas (0% complete)
+
+**Proceso de migración:**
+1. Leer TODO.md sección por sección
+2. Crear tareas en TaskMaster con TaskCreate
+3. Incluir: nombre, descripción, prioridad, categoría, estimación
+4. Establecer dependencias entre tareas
+5. Marcar tareas ya completadas como "completed"
+6. TODO.md se vuelve archivo de referencia histórica
 
 **Workspace:** https://www.notion.so/IndustryDB-Business-Data-SaaS-Platform-2faae93b443d81b4aa83e5a01fe900d4
 
@@ -172,155 +168,95 @@ TaskCreate:
 10. ✅ **Commit with conventional commit** message linking to Notion task
 11. ✅ **Move to next task** in Notion backlog
 
-### Notion Workspace Structure
+### Notion Documentation Structure
+
+**Workspace:** https://www.notion.so/IndustryDB-Business-Data-SaaS-Platform-2faae93b443d81b4aa83e5a01fe900d4
+
+**⚠️ IMPORTANTE: Notion es SOLO para documentación, NO para gestión de tareas**
 
 #### 1. Executive Dashboard
 **Page ID:** `2faae93b443d81df8f66cba6514b9fd4`
-- Project overview and metrics
-- Critical blockers (4 production blockers)
-- Progress tracking (55/287 tasks = 19%)
-- Architecture diagram
+**Contenido:** Project overview, métricas de alto nivel, arquitectura
+**NO incluye:** Gestión de tareas (usar TaskMaster)
 
 #### 2. Product Department
 **Page ID:** `2faae93b443d81f0b952df8fddc10014`
-- Features inventory (19 features database)
-- Product roadmap (Q1-Q4 2026)
-- Pages inventory (33 pages)
-- i18n statistics
+**Contenido:** Documentación de features, roadmap de producto, especificaciones
+**NO incluye:** Backlog de tareas (usar TaskMaster)
 
 #### 3. Engineering Department
 **Page ID:** `2faae93b443d81428570e8314e920628`
-- API endpoints database (65+ endpoints)
-- Database schema (11 entities)
-- Security features checklist
-- Performance optimization guide
+**Contenido:** API Reference (65+ endpoints), database schema, guías técnicas
+**NO incluye:** Tareas de desarrollo (usar TaskMaster)
 
 #### 4. Operations/DevOps Department
 **Page ID:** `2faae93b443d81129f70cab7f7b495cc`
-- Production readiness checklist
-- Deployment guides (local, Docker, K8s)
-- Environment variables
-- Monitoring strategy
+**Contenido:** Deployment guides (AWS/GCP/Azure), infrastructure docs
+**NO incluye:** Tareas de DevOps (usar TaskMaster)
 
 #### 5. Business/Sales Department
 **Page ID:** `2faae93b443d819a991fc8ebbe57c74b`
-- Pricing strategy (4 tiers)
-- Data coverage (82,740 leads, 184 countries)
-- Industries catalog (20 industries)
-- Revenue projections
+**Contenido:** Pricing strategy, sales playbooks, market analysis
+**NO incluye:** Tareas de negocio (usar TaskMaster)
 
 #### 6. Legal/Compliance Department
 **Page ID:** `2faae93b443d811bb1b3f97701addffb`
-- GDPR compliance (7 articles implemented)
-- Audit logs (21 event types)
-- Legal documents (Privacy Policy, ToS)
-- Security compliance
+**Contenido:** GDPR compliance docs, legal policies, audit procedures
+**NO incluye:** Tareas legales (usar TaskMaster)
 
-#### 7. Project Management Department
-**Page ID:** `2faae93b443d813284d8fd0ec713a126`
-- **Master TODO Database** (287 tasks with Kanban views)
-- Project timeline (5 phases)
-- Progress dashboard
-- Project history (activity log)
-- Risk register
-
-### Kanban/Scrum Boards by Department
-
-**Master TODO Database Views:**
-
-1. **All Tasks (Default Table)**
-   - Columns: Task Name | Category | Priority | Status | Phase | Estimate | Owner | Dependencies | Due Date
-   - Total: 287 tasks
-
-2. **Critical Blockers (Board)**
-   - Filter: Priority = Critical, Status ≠ Complete
-   - Columns: Pending | In Progress | Blocked | Done
-   - Current: 4 critical blockers
-
-3. **By Department (Board)**
-   - Group by: Category (Backend, Frontend, Infrastructure, Legal, Testing, Documentation)
-   - Backend: 80 tasks (45 complete = 56%)
-   - Frontend: 60 tasks (0 complete = 0%)
-   - Infrastructure: 35 tasks (0 complete = 0%)
-   - Legal: 22 tasks (10 complete = 45%)
-   - Testing: 30 tasks (0 complete = 0%)
-   - Documentation: 20 tasks (0 complete = 0%)
-
-4. **By Sprint (Timeline)**
-   - Phase 1: Critical Blockers (Weeks 1-3) - 76% complete
-   - Phase 2: Essential UX (Weeks 4-6) - 0% complete
-   - Phase 3: Advanced Features (Weeks 7-9) - 0% complete
-   - Phase 4: Production Readiness (Weeks 10-12) - 0% complete
-   - Phase 5: Launch (Weeks 13-16) - 0% complete
-
-5. **By Owner (Board)**
-   - Group by: Owner
-   - Filter: Status = In Progress OR Pending
-
-6. **Completed (Table)**
-   - Filter: Status = Complete
-   - Sort by: Completion date (desc)
-   - Total: 55 completed tasks
+#### 7. Reference Documentation
+**Contenido:** Arquitectura, principios de código (SOLID, TDD, DDD), guías de estilo
+**NO incluye:** Gestión de tareas o sprints (usar TaskMaster)
 
 ### Workflow: Starting a New Task
 
-**⚠️ MANDATORY: All task management ONLY in Notion**
+**⚠️ MANDATORY: All task management ONLY in TaskMaster**
 
 ```bash
 # ========================================
-# STEP 1: CONSULT NOTION (ALWAYS FIRST)
+# STEP 1: CONSULT TASKMASTER (ALWAYS FIRST)
 # ========================================
-# Open Notion Project Management page:
-# https://www.notion.so/2faae93b443d813284d8fd0ec713a126
+# List all pending tasks
+TaskList
 
-# Navigate to appropriate view:
-# - "Critical Blockers" board for urgent tasks
-# - "By Department" board for specific area work
-# - "By Sprint" timeline for current sprint tasks
-# - "All Tasks" table for complete overview
-
-# Filter by:
-# - Status = Pending (not started yet)
-# - Priority = Critical OR High (most important)
-# - Dependencies = None OR all dependencies complete
-# - Owner = Unassigned OR assigned to you
-
-# Sort by:
-# - Priority (desc) - Critical first
-# - Due Date (asc) - Urgent first
-# - Phase (asc) - Current phase first
+# Filter by priority (Critical/High first)
+# Look for:
+# - Status: pending
+# - Priority: critical or high
+# - No blocking dependencies
+# - Matches your expertise area
 
 # ========================================
-# STEP 2: SELECT AND CLAIM TASK IN NOTION
+# STEP 2: SELECT AND START TASK
 # ========================================
-# Click on task card to open
+# Get full task details
+TaskGet <task_id>
+
 # Read ALL sections:
-# - Task Name and Description
-# - Acceptance Criteria (must be 100% clear)
-# - Dependencies (verify all are complete)
-# - Estimate (how long it should take)
-# - Notes (any important context)
+# - Task description
+# - Acceptance criteria
+# - Dependencies (verify all complete)
+# - Estimate
+# - Related documentation
 
-# Update task in Notion:
-# - Set Owner = Your name
-# - Set Status = In Progress
-# - Add comment: "Starting work on [date]"
+# Mark as in progress
+TaskUpdate <task_id> --status in_progress
 
 # ========================================
-# STEP 3: REVIEW RELATED DOCS IN NOTION
+# STEP 3: REVIEW DOCUMENTATION IN NOTION
 # ========================================
-# Navigate to relevant department page:
-# - Backend task → Engineering Department
-# - Frontend task → Product Department
-# - Infrastructure task → Operations Department
-# - Legal task → Legal Department
+# Open relevant Notion documentation page:
+# - Backend task → Engineering Department (API Reference)
+# - Frontend task → Product Department (Feature Specs)
+# - Infrastructure → Operations (Deployment Guides)
+# - Legal → Legal Department (Compliance Docs)
 
 # Review:
-# - API endpoints (if backend task)
-# - Database schema (if data model task)
-# - Feature specs (if frontend task)
-# - Security guidelines (ALWAYS read this)
-# - Architecture patterns (follow established patterns)
+# - API endpoints documentation (if backend)
+# - Database schema reference (if data model)
+# - Feature specifications (if frontend)
+# - Security guidelines (ALWAYS)
+# - Architecture patterns (follow established)
 
 # ========================================
 # STEP 4: CHECK CODEBASE CONTEXT
@@ -350,44 +286,12 @@ go test ./pkg/myfeature/... -v -cover
 # Target: 80% coverage minimum
 
 # ========================================
-# STEP 7: UPDATE NOTION TASK (CRITICAL)
+# STEP 7: MARK TASK AS COMPLETED
 # ========================================
-# Open task card in Notion
-# When complete, update ALL fields:
-# - Status = Done
-# - Completed Date = Today
-# - Add completion comment with:
-#   - What was implemented
-#   - Test coverage achieved (%)
-#   - Any blockers encountered
-#   - Decisions made (and why)
-#   - Files modified
-#   - Related Notion pages updated
-
-# Example completion comment:
-# """
-# ✅ COMPLETED - 2026-02-02
-#
-# Implementation:
-# - Added JWT blacklist with Redis
-# - Implemented logout endpoint
-# - Added middleware for token validation
-#
-# Testing:
-# - Unit tests: 12 tests, 92% coverage
-# - Integration tests: 4 scenarios
-# - Manual testing: logout flow works
-#
-# Files Modified:
-# - backend/pkg/auth/service.go
-# - backend/pkg/middleware/jwt.go
-# - backend/cmd/api/main.go
-#
-# Documentation Updated:
-# - Engineering > API Endpoints > Auth
-#
-# Commit: abc123def
-# """
+# Verify all acceptance criteria met
+# Verify tests passing (80%+ coverage)
+# Update TaskMaster
+TaskUpdate <task_id> --status completed
 
 # ========================================
 # STEP 8: COMMIT WITH CONVENTIONAL COMMIT
@@ -403,42 +307,37 @@ git commit -m "feat: implement JWT blacklist for logout
 - Add integration tests for logout flow
 - Update API documentation in Notion
 
-Related: Notion Task [Task Name] in Project Management
+TaskMaster: #<task_id>
 "
 
 # ========================================
-# STEP 9: MOVE TO NEXT TASK IN NOTION
+# STEP 9: MOVE TO NEXT TASK
 # ========================================
 # Return to Step 1
-# Open Notion backlog again
+# List pending tasks in TaskMaster
 # Select next priority task
 # Repeat workflow
 ```
 
-### Task Status Management in Notion
+### Task Status Management in TaskMaster
 
 **Status Workflow:**
 ```
-Pending → In Progress → Done
-   ↓           ↓
-Blocked    Canceled
+pending → in_progress → completed
 ```
 
 **When to use each status:**
-- **Pending:** Task not started, waiting to be picked up
-- **In Progress:** Currently working on it (set Owner + add comment)
-- **Blocked:** Cannot proceed due to dependency/blocker (add comment explaining why)
-- **Done:** Completed with all acceptance criteria met + tests passing
-- **Canceled:** Task no longer needed (add comment explaining why)
+- **pending:** Task not started, waiting to be picked up
+- **in_progress:** Currently working on it
+- **completed:** Done with all acceptance criteria met + tests passing
 
 **Rules:**
-- ✅ ONLY change to "In Progress" when you actually start work
-- ✅ MUST add comment when changing status
-- ✅ MUST set Owner when moving to "In Progress"
-- ✅ MUST verify acceptance criteria before marking "Done"
-- ✅ MUST add completion notes when marking "Done"
-- ❌ NEVER mark "Done" without tests passing
-- ❌ NEVER skip status updates in Notion
+- ✅ ONLY change to "in_progress" when you actually start work
+- ✅ MUST verify acceptance criteria before marking "completed"
+- ✅ MUST have tests passing (80%+ coverage) before "completed"
+- ✅ MUST link task ID in commit message
+- ❌ NEVER mark "completed" without tests passing
+- ❌ NEVER skip TaskUpdate when starting/completing work
 
 ### Development Principles (ALWAYS Follow)
 
@@ -691,43 +590,13 @@ func (l *Lead) AddContact(c Contact) error {
 - [ ] README updated (if setup changed)
 ```
 
-### Migration from TODO.md to Notion
-
-**STATUS:** 🚧 In Progress
-
-**TODO.md is DEPRECATED:**
-- ⚠️ File: `TODO.md` is **legacy only** (for historical reference)
-- ❌ DO NOT update TODO.md
-- ❌ DO NOT read TODO.md for current tasks
-- ✅ USE Notion Project Management page instead
-
-**Migration Process:**
-1. **Read TODO.md** (287 tasks documented)
-2. **Parse structure** (categories, priorities, phases)
-3. **Create Notion database** with properties:
-   - Task Name, Category, Priority, Status, Phase
-   - Estimate, Owner, Dependencies, Due Date
-   - Acceptance Criteria, Notes, Created/Completed dates
-4. **Migrate all 287 tasks** to Notion using API
-5. **Create 11 views** (Kanban by dept, Timeline, etc.)
-6. **Verify migration** (all tasks, metadata, dependencies)
-7. **Mark TODO.md as deprecated** (add notice at top)
-
-**Migration Script:** `scripts/migrate_todo_to_notion.py` (to be created)
-
-**After Migration:**
-- TODO.md becomes read-only archive
-- All new tasks created in Notion only
-- Notion becomes single source of truth
-
 ### Task Backlog (287 Tasks Total)
 
-**⚠️ CRITICAL: View ONLY in Notion**
+**⚠️ CRITICAL: All tasks in TaskMaster ONLY**
 
-**Notion Project Management Page:**
-https://www.notion.so/2faae93b443d813284d8fd0ec713a126
+**Source:** TODO.md (to be migrated to TaskMaster)
 
-**Backlog Summary (as of last sync):**
+**Backlog Summary:**
 
 **By Category:**
 - Backend: 80 tasks (56% complete) - **45 done, 35 pending**
@@ -744,12 +613,11 @@ https://www.notion.so/2faae93b443d813284d8fd0ec713a126
 - 🟢 Low: 75 tasks (0 complete = 0%)
 
 **By Status:**
-- ✅ Done: 55 tasks (19%)
-- 🟡 In Progress: 8 tasks (3%)
-- ⏸️ Blocked: 0 tasks (0%)
-- 📋 Pending: 224 tasks (78%)
+- ✅ completed: 55 tasks (19%)
+- 🟡 in_progress: 8 tasks (3%)
+- 📋 pending: 224 tasks (78%)
 
-**Current Sprint (Phase 1 - Weeks 1-3):**
+**Current Phase (Phase 1 - Weeks 1-3):**
 - ✅ Security backend: 45/45 tasks (100%) - **COMPLETE**
 - ⏳ Legal compliance: 10/18 tasks (56%) - **IN PROGRESS**
 - 🔴 **4 Critical Blockers** preventing production:
@@ -758,22 +626,31 @@ https://www.notion.so/2faae93b443d813284d8fd0ec713a126
   3. JWT secret rotation (Secrets Manager) - 4-6h
   4. Stripe production keys - 2-3h
 
-**Next Sprint (Phase 2 - Weeks 4-6):**
+**Next Phase (Phase 2 - Weeks 4-6):**
 - UI/UX polish: 22 tasks
 - Admin dashboard: 15 tasks
 - Error boundaries: 8 tasks
 - Form validation: 12 tasks
 - Accessibility (WCAG): 18 tasks
 
-**For:**
-- ✅ Complete task list with acceptance criteria
-- ✅ Dependencies and blockers
-- ✅ Estimates and deadlines
-- ✅ Visual Kanban boards by department
-- ✅ Sprint timeline view
-- ✅ Progress tracking
+**Migration Status:**
+- ⏳ IN PROGRESS: Creating 287 tasks in TaskMaster from TODO.md
+- 📝 Current: 16 tasks created (translation work)
+- 📋 Remaining: 271 tasks to create
+- 🎯 Goal: Complete TaskMaster migration by end of week
 
-**→ ALWAYS consult Notion Project Management page**
+**How to check tasks:**
+```bash
+# List all tasks
+TaskList
+
+# Count tasks by status
+TaskList | grep "pending" | wc -l
+TaskList | grep "completed" | wc -l
+
+# Find high priority tasks
+TaskList | grep "priority.*high"
+```
 
 ## Tech Stack
 
