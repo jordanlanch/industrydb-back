@@ -177,6 +177,36 @@ func main() {
 		})
 	})
 
+	// Health check endpoint (public)
+	v1.GET("/health", func(c echo.Context) error {
+		ctx, cancel := context.WithTimeout(c.Request().Context(), 2*time.Second)
+		defer cancel()
+
+		// Check database connection
+		dbStatus := "healthy"
+		if _, err := db.Ent.User.Query().Limit(1).Count(ctx); err != nil {
+			dbStatus = "unhealthy"
+		}
+
+		// Check Redis connection
+		redisStatus := "healthy"
+		if _, err := redisClient.Get(ctx, "health_check"); err != nil && err.Error() != "redis: nil" {
+			redisStatus = "unhealthy"
+		}
+
+		status := http.StatusOK
+		if dbStatus == "unhealthy" || redisStatus == "unhealthy" {
+			status = http.StatusServiceUnavailable
+		}
+
+		return c.JSON(status, map[string]interface{}{
+			"status":   "ok",
+			"database": dbStatus,
+			"redis":    redisStatus,
+			"version":  "1.0.0",
+		})
+	})
+
 	// Initialize JWT blacklist
 	tokenBlacklist := auth.NewTokenBlacklist(redisClient)
 
