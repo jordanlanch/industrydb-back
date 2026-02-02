@@ -73,27 +73,87 @@ Notion is the **ONLY and SINGLE source of truth** for:
 - ✅ Progress tracking and metrics
 - ✅ Team collaboration and updates
 
-**⚠️ STRICTLY FORBIDDEN:**
-- ❌ **DO NOT use TaskMaster** (Claude Code's internal task system)
-- ❌ **DO NOT use TaskCreate/TaskUpdate/TaskList** tools
-- ❌ **DO NOT create tasks** outside of Notion
-- ❌ **DO NOT track progress** in any system other than Notion
-- ❌ **DO NOT use TODO.md** (deprecated, legacy only)
+**⚠️ DUAL SYSTEM APPROACH:**
 
-**✅ REQUIRED BEHAVIOR:**
-- ✅ **ALWAYS consult Notion** before starting any work
-- ✅ **ALWAYS update Notion** when starting/completing tasks
-- ✅ **ALWAYS link commits** to Notion task IDs
-- ✅ **ALWAYS add completion notes** in Notion
-- ✅ **ONLY work on tasks** that exist in Notion backlog
+**Notion (Team Source of Truth):**
+- ✅ Official task backlog for entire team
+- ✅ Project status and metrics
+- ✅ Department Kanban boards
+- ✅ Sprint/phase planning
+- ✅ Team collaboration and updates
+- ✅ Stakeholder visibility
 
-**Why Notion Only?**
-- Single source of truth for entire team
-- Visual Kanban/Scrum boards by department
-- Better collaboration and transparency
-- Proper sprint/phase planning with dependencies
-- Professional project management (not internal tool)
-- Accessible to non-technical stakeholders
+**TaskMaster (Claude's Planning Tool):**
+- ✅ Used by Claude for **work breakdown** when planning
+- ✅ Creating execution map for complex tasks
+- ✅ Tracking implementation steps during execution
+- ✅ Temporary task decomposition
+- ❌ NOT for official team tracking
+- ❌ NOT a replacement for Notion
+
+**Workflow Integration:**
+
+1. **Planning Phase (Use TaskMaster):**
+   - Read task from Notion
+   - Use TaskCreate to break down into subtasks
+   - Create implementation roadmap
+   - Organize work steps
+
+2. **Execution Phase (Use Both):**
+   - Update Notion task: Status = In Progress
+   - Work through TaskMaster subtasks
+   - Complete implementation with TDD/DDD
+
+3. **Completion Phase (Update Notion):**
+   - Mark Notion task as Done
+   - Add completion notes to Notion
+   - Link commit to Notion task
+   - TaskMaster tasks can be cleared
+
+**Example:**
+
+**Notion Task:**
+```
+Task: "Implement JWT blacklist for logout"
+Status: Pending → In Progress (when starting)
+Acceptance Criteria: [...]
+```
+
+**Claude creates TaskMaster breakdown:**
+```
+TaskCreate:
+1. Write failing tests for blacklist (TDD - Red)
+2. Implement Redis blacklist service
+3. Add logout endpoint handler
+4. Add middleware to check blacklist
+5. Refactor and optimize (TDD - Green/Refactor)
+6. Update API docs in Notion
+7. Update Notion task to Done
+```
+
+**Result:**
+- Notion shows: "Task completed ✅"
+- Notion has: Completion notes + commit link
+- Team sees: Progress in official boards
+- TaskMaster: Can be cleared (temporary)
+
+**Why Dual System?**
+- **Notion:** Official team collaboration + stakeholder visibility
+- **TaskMaster:** Claude's internal planning + execution tracking
+- Best of both: Professional PM + AI execution assistance
+
+**✅ ALLOWED:**
+- ✅ Use TaskCreate to break down complex Notion tasks
+- ✅ Use TaskUpdate to track implementation progress
+- ✅ Use TaskList to see current work breakdown
+- ✅ Clear TaskMaster tasks after Notion update
+
+**❌ FORBIDDEN:**
+- ❌ Create tasks in TaskMaster that don't exist in Notion
+- ❌ Mark Notion task as Done without updating Notion
+- ❌ Use TaskMaster as only tracking system
+- ❌ Skip Notion updates when completing work
+- ❌ Use TODO.md for new tasks (deprecated)
 
 **Workspace:** https://www.notion.so/IndustryDB-Business-Data-SaaS-Platform-2faae93b443d81b4aa83e5a01fe900d4
 
