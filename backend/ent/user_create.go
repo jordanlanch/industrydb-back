@@ -312,6 +312,34 @@ func (_c *UserCreate) SetNillableUpdatedAt(v *time.Time) *UserCreate {
 	return _c
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (_c *UserCreate) SetDeletedAt(v time.Time) *UserCreate {
+	_c.mutation.SetDeletedAt(v)
+	return _c
+}
+
+// SetNillableDeletedAt sets the "deleted_at" field if the given value is not nil.
+func (_c *UserCreate) SetNillableDeletedAt(v *time.Time) *UserCreate {
+	if v != nil {
+		_c.SetDeletedAt(*v)
+	}
+	return _c
+}
+
+// SetOnboardingStep sets the "onboarding_step" field.
+func (_c *UserCreate) SetOnboardingStep(v int) *UserCreate {
+	_c.mutation.SetOnboardingStep(v)
+	return _c
+}
+
+// SetNillableOnboardingStep sets the "onboarding_step" field if the given value is not nil.
+func (_c *UserCreate) SetNillableOnboardingStep(v *int) *UserCreate {
+	if v != nil {
+		_c.SetOnboardingStep(*v)
+	}
+	return _c
+}
+
 // AddSubscriptionIDs adds the "subscriptions" edge to the Subscription entity by IDs.
 func (_c *UserCreate) AddSubscriptionIDs(ids ...int) *UserCreate {
 	_c.mutation.AddSubscriptionIDs(ids...)
@@ -507,6 +535,10 @@ func (_c *UserCreate) defaults() {
 		v := user.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.OnboardingStep(); !ok {
+		v := user.DefaultOnboardingStep
+		_c.mutation.SetOnboardingStep(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -584,6 +616,14 @@ func (_c *UserCreate) check() error {
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "User.updated_at"`)}
+	}
+	if _, ok := _c.mutation.OnboardingStep(); !ok {
+		return &ValidationError{Name: "onboarding_step", err: errors.New(`ent: missing required field "User.onboarding_step"`)}
+	}
+	if v, ok := _c.mutation.OnboardingStep(); ok {
+		if err := user.OnboardingStepValidator(v); err != nil {
+			return &ValidationError{Name: "onboarding_step", err: fmt.Errorf(`ent: validator failed for field "User.onboarding_step": %w`, err)}
+		}
 	}
 	return nil
 }
@@ -698,6 +738,14 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := _c.mutation.DeletedAt(); ok {
+		_spec.SetField(user.FieldDeletedAt, field.TypeTime, value)
+		_node.DeletedAt = &value
+	}
+	if value, ok := _c.mutation.OnboardingStep(); ok {
+		_spec.SetField(user.FieldOnboardingStep, field.TypeInt, value)
+		_node.OnboardingStep = value
 	}
 	if nodes := _c.mutation.SubscriptionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

@@ -59,6 +59,10 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// FieldDeletedAt holds the string denoting the deleted_at field in the database.
+	FieldDeletedAt = "deleted_at"
+	// FieldOnboardingStep holds the string denoting the onboarding_step field in the database.
+	FieldOnboardingStep = "onboarding_step"
 	// EdgeSubscriptions holds the string denoting the subscriptions edge name in mutations.
 	EdgeSubscriptions = "subscriptions"
 	// EdgeExports holds the string denoting the exports edge name in mutations.
@@ -160,6 +164,8 @@ var Columns = []string{
 	FieldStripeCustomerID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
+	FieldDeletedAt,
+	FieldOnboardingStep,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -201,6 +207,10 @@ var (
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
+	// DefaultOnboardingStep holds the default value on creation for the "onboarding_step" field.
+	DefaultOnboardingStep int
+	// OnboardingStepValidator is a validator for the "onboarding_step" field. It is called by the builders before save.
+	OnboardingStepValidator func(int) error
 )
 
 // SubscriptionTier defines the type for the "subscription_tier" enum field.
@@ -374,6 +384,16 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByDeletedAt orders the results by the deleted_at field.
+func ByDeletedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDeletedAt, opts...).ToFunc()
+}
+
+// ByOnboardingStep orders the results by the onboarding_step field.
+func ByOnboardingStep(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOnboardingStep, opts...).ToFunc()
 }
 
 // BySubscriptionsCount orders the results by subscriptions count.

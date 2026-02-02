@@ -152,13 +152,15 @@ func (h *AuthHandler) Register(c echo.Context) error {
 	return c.JSON(http.StatusCreated, models.AuthResponse{
 		Token: token,
 		User: &models.UserInfo{
-			ID:               newUser.ID,
-			Email:            newUser.Email,
-			Name:             newUser.Name,
-			SubscriptionTier: string(newUser.SubscriptionTier),
-			UsageCount:       newUser.UsageCount,
-			UsageLimit:       newUser.UsageLimit,
-			EmailVerified:    newUser.EmailVerified,
+			ID:                  newUser.ID,
+			Email:               newUser.Email,
+			Name:                newUser.Name,
+			SubscriptionTier:    string(newUser.SubscriptionTier),
+			UsageCount:          newUser.UsageCount,
+			UsageLimit:          newUser.UsageLimit,
+			EmailVerified:       newUser.EmailVerified,
+			OnboardingCompleted: newUser.OnboardingCompleted,
+			OnboardingStep:      newUser.OnboardingStep,
 		},
 	})
 }
@@ -244,13 +246,15 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	return c.JSON(http.StatusOK, models.AuthResponse{
 		Token: token,
 		User: &models.UserInfo{
-			ID:               u.ID,
-			Email:            u.Email,
-			Name:             u.Name,
-			SubscriptionTier: string(u.SubscriptionTier),
-			UsageCount:       u.UsageCount,
-			UsageLimit:       u.UsageLimit,
-			EmailVerified:    u.EmailVerified,
+			ID:                  u.ID,
+			Email:               u.Email,
+			Name:                u.Name,
+			SubscriptionTier:    string(u.SubscriptionTier),
+			UsageCount:          u.UsageCount,
+			UsageLimit:          u.UsageLimit,
+			EmailVerified:       u.EmailVerified,
+			OnboardingCompleted: u.OnboardingCompleted,
+			OnboardingStep:      u.OnboardingStep,
 		},
 	})
 }
@@ -283,13 +287,15 @@ func (h *AuthHandler) Me(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, models.UserInfo{
-		ID:               u.ID,
-		Email:            u.Email,
-		Name:             u.Name,
-		SubscriptionTier: string(u.SubscriptionTier),
-		UsageCount:       u.UsageCount,
-		UsageLimit:       u.UsageLimit,
-		EmailVerified:    u.EmailVerified,
+		ID:                  u.ID,
+		Email:               u.Email,
+		Name:                u.Name,
+		SubscriptionTier:    string(u.SubscriptionTier),
+		UsageCount:          u.UsageCount,
+		UsageLimit:          u.UsageLimit,
+		EmailVerified:       u.EmailVerified,
+		OnboardingCompleted: u.OnboardingCompleted,
+		OnboardingStep:      u.OnboardingStep,
 	})
 }
 

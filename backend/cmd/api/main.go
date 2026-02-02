@@ -239,13 +239,13 @@ func main() {
 		// Login with rate limit: 5 per minute (prevent brute force)
 		authRoutes.POST("/login", authHandler.Login, authRateLimiter.RateLimitMiddleware())
 		// Me endpoint with JWT validation and blacklist check
-		authRoutes.GET("/me", authHandler.Me, custommw.JWTMiddlewareWithBlacklist(cfg.JWTSecret, tokenBlacklist))
+		authRoutes.GET("/me", authHandler.Me, custommw.JWTMiddlewareWithBlacklist(cfg.JWTSecret, tokenBlacklist, db.Ent))
 		// Logout endpoint (revoke token)
-		authRoutes.POST("/logout", authHandler.Logout, custommw.JWTMiddlewareWithBlacklist(cfg.JWTSecret, tokenBlacklist))
+		authRoutes.POST("/logout", authHandler.Logout, custommw.JWTMiddlewareWithBlacklist(cfg.JWTSecret, tokenBlacklist, db.Ent))
 		// Email verification (public)
 		authRoutes.GET("/verify-email/:token", authHandler.VerifyEmail)
 		// Resend verification email (requires JWT)
-		authRoutes.POST("/resend-verification", authHandler.ResendVerificationEmail, custommw.JWTMiddlewareWithBlacklist(cfg.JWTSecret, tokenBlacklist))
+		authRoutes.POST("/resend-verification", authHandler.ResendVerificationEmail, custommw.JWTMiddlewareWithBlacklist(cfg.JWTSecret, tokenBlacklist, db.Ent))
 		// Password reset (public endpoints)
 		authRoutes.POST("/forgot-password", authHandler.ForgotPassword)
 		authRoutes.POST("/reset-password", authHandler.ResetPassword)
@@ -253,7 +253,7 @@ func main() {
 
 	// Protected routes (require JWT with blacklist validation)
 	protected := v1.Group("")
-	protected.Use(custommw.JWTMiddlewareWithBlacklist(cfg.JWTSecret, tokenBlacklist))
+	protected.Use(custommw.JWTMiddlewareWithBlacklist(cfg.JWTSecret, tokenBlacklist, db.Ent))
 	{
 		// Lead routes (require email verification)
 		leadsGroup := protected.Group("/leads")

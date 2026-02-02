@@ -61,6 +61,10 @@ type User struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Last update timestamp
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// Soft delete timestamp for GDPR compliance
+	DeletedAt *time.Time `json:"deleted_at,omitempty"`
+	// Current onboarding wizard step (0-5, 0=not started)
+	OnboardingStep int `json:"onboarding_step,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
 	Edges        UserEdges `json:"edges"`
@@ -169,11 +173,11 @@ func (*User) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case user.FieldEmailVerified, user.FieldOnboardingCompleted, user.FieldTotpEnabled:
 			values[i] = new(sql.NullBool)
-		case user.FieldID, user.FieldUsageCount, user.FieldUsageLimit:
+		case user.FieldID, user.FieldUsageCount, user.FieldUsageLimit, user.FieldOnboardingStep:
 			values[i] = new(sql.NullInt64)
 		case user.FieldEmail, user.FieldPasswordHash, user.FieldName, user.FieldSubscriptionTier, user.FieldRole, user.FieldEmailVerificationToken, user.FieldTotpSecret, user.FieldOauthProvider, user.FieldOauthID, user.FieldStripeCustomerID:
 			values[i] = new(sql.NullString)
-		case user.FieldLastResetAt, user.FieldLastLoginAt, user.FieldEmailVerificationTokenExpiresAt, user.FieldEmailVerifiedAt, user.FieldAcceptedTermsAt, user.FieldCreatedAt, user.FieldUpdatedAt:
+		case user.FieldLastResetAt, user.FieldLastLoginAt, user.FieldEmailVerificationTokenExpiresAt, user.FieldEmailVerifiedAt, user.FieldAcceptedTermsAt, user.FieldCreatedAt, user.FieldUpdatedAt, user.FieldDeletedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -337,6 +341,19 @@ func (_m *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
+		case user.FieldDeletedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field deleted_at", values[i])
+			} else if value.Valid {
+				_m.DeletedAt = new(time.Time)
+				*_m.DeletedAt = value.Time
+			}
+		case user.FieldOnboardingStep:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field onboarding_step", values[i])
+			} else if value.Valid {
+				_m.OnboardingStep = int(value.Int64)
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -489,6 +506,14 @@ func (_m *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	if v := _m.DeletedAt; v != nil {
+		builder.WriteString("deleted_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("onboarding_step=")
+	builder.WriteString(fmt.Sprintf("%v", _m.OnboardingStep))
 	builder.WriteByte(')')
 	return builder.String()
 }

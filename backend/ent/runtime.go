@@ -353,4 +353,10 @@ func init() {
 	user.DefaultUpdatedAt = userDescUpdatedAt.Default.(func() time.Time)
 	// user.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	user.UpdateDefaultUpdatedAt = userDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// userDescOnboardingStep is the schema descriptor for onboarding_step field.
+	userDescOnboardingStep := userFields[23].Descriptor()
+	// user.DefaultOnboardingStep holds the default value on creation for the onboarding_step field.
+	user.DefaultOnboardingStep = userDescOnboardingStep.Default.(int)
+	// user.OnboardingStepValidator is a validator for the "onboarding_step" field. It is called by the builders before save.
+	user.OnboardingStepValidator = userDescOnboardingStep.Validators[0].(func(int) error)
 }

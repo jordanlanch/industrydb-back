@@ -102,6 +102,14 @@ func (User) Fields() []ent.Field {
 			Default(time.Now).
 			UpdateDefault(time.Now).
 			Comment("Last update timestamp"),
+		field.Time("deleted_at").
+			Optional().
+			Nillable().
+			Comment("Soft delete timestamp for GDPR compliance"),
+		field.Int("onboarding_step").
+			Default(0).
+			NonNegative().
+			Comment("Current onboarding wizard step (0-5, 0=not started)"),
 	}
 }
 

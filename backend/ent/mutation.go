@@ -10553,6 +10553,9 @@ type UserMutation struct {
 	stripe_customer_id                  *string
 	created_at                          *time.Time
 	updated_at                          *time.Time
+	deleted_at                          *time.Time
+	onboarding_step                     *int
+	addonboarding_step                  *int
 	clearedFields                       map[string]struct{}
 	subscriptions                       map[int]struct{}
 	removedsubscriptions                map[int]struct{}
@@ -11630,6 +11633,111 @@ func (m *UserMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetDeletedAt sets the "deleted_at" field.
+func (m *UserMutation) SetDeletedAt(t time.Time) {
+	m.deleted_at = &t
+}
+
+// DeletedAt returns the value of the "deleted_at" field in the mutation.
+func (m *UserMutation) DeletedAt() (r time.Time, exists bool) {
+	v := m.deleted_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDeletedAt returns the old "deleted_at" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldDeletedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDeletedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDeletedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDeletedAt: %w", err)
+	}
+	return oldValue.DeletedAt, nil
+}
+
+// ClearDeletedAt clears the value of the "deleted_at" field.
+func (m *UserMutation) ClearDeletedAt() {
+	m.deleted_at = nil
+	m.clearedFields[user.FieldDeletedAt] = struct{}{}
+}
+
+// DeletedAtCleared returns if the "deleted_at" field was cleared in this mutation.
+func (m *UserMutation) DeletedAtCleared() bool {
+	_, ok := m.clearedFields[user.FieldDeletedAt]
+	return ok
+}
+
+// ResetDeletedAt resets all changes to the "deleted_at" field.
+func (m *UserMutation) ResetDeletedAt() {
+	m.deleted_at = nil
+	delete(m.clearedFields, user.FieldDeletedAt)
+}
+
+// SetOnboardingStep sets the "onboarding_step" field.
+func (m *UserMutation) SetOnboardingStep(i int) {
+	m.onboarding_step = &i
+	m.addonboarding_step = nil
+}
+
+// OnboardingStep returns the value of the "onboarding_step" field in the mutation.
+func (m *UserMutation) OnboardingStep() (r int, exists bool) {
+	v := m.onboarding_step
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOnboardingStep returns the old "onboarding_step" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldOnboardingStep(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOnboardingStep is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOnboardingStep requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOnboardingStep: %w", err)
+	}
+	return oldValue.OnboardingStep, nil
+}
+
+// AddOnboardingStep adds i to the "onboarding_step" field.
+func (m *UserMutation) AddOnboardingStep(i int) {
+	if m.addonboarding_step != nil {
+		*m.addonboarding_step += i
+	} else {
+		m.addonboarding_step = &i
+	}
+}
+
+// AddedOnboardingStep returns the value that was added to the "onboarding_step" field in this mutation.
+func (m *UserMutation) AddedOnboardingStep() (r int, exists bool) {
+	v := m.addonboarding_step
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetOnboardingStep resets all changes to the "onboarding_step" field.
+func (m *UserMutation) ResetOnboardingStep() {
+	m.onboarding_step = nil
+	m.addonboarding_step = nil
+}
+
 // AddSubscriptionIDs adds the "subscriptions" edge to the Subscription entity by ids.
 func (m *UserMutation) AddSubscriptionIDs(ids ...int) {
 	if m.subscriptions == nil {
@@ -12096,7 +12204,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 22)
+	fields := make([]string, 0, 24)
 	if m.email != nil {
 		fields = append(fields, user.FieldEmail)
 	}
@@ -12163,6 +12271,12 @@ func (m *UserMutation) Fields() []string {
 	if m.updated_at != nil {
 		fields = append(fields, user.FieldUpdatedAt)
 	}
+	if m.deleted_at != nil {
+		fields = append(fields, user.FieldDeletedAt)
+	}
+	if m.onboarding_step != nil {
+		fields = append(fields, user.FieldOnboardingStep)
+	}
 	return fields
 }
 
@@ -12215,6 +12329,10 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case user.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case user.FieldDeletedAt:
+		return m.DeletedAt()
+	case user.FieldOnboardingStep:
+		return m.OnboardingStep()
 	}
 	return nil, false
 }
@@ -12268,6 +12386,10 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldCreatedAt(ctx)
 	case user.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case user.FieldDeletedAt:
+		return m.OldDeletedAt(ctx)
+	case user.FieldOnboardingStep:
+		return m.OldOnboardingStep(ctx)
 	}
 	return nil, fmt.Errorf("unknown User field %s", name)
 }
@@ -12431,6 +12553,20 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case user.FieldDeletedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDeletedAt(v)
+		return nil
+	case user.FieldOnboardingStep:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOnboardingStep(v)
+		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
 }
@@ -12445,6 +12581,9 @@ func (m *UserMutation) AddedFields() []string {
 	if m.addusage_limit != nil {
 		fields = append(fields, user.FieldUsageLimit)
 	}
+	if m.addonboarding_step != nil {
+		fields = append(fields, user.FieldOnboardingStep)
+	}
 	return fields
 }
 
@@ -12457,6 +12596,8 @@ func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedUsageCount()
 	case user.FieldUsageLimit:
 		return m.AddedUsageLimit()
+	case user.FieldOnboardingStep:
+		return m.AddedOnboardingStep()
 	}
 	return nil, false
 }
@@ -12479,6 +12620,13 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddUsageLimit(v)
+		return nil
+	case user.FieldOnboardingStep:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddOnboardingStep(v)
 		return nil
 	}
 	return fmt.Errorf("unknown User numeric field %s", name)
@@ -12514,6 +12662,9 @@ func (m *UserMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(user.FieldStripeCustomerID) {
 		fields = append(fields, user.FieldStripeCustomerID)
+	}
+	if m.FieldCleared(user.FieldDeletedAt) {
+		fields = append(fields, user.FieldDeletedAt)
 	}
 	return fields
 }
@@ -12555,6 +12706,9 @@ func (m *UserMutation) ClearField(name string) error {
 		return nil
 	case user.FieldStripeCustomerID:
 		m.ClearStripeCustomerID()
+		return nil
+	case user.FieldDeletedAt:
+		m.ClearDeletedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown User nullable field %s", name)
@@ -12629,6 +12783,12 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case user.FieldDeletedAt:
+		m.ResetDeletedAt()
+		return nil
+	case user.FieldOnboardingStep:
+		m.ResetOnboardingStep()
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)

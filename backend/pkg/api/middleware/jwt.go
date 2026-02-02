@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jordanlanch/industrydb/ent"
 	"github.com/jordanlanch/industrydb/pkg/auth"
 	"github.com/jordanlanch/industrydb/pkg/models"
 	"github.com/labstack/echo/v4"
@@ -13,11 +14,11 @@ import (
 
 // JWTMiddleware creates a JWT authentication middleware
 func JWTMiddleware(secret string) echo.MiddlewareFunc {
-	return JWTMiddlewareWithBlacklist(secret, nil)
+	return JWTMiddlewareWithBlacklist(secret, nil, nil)
 }
 
 // JWTMiddlewareWithBlacklist creates a JWT authentication middleware with blacklist support
-func JWTMiddlewareWithBlacklist(secret string, blacklist *auth.TokenBlacklist) echo.MiddlewareFunc {
+func JWTMiddlewareWithBlacklist(secret string, blacklist *auth.TokenBlacklist, db *ent.Client) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			var token string
@@ -55,6 +56,25 @@ func JWTMiddlewareWithBlacklist(secret string, blacklist *auth.TokenBlacklist) e
 				})
 			}
 
+			// Check if user account is deleted (soft delete check)
+			if db != nil {
+				user, err := db.User.Get(ctx, claims.UserID)
+				if err != nil {
+					return c.JSON(http.StatusUnauthorized, models.ErrorResponse{
+						Error:   "user_not_found",
+						Message: "User account not found",
+					})
+				}
+
+				// Reject deleted users
+				if user.DeletedAt != nil {
+					return c.JSON(http.StatusUnauthorized, models.ErrorResponse{
+						Error:   "account_deleted",
+						Message: "This account has been deleted",
+					})
+				}
+			}
+
 			// Store token in context for potential logout
 			c.Set("token", token)
 
@@ -70,7 +90,7 @@ func JWTMiddlewareWithBlacklist(secret string, blacklist *auth.TokenBlacklist) e
 
 // JWTFromQueryOrHeader creates a JWT middleware that accepts token from query parameter or header
 // This is useful for download links where headers cannot be easily set
-func JWTFromQueryOrHeader(secret string, blacklist *auth.TokenBlacklist) echo.MiddlewareFunc {
+func JWTFromQueryOrHeader(secret string, blacklist *auth.TokenBlacklist, db *ent.Client) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			var token string
@@ -108,6 +128,25 @@ func JWTFromQueryOrHeader(secret string, blacklist *auth.TokenBlacklist) echo.Mi
 					Error:   "invalid_token",
 					Message: err.Error(),
 				})
+			}
+
+			// Check if user account is deleted (soft delete check)
+			if db != nil {
+				user, err := db.User.Get(ctx, claims.UserID)
+				if err != nil {
+					return c.JSON(http.StatusUnauthorized, models.ErrorResponse{
+						Error:   "user_not_found",
+						Message: "User account not found",
+					})
+				}
+
+				// Reject deleted users
+				if user.DeletedAt != nil {
+					return c.JSON(http.StatusUnauthorized, models.ErrorResponse{
+						Error:   "account_deleted",
+						Message: "This account has been deleted",
+					})
+				}
 			}
 
 			// Store token in context for potential logout

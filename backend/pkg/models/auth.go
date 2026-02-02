@@ -21,13 +21,15 @@ type AuthResponse struct {
 
 // UserInfo represents user information in responses
 type UserInfo struct {
-	ID               int    `json:"id"`
-	Email            string `json:"email"`
-	Name             string `json:"name"`
-	SubscriptionTier string `json:"subscription_tier"`
-	UsageCount       int    `json:"usage_count"`
-	UsageLimit       int    `json:"usage_limit"`
-	EmailVerified    bool   `json:"email_verified"`
+	ID                  int    `json:"id"`
+	Email               string `json:"email"`
+	Name                string `json:"name"`
+	SubscriptionTier    string `json:"subscription_tier"`
+	UsageCount          int    `json:"usage_count"`
+	UsageLimit          int    `json:"usage_limit"`
+	EmailVerified       bool   `json:"email_verified"`
+	OnboardingCompleted bool   `json:"onboarding_completed"`
+	OnboardingStep      int    `json:"onboarding_step"`
 }
 
 // ErrorResponse represents an error response
