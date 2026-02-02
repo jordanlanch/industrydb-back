@@ -290,12 +290,9 @@ func main() {
 			exportsGroup.POST("", exportHandler.Create)
 			exportsGroup.GET("", exportHandler.List)
 			exportsGroup.GET("/:id", exportHandler.Get)
-			// Download route uses special middleware to accept token from query parameter
-			// This allows direct download links without custom headers
+			// Download route now requires Authorization header (more secure than query parameter)
+			exportsGroup.GET("/:id/download", exportHandler.Download)
 		}
-
-		// Export download route (accepts token from query parameter or header)
-		v1.GET("/exports/:id/download", exportHandler.Download, custommw.JWTFromQueryOrHeader(cfg.JWTSecret, tokenBlacklist))
 
 		// Billing routes (checkout requires email verification)
 		billingGroup := protected.Group("/billing")
