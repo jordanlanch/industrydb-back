@@ -255,8 +255,9 @@ func main() {
 	protected := v1.Group("")
 	protected.Use(custommw.JWTMiddlewareWithBlacklist(cfg.JWTSecret, tokenBlacklist))
 	{
-		// Lead routes
+		// Lead routes (require email verification)
 		leadsGroup := protected.Group("/leads")
+		leadsGroup.Use(custommiddleware.RequireEmailVerified(db.Ent))
 		{
 			leadsGroup.GET("", leadHandler.Search)
 			leadsGroup.GET("/preview", leadHandler.Preview) // Must be before /:id to avoid route conflict
@@ -282,8 +283,9 @@ func main() {
 			analyticsGroup.GET("/breakdown", analyticsHandler.GetActionBreakdown)
 		}
 
-		// Export routes
+		// Export routes (require email verification)
 		exportsGroup := protected.Group("/exports")
+		exportsGroup.Use(custommiddleware.RequireEmailVerified(db.Ent))
 		{
 			exportsGroup.POST("", exportHandler.Create)
 			exportsGroup.GET("", exportHandler.List)
@@ -295,10 +297,11 @@ func main() {
 		// Export download route (accepts token from query parameter or header)
 		v1.GET("/exports/:id/download", exportHandler.Download, custommw.JWTFromQueryOrHeader(cfg.JWTSecret, tokenBlacklist))
 
-		// Billing routes
+		// Billing routes (checkout requires email verification)
 		billingGroup := protected.Group("/billing")
 		{
-			billingGroup.POST("/checkout", billingHandler.CreateCheckout)
+			// Checkout requires email verification to prevent unverified users from upgrading
+			billingGroup.POST("/checkout", billingHandler.CreateCheckout, custommiddleware.RequireEmailVerified(db.Ent))
 			billingGroup.POST("/portal", billingHandler.CreatePortalSession)
 		}
 
