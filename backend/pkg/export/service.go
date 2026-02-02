@@ -41,7 +41,8 @@ func NewService(db *ent.Client, leadService *leads.Service, analyticsService *an
 }
 
 // CreateExport creates a new export with the given filters
-func (s *Service) CreateExport(ctx context.Context, userID int, req models.ExportRequest) (*models.ExportResponse, error) {
+// organizationID is optional - pass nil for personal exports
+func (s *Service) CreateExport(ctx context.Context, userID int, organizationID *int, req models.ExportRequest) (*models.ExportResponse, error) {
 	// Validate format
 	if req.Format != "csv" && req.Format != "excel" {
 		return nil, fmt.Errorf("invalid format: must be csv or excel")
@@ -66,14 +67,20 @@ func (s *Service) CreateExport(ctx context.Context, userID int, req models.Expor
 	}
 
 	// Create export record
-	exp, err := s.db.Export.Create().
+	creator := s.db.Export.Create().
 		SetUserID(userID).
 		SetFormat(export.Format(req.Format)).
 		SetFiltersApplied(filtersMap).
 		SetLeadCount(0).
 		SetStatus(export.StatusPending).
-		SetExpiresAt(time.Now().Add(24 * time.Hour)).
-		Save(ctx)
+		SetExpiresAt(time.Now().Add(24 * time.Hour))
+
+	// Set organization_id if provided
+	if organizationID != nil {
+		creator = creator.SetOrganizationID(*organizationID)
+	}
+
+	exp, err := creator.Save(ctx)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create export: %w", err)
@@ -284,8 +291,9 @@ func (s *Service) GetExport(ctx context.Context, userID, exportID int) (*models.
 	return s.toExportResponse(exp), nil
 }
 
-// ListExports lists all exports for a user
-func (s *Service) ListExports(ctx context.Context, userID int, page, limit int) (*models.ExportListResponse, error) {
+// ListExports lists all exports for a user or organization
+// organizationID is optional - pass nil to list personal exports
+func (s *Service) ListExports(ctx context.Context, userID int, organizationID *int, page, limit int) (*models.ExportListResponse, error) {
 	if page == 0 {
 		page = 1
 	}
@@ -296,10 +304,19 @@ func (s *Service) ListExports(ctx context.Context, userID int, page, limit int) 
 		limit = 100
 	}
 
+	// Build query with user_id filter
+	query := s.db.Export.Query().Where(export.UserIDEQ(userID))
+
+	// Add organization filter if provided
+	if organizationID != nil {
+		query = query.Where(export.OrganizationIDEQ(*organizationID))
+	} else {
+		// Only show personal exports (no organization)
+		query = query.Where(export.OrganizationIDIsNil())
+	}
+
 	// Get total count
-	total, err := s.db.Export.Query().
-		Where(export.UserIDEQ(userID)).
-		Count(ctx)
+	total, err := query.Count(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to count exports: %w", err)
 	}
@@ -308,8 +325,7 @@ func (s *Service) ListExports(ctx context.Context, userID int, page, limit int) 
 	offset := (page - 1) * limit
 	totalPages := (total + limit - 1) / limit
 
-	exports, err := s.db.Export.Query().
-		Where(export.UserIDEQ(userID)).
+	exports, err := query.
 		Order(ent.Desc(export.FieldCreatedAt)).
 		Limit(limit).
 		Offset(offset).

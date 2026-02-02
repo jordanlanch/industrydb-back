@@ -63,8 +63,14 @@ func (h *ExportHandler) Create(c echo.Context) error {
 		return errors.ValidationError(c, err)
 	}
 
+	// Check if user is acting as part of an organization
+	var organizationID *int
+	if orgID, hasOrgContext := c.Get("organization_id").(int); hasOrgContext {
+		organizationID = &orgID
+	}
+
 	// Create export
-	exportResp, err := h.exportService.CreateExport(c.Request().Context(), userID, req)
+	exportResp, err := h.exportService.CreateExport(c.Request().Context(), userID, organizationID, req)
 	if err != nil {
 		return errors.InternalError(c, err)
 	}
@@ -153,8 +159,14 @@ func (h *ExportHandler) List(c echo.Context) error {
 		}
 	}
 
+	// Check if user is acting as part of an organization
+	var organizationID *int
+	if orgID, hasOrgContext := c.Get("organization_id").(int); hasOrgContext {
+		organizationID = &orgID
+	}
+
 	// List exports
-	exports, err := h.exportService.ListExports(c.Request().Context(), userID, page, limit)
+	exports, err := h.exportService.ListExports(c.Request().Context(), userID, organizationID, page, limit)
 	if err != nil {
 		return errors.InternalError(c, err)
 	}
