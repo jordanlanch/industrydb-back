@@ -1014,6 +1014,27 @@ claude --dangerously-skip-permissions -p "Execute /workflows:feature-dev 'Add us
 
 ## API Endpoints
 
+### Health & Monitoring
+```
+GET  /api/v1/health           # Health check endpoint
+GET  /api/v1/ping             # Simple ping endpoint
+```
+
+**Health Check Response:**
+```json
+{
+  "status": "ok",
+  "database": "healthy",
+  "redis": "healthy",
+  "version": "1.0.0"
+}
+```
+
+- Returns **200 OK** if all services are healthy
+- Returns **503 Service Unavailable** if any service is unhealthy
+- Used by monitoring services (Prometheus, Datadog, load balancers)
+- 2-second timeout for dependency checks
+
 ### Authentication
 ```
 POST /api/v1/auth/register    # Create account
