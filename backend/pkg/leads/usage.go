@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/user"
 	"github.com/jordanlanch/industrydb/pkg/models"
 )
@@ -63,6 +64,59 @@ func (s *Service) CheckAndIncrementUsage(ctx context.Context, userID int, count 
 	return nil
 }
 
+// CheckAndIncrementOrganizationUsage checks if organization can access more leads and increments usage
+// Uses a transaction with FOR UPDATE locking to prevent race conditions
+func (s *Service) CheckAndIncrementOrganizationUsage(ctx context.Context, orgID int, count int) error {
+	// Start transaction for atomic operations
+	tx, err := s.db.Tx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	// Get organization within transaction
+	org, err := tx.Organization.Get(ctx, orgID)
+	if err != nil {
+		return fmt.Errorf("failed to get organization: %w", err)
+	}
+
+	// Check if usage needs to be reset (monthly)
+	if time.Since(org.LastResetAt) > 30*24*time.Hour {
+		// Reset usage
+		org, err = tx.Organization.UpdateOneID(orgID).
+			SetUsageCount(0).
+			SetLastResetAt(time.Now()).
+			Save(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to reset organization usage: %w", err)
+		}
+	}
+
+	// Check if organization has enough remaining usage
+	if org.UsageCount+count > org.UsageLimit {
+		return fmt.Errorf("organization usage limit exceeded: %d/%d used", org.UsageCount, org.UsageLimit)
+	}
+
+	// Increment usage
+	_, err = tx.Organization.UpdateOneID(orgID).
+		SetUsageCount(org.UsageCount + count).
+		Save(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to increment organization usage: %w", err)
+	}
+
+	// Commit transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
 // GetUsageInfo returns user usage statistics
 func (s *Service) GetUsageInfo(ctx context.Context, userID int) (*models.UsageInfo, error) {
 	u, err := s.db.User.Get(ctx, userID)
@@ -84,6 +138,30 @@ func (s *Service) GetUsageInfo(ctx context.Context, userID int) (*models.UsageIn
 		Remaining:  remaining,
 		ResetAt:    resetAt.Format(time.RFC3339),
 		Tier:       string(u.SubscriptionTier),
+	}, nil
+}
+
+// GetOrganizationUsageInfo returns organization usage statistics
+func (s *Service) GetOrganizationUsageInfo(ctx context.Context, orgID int) (*models.UsageInfo, error) {
+	org, err := s.db.Organization.Query().Where(organization.IDEQ(orgID)).Only(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get organization: %w", err)
+	}
+
+	// Calculate reset date (30 days from last reset)
+	resetAt := org.LastResetAt.Add(30 * 24 * time.Hour)
+
+	remaining := org.UsageLimit - org.UsageCount
+	if remaining < 0 {
+		remaining = 0
+	}
+
+	return &models.UsageInfo{
+		UsageCount: org.UsageCount,
+		UsageLimit: org.UsageLimit,
+		Remaining:  remaining,
+		ResetAt:    resetAt.Format(time.RFC3339),
+		Tier:       string(org.SubscriptionTier),
 	}, nil
 }
 

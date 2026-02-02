@@ -160,8 +160,18 @@ func (h *LeadHandler) Search(c echo.Context) error {
 
 	// Only charge credit if this is a NEW search (not pagination)
 	if !isPagination {
-		if err := h.leadService.CheckAndIncrementUsage(c.Request().Context(), userID, 1); err != nil {
-			return errors.ForbiddenError(c, "usage_limit_exceeded")
+		// Check if user is acting as part of an organization
+		orgID, hasOrgContext := c.Get("organization_id").(int)
+		if hasOrgContext {
+			// Use organization usage limits
+			if err := h.leadService.CheckAndIncrementOrganizationUsage(c.Request().Context(), orgID, 1); err != nil {
+				return errors.ForbiddenError(c, "usage_limit_exceeded")
+			}
+		} else {
+			// Use personal usage limits
+			if err := h.leadService.CheckAndIncrementUsage(c.Request().Context(), userID, 1); err != nil {
+				return errors.ForbiddenError(c, "usage_limit_exceeded")
+			}
 		}
 		// Create session for this search
 		createSession(sessionKey, userID)
@@ -221,8 +231,18 @@ func (h *LeadHandler) GetByID(c echo.Context) error {
 	}
 
 	// Check usage before retrieving
-	if err := h.leadService.CheckAndIncrementUsage(c.Request().Context(), userID, 1); err != nil {
-		return errors.ForbiddenError(c, "usage_limit_exceeded")
+	// Check if user is acting as part of an organization
+	orgID, hasOrgContext := c.Get("organization_id").(int)
+	if hasOrgContext {
+		// Use organization usage limits
+		if err := h.leadService.CheckAndIncrementOrganizationUsage(c.Request().Context(), orgID, 1); err != nil {
+			return errors.ForbiddenError(c, "usage_limit_exceeded")
+		}
+	} else {
+		// Use personal usage limits
+		if err := h.leadService.CheckAndIncrementUsage(c.Request().Context(), userID, 1); err != nil {
+			return errors.ForbiddenError(c, "usage_limit_exceeded")
+		}
 	}
 
 	// Get lead
