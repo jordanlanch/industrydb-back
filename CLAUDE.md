@@ -1035,6 +1035,64 @@ GET  /api/v1/ping             # Simple ping endpoint
 - Used by monitoring services (Prometheus, Datadog, load balancers)
 - 2-second timeout for dependency checks
 
+### API Versioning
+**Implemented:** 2026-02-03
+
+All API endpoints are versioned using URL-based versioning (`/api/v1/*`). Version information is included in response headers.
+
+**Version Headers:**
+```
+X-API-Version: 1.0.0              # Current API version
+X-API-Latest-Version: 1.0.0       # Latest available version
+```
+
+**Deprecation Headers** (when version is deprecated):
+```
+Deprecation: true                           # Indicates deprecated API
+X-API-Deprecation-Date: 2026-06-01        # When version was deprecated
+X-API-Sunset-Date: 2026-12-01             # When version will be removed
+Sunset: 2026-12-01                         # RFC 8594 sunset date
+X-API-Deprecation-Notice: Migration guide  # Human-readable notice
+```
+
+**Version Info Endpoint:**
+```
+GET /api/v1/version
+```
+
+**Response:**
+```json
+{
+  "version": "1.0.0",
+  "latest_version": "1.0.0",
+  "deprecated": false
+}
+```
+
+**Response (deprecated version):**
+```json
+{
+  "version": "1.0.0",
+  "latest_version": "2.0.0",
+  "deprecated": true,
+  "deprecation_date": "2026-06-01",
+  "sunset_date": "2026-12-01",
+  "deprecation_notice": "Please migrate to v2. See docs at https://docs.industrydb.io/migration"
+}
+```
+
+**Implementation:**
+- Middleware: `backend/pkg/middleware/api_version.go`
+- Applied to all `/api/v1` routes
+- Non-breaking: Version headers added to all responses
+- Future-proof: Easy to add v2, v3, etc.
+
+**Versioning Strategy:**
+- **URL-based versioning** for major changes (`/api/v2`)
+- **Header-based versioning** for minor changes (content negotiation)
+- **Deprecation period**: 6 months minimum before sunset
+- **Sunset notification**: 6 months advance notice before removal
+
 ### Authentication
 ```
 POST /api/v1/auth/register    # Create account

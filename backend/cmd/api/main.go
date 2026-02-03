@@ -169,8 +169,14 @@ func main() {
 	// Swagger documentation (public)
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
-	// API v1 routes group
+	// API v1 routes group with versioning middleware
 	v1 := e.Group("/api/v1")
+	v1.Use(custommiddleware.APIVersionMiddleware(custommiddleware.CurrentAPIVersion))
+
+	// Version info endpoint (public)
+	v1.GET("/version", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, custommiddleware.VersionInfo(custommiddleware.CurrentAPIVersion))
+	})
 
 	// Ping endpoint (public)
 	v1.GET("/ping", func(c echo.Context) error {
