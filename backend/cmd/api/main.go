@@ -358,6 +358,7 @@ func main() {
 	leadScoringHandler := handlers.NewLeadScoringHandler(db.Ent)
 	territoryHandler := handlers.NewTerritoryHandler(db.Ent)
 	emailSequenceHandler := handlers.NewEmailSequenceHandler(db.Ent)
+	funnelHandler := handlers.NewFunnelHandler(db.Ent)
 	log.Printf("✅ Webhook and batch handlers initialized")
 
 	// Backup handler (admin only, if enabled)
@@ -496,6 +497,16 @@ func main() {
 			analyticsGroup.GET("/daily", analyticsHandler.GetDailyUsage)
 			analyticsGroup.GET("/summary", analyticsHandler.GetUsageSummary)
 			analyticsGroup.GET("/breakdown", analyticsHandler.GetActionBreakdown)
+		}
+
+		// Funnel analytics routes (admin only)
+		funnelGroup := protected.Group("/analytics/funnel")
+		funnelGroup.Use(custommiddleware.RequireAdmin(db.Ent))
+		{
+			funnelGroup.GET("/metrics", funnelHandler.GetFunnelMetrics)
+			funnelGroup.GET("/details", funnelHandler.GetFunnelDetails)
+			funnelGroup.GET("/dropoff", funnelHandler.GetDropoffAnalysis)
+			funnelGroup.GET("/time-to-conversion", funnelHandler.GetTimeToConversion)
 		}
 
 		// Export routes (require email verification)
