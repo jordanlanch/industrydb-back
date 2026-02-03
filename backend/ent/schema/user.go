@@ -165,6 +165,8 @@ func (User) Edges() []ent.Edge {
 			Comment("Conversions attributed to this user"),
 		edge.To("sms_campaigns", SMSCampaign.Type).
 			Comment("SMS campaigns created by this user"),
+		edge.To("call_logs", CallLog.Type).
+			Comment("Call logs for this user"),
 	}
 }
 

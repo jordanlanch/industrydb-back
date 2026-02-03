@@ -111,6 +111,8 @@ const (
 	EdgeAffiliateConversions = "affiliate_conversions"
 	// EdgeSmsCampaigns holds the string denoting the sms_campaigns edge name in mutations.
 	EdgeSmsCampaigns = "sms_campaigns"
+	// EdgeCallLogs holds the string denoting the call_logs edge name in mutations.
+	EdgeCallLogs = "call_logs"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// SubscriptionsTable is the table that holds the subscriptions relation/edge.
@@ -281,6 +283,13 @@ const (
 	SmsCampaignsInverseTable = "sms_campaigns"
 	// SmsCampaignsColumn is the table column denoting the sms_campaigns relation/edge.
 	SmsCampaignsColumn = "user_id"
+	// CallLogsTable is the table that holds the call_logs relation/edge.
+	CallLogsTable = "call_logs"
+	// CallLogsInverseTable is the table name for the CallLog entity.
+	// It exists in this package in order to avoid circular dependency with the "calllog" package.
+	CallLogsInverseTable = "call_logs"
+	// CallLogsColumn is the table column denoting the call_logs relation/edge.
+	CallLogsColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -868,6 +877,20 @@ func BySmsCampaigns(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newSmsCampaignsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByCallLogsCount orders the results by call_logs count.
+func ByCallLogsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newCallLogsStep(), opts...)
+	}
+}
+
+// ByCallLogs orders the results by call_logs terms.
+func ByCallLogs(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCallLogsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSubscriptionsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -1034,5 +1057,12 @@ func newSmsCampaignsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(SmsCampaignsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, SmsCampaignsTable, SmsCampaignsColumn),
+	)
+}
+func newCallLogsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CallLogsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, CallLogsTable, CallLogsColumn),
 	)
 }

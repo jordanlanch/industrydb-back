@@ -21,6 +21,9 @@ type AffiliateConversion func(*sql.Selector)
 // AuditLog is the predicate function for auditlog builders.
 type AuditLog func(*sql.Selector)
 
+// CallLog is the predicate function for calllog builders.
+type CallLog func(*sql.Selector)
+
 // EmailSequence is the predicate function for emailsequence builders.
 type EmailSequence func(*sql.Selector)
 

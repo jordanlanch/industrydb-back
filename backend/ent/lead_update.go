@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
+	"github.com/jordanlanch/industrydb/ent/calllog"
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/emailsequencesend"
 	"github.com/jordanlanch/industrydb/ent/lead"
@@ -753,6 +754,21 @@ func (_u *LeadUpdate) AddSmsMessages(v ...*SMSMessage) *LeadUpdate {
 	return _u.AddSmsMessageIDs(ids...)
 }
 
+// AddCallLogIDs adds the "call_logs" edge to the CallLog entity by IDs.
+func (_u *LeadUpdate) AddCallLogIDs(ids ...int) *LeadUpdate {
+	_u.mutation.AddCallLogIDs(ids...)
+	return _u
+}
+
+// AddCallLogs adds the "call_logs" edges to the CallLog entity.
+func (_u *LeadUpdate) AddCallLogs(v ...*CallLog) *LeadUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddCallLogIDs(ids...)
+}
+
 // Mutation returns the LeadMutation object of the builder.
 func (_u *LeadUpdate) Mutation() *LeadMutation {
 	return _u.mutation
@@ -888,6 +904,27 @@ func (_u *LeadUpdate) RemoveSmsMessages(v ...*SMSMessage) *LeadUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveSmsMessageIDs(ids...)
+}
+
+// ClearCallLogs clears all "call_logs" edges to the CallLog entity.
+func (_u *LeadUpdate) ClearCallLogs() *LeadUpdate {
+	_u.mutation.ClearCallLogs()
+	return _u
+}
+
+// RemoveCallLogIDs removes the "call_logs" edge to CallLog entities by IDs.
+func (_u *LeadUpdate) RemoveCallLogIDs(ids ...int) *LeadUpdate {
+	_u.mutation.RemoveCallLogIDs(ids...)
+	return _u
+}
+
+// RemoveCallLogs removes "call_logs" edges to CallLog entities.
+func (_u *LeadUpdate) RemoveCallLogs(v ...*CallLog) *LeadUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveCallLogIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -1453,6 +1490,51 @@ func (_u *LeadUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(smsmessage.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.CallLogsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.CallLogsTable,
+			Columns: []string{lead.CallLogsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(calllog.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedCallLogsIDs(); len(nodes) > 0 && !_u.mutation.CallLogsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.CallLogsTable,
+			Columns: []string{lead.CallLogsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(calllog.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CallLogsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.CallLogsTable,
+			Columns: []string{lead.CallLogsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(calllog.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -2197,6 +2279,21 @@ func (_u *LeadUpdateOne) AddSmsMessages(v ...*SMSMessage) *LeadUpdateOne {
 	return _u.AddSmsMessageIDs(ids...)
 }
 
+// AddCallLogIDs adds the "call_logs" edge to the CallLog entity by IDs.
+func (_u *LeadUpdateOne) AddCallLogIDs(ids ...int) *LeadUpdateOne {
+	_u.mutation.AddCallLogIDs(ids...)
+	return _u
+}
+
+// AddCallLogs adds the "call_logs" edges to the CallLog entity.
+func (_u *LeadUpdateOne) AddCallLogs(v ...*CallLog) *LeadUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddCallLogIDs(ids...)
+}
+
 // Mutation returns the LeadMutation object of the builder.
 func (_u *LeadUpdateOne) Mutation() *LeadMutation {
 	return _u.mutation
@@ -2332,6 +2429,27 @@ func (_u *LeadUpdateOne) RemoveSmsMessages(v ...*SMSMessage) *LeadUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveSmsMessageIDs(ids...)
+}
+
+// ClearCallLogs clears all "call_logs" edges to the CallLog entity.
+func (_u *LeadUpdateOne) ClearCallLogs() *LeadUpdateOne {
+	_u.mutation.ClearCallLogs()
+	return _u
+}
+
+// RemoveCallLogIDs removes the "call_logs" edge to CallLog entities by IDs.
+func (_u *LeadUpdateOne) RemoveCallLogIDs(ids ...int) *LeadUpdateOne {
+	_u.mutation.RemoveCallLogIDs(ids...)
+	return _u
+}
+
+// RemoveCallLogs removes "call_logs" edges to CallLog entities.
+func (_u *LeadUpdateOne) RemoveCallLogs(v ...*CallLog) *LeadUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveCallLogIDs(ids...)
 }
 
 // Where appends a list predicates to the LeadUpdate builder.
@@ -2927,6 +3045,51 @@ func (_u *LeadUpdateOne) sqlSave(ctx context.Context) (_node *Lead, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(smsmessage.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.CallLogsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.CallLogsTable,
+			Columns: []string{lead.CallLogsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(calllog.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedCallLogsIDs(); len(nodes) > 0 && !_u.mutation.CallLogsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.CallLogsTable,
+			Columns: []string{lead.CallLogsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(calllog.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CallLogsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.CallLogsTable,
+			Columns: []string{lead.CallLogsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(calllog.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

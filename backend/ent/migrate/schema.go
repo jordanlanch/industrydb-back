@@ -281,6 +281,86 @@ var (
 			},
 		},
 	}
+	// CallLogsColumns holds the columns for the "call_logs" table.
+	CallLogsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "phone_number", Type: field.TypeString, Size: 20},
+		{Name: "direction", Type: field.TypeEnum, Enums: []string{"inbound", "outbound"}},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"initiated", "ringing", "in_progress", "completed", "failed", "busy", "no_answer", "canceled"}, Default: "initiated"},
+		{Name: "duration", Type: field.TypeInt, Default: 0},
+		{Name: "provider_call_id", Type: field.TypeString, Nullable: true, Size: 100},
+		{Name: "from_number", Type: field.TypeString, Nullable: true, Size: 20},
+		{Name: "to_number", Type: field.TypeString, Nullable: true, Size: 20},
+		{Name: "cost", Type: field.TypeFloat64, Default: 0},
+		{Name: "recording_url", Type: field.TypeString, Nullable: true},
+		{Name: "recording_duration", Type: field.TypeInt, Nullable: true},
+		{Name: "notes", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "disposition", Type: field.TypeString, Nullable: true, Size: 50},
+		{Name: "is_recorded", Type: field.TypeBool, Default: false},
+		{Name: "started_at", Type: field.TypeTime, Nullable: true},
+		{Name: "ended_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "lead_id", Type: field.TypeInt, Nullable: true},
+		{Name: "user_id", Type: field.TypeInt},
+	}
+	// CallLogsTable holds the schema information for the "call_logs" table.
+	CallLogsTable = &schema.Table{
+		Name:       "call_logs",
+		Columns:    CallLogsColumns,
+		PrimaryKey: []*schema.Column{CallLogsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "call_logs_leads_call_logs",
+				Columns:    []*schema.Column{CallLogsColumns[18]},
+				RefColumns: []*schema.Column{LeadsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "call_logs_users_call_logs",
+				Columns:    []*schema.Column{CallLogsColumns[19]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "calllog_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{CallLogsColumns[19]},
+			},
+			{
+				Name:    "calllog_lead_id",
+				Unique:  false,
+				Columns: []*schema.Column{CallLogsColumns[18]},
+			},
+			{
+				Name:    "calllog_status",
+				Unique:  false,
+				Columns: []*schema.Column{CallLogsColumns[3]},
+			},
+			{
+				Name:    "calllog_direction",
+				Unique:  false,
+				Columns: []*schema.Column{CallLogsColumns[2]},
+			},
+			{
+				Name:    "calllog_provider_call_id",
+				Unique:  false,
+				Columns: []*schema.Column{CallLogsColumns[5]},
+			},
+			{
+				Name:    "calllog_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{CallLogsColumns[16]},
+			},
+			{
+				Name:    "calllog_started_at",
+				Unique:  false,
+				Columns: []*schema.Column{CallLogsColumns[14]},
+			},
+		},
+	}
 	// EmailSequencesColumns holds the columns for the "email_sequences" table.
 	EmailSequencesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -1604,6 +1684,7 @@ var (
 		AffiliateClicksTable,
 		AffiliateConversionsTable,
 		AuditLogsTable,
+		CallLogsTable,
 		EmailSequencesTable,
 		EmailSequenceEnrollmentsTable,
 		EmailSequenceSendsTable,
@@ -1638,6 +1719,8 @@ func init() {
 	AffiliateConversionsTable.ForeignKeys[0].RefTable = AffiliatesTable
 	AffiliateConversionsTable.ForeignKeys[1].RefTable = UsersTable
 	AuditLogsTable.ForeignKeys[0].RefTable = UsersTable
+	CallLogsTable.ForeignKeys[0].RefTable = LeadsTable
+	CallLogsTable.ForeignKeys[1].RefTable = UsersTable
 	EmailSequencesTable.ForeignKeys[0].RefTable = UsersTable
 	EmailSequenceEnrollmentsTable.ForeignKeys[0].RefTable = EmailSequencesTable
 	EmailSequenceEnrollmentsTable.ForeignKeys[1].RefTable = LeadsTable

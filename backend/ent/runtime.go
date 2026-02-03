@@ -10,6 +10,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/affiliateconversion"
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
+	"github.com/jordanlanch/industrydb/ent/calllog"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/emailsequencesend"
@@ -159,6 +160,72 @@ func init() {
 	auditlogDescCreatedAt := auditlogFields[9].Descriptor()
 	// auditlog.DefaultCreatedAt holds the default value on creation for the created_at field.
 	auditlog.DefaultCreatedAt = auditlogDescCreatedAt.Default.(func() time.Time)
+	calllogFields := schema.CallLog{}.Fields()
+	_ = calllogFields
+	// calllogDescPhoneNumber is the schema descriptor for phone_number field.
+	calllogDescPhoneNumber := calllogFields[2].Descriptor()
+	// calllog.PhoneNumberValidator is a validator for the "phone_number" field. It is called by the builders before save.
+	calllog.PhoneNumberValidator = func() func(string) error {
+		validators := calllogDescPhoneNumber.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(phone_number string) error {
+			for _, fn := range fns {
+				if err := fn(phone_number); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// calllogDescDuration is the schema descriptor for duration field.
+	calllogDescDuration := calllogFields[5].Descriptor()
+	// calllog.DefaultDuration holds the default value on creation for the duration field.
+	calllog.DefaultDuration = calllogDescDuration.Default.(int)
+	// calllog.DurationValidator is a validator for the "duration" field. It is called by the builders before save.
+	calllog.DurationValidator = calllogDescDuration.Validators[0].(func(int) error)
+	// calllogDescProviderCallID is the schema descriptor for provider_call_id field.
+	calllogDescProviderCallID := calllogFields[6].Descriptor()
+	// calllog.ProviderCallIDValidator is a validator for the "provider_call_id" field. It is called by the builders before save.
+	calllog.ProviderCallIDValidator = calllogDescProviderCallID.Validators[0].(func(string) error)
+	// calllogDescFromNumber is the schema descriptor for from_number field.
+	calllogDescFromNumber := calllogFields[7].Descriptor()
+	// calllog.FromNumberValidator is a validator for the "from_number" field. It is called by the builders before save.
+	calllog.FromNumberValidator = calllogDescFromNumber.Validators[0].(func(string) error)
+	// calllogDescToNumber is the schema descriptor for to_number field.
+	calllogDescToNumber := calllogFields[8].Descriptor()
+	// calllog.ToNumberValidator is a validator for the "to_number" field. It is called by the builders before save.
+	calllog.ToNumberValidator = calllogDescToNumber.Validators[0].(func(string) error)
+	// calllogDescCost is the schema descriptor for cost field.
+	calllogDescCost := calllogFields[9].Descriptor()
+	// calllog.DefaultCost holds the default value on creation for the cost field.
+	calllog.DefaultCost = calllogDescCost.Default.(float64)
+	// calllog.CostValidator is a validator for the "cost" field. It is called by the builders before save.
+	calllog.CostValidator = calllogDescCost.Validators[0].(func(float64) error)
+	// calllogDescRecordingDuration is the schema descriptor for recording_duration field.
+	calllogDescRecordingDuration := calllogFields[11].Descriptor()
+	// calllog.RecordingDurationValidator is a validator for the "recording_duration" field. It is called by the builders before save.
+	calllog.RecordingDurationValidator = calllogDescRecordingDuration.Validators[0].(func(int) error)
+	// calllogDescDisposition is the schema descriptor for disposition field.
+	calllogDescDisposition := calllogFields[13].Descriptor()
+	// calllog.DispositionValidator is a validator for the "disposition" field. It is called by the builders before save.
+	calllog.DispositionValidator = calllogDescDisposition.Validators[0].(func(string) error)
+	// calllogDescIsRecorded is the schema descriptor for is_recorded field.
+	calllogDescIsRecorded := calllogFields[14].Descriptor()
+	// calllog.DefaultIsRecorded holds the default value on creation for the is_recorded field.
+	calllog.DefaultIsRecorded = calllogDescIsRecorded.Default.(bool)
+	// calllogDescCreatedAt is the schema descriptor for created_at field.
+	calllogDescCreatedAt := calllogFields[17].Descriptor()
+	// calllog.DefaultCreatedAt holds the default value on creation for the created_at field.
+	calllog.DefaultCreatedAt = calllogDescCreatedAt.Default.(func() time.Time)
+	// calllogDescUpdatedAt is the schema descriptor for updated_at field.
+	calllogDescUpdatedAt := calllogFields[18].Descriptor()
+	// calllog.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	calllog.DefaultUpdatedAt = calllogDescUpdatedAt.Default.(func() time.Time)
+	// calllog.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	calllog.UpdateDefaultUpdatedAt = calllogDescUpdatedAt.UpdateDefault.(func() time.Time)
 	emailsequenceFields := schema.EmailSequence{}.Fields()
 	_ = emailsequenceFields
 	// emailsequenceDescName is the schema descriptor for name field.

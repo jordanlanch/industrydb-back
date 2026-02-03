@@ -112,9 +112,11 @@ type LeadEdges struct {
 	Territory *Territory `json:"territory,omitempty"`
 	// SMS messages sent to this lead
 	SmsMessages []*SMSMessage `json:"sms_messages,omitempty"`
+	// Call logs for this lead
+	CallLogs []*CallLog `json:"call_logs,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [7]bool
+	loadedTypes [8]bool
 }
 
 // NotesOrErr returns the Notes value or an error if the edge
@@ -180,6 +182,15 @@ func (e LeadEdges) SmsMessagesOrErr() ([]*SMSMessage, error) {
 		return e.SmsMessages, nil
 	}
 	return nil, &NotLoadedError{edge: "sms_messages"}
+}
+
+// CallLogsOrErr returns the CallLogs value or an error if the edge
+// was not loaded in eager-loading.
+func (e LeadEdges) CallLogsOrErr() ([]*CallLog, error) {
+	if e.loadedTypes[7] {
+		return e.CallLogs, nil
+	}
+	return nil, &NotLoadedError{edge: "call_logs"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -494,6 +505,11 @@ func (_m *Lead) QueryTerritory() *TerritoryQuery {
 // QuerySmsMessages queries the "sms_messages" edge of the Lead entity.
 func (_m *Lead) QuerySmsMessages() *SMSMessageQuery {
 	return NewLeadClient(_m.config).QuerySmsMessages(_m)
+}
+
+// QueryCallLogs queries the "call_logs" edge of the Lead entity.
+func (_m *Lead) QueryCallLogs() *CallLogQuery {
+	return NewLeadClient(_m.config).QueryCallLogs(_m)
 }
 
 // Update returns a builder for updating this Lead.

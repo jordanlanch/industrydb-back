@@ -20,6 +20,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/affiliateconversion"
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
+	"github.com/jordanlanch/industrydb/ent/calllog"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/emailsequencesend"
@@ -61,6 +62,8 @@ type Client struct {
 	AffiliateConversion *AffiliateConversionClient
 	// AuditLog is the client for interacting with the AuditLog builders.
 	AuditLog *AuditLogClient
+	// CallLog is the client for interacting with the CallLog builders.
+	CallLog *CallLogClient
 	// EmailSequence is the client for interacting with the EmailSequence builders.
 	EmailSequence *EmailSequenceClient
 	// EmailSequenceEnrollment is the client for interacting with the EmailSequenceEnrollment builders.
@@ -125,6 +128,7 @@ func (c *Client) init() {
 	c.AffiliateClick = NewAffiliateClickClient(c.config)
 	c.AffiliateConversion = NewAffiliateConversionClient(c.config)
 	c.AuditLog = NewAuditLogClient(c.config)
+	c.CallLog = NewCallLogClient(c.config)
 	c.EmailSequence = NewEmailSequenceClient(c.config)
 	c.EmailSequenceEnrollment = NewEmailSequenceEnrollmentClient(c.config)
 	c.EmailSequenceSend = NewEmailSequenceSendClient(c.config)
@@ -246,6 +250,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		AffiliateClick:          NewAffiliateClickClient(cfg),
 		AffiliateConversion:     NewAffiliateConversionClient(cfg),
 		AuditLog:                NewAuditLogClient(cfg),
+		CallLog:                 NewCallLogClient(cfg),
 		EmailSequence:           NewEmailSequenceClient(cfg),
 		EmailSequenceEnrollment: NewEmailSequenceEnrollmentClient(cfg),
 		EmailSequenceSend:       NewEmailSequenceSendClient(cfg),
@@ -294,6 +299,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		AffiliateClick:          NewAffiliateClickClient(cfg),
 		AffiliateConversion:     NewAffiliateConversionClient(cfg),
 		AuditLog:                NewAuditLogClient(cfg),
+		CallLog:                 NewCallLogClient(cfg),
 		EmailSequence:           NewEmailSequenceClient(cfg),
 		EmailSequenceEnrollment: NewEmailSequenceEnrollmentClient(cfg),
 		EmailSequenceSend:       NewEmailSequenceSendClient(cfg),
@@ -348,7 +354,7 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.APIKey, c.Affiliate, c.AffiliateClick, c.AffiliateConversion, c.AuditLog,
-		c.EmailSequence, c.EmailSequenceEnrollment, c.EmailSequenceSend,
+		c.CallLog, c.EmailSequence, c.EmailSequenceEnrollment, c.EmailSequenceSend,
 		c.EmailSequenceStep, c.Experiment, c.ExperimentAssignment, c.Export,
 		c.Industry, c.Lead, c.LeadAssignment, c.LeadNote, c.LeadStatusHistory,
 		c.Organization, c.OrganizationMember, c.Referral, c.SMSCampaign, c.SMSMessage,
@@ -364,7 +370,7 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.APIKey, c.Affiliate, c.AffiliateClick, c.AffiliateConversion, c.AuditLog,
-		c.EmailSequence, c.EmailSequenceEnrollment, c.EmailSequenceSend,
+		c.CallLog, c.EmailSequence, c.EmailSequenceEnrollment, c.EmailSequenceSend,
 		c.EmailSequenceStep, c.Experiment, c.ExperimentAssignment, c.Export,
 		c.Industry, c.Lead, c.LeadAssignment, c.LeadNote, c.LeadStatusHistory,
 		c.Organization, c.OrganizationMember, c.Referral, c.SMSCampaign, c.SMSMessage,
@@ -388,6 +394,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.AffiliateConversion.mutate(ctx, m)
 	case *AuditLogMutation:
 		return c.AuditLog.mutate(ctx, m)
+	case *CallLogMutation:
+		return c.CallLog.mutate(ctx, m)
 	case *EmailSequenceMutation:
 		return c.EmailSequence.mutate(ctx, m)
 	case *EmailSequenceEnrollmentMutation:
@@ -1231,6 +1239,171 @@ func (c *AuditLogClient) mutate(ctx context.Context, m *AuditLogMutation) (Value
 		return (&AuditLogDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown AuditLog mutation op: %q", m.Op())
+	}
+}
+
+// CallLogClient is a client for the CallLog schema.
+type CallLogClient struct {
+	config
+}
+
+// NewCallLogClient returns a client for the CallLog from the given config.
+func NewCallLogClient(c config) *CallLogClient {
+	return &CallLogClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `calllog.Hooks(f(g(h())))`.
+func (c *CallLogClient) Use(hooks ...Hook) {
+	c.hooks.CallLog = append(c.hooks.CallLog, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `calllog.Intercept(f(g(h())))`.
+func (c *CallLogClient) Intercept(interceptors ...Interceptor) {
+	c.inters.CallLog = append(c.inters.CallLog, interceptors...)
+}
+
+// Create returns a builder for creating a CallLog entity.
+func (c *CallLogClient) Create() *CallLogCreate {
+	mutation := newCallLogMutation(c.config, OpCreate)
+	return &CallLogCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of CallLog entities.
+func (c *CallLogClient) CreateBulk(builders ...*CallLogCreate) *CallLogCreateBulk {
+	return &CallLogCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CallLogClient) MapCreateBulk(slice any, setFunc func(*CallLogCreate, int)) *CallLogCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CallLogCreateBulk{err: fmt.Errorf("calling to CallLogClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CallLogCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CallLogCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for CallLog.
+func (c *CallLogClient) Update() *CallLogUpdate {
+	mutation := newCallLogMutation(c.config, OpUpdate)
+	return &CallLogUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CallLogClient) UpdateOne(_m *CallLog) *CallLogUpdateOne {
+	mutation := newCallLogMutation(c.config, OpUpdateOne, withCallLog(_m))
+	return &CallLogUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CallLogClient) UpdateOneID(id int) *CallLogUpdateOne {
+	mutation := newCallLogMutation(c.config, OpUpdateOne, withCallLogID(id))
+	return &CallLogUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for CallLog.
+func (c *CallLogClient) Delete() *CallLogDelete {
+	mutation := newCallLogMutation(c.config, OpDelete)
+	return &CallLogDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CallLogClient) DeleteOne(_m *CallLog) *CallLogDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CallLogClient) DeleteOneID(id int) *CallLogDeleteOne {
+	builder := c.Delete().Where(calllog.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CallLogDeleteOne{builder}
+}
+
+// Query returns a query builder for CallLog.
+func (c *CallLogClient) Query() *CallLogQuery {
+	return &CallLogQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCallLog},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a CallLog entity by its id.
+func (c *CallLogClient) Get(ctx context.Context, id int) (*CallLog, error) {
+	return c.Query().Where(calllog.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CallLogClient) GetX(ctx context.Context, id int) *CallLog {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a CallLog.
+func (c *CallLogClient) QueryUser(_m *CallLog) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(calllog.Table, calllog.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, calllog.UserTable, calllog.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLead queries the lead edge of a CallLog.
+func (c *CallLogClient) QueryLead(_m *CallLog) *LeadQuery {
+	query := (&LeadClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(calllog.Table, calllog.FieldID, id),
+			sqlgraph.To(lead.Table, lead.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, calllog.LeadTable, calllog.LeadColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *CallLogClient) Hooks() []Hook {
+	return c.hooks.CallLog
+}
+
+// Interceptors returns the client interceptors.
+func (c *CallLogClient) Interceptors() []Interceptor {
+	return c.inters.CallLog
+}
+
+func (c *CallLogClient) mutate(ctx context.Context, m *CallLogMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CallLogCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CallLogUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CallLogUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CallLogDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown CallLog mutation op: %q", m.Op())
 	}
 }
 
@@ -2783,6 +2956,22 @@ func (c *LeadClient) QuerySmsMessages(_m *Lead) *SMSMessageQuery {
 			sqlgraph.From(lead.Table, lead.FieldID, id),
 			sqlgraph.To(smsmessage.Table, smsmessage.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, lead.SmsMessagesTable, lead.SmsMessagesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryCallLogs queries the call_logs edge of a Lead.
+func (c *LeadClient) QueryCallLogs(_m *Lead) *CallLogQuery {
+	query := (&CallLogClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(lead.Table, lead.FieldID, id),
+			sqlgraph.To(calllog.Table, calllog.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, lead.CallLogsTable, lead.CallLogsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -5468,6 +5657,22 @@ func (c *UserClient) QuerySmsCampaigns(_m *User) *SMSCampaignQuery {
 	return query
 }
 
+// QueryCallLogs queries the call_logs edge of a User.
+func (c *UserClient) QueryCallLogs(_m *User) *CallLogQuery {
+	query := (&CallLogClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(calllog.Table, calllog.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.CallLogsTable, user.CallLogsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -5645,19 +5850,19 @@ func (c *WebhookClient) mutate(ctx context.Context, m *WebhookMutation) (Value, 
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		APIKey, Affiliate, AffiliateClick, AffiliateConversion, AuditLog, EmailSequence,
-		EmailSequenceEnrollment, EmailSequenceSend, EmailSequenceStep, Experiment,
-		ExperimentAssignment, Export, Industry, Lead, LeadAssignment, LeadNote,
-		LeadStatusHistory, Organization, OrganizationMember, Referral, SMSCampaign,
-		SMSMessage, SavedSearch, Subscription, Territory, TerritoryMember, UsageLog,
-		User, Webhook []ent.Hook
+		APIKey, Affiliate, AffiliateClick, AffiliateConversion, AuditLog, CallLog,
+		EmailSequence, EmailSequenceEnrollment, EmailSequenceSend, EmailSequenceStep,
+		Experiment, ExperimentAssignment, Export, Industry, Lead, LeadAssignment,
+		LeadNote, LeadStatusHistory, Organization, OrganizationMember, Referral,
+		SMSCampaign, SMSMessage, SavedSearch, Subscription, Territory, TerritoryMember,
+		UsageLog, User, Webhook []ent.Hook
 	}
 	inters struct {
-		APIKey, Affiliate, AffiliateClick, AffiliateConversion, AuditLog, EmailSequence,
-		EmailSequenceEnrollment, EmailSequenceSend, EmailSequenceStep, Experiment,
-		ExperimentAssignment, Export, Industry, Lead, LeadAssignment, LeadNote,
-		LeadStatusHistory, Organization, OrganizationMember, Referral, SMSCampaign,
-		SMSMessage, SavedSearch, Subscription, Territory, TerritoryMember, UsageLog,
-		User, Webhook []ent.Interceptor
+		APIKey, Affiliate, AffiliateClick, AffiliateConversion, AuditLog, CallLog,
+		EmailSequence, EmailSequenceEnrollment, EmailSequenceSend, EmailSequenceStep,
+		Experiment, ExperimentAssignment, Export, Industry, Lead, LeadAssignment,
+		LeadNote, LeadStatusHistory, Organization, OrganizationMember, Referral,
+		SMSCampaign, SMSMessage, SavedSearch, Subscription, Territory, TerritoryMember,
+		UsageLog, User, Webhook []ent.Interceptor
 	}
 )

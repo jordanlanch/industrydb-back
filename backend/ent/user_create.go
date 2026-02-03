@@ -14,6 +14,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/affiliateconversion"
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
+	"github.com/jordanlanch/industrydb/ent/calllog"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/experimentassignment"
@@ -717,6 +718,21 @@ func (_c *UserCreate) AddSmsCampaigns(v ...*SMSCampaign) *UserCreate {
 	return _c.AddSmsCampaignIDs(ids...)
 }
 
+// AddCallLogIDs adds the "call_logs" edge to the CallLog entity by IDs.
+func (_c *UserCreate) AddCallLogIDs(ids ...int) *UserCreate {
+	_c.mutation.AddCallLogIDs(ids...)
+	return _c
+}
+
+// AddCallLogs adds the "call_logs" edges to the CallLog entity.
+func (_c *UserCreate) AddCallLogs(v ...*CallLog) *UserCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddCallLogIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_c *UserCreate) Mutation() *UserMutation {
 	return _c.mutation
@@ -1381,6 +1397,22 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(smscampaign.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.CallLogsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CallLogsTable,
+			Columns: []string{user.CallLogsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(calllog.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

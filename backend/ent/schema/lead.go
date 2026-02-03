@@ -203,6 +203,9 @@ func (Lead) Edges() []ent.Edge {
 
 		edge.To("sms_messages", SMSMessage.Type).
 			Comment("SMS messages sent to this lead"),
+
+		edge.To("call_logs", CallLog.Type).
+			Comment("Call logs for this lead"),
 	}
 }
 
