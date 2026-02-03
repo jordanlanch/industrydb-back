@@ -156,6 +156,9 @@ func (Lead) Edges() []ent.Edge {
 
 		edge.To("status_history", LeadStatusHistory.Type).
 			Comment("History of status changes for this lead"),
+
+		edge.To("assignments", LeadAssignment.Type).
+			Comment("Assignment history for this lead"),
 	}
 }
 

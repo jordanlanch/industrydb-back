@@ -15,6 +15,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/export"
+	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/organization"
@@ -45,6 +46,8 @@ type UserQuery struct {
 	withWebhooks                *WebhookQuery
 	withLeadNotes               *LeadNoteQuery
 	withLeadStatusChanges       *LeadStatusHistoryQuery
+	withAssignedLeads           *LeadAssignmentQuery
+	withLeadAssignmentsMade     *LeadAssignmentQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -323,6 +326,50 @@ func (_q *UserQuery) QueryLeadStatusChanges() *LeadStatusHistoryQuery {
 	return query
 }
 
+// QueryAssignedLeads chains the current query on the "assigned_leads" edge.
+func (_q *UserQuery) QueryAssignedLeads() *LeadAssignmentQuery {
+	query := (&LeadAssignmentClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(leadassignment.Table, leadassignment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.AssignedLeadsTable, user.AssignedLeadsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryLeadAssignmentsMade chains the current query on the "lead_assignments_made" edge.
+func (_q *UserQuery) QueryLeadAssignmentsMade() *LeadAssignmentQuery {
+	query := (&LeadAssignmentClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(leadassignment.Table, leadassignment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.LeadAssignmentsMadeTable, user.LeadAssignmentsMadeColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first User entity from the query.
 // Returns a *NotFoundError when no User was found.
 func (_q *UserQuery) First(ctx context.Context) (*User, error) {
@@ -526,6 +573,8 @@ func (_q *UserQuery) Clone() *UserQuery {
 		withWebhooks:                _q.withWebhooks.Clone(),
 		withLeadNotes:               _q.withLeadNotes.Clone(),
 		withLeadStatusChanges:       _q.withLeadStatusChanges.Clone(),
+		withAssignedLeads:           _q.withAssignedLeads.Clone(),
+		withLeadAssignmentsMade:     _q.withLeadAssignmentsMade.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -653,6 +702,28 @@ func (_q *UserQuery) WithLeadStatusChanges(opts ...func(*LeadStatusHistoryQuery)
 	return _q
 }
 
+// WithAssignedLeads tells the query-builder to eager-load the nodes that are connected to
+// the "assigned_leads" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithAssignedLeads(opts ...func(*LeadAssignmentQuery)) *UserQuery {
+	query := (&LeadAssignmentClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withAssignedLeads = query
+	return _q
+}
+
+// WithLeadAssignmentsMade tells the query-builder to eager-load the nodes that are connected to
+// the "lead_assignments_made" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithLeadAssignmentsMade(opts ...func(*LeadAssignmentQuery)) *UserQuery {
+	query := (&LeadAssignmentClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withLeadAssignmentsMade = query
+	return _q
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -731,7 +802,7 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
-		loadedTypes = [11]bool{
+		loadedTypes = [13]bool{
 			_q.withSubscriptions != nil,
 			_q.withExports != nil,
 			_q.withAPIKeys != nil,
@@ -743,6 +814,8 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			_q.withWebhooks != nil,
 			_q.withLeadNotes != nil,
 			_q.withLeadStatusChanges != nil,
+			_q.withAssignedLeads != nil,
+			_q.withLeadAssignmentsMade != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -839,6 +912,20 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := _q.loadLeadStatusChanges(ctx, query, nodes,
 			func(n *User) { n.Edges.LeadStatusChanges = []*LeadStatusHistory{} },
 			func(n *User, e *LeadStatusHistory) { n.Edges.LeadStatusChanges = append(n.Edges.LeadStatusChanges, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withAssignedLeads; query != nil {
+		if err := _q.loadAssignedLeads(ctx, query, nodes,
+			func(n *User) { n.Edges.AssignedLeads = []*LeadAssignment{} },
+			func(n *User, e *LeadAssignment) { n.Edges.AssignedLeads = append(n.Edges.AssignedLeads, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withLeadAssignmentsMade; query != nil {
+		if err := _q.loadLeadAssignmentsMade(ctx, query, nodes,
+			func(n *User) { n.Edges.LeadAssignmentsMade = []*LeadAssignment{} },
+			func(n *User, e *LeadAssignment) { n.Edges.LeadAssignmentsMade = append(n.Edges.LeadAssignmentsMade, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -1174,6 +1261,69 @@ func (_q *UserQuery) loadLeadStatusChanges(ctx context.Context, query *LeadStatu
 		node, ok := nodeids[fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadAssignedLeads(ctx context.Context, query *LeadAssignmentQuery, nodes []*User, init func(*User), assign func(*User, *LeadAssignment)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(leadassignment.FieldUserID)
+	}
+	query.Where(predicate.LeadAssignment(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.AssignedLeadsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.UserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadLeadAssignmentsMade(ctx context.Context, query *LeadAssignmentQuery, nodes []*User, init func(*User), assign func(*User, *LeadAssignment)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(leadassignment.FieldAssignedByUserID)
+	}
+	query.Where(predicate.LeadAssignment(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.LeadAssignmentsMadeColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.AssignedByUserID
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "assigned_by_user_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "assigned_by_user_id" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

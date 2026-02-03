@@ -69,6 +69,18 @@ func (f LeadFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.LeadMutation", m)
 }
 
+// The LeadAssignmentFunc type is an adapter to allow the use of ordinary
+// function as LeadAssignment mutator.
+type LeadAssignmentFunc func(context.Context, *ent.LeadAssignmentMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f LeadAssignmentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.LeadAssignmentMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.LeadAssignmentMutation", m)
+}
+
 // The LeadNoteFunc type is an adapter to allow the use of ordinary
 // function as LeadNote mutator.
 type LeadNoteFunc func(context.Context, *ent.LeadNoteMutation) (ent.Value, error)

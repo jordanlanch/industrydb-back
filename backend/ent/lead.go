@@ -82,9 +82,11 @@ type LeadEdges struct {
 	Notes []*LeadNote `json:"notes,omitempty"`
 	// History of status changes for this lead
 	StatusHistory []*LeadStatusHistory `json:"status_history,omitempty"`
+	// Assignment history for this lead
+	Assignments []*LeadAssignment `json:"assignments,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // NotesOrErr returns the Notes value or an error if the edge
@@ -103,6 +105,15 @@ func (e LeadEdges) StatusHistoryOrErr() ([]*LeadStatusHistory, error) {
 		return e.StatusHistory, nil
 	}
 	return nil, &NotLoadedError{edge: "status_history"}
+}
+
+// AssignmentsOrErr returns the Assignments value or an error if the edge
+// was not loaded in eager-loading.
+func (e LeadEdges) AssignmentsOrErr() ([]*LeadAssignment, error) {
+	if e.loadedTypes[2] {
+		return e.Assignments, nil
+	}
+	return nil, &NotLoadedError{edge: "assignments"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -328,6 +339,11 @@ func (_m *Lead) QueryNotes() *LeadNoteQuery {
 // QueryStatusHistory queries the "status_history" edge of the Lead entity.
 func (_m *Lead) QueryStatusHistory() *LeadStatusHistoryQuery {
 	return NewLeadClient(_m.config).QueryStatusHistory(_m)
+}
+
+// QueryAssignments queries the "assignments" edge of the Lead entity.
+func (_m *Lead) QueryAssignments() *LeadAssignmentQuery {
+	return NewLeadClient(_m.config).QueryAssignments(_m)
 }
 
 // Update returns a builder for updating this Lead.

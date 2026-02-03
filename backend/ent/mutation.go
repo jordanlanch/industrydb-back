@@ -16,6 +16,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/industry"
 	"github.com/jordanlanch/industrydb/ent/lead"
+	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/organization"
@@ -42,6 +43,7 @@ const (
 	TypeExport             = "Export"
 	TypeIndustry           = "Industry"
 	TypeLead               = "Lead"
+	TypeLeadAssignment     = "LeadAssignment"
 	TypeLeadNote           = "LeadNote"
 	TypeLeadStatusHistory  = "LeadStatusHistory"
 	TypeOrganization       = "Organization"
@@ -4221,6 +4223,9 @@ type LeadMutation struct {
 	status_history        map[int]struct{}
 	removedstatus_history map[int]struct{}
 	clearedstatus_history bool
+	assignments           map[int]struct{}
+	removedassignments    map[int]struct{}
+	clearedassignments    bool
 	done                  bool
 	oldValue              func(context.Context) (*Lead, error)
 	predicates            []predicate.Lead
@@ -5654,6 +5659,60 @@ func (m *LeadMutation) ResetStatusHistory() {
 	m.removedstatus_history = nil
 }
 
+// AddAssignmentIDs adds the "assignments" edge to the LeadAssignment entity by ids.
+func (m *LeadMutation) AddAssignmentIDs(ids ...int) {
+	if m.assignments == nil {
+		m.assignments = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.assignments[ids[i]] = struct{}{}
+	}
+}
+
+// ClearAssignments clears the "assignments" edge to the LeadAssignment entity.
+func (m *LeadMutation) ClearAssignments() {
+	m.clearedassignments = true
+}
+
+// AssignmentsCleared reports if the "assignments" edge to the LeadAssignment entity was cleared.
+func (m *LeadMutation) AssignmentsCleared() bool {
+	return m.clearedassignments
+}
+
+// RemoveAssignmentIDs removes the "assignments" edge to the LeadAssignment entity by IDs.
+func (m *LeadMutation) RemoveAssignmentIDs(ids ...int) {
+	if m.removedassignments == nil {
+		m.removedassignments = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.assignments, ids[i])
+		m.removedassignments[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedAssignments returns the removed IDs of the "assignments" edge to the LeadAssignment entity.
+func (m *LeadMutation) RemovedAssignmentsIDs() (ids []int) {
+	for id := range m.removedassignments {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// AssignmentsIDs returns the "assignments" edge IDs in the mutation.
+func (m *LeadMutation) AssignmentsIDs() (ids []int) {
+	for id := range m.assignments {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetAssignments resets all changes to the "assignments" edge.
+func (m *LeadMutation) ResetAssignments() {
+	m.assignments = nil
+	m.clearedassignments = false
+	m.removedassignments = nil
+}
+
 // Where appends a list predicates to the LeadMutation builder.
 func (m *LeadMutation) Where(ps ...predicate.Lead) {
 	m.predicates = append(m.predicates, ps...)
@@ -6350,12 +6409,15 @@ func (m *LeadMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *LeadMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.notes != nil {
 		edges = append(edges, lead.EdgeNotes)
 	}
 	if m.status_history != nil {
 		edges = append(edges, lead.EdgeStatusHistory)
+	}
+	if m.assignments != nil {
+		edges = append(edges, lead.EdgeAssignments)
 	}
 	return edges
 }
@@ -6376,18 +6438,27 @@ func (m *LeadMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case lead.EdgeAssignments:
+		ids := make([]ent.Value, 0, len(m.assignments))
+		for id := range m.assignments {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *LeadMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.removednotes != nil {
 		edges = append(edges, lead.EdgeNotes)
 	}
 	if m.removedstatus_history != nil {
 		edges = append(edges, lead.EdgeStatusHistory)
+	}
+	if m.removedassignments != nil {
+		edges = append(edges, lead.EdgeAssignments)
 	}
 	return edges
 }
@@ -6408,18 +6479,27 @@ func (m *LeadMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case lead.EdgeAssignments:
+		ids := make([]ent.Value, 0, len(m.removedassignments))
+		for id := range m.removedassignments {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *LeadMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearednotes {
 		edges = append(edges, lead.EdgeNotes)
 	}
 	if m.clearedstatus_history {
 		edges = append(edges, lead.EdgeStatusHistory)
+	}
+	if m.clearedassignments {
+		edges = append(edges, lead.EdgeAssignments)
 	}
 	return edges
 }
@@ -6432,6 +6512,8 @@ func (m *LeadMutation) EdgeCleared(name string) bool {
 		return m.clearednotes
 	case lead.EdgeStatusHistory:
 		return m.clearedstatus_history
+	case lead.EdgeAssignments:
+		return m.clearedassignments
 	}
 	return false
 }
@@ -6454,8 +6536,918 @@ func (m *LeadMutation) ResetEdge(name string) error {
 	case lead.EdgeStatusHistory:
 		m.ResetStatusHistory()
 		return nil
+	case lead.EdgeAssignments:
+		m.ResetAssignments()
+		return nil
 	}
 	return fmt.Errorf("unknown Lead edge %s", name)
+}
+
+// LeadAssignmentMutation represents an operation that mutates the LeadAssignment nodes in the graph.
+type LeadAssignmentMutation struct {
+	config
+	op                 Op
+	typ                string
+	id                 *int
+	assignment_type    *leadassignment.AssignmentType
+	assignment_reason  *string
+	assigned_at        *time.Time
+	is_active          *bool
+	created_at         *time.Time
+	clearedFields      map[string]struct{}
+	lead               *int
+	clearedlead        bool
+	user               *int
+	cleareduser        bool
+	assigned_by        *int
+	clearedassigned_by bool
+	done               bool
+	oldValue           func(context.Context) (*LeadAssignment, error)
+	predicates         []predicate.LeadAssignment
+}
+
+var _ ent.Mutation = (*LeadAssignmentMutation)(nil)
+
+// leadassignmentOption allows management of the mutation configuration using functional options.
+type leadassignmentOption func(*LeadAssignmentMutation)
+
+// newLeadAssignmentMutation creates new mutation for the LeadAssignment entity.
+func newLeadAssignmentMutation(c config, op Op, opts ...leadassignmentOption) *LeadAssignmentMutation {
+	m := &LeadAssignmentMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeLeadAssignment,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withLeadAssignmentID sets the ID field of the mutation.
+func withLeadAssignmentID(id int) leadassignmentOption {
+	return func(m *LeadAssignmentMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *LeadAssignment
+		)
+		m.oldValue = func(ctx context.Context) (*LeadAssignment, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().LeadAssignment.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withLeadAssignment sets the old LeadAssignment of the mutation.
+func withLeadAssignment(node *LeadAssignment) leadassignmentOption {
+	return func(m *LeadAssignmentMutation) {
+		m.oldValue = func(context.Context) (*LeadAssignment, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m LeadAssignmentMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m LeadAssignmentMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *LeadAssignmentMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *LeadAssignmentMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().LeadAssignment.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetLeadID sets the "lead_id" field.
+func (m *LeadAssignmentMutation) SetLeadID(i int) {
+	m.lead = &i
+}
+
+// LeadID returns the value of the "lead_id" field in the mutation.
+func (m *LeadAssignmentMutation) LeadID() (r int, exists bool) {
+	v := m.lead
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLeadID returns the old "lead_id" field's value of the LeadAssignment entity.
+// If the LeadAssignment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadAssignmentMutation) OldLeadID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLeadID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLeadID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLeadID: %w", err)
+	}
+	return oldValue.LeadID, nil
+}
+
+// ResetLeadID resets all changes to the "lead_id" field.
+func (m *LeadAssignmentMutation) ResetLeadID() {
+	m.lead = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *LeadAssignmentMutation) SetUserID(i int) {
+	m.user = &i
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *LeadAssignmentMutation) UserID() (r int, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the LeadAssignment entity.
+// If the LeadAssignment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadAssignmentMutation) OldUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *LeadAssignmentMutation) ResetUserID() {
+	m.user = nil
+}
+
+// SetAssignedByUserID sets the "assigned_by_user_id" field.
+func (m *LeadAssignmentMutation) SetAssignedByUserID(i int) {
+	m.assigned_by = &i
+}
+
+// AssignedByUserID returns the value of the "assigned_by_user_id" field in the mutation.
+func (m *LeadAssignmentMutation) AssignedByUserID() (r int, exists bool) {
+	v := m.assigned_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAssignedByUserID returns the old "assigned_by_user_id" field's value of the LeadAssignment entity.
+// If the LeadAssignment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadAssignmentMutation) OldAssignedByUserID(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAssignedByUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAssignedByUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAssignedByUserID: %w", err)
+	}
+	return oldValue.AssignedByUserID, nil
+}
+
+// ClearAssignedByUserID clears the value of the "assigned_by_user_id" field.
+func (m *LeadAssignmentMutation) ClearAssignedByUserID() {
+	m.assigned_by = nil
+	m.clearedFields[leadassignment.FieldAssignedByUserID] = struct{}{}
+}
+
+// AssignedByUserIDCleared returns if the "assigned_by_user_id" field was cleared in this mutation.
+func (m *LeadAssignmentMutation) AssignedByUserIDCleared() bool {
+	_, ok := m.clearedFields[leadassignment.FieldAssignedByUserID]
+	return ok
+}
+
+// ResetAssignedByUserID resets all changes to the "assigned_by_user_id" field.
+func (m *LeadAssignmentMutation) ResetAssignedByUserID() {
+	m.assigned_by = nil
+	delete(m.clearedFields, leadassignment.FieldAssignedByUserID)
+}
+
+// SetAssignmentType sets the "assignment_type" field.
+func (m *LeadAssignmentMutation) SetAssignmentType(lt leadassignment.AssignmentType) {
+	m.assignment_type = &lt
+}
+
+// AssignmentType returns the value of the "assignment_type" field in the mutation.
+func (m *LeadAssignmentMutation) AssignmentType() (r leadassignment.AssignmentType, exists bool) {
+	v := m.assignment_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAssignmentType returns the old "assignment_type" field's value of the LeadAssignment entity.
+// If the LeadAssignment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadAssignmentMutation) OldAssignmentType(ctx context.Context) (v leadassignment.AssignmentType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAssignmentType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAssignmentType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAssignmentType: %w", err)
+	}
+	return oldValue.AssignmentType, nil
+}
+
+// ResetAssignmentType resets all changes to the "assignment_type" field.
+func (m *LeadAssignmentMutation) ResetAssignmentType() {
+	m.assignment_type = nil
+}
+
+// SetAssignmentReason sets the "assignment_reason" field.
+func (m *LeadAssignmentMutation) SetAssignmentReason(s string) {
+	m.assignment_reason = &s
+}
+
+// AssignmentReason returns the value of the "assignment_reason" field in the mutation.
+func (m *LeadAssignmentMutation) AssignmentReason() (r string, exists bool) {
+	v := m.assignment_reason
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAssignmentReason returns the old "assignment_reason" field's value of the LeadAssignment entity.
+// If the LeadAssignment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadAssignmentMutation) OldAssignmentReason(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAssignmentReason is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAssignmentReason requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAssignmentReason: %w", err)
+	}
+	return oldValue.AssignmentReason, nil
+}
+
+// ClearAssignmentReason clears the value of the "assignment_reason" field.
+func (m *LeadAssignmentMutation) ClearAssignmentReason() {
+	m.assignment_reason = nil
+	m.clearedFields[leadassignment.FieldAssignmentReason] = struct{}{}
+}
+
+// AssignmentReasonCleared returns if the "assignment_reason" field was cleared in this mutation.
+func (m *LeadAssignmentMutation) AssignmentReasonCleared() bool {
+	_, ok := m.clearedFields[leadassignment.FieldAssignmentReason]
+	return ok
+}
+
+// ResetAssignmentReason resets all changes to the "assignment_reason" field.
+func (m *LeadAssignmentMutation) ResetAssignmentReason() {
+	m.assignment_reason = nil
+	delete(m.clearedFields, leadassignment.FieldAssignmentReason)
+}
+
+// SetAssignedAt sets the "assigned_at" field.
+func (m *LeadAssignmentMutation) SetAssignedAt(t time.Time) {
+	m.assigned_at = &t
+}
+
+// AssignedAt returns the value of the "assigned_at" field in the mutation.
+func (m *LeadAssignmentMutation) AssignedAt() (r time.Time, exists bool) {
+	v := m.assigned_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAssignedAt returns the old "assigned_at" field's value of the LeadAssignment entity.
+// If the LeadAssignment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadAssignmentMutation) OldAssignedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAssignedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAssignedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAssignedAt: %w", err)
+	}
+	return oldValue.AssignedAt, nil
+}
+
+// ResetAssignedAt resets all changes to the "assigned_at" field.
+func (m *LeadAssignmentMutation) ResetAssignedAt() {
+	m.assigned_at = nil
+}
+
+// SetIsActive sets the "is_active" field.
+func (m *LeadAssignmentMutation) SetIsActive(b bool) {
+	m.is_active = &b
+}
+
+// IsActive returns the value of the "is_active" field in the mutation.
+func (m *LeadAssignmentMutation) IsActive() (r bool, exists bool) {
+	v := m.is_active
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsActive returns the old "is_active" field's value of the LeadAssignment entity.
+// If the LeadAssignment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadAssignmentMutation) OldIsActive(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsActive is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsActive requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsActive: %w", err)
+	}
+	return oldValue.IsActive, nil
+}
+
+// ResetIsActive resets all changes to the "is_active" field.
+func (m *LeadAssignmentMutation) ResetIsActive() {
+	m.is_active = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *LeadAssignmentMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *LeadAssignmentMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the LeadAssignment entity.
+// If the LeadAssignment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadAssignmentMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *LeadAssignmentMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// ClearLead clears the "lead" edge to the Lead entity.
+func (m *LeadAssignmentMutation) ClearLead() {
+	m.clearedlead = true
+	m.clearedFields[leadassignment.FieldLeadID] = struct{}{}
+}
+
+// LeadCleared reports if the "lead" edge to the Lead entity was cleared.
+func (m *LeadAssignmentMutation) LeadCleared() bool {
+	return m.clearedlead
+}
+
+// LeadIDs returns the "lead" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// LeadID instead. It exists only for internal usage by the builders.
+func (m *LeadAssignmentMutation) LeadIDs() (ids []int) {
+	if id := m.lead; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetLead resets all changes to the "lead" edge.
+func (m *LeadAssignmentMutation) ResetLead() {
+	m.lead = nil
+	m.clearedlead = false
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (m *LeadAssignmentMutation) ClearUser() {
+	m.cleareduser = true
+	m.clearedFields[leadassignment.FieldUserID] = struct{}{}
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *LeadAssignmentMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *LeadAssignmentMutation) UserIDs() (ids []int) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *LeadAssignmentMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
+// SetAssignedByID sets the "assigned_by" edge to the User entity by id.
+func (m *LeadAssignmentMutation) SetAssignedByID(id int) {
+	m.assigned_by = &id
+}
+
+// ClearAssignedBy clears the "assigned_by" edge to the User entity.
+func (m *LeadAssignmentMutation) ClearAssignedBy() {
+	m.clearedassigned_by = true
+	m.clearedFields[leadassignment.FieldAssignedByUserID] = struct{}{}
+}
+
+// AssignedByCleared reports if the "assigned_by" edge to the User entity was cleared.
+func (m *LeadAssignmentMutation) AssignedByCleared() bool {
+	return m.AssignedByUserIDCleared() || m.clearedassigned_by
+}
+
+// AssignedByID returns the "assigned_by" edge ID in the mutation.
+func (m *LeadAssignmentMutation) AssignedByID() (id int, exists bool) {
+	if m.assigned_by != nil {
+		return *m.assigned_by, true
+	}
+	return
+}
+
+// AssignedByIDs returns the "assigned_by" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// AssignedByID instead. It exists only for internal usage by the builders.
+func (m *LeadAssignmentMutation) AssignedByIDs() (ids []int) {
+	if id := m.assigned_by; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetAssignedBy resets all changes to the "assigned_by" edge.
+func (m *LeadAssignmentMutation) ResetAssignedBy() {
+	m.assigned_by = nil
+	m.clearedassigned_by = false
+}
+
+// Where appends a list predicates to the LeadAssignmentMutation builder.
+func (m *LeadAssignmentMutation) Where(ps ...predicate.LeadAssignment) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the LeadAssignmentMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *LeadAssignmentMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.LeadAssignment, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *LeadAssignmentMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *LeadAssignmentMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (LeadAssignment).
+func (m *LeadAssignmentMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *LeadAssignmentMutation) Fields() []string {
+	fields := make([]string, 0, 8)
+	if m.lead != nil {
+		fields = append(fields, leadassignment.FieldLeadID)
+	}
+	if m.user != nil {
+		fields = append(fields, leadassignment.FieldUserID)
+	}
+	if m.assigned_by != nil {
+		fields = append(fields, leadassignment.FieldAssignedByUserID)
+	}
+	if m.assignment_type != nil {
+		fields = append(fields, leadassignment.FieldAssignmentType)
+	}
+	if m.assignment_reason != nil {
+		fields = append(fields, leadassignment.FieldAssignmentReason)
+	}
+	if m.assigned_at != nil {
+		fields = append(fields, leadassignment.FieldAssignedAt)
+	}
+	if m.is_active != nil {
+		fields = append(fields, leadassignment.FieldIsActive)
+	}
+	if m.created_at != nil {
+		fields = append(fields, leadassignment.FieldCreatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *LeadAssignmentMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case leadassignment.FieldLeadID:
+		return m.LeadID()
+	case leadassignment.FieldUserID:
+		return m.UserID()
+	case leadassignment.FieldAssignedByUserID:
+		return m.AssignedByUserID()
+	case leadassignment.FieldAssignmentType:
+		return m.AssignmentType()
+	case leadassignment.FieldAssignmentReason:
+		return m.AssignmentReason()
+	case leadassignment.FieldAssignedAt:
+		return m.AssignedAt()
+	case leadassignment.FieldIsActive:
+		return m.IsActive()
+	case leadassignment.FieldCreatedAt:
+		return m.CreatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *LeadAssignmentMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case leadassignment.FieldLeadID:
+		return m.OldLeadID(ctx)
+	case leadassignment.FieldUserID:
+		return m.OldUserID(ctx)
+	case leadassignment.FieldAssignedByUserID:
+		return m.OldAssignedByUserID(ctx)
+	case leadassignment.FieldAssignmentType:
+		return m.OldAssignmentType(ctx)
+	case leadassignment.FieldAssignmentReason:
+		return m.OldAssignmentReason(ctx)
+	case leadassignment.FieldAssignedAt:
+		return m.OldAssignedAt(ctx)
+	case leadassignment.FieldIsActive:
+		return m.OldIsActive(ctx)
+	case leadassignment.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown LeadAssignment field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *LeadAssignmentMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case leadassignment.FieldLeadID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLeadID(v)
+		return nil
+	case leadassignment.FieldUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case leadassignment.FieldAssignedByUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAssignedByUserID(v)
+		return nil
+	case leadassignment.FieldAssignmentType:
+		v, ok := value.(leadassignment.AssignmentType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAssignmentType(v)
+		return nil
+	case leadassignment.FieldAssignmentReason:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAssignmentReason(v)
+		return nil
+	case leadassignment.FieldAssignedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAssignedAt(v)
+		return nil
+	case leadassignment.FieldIsActive:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsActive(v)
+		return nil
+	case leadassignment.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown LeadAssignment field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *LeadAssignmentMutation) AddedFields() []string {
+	var fields []string
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *LeadAssignmentMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *LeadAssignmentMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown LeadAssignment numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *LeadAssignmentMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(leadassignment.FieldAssignedByUserID) {
+		fields = append(fields, leadassignment.FieldAssignedByUserID)
+	}
+	if m.FieldCleared(leadassignment.FieldAssignmentReason) {
+		fields = append(fields, leadassignment.FieldAssignmentReason)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *LeadAssignmentMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *LeadAssignmentMutation) ClearField(name string) error {
+	switch name {
+	case leadassignment.FieldAssignedByUserID:
+		m.ClearAssignedByUserID()
+		return nil
+	case leadassignment.FieldAssignmentReason:
+		m.ClearAssignmentReason()
+		return nil
+	}
+	return fmt.Errorf("unknown LeadAssignment nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *LeadAssignmentMutation) ResetField(name string) error {
+	switch name {
+	case leadassignment.FieldLeadID:
+		m.ResetLeadID()
+		return nil
+	case leadassignment.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case leadassignment.FieldAssignedByUserID:
+		m.ResetAssignedByUserID()
+		return nil
+	case leadassignment.FieldAssignmentType:
+		m.ResetAssignmentType()
+		return nil
+	case leadassignment.FieldAssignmentReason:
+		m.ResetAssignmentReason()
+		return nil
+	case leadassignment.FieldAssignedAt:
+		m.ResetAssignedAt()
+		return nil
+	case leadassignment.FieldIsActive:
+		m.ResetIsActive()
+		return nil
+	case leadassignment.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown LeadAssignment field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *LeadAssignmentMutation) AddedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.lead != nil {
+		edges = append(edges, leadassignment.EdgeLead)
+	}
+	if m.user != nil {
+		edges = append(edges, leadassignment.EdgeUser)
+	}
+	if m.assigned_by != nil {
+		edges = append(edges, leadassignment.EdgeAssignedBy)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *LeadAssignmentMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case leadassignment.EdgeLead:
+		if id := m.lead; id != nil {
+			return []ent.Value{*id}
+		}
+	case leadassignment.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	case leadassignment.EdgeAssignedBy:
+		if id := m.assigned_by; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *LeadAssignmentMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 3)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *LeadAssignmentMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *LeadAssignmentMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.clearedlead {
+		edges = append(edges, leadassignment.EdgeLead)
+	}
+	if m.cleareduser {
+		edges = append(edges, leadassignment.EdgeUser)
+	}
+	if m.clearedassigned_by {
+		edges = append(edges, leadassignment.EdgeAssignedBy)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *LeadAssignmentMutation) EdgeCleared(name string) bool {
+	switch name {
+	case leadassignment.EdgeLead:
+		return m.clearedlead
+	case leadassignment.EdgeUser:
+		return m.cleareduser
+	case leadassignment.EdgeAssignedBy:
+		return m.clearedassigned_by
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *LeadAssignmentMutation) ClearEdge(name string) error {
+	switch name {
+	case leadassignment.EdgeLead:
+		m.ClearLead()
+		return nil
+	case leadassignment.EdgeUser:
+		m.ClearUser()
+		return nil
+	case leadassignment.EdgeAssignedBy:
+		m.ClearAssignedBy()
+		return nil
+	}
+	return fmt.Errorf("unknown LeadAssignment unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *LeadAssignmentMutation) ResetEdge(name string) error {
+	switch name {
+	case leadassignment.EdgeLead:
+		m.ResetLead()
+		return nil
+	case leadassignment.EdgeUser:
+		m.ResetUser()
+		return nil
+	case leadassignment.EdgeAssignedBy:
+		m.ResetAssignedBy()
+		return nil
+	}
+	return fmt.Errorf("unknown LeadAssignment edge %s", name)
 }
 
 // LeadNoteMutation represents an operation that mutates the LeadNote nodes in the graph.
@@ -12392,6 +13384,12 @@ type UserMutation struct {
 	lead_status_changes                 map[int]struct{}
 	removedlead_status_changes          map[int]struct{}
 	clearedlead_status_changes          bool
+	assigned_leads                      map[int]struct{}
+	removedassigned_leads               map[int]struct{}
+	clearedassigned_leads               bool
+	lead_assignments_made               map[int]struct{}
+	removedlead_assignments_made        map[int]struct{}
+	clearedlead_assignments_made        bool
 	done                                bool
 	oldValue                            func(context.Context) (*User, error)
 	predicates                          []predicate.User
@@ -14143,6 +15141,114 @@ func (m *UserMutation) ResetLeadStatusChanges() {
 	m.removedlead_status_changes = nil
 }
 
+// AddAssignedLeadIDs adds the "assigned_leads" edge to the LeadAssignment entity by ids.
+func (m *UserMutation) AddAssignedLeadIDs(ids ...int) {
+	if m.assigned_leads == nil {
+		m.assigned_leads = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.assigned_leads[ids[i]] = struct{}{}
+	}
+}
+
+// ClearAssignedLeads clears the "assigned_leads" edge to the LeadAssignment entity.
+func (m *UserMutation) ClearAssignedLeads() {
+	m.clearedassigned_leads = true
+}
+
+// AssignedLeadsCleared reports if the "assigned_leads" edge to the LeadAssignment entity was cleared.
+func (m *UserMutation) AssignedLeadsCleared() bool {
+	return m.clearedassigned_leads
+}
+
+// RemoveAssignedLeadIDs removes the "assigned_leads" edge to the LeadAssignment entity by IDs.
+func (m *UserMutation) RemoveAssignedLeadIDs(ids ...int) {
+	if m.removedassigned_leads == nil {
+		m.removedassigned_leads = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.assigned_leads, ids[i])
+		m.removedassigned_leads[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedAssignedLeads returns the removed IDs of the "assigned_leads" edge to the LeadAssignment entity.
+func (m *UserMutation) RemovedAssignedLeadsIDs() (ids []int) {
+	for id := range m.removedassigned_leads {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// AssignedLeadsIDs returns the "assigned_leads" edge IDs in the mutation.
+func (m *UserMutation) AssignedLeadsIDs() (ids []int) {
+	for id := range m.assigned_leads {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetAssignedLeads resets all changes to the "assigned_leads" edge.
+func (m *UserMutation) ResetAssignedLeads() {
+	m.assigned_leads = nil
+	m.clearedassigned_leads = false
+	m.removedassigned_leads = nil
+}
+
+// AddLeadAssignmentsMadeIDs adds the "lead_assignments_made" edge to the LeadAssignment entity by ids.
+func (m *UserMutation) AddLeadAssignmentsMadeIDs(ids ...int) {
+	if m.lead_assignments_made == nil {
+		m.lead_assignments_made = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.lead_assignments_made[ids[i]] = struct{}{}
+	}
+}
+
+// ClearLeadAssignmentsMade clears the "lead_assignments_made" edge to the LeadAssignment entity.
+func (m *UserMutation) ClearLeadAssignmentsMade() {
+	m.clearedlead_assignments_made = true
+}
+
+// LeadAssignmentsMadeCleared reports if the "lead_assignments_made" edge to the LeadAssignment entity was cleared.
+func (m *UserMutation) LeadAssignmentsMadeCleared() bool {
+	return m.clearedlead_assignments_made
+}
+
+// RemoveLeadAssignmentsMadeIDs removes the "lead_assignments_made" edge to the LeadAssignment entity by IDs.
+func (m *UserMutation) RemoveLeadAssignmentsMadeIDs(ids ...int) {
+	if m.removedlead_assignments_made == nil {
+		m.removedlead_assignments_made = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.lead_assignments_made, ids[i])
+		m.removedlead_assignments_made[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedLeadAssignmentsMade returns the removed IDs of the "lead_assignments_made" edge to the LeadAssignment entity.
+func (m *UserMutation) RemovedLeadAssignmentsMadeIDs() (ids []int) {
+	for id := range m.removedlead_assignments_made {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// LeadAssignmentsMadeIDs returns the "lead_assignments_made" edge IDs in the mutation.
+func (m *UserMutation) LeadAssignmentsMadeIDs() (ids []int) {
+	for id := range m.lead_assignments_made {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetLeadAssignmentsMade resets all changes to the "lead_assignments_made" edge.
+func (m *UserMutation) ResetLeadAssignmentsMade() {
+	m.lead_assignments_made = nil
+	m.clearedlead_assignments_made = false
+	m.removedlead_assignments_made = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -14769,7 +15875,7 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 11)
+	edges := make([]string, 0, 13)
 	if m.subscriptions != nil {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -14802,6 +15908,12 @@ func (m *UserMutation) AddedEdges() []string {
 	}
 	if m.lead_status_changes != nil {
 		edges = append(edges, user.EdgeLeadStatusChanges)
+	}
+	if m.assigned_leads != nil {
+		edges = append(edges, user.EdgeAssignedLeads)
+	}
+	if m.lead_assignments_made != nil {
+		edges = append(edges, user.EdgeLeadAssignmentsMade)
 	}
 	return edges
 }
@@ -14876,13 +15988,25 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeAssignedLeads:
+		ids := make([]ent.Value, 0, len(m.assigned_leads))
+		for id := range m.assigned_leads {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgeLeadAssignmentsMade:
+		ids := make([]ent.Value, 0, len(m.lead_assignments_made))
+		for id := range m.lead_assignments_made {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 11)
+	edges := make([]string, 0, 13)
 	if m.removedsubscriptions != nil {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -14915,6 +16039,12 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedlead_status_changes != nil {
 		edges = append(edges, user.EdgeLeadStatusChanges)
+	}
+	if m.removedassigned_leads != nil {
+		edges = append(edges, user.EdgeAssignedLeads)
+	}
+	if m.removedlead_assignments_made != nil {
+		edges = append(edges, user.EdgeLeadAssignmentsMade)
 	}
 	return edges
 }
@@ -14989,13 +16119,25 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeAssignedLeads:
+		ids := make([]ent.Value, 0, len(m.removedassigned_leads))
+		for id := range m.removedassigned_leads {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgeLeadAssignmentsMade:
+		ids := make([]ent.Value, 0, len(m.removedlead_assignments_made))
+		for id := range m.removedlead_assignments_made {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 11)
+	edges := make([]string, 0, 13)
 	if m.clearedsubscriptions {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -15029,6 +16171,12 @@ func (m *UserMutation) ClearedEdges() []string {
 	if m.clearedlead_status_changes {
 		edges = append(edges, user.EdgeLeadStatusChanges)
 	}
+	if m.clearedassigned_leads {
+		edges = append(edges, user.EdgeAssignedLeads)
+	}
+	if m.clearedlead_assignments_made {
+		edges = append(edges, user.EdgeLeadAssignmentsMade)
+	}
 	return edges
 }
 
@@ -15058,6 +16206,10 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedlead_notes
 	case user.EdgeLeadStatusChanges:
 		return m.clearedlead_status_changes
+	case user.EdgeAssignedLeads:
+		return m.clearedassigned_leads
+	case user.EdgeLeadAssignmentsMade:
+		return m.clearedlead_assignments_made
 	}
 	return false
 }
@@ -15106,6 +16258,12 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgeLeadStatusChanges:
 		m.ResetLeadStatusChanges()
+		return nil
+	case user.EdgeAssignedLeads:
+		m.ResetAssignedLeads()
+		return nil
+	case user.EdgeLeadAssignmentsMade:
+		m.ResetLeadAssignmentsMade()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

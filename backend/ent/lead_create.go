@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/jordanlanch/industrydb/ent/lead"
+	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 )
@@ -352,6 +353,21 @@ func (_c *LeadCreate) AddStatusHistory(v ...*LeadStatusHistory) *LeadCreate {
 	return _c.AddStatusHistoryIDs(ids...)
 }
 
+// AddAssignmentIDs adds the "assignments" edge to the LeadAssignment entity by IDs.
+func (_c *LeadCreate) AddAssignmentIDs(ids ...int) *LeadCreate {
+	_c.mutation.AddAssignmentIDs(ids...)
+	return _c
+}
+
+// AddAssignments adds the "assignments" edges to the LeadAssignment entity.
+func (_c *LeadCreate) AddAssignments(v ...*LeadAssignment) *LeadCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddAssignmentIDs(ids...)
+}
+
 // Mutation returns the LeadMutation object of the builder.
 func (_c *LeadCreate) Mutation() *LeadMutation {
 	return _c.mutation
@@ -630,6 +646,22 @@ func (_c *LeadCreate) createSpec() (*Lead, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(leadstatushistory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.AssignmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.AssignmentsTable,
+			Columns: []string{lead.AssignmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

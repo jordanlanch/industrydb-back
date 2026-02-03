@@ -71,6 +71,8 @@ const (
 	EdgeNotes = "notes"
 	// EdgeStatusHistory holds the string denoting the status_history edge name in mutations.
 	EdgeStatusHistory = "status_history"
+	// EdgeAssignments holds the string denoting the assignments edge name in mutations.
+	EdgeAssignments = "assignments"
 	// Table holds the table name of the lead in the database.
 	Table = "leads"
 	// NotesTable is the table that holds the notes relation/edge.
@@ -87,6 +89,13 @@ const (
 	StatusHistoryInverseTable = "lead_status_histories"
 	// StatusHistoryColumn is the table column denoting the status_history relation/edge.
 	StatusHistoryColumn = "lead_id"
+	// AssignmentsTable is the table that holds the assignments relation/edge.
+	AssignmentsTable = "lead_assignments"
+	// AssignmentsInverseTable is the table name for the LeadAssignment entity.
+	// It exists in this package in order to avoid circular dependency with the "leadassignment" package.
+	AssignmentsInverseTable = "lead_assignments"
+	// AssignmentsColumn is the table column denoting the assignments relation/edge.
+	AssignmentsColumn = "lead_id"
 )
 
 // Columns holds all SQL columns for lead fields.
@@ -440,6 +449,20 @@ func ByStatusHistory(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newStatusHistoryStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByAssignmentsCount orders the results by assignments count.
+func ByAssignmentsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAssignmentsStep(), opts...)
+	}
+}
+
+// ByAssignments orders the results by assignments terms.
+func ByAssignments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAssignmentsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newNotesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -452,5 +475,12 @@ func newStatusHistoryStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(StatusHistoryInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, StatusHistoryTable, StatusHistoryColumn),
+	)
+}
+func newAssignmentsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AssignmentsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AssignmentsTable, AssignmentsColumn),
 	)
 }

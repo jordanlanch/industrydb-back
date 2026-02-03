@@ -14,6 +14,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/export"
+	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/organization"
@@ -599,6 +600,36 @@ func (_u *UserUpdate) AddLeadStatusChanges(v ...*LeadStatusHistory) *UserUpdate 
 	return _u.AddLeadStatusChangeIDs(ids...)
 }
 
+// AddAssignedLeadIDs adds the "assigned_leads" edge to the LeadAssignment entity by IDs.
+func (_u *UserUpdate) AddAssignedLeadIDs(ids ...int) *UserUpdate {
+	_u.mutation.AddAssignedLeadIDs(ids...)
+	return _u
+}
+
+// AddAssignedLeads adds the "assigned_leads" edges to the LeadAssignment entity.
+func (_u *UserUpdate) AddAssignedLeads(v ...*LeadAssignment) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAssignedLeadIDs(ids...)
+}
+
+// AddLeadAssignmentsMadeIDs adds the "lead_assignments_made" edge to the LeadAssignment entity by IDs.
+func (_u *UserUpdate) AddLeadAssignmentsMadeIDs(ids ...int) *UserUpdate {
+	_u.mutation.AddLeadAssignmentsMadeIDs(ids...)
+	return _u
+}
+
+// AddLeadAssignmentsMade adds the "lead_assignments_made" edges to the LeadAssignment entity.
+func (_u *UserUpdate) AddLeadAssignmentsMade(v ...*LeadAssignment) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddLeadAssignmentsMadeIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -833,6 +864,48 @@ func (_u *UserUpdate) RemoveLeadStatusChanges(v ...*LeadStatusHistory) *UserUpda
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveLeadStatusChangeIDs(ids...)
+}
+
+// ClearAssignedLeads clears all "assigned_leads" edges to the LeadAssignment entity.
+func (_u *UserUpdate) ClearAssignedLeads() *UserUpdate {
+	_u.mutation.ClearAssignedLeads()
+	return _u
+}
+
+// RemoveAssignedLeadIDs removes the "assigned_leads" edge to LeadAssignment entities by IDs.
+func (_u *UserUpdate) RemoveAssignedLeadIDs(ids ...int) *UserUpdate {
+	_u.mutation.RemoveAssignedLeadIDs(ids...)
+	return _u
+}
+
+// RemoveAssignedLeads removes "assigned_leads" edges to LeadAssignment entities.
+func (_u *UserUpdate) RemoveAssignedLeads(v ...*LeadAssignment) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAssignedLeadIDs(ids...)
+}
+
+// ClearLeadAssignmentsMade clears all "lead_assignments_made" edges to the LeadAssignment entity.
+func (_u *UserUpdate) ClearLeadAssignmentsMade() *UserUpdate {
+	_u.mutation.ClearLeadAssignmentsMade()
+	return _u
+}
+
+// RemoveLeadAssignmentsMadeIDs removes the "lead_assignments_made" edge to LeadAssignment entities by IDs.
+func (_u *UserUpdate) RemoveLeadAssignmentsMadeIDs(ids ...int) *UserUpdate {
+	_u.mutation.RemoveLeadAssignmentsMadeIDs(ids...)
+	return _u
+}
+
+// RemoveLeadAssignmentsMade removes "lead_assignments_made" edges to LeadAssignment entities.
+func (_u *UserUpdate) RemoveLeadAssignmentsMade(v ...*LeadAssignment) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveLeadAssignmentsMadeIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -1531,6 +1604,96 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.AssignedLeadsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AssignedLeadsTable,
+			Columns: []string{user.AssignedLeadsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAssignedLeadsIDs(); len(nodes) > 0 && !_u.mutation.AssignedLeadsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AssignedLeadsTable,
+			Columns: []string{user.AssignedLeadsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AssignedLeadsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AssignedLeadsTable,
+			Columns: []string{user.AssignedLeadsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.LeadAssignmentsMadeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadAssignmentsMadeTable,
+			Columns: []string{user.LeadAssignmentsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedLeadAssignmentsMadeIDs(); len(nodes) > 0 && !_u.mutation.LeadAssignmentsMadeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadAssignmentsMadeTable,
+			Columns: []string{user.LeadAssignmentsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.LeadAssignmentsMadeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadAssignmentsMadeTable,
+			Columns: []string{user.LeadAssignmentsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -2111,6 +2274,36 @@ func (_u *UserUpdateOne) AddLeadStatusChanges(v ...*LeadStatusHistory) *UserUpda
 	return _u.AddLeadStatusChangeIDs(ids...)
 }
 
+// AddAssignedLeadIDs adds the "assigned_leads" edge to the LeadAssignment entity by IDs.
+func (_u *UserUpdateOne) AddAssignedLeadIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.AddAssignedLeadIDs(ids...)
+	return _u
+}
+
+// AddAssignedLeads adds the "assigned_leads" edges to the LeadAssignment entity.
+func (_u *UserUpdateOne) AddAssignedLeads(v ...*LeadAssignment) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAssignedLeadIDs(ids...)
+}
+
+// AddLeadAssignmentsMadeIDs adds the "lead_assignments_made" edge to the LeadAssignment entity by IDs.
+func (_u *UserUpdateOne) AddLeadAssignmentsMadeIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.AddLeadAssignmentsMadeIDs(ids...)
+	return _u
+}
+
+// AddLeadAssignmentsMade adds the "lead_assignments_made" edges to the LeadAssignment entity.
+func (_u *UserUpdateOne) AddLeadAssignmentsMade(v ...*LeadAssignment) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddLeadAssignmentsMadeIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -2345,6 +2538,48 @@ func (_u *UserUpdateOne) RemoveLeadStatusChanges(v ...*LeadStatusHistory) *UserU
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveLeadStatusChangeIDs(ids...)
+}
+
+// ClearAssignedLeads clears all "assigned_leads" edges to the LeadAssignment entity.
+func (_u *UserUpdateOne) ClearAssignedLeads() *UserUpdateOne {
+	_u.mutation.ClearAssignedLeads()
+	return _u
+}
+
+// RemoveAssignedLeadIDs removes the "assigned_leads" edge to LeadAssignment entities by IDs.
+func (_u *UserUpdateOne) RemoveAssignedLeadIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.RemoveAssignedLeadIDs(ids...)
+	return _u
+}
+
+// RemoveAssignedLeads removes "assigned_leads" edges to LeadAssignment entities.
+func (_u *UserUpdateOne) RemoveAssignedLeads(v ...*LeadAssignment) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAssignedLeadIDs(ids...)
+}
+
+// ClearLeadAssignmentsMade clears all "lead_assignments_made" edges to the LeadAssignment entity.
+func (_u *UserUpdateOne) ClearLeadAssignmentsMade() *UserUpdateOne {
+	_u.mutation.ClearLeadAssignmentsMade()
+	return _u
+}
+
+// RemoveLeadAssignmentsMadeIDs removes the "lead_assignments_made" edge to LeadAssignment entities by IDs.
+func (_u *UserUpdateOne) RemoveLeadAssignmentsMadeIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.RemoveLeadAssignmentsMadeIDs(ids...)
+	return _u
+}
+
+// RemoveLeadAssignmentsMade removes "lead_assignments_made" edges to LeadAssignment entities.
+func (_u *UserUpdateOne) RemoveLeadAssignmentsMade(v ...*LeadAssignment) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveLeadAssignmentsMadeIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -3066,6 +3301,96 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(leadstatushistory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.AssignedLeadsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AssignedLeadsTable,
+			Columns: []string{user.AssignedLeadsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAssignedLeadsIDs(); len(nodes) > 0 && !_u.mutation.AssignedLeadsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AssignedLeadsTable,
+			Columns: []string{user.AssignedLeadsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AssignedLeadsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AssignedLeadsTable,
+			Columns: []string{user.AssignedLeadsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.LeadAssignmentsMadeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadAssignmentsMadeTable,
+			Columns: []string{user.LeadAssignmentsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedLeadAssignmentsMadeIDs(); len(nodes) > 0 && !_u.mutation.LeadAssignmentsMadeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadAssignmentsMadeTable,
+			Columns: []string{user.LeadAssignmentsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.LeadAssignmentsMadeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadAssignmentsMadeTable,
+			Columns: []string{user.LeadAssignmentsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

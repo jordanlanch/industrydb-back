@@ -20,6 +20,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/industry"
 	"github.com/jordanlanch/industrydb/ent/lead"
+	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/organization"
@@ -46,6 +47,8 @@ type Client struct {
 	Industry *IndustryClient
 	// Lead is the client for interacting with the Lead builders.
 	Lead *LeadClient
+	// LeadAssignment is the client for interacting with the LeadAssignment builders.
+	LeadAssignment *LeadAssignmentClient
 	// LeadNote is the client for interacting with the LeadNote builders.
 	LeadNote *LeadNoteClient
 	// LeadStatusHistory is the client for interacting with the LeadStatusHistory builders.
@@ -80,6 +83,7 @@ func (c *Client) init() {
 	c.Export = NewExportClient(c.config)
 	c.Industry = NewIndustryClient(c.config)
 	c.Lead = NewLeadClient(c.config)
+	c.LeadAssignment = NewLeadAssignmentClient(c.config)
 	c.LeadNote = NewLeadNoteClient(c.config)
 	c.LeadStatusHistory = NewLeadStatusHistoryClient(c.config)
 	c.Organization = NewOrganizationClient(c.config)
@@ -186,6 +190,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Export:             NewExportClient(cfg),
 		Industry:           NewIndustryClient(cfg),
 		Lead:               NewLeadClient(cfg),
+		LeadAssignment:     NewLeadAssignmentClient(cfg),
 		LeadNote:           NewLeadNoteClient(cfg),
 		LeadStatusHistory:  NewLeadStatusHistoryClient(cfg),
 		Organization:       NewOrganizationClient(cfg),
@@ -219,6 +224,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Export:             NewExportClient(cfg),
 		Industry:           NewIndustryClient(cfg),
 		Lead:               NewLeadClient(cfg),
+		LeadAssignment:     NewLeadAssignmentClient(cfg),
 		LeadNote:           NewLeadNoteClient(cfg),
 		LeadStatusHistory:  NewLeadStatusHistoryClient(cfg),
 		Organization:       NewOrganizationClient(cfg),
@@ -257,9 +263,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.APIKey, c.AuditLog, c.Export, c.Industry, c.Lead, c.LeadNote,
-		c.LeadStatusHistory, c.Organization, c.OrganizationMember, c.SavedSearch,
-		c.Subscription, c.UsageLog, c.User, c.Webhook,
+		c.APIKey, c.AuditLog, c.Export, c.Industry, c.Lead, c.LeadAssignment,
+		c.LeadNote, c.LeadStatusHistory, c.Organization, c.OrganizationMember,
+		c.SavedSearch, c.Subscription, c.UsageLog, c.User, c.Webhook,
 	} {
 		n.Use(hooks...)
 	}
@@ -269,9 +275,9 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.APIKey, c.AuditLog, c.Export, c.Industry, c.Lead, c.LeadNote,
-		c.LeadStatusHistory, c.Organization, c.OrganizationMember, c.SavedSearch,
-		c.Subscription, c.UsageLog, c.User, c.Webhook,
+		c.APIKey, c.AuditLog, c.Export, c.Industry, c.Lead, c.LeadAssignment,
+		c.LeadNote, c.LeadStatusHistory, c.Organization, c.OrganizationMember,
+		c.SavedSearch, c.Subscription, c.UsageLog, c.User, c.Webhook,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -290,6 +296,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Industry.mutate(ctx, m)
 	case *LeadMutation:
 		return c.Lead.mutate(ctx, m)
+	case *LeadAssignmentMutation:
+		return c.LeadAssignment.mutate(ctx, m)
 	case *LeadNoteMutation:
 		return c.LeadNote.mutate(ctx, m)
 	case *LeadStatusHistoryMutation:
@@ -1049,6 +1057,22 @@ func (c *LeadClient) QueryStatusHistory(_m *Lead) *LeadStatusHistoryQuery {
 	return query
 }
 
+// QueryAssignments queries the assignments edge of a Lead.
+func (c *LeadClient) QueryAssignments(_m *Lead) *LeadAssignmentQuery {
+	query := (&LeadAssignmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(lead.Table, lead.FieldID, id),
+			sqlgraph.To(leadassignment.Table, leadassignment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, lead.AssignmentsTable, lead.AssignmentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *LeadClient) Hooks() []Hook {
 	return c.hooks.Lead
@@ -1071,6 +1095,187 @@ func (c *LeadClient) mutate(ctx context.Context, m *LeadMutation) (Value, error)
 		return (&LeadDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Lead mutation op: %q", m.Op())
+	}
+}
+
+// LeadAssignmentClient is a client for the LeadAssignment schema.
+type LeadAssignmentClient struct {
+	config
+}
+
+// NewLeadAssignmentClient returns a client for the LeadAssignment from the given config.
+func NewLeadAssignmentClient(c config) *LeadAssignmentClient {
+	return &LeadAssignmentClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `leadassignment.Hooks(f(g(h())))`.
+func (c *LeadAssignmentClient) Use(hooks ...Hook) {
+	c.hooks.LeadAssignment = append(c.hooks.LeadAssignment, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `leadassignment.Intercept(f(g(h())))`.
+func (c *LeadAssignmentClient) Intercept(interceptors ...Interceptor) {
+	c.inters.LeadAssignment = append(c.inters.LeadAssignment, interceptors...)
+}
+
+// Create returns a builder for creating a LeadAssignment entity.
+func (c *LeadAssignmentClient) Create() *LeadAssignmentCreate {
+	mutation := newLeadAssignmentMutation(c.config, OpCreate)
+	return &LeadAssignmentCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of LeadAssignment entities.
+func (c *LeadAssignmentClient) CreateBulk(builders ...*LeadAssignmentCreate) *LeadAssignmentCreateBulk {
+	return &LeadAssignmentCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *LeadAssignmentClient) MapCreateBulk(slice any, setFunc func(*LeadAssignmentCreate, int)) *LeadAssignmentCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &LeadAssignmentCreateBulk{err: fmt.Errorf("calling to LeadAssignmentClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*LeadAssignmentCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &LeadAssignmentCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for LeadAssignment.
+func (c *LeadAssignmentClient) Update() *LeadAssignmentUpdate {
+	mutation := newLeadAssignmentMutation(c.config, OpUpdate)
+	return &LeadAssignmentUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *LeadAssignmentClient) UpdateOne(_m *LeadAssignment) *LeadAssignmentUpdateOne {
+	mutation := newLeadAssignmentMutation(c.config, OpUpdateOne, withLeadAssignment(_m))
+	return &LeadAssignmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *LeadAssignmentClient) UpdateOneID(id int) *LeadAssignmentUpdateOne {
+	mutation := newLeadAssignmentMutation(c.config, OpUpdateOne, withLeadAssignmentID(id))
+	return &LeadAssignmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for LeadAssignment.
+func (c *LeadAssignmentClient) Delete() *LeadAssignmentDelete {
+	mutation := newLeadAssignmentMutation(c.config, OpDelete)
+	return &LeadAssignmentDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *LeadAssignmentClient) DeleteOne(_m *LeadAssignment) *LeadAssignmentDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *LeadAssignmentClient) DeleteOneID(id int) *LeadAssignmentDeleteOne {
+	builder := c.Delete().Where(leadassignment.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &LeadAssignmentDeleteOne{builder}
+}
+
+// Query returns a query builder for LeadAssignment.
+func (c *LeadAssignmentClient) Query() *LeadAssignmentQuery {
+	return &LeadAssignmentQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeLeadAssignment},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a LeadAssignment entity by its id.
+func (c *LeadAssignmentClient) Get(ctx context.Context, id int) (*LeadAssignment, error) {
+	return c.Query().Where(leadassignment.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *LeadAssignmentClient) GetX(ctx context.Context, id int) *LeadAssignment {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryLead queries the lead edge of a LeadAssignment.
+func (c *LeadAssignmentClient) QueryLead(_m *LeadAssignment) *LeadQuery {
+	query := (&LeadClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(leadassignment.Table, leadassignment.FieldID, id),
+			sqlgraph.To(lead.Table, lead.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, leadassignment.LeadTable, leadassignment.LeadColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUser queries the user edge of a LeadAssignment.
+func (c *LeadAssignmentClient) QueryUser(_m *LeadAssignment) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(leadassignment.Table, leadassignment.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, leadassignment.UserTable, leadassignment.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAssignedBy queries the assigned_by edge of a LeadAssignment.
+func (c *LeadAssignmentClient) QueryAssignedBy(_m *LeadAssignment) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(leadassignment.Table, leadassignment.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, leadassignment.AssignedByTable, leadassignment.AssignedByColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *LeadAssignmentClient) Hooks() []Hook {
+	return c.hooks.LeadAssignment
+}
+
+// Interceptors returns the client interceptors.
+func (c *LeadAssignmentClient) Interceptors() []Interceptor {
+	return c.inters.LeadAssignment
+}
+
+func (c *LeadAssignmentClient) mutate(ctx context.Context, m *LeadAssignmentMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&LeadAssignmentCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&LeadAssignmentUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&LeadAssignmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&LeadAssignmentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown LeadAssignment mutation op: %q", m.Op())
 	}
 }
 
@@ -2481,6 +2686,38 @@ func (c *UserClient) QueryLeadStatusChanges(_m *User) *LeadStatusHistoryQuery {
 	return query
 }
 
+// QueryAssignedLeads queries the assigned_leads edge of a User.
+func (c *UserClient) QueryAssignedLeads(_m *User) *LeadAssignmentQuery {
+	query := (&LeadAssignmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(leadassignment.Table, leadassignment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.AssignedLeadsTable, user.AssignedLeadsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLeadAssignmentsMade queries the lead_assignments_made edge of a User.
+func (c *UserClient) QueryLeadAssignmentsMade(_m *User) *LeadAssignmentQuery {
+	query := (&LeadAssignmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(leadassignment.Table, leadassignment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.LeadAssignmentsMadeTable, user.LeadAssignmentsMadeColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -2658,13 +2895,13 @@ func (c *WebhookClient) mutate(ctx context.Context, m *WebhookMutation) (Value, 
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		APIKey, AuditLog, Export, Industry, Lead, LeadNote, LeadStatusHistory,
-		Organization, OrganizationMember, SavedSearch, Subscription, UsageLog, User,
-		Webhook []ent.Hook
+		APIKey, AuditLog, Export, Industry, Lead, LeadAssignment, LeadNote,
+		LeadStatusHistory, Organization, OrganizationMember, SavedSearch, Subscription,
+		UsageLog, User, Webhook []ent.Hook
 	}
 	inters struct {
-		APIKey, AuditLog, Export, Industry, Lead, LeadNote, LeadStatusHistory,
-		Organization, OrganizationMember, SavedSearch, Subscription, UsageLog, User,
-		Webhook []ent.Interceptor
+		APIKey, AuditLog, Export, Industry, Lead, LeadAssignment, LeadNote,
+		LeadStatusHistory, Organization, OrganizationMember, SavedSearch, Subscription,
+		UsageLog, User, Webhook []ent.Interceptor
 	}
 )

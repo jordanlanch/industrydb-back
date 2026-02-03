@@ -332,6 +332,66 @@ var (
 			},
 		},
 	}
+	// LeadAssignmentsColumns holds the columns for the "lead_assignments" table.
+	LeadAssignmentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "assignment_type", Type: field.TypeEnum, Enums: []string{"auto", "manual"}, Default: "manual"},
+		{Name: "assignment_reason", Type: field.TypeString, Nullable: true, Size: 200},
+		{Name: "assigned_at", Type: field.TypeTime},
+		{Name: "is_active", Type: field.TypeBool, Default: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "lead_id", Type: field.TypeInt},
+		{Name: "user_id", Type: field.TypeInt},
+		{Name: "assigned_by_user_id", Type: field.TypeInt, Nullable: true},
+	}
+	// LeadAssignmentsTable holds the schema information for the "lead_assignments" table.
+	LeadAssignmentsTable = &schema.Table{
+		Name:       "lead_assignments",
+		Columns:    LeadAssignmentsColumns,
+		PrimaryKey: []*schema.Column{LeadAssignmentsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "lead_assignments_leads_assignments",
+				Columns:    []*schema.Column{LeadAssignmentsColumns[6]},
+				RefColumns: []*schema.Column{LeadsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "lead_assignments_users_assigned_leads",
+				Columns:    []*schema.Column{LeadAssignmentsColumns[7]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "lead_assignments_users_lead_assignments_made",
+				Columns:    []*schema.Column{LeadAssignmentsColumns[8]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "idx_lead_assignment_user_active",
+				Unique:  false,
+				Columns: []*schema.Column{LeadAssignmentsColumns[7], LeadAssignmentsColumns[4]},
+			},
+			{
+				Name:    "idx_lead_assignment_lead_active",
+				Unique:  false,
+				Columns: []*schema.Column{LeadAssignmentsColumns[6], LeadAssignmentsColumns[4]},
+			},
+			{
+				Name:    "idx_lead_assignment_time",
+				Unique:  false,
+				Columns: []*schema.Column{LeadAssignmentsColumns[3]},
+			},
+			{
+				Name:    "idx_lead_assignment_type_time",
+				Unique:  false,
+				Columns: []*schema.Column{LeadAssignmentsColumns[1], LeadAssignmentsColumns[3]},
+			},
+		},
+	}
 	// LeadNotesColumns holds the columns for the "lead_notes" table.
 	LeadNotesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -779,6 +839,7 @@ var (
 		ExportsTable,
 		IndustriesTable,
 		LeadsTable,
+		LeadAssignmentsTable,
 		LeadNotesTable,
 		LeadStatusHistoriesTable,
 		OrganizationsTable,
@@ -796,6 +857,9 @@ func init() {
 	AuditLogsTable.ForeignKeys[0].RefTable = UsersTable
 	ExportsTable.ForeignKeys[0].RefTable = OrganizationsTable
 	ExportsTable.ForeignKeys[1].RefTable = UsersTable
+	LeadAssignmentsTable.ForeignKeys[0].RefTable = LeadsTable
+	LeadAssignmentsTable.ForeignKeys[1].RefTable = UsersTable
+	LeadAssignmentsTable.ForeignKeys[2].RefTable = UsersTable
 	LeadNotesTable.ForeignKeys[0].RefTable = LeadsTable
 	LeadNotesTable.ForeignKeys[1].RefTable = UsersTable
 	LeadStatusHistoriesTable.ForeignKeys[0].RefTable = LeadsTable

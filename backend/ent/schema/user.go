@@ -138,6 +138,10 @@ func (User) Edges() []ent.Edge {
 			Comment("Notes created by this user on leads"),
 		edge.To("lead_status_changes", LeadStatusHistory.Type).
 			Comment("Lead status changes made by this user"),
+		edge.To("assigned_leads", LeadAssignment.Type).
+			Comment("Leads assigned to this user"),
+		edge.To("lead_assignments_made", LeadAssignment.Type).
+			Comment("Lead assignments made by this user"),
 	}
 }
 

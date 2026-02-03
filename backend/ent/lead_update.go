@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/jordanlanch/industrydb/ent/lead"
+	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/predicate"
@@ -494,6 +495,21 @@ func (_u *LeadUpdate) AddStatusHistory(v ...*LeadStatusHistory) *LeadUpdate {
 	return _u.AddStatusHistoryIDs(ids...)
 }
 
+// AddAssignmentIDs adds the "assignments" edge to the LeadAssignment entity by IDs.
+func (_u *LeadUpdate) AddAssignmentIDs(ids ...int) *LeadUpdate {
+	_u.mutation.AddAssignmentIDs(ids...)
+	return _u
+}
+
+// AddAssignments adds the "assignments" edges to the LeadAssignment entity.
+func (_u *LeadUpdate) AddAssignments(v ...*LeadAssignment) *LeadUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAssignmentIDs(ids...)
+}
+
 // Mutation returns the LeadMutation object of the builder.
 func (_u *LeadUpdate) Mutation() *LeadMutation {
 	return _u.mutation
@@ -539,6 +555,27 @@ func (_u *LeadUpdate) RemoveStatusHistory(v ...*LeadStatusHistory) *LeadUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveStatusHistoryIDs(ids...)
+}
+
+// ClearAssignments clears all "assignments" edges to the LeadAssignment entity.
+func (_u *LeadUpdate) ClearAssignments() *LeadUpdate {
+	_u.mutation.ClearAssignments()
+	return _u
+}
+
+// RemoveAssignmentIDs removes the "assignments" edge to LeadAssignment entities by IDs.
+func (_u *LeadUpdate) RemoveAssignmentIDs(ids ...int) *LeadUpdate {
+	_u.mutation.RemoveAssignmentIDs(ids...)
+	return _u
+}
+
+// RemoveAssignments removes "assignments" edges to LeadAssignment entities.
+func (_u *LeadUpdate) RemoveAssignments(v ...*LeadAssignment) *LeadUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAssignmentIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -844,6 +881,51 @@ func (_u *LeadUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(leadstatushistory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.AssignmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.AssignmentsTable,
+			Columns: []string{lead.AssignmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAssignmentsIDs(); len(nodes) > 0 && !_u.mutation.AssignmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.AssignmentsTable,
+			Columns: []string{lead.AssignmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AssignmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.AssignmentsTable,
+			Columns: []string{lead.AssignmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -1334,6 +1416,21 @@ func (_u *LeadUpdateOne) AddStatusHistory(v ...*LeadStatusHistory) *LeadUpdateOn
 	return _u.AddStatusHistoryIDs(ids...)
 }
 
+// AddAssignmentIDs adds the "assignments" edge to the LeadAssignment entity by IDs.
+func (_u *LeadUpdateOne) AddAssignmentIDs(ids ...int) *LeadUpdateOne {
+	_u.mutation.AddAssignmentIDs(ids...)
+	return _u
+}
+
+// AddAssignments adds the "assignments" edges to the LeadAssignment entity.
+func (_u *LeadUpdateOne) AddAssignments(v ...*LeadAssignment) *LeadUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAssignmentIDs(ids...)
+}
+
 // Mutation returns the LeadMutation object of the builder.
 func (_u *LeadUpdateOne) Mutation() *LeadMutation {
 	return _u.mutation
@@ -1379,6 +1476,27 @@ func (_u *LeadUpdateOne) RemoveStatusHistory(v ...*LeadStatusHistory) *LeadUpdat
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveStatusHistoryIDs(ids...)
+}
+
+// ClearAssignments clears all "assignments" edges to the LeadAssignment entity.
+func (_u *LeadUpdateOne) ClearAssignments() *LeadUpdateOne {
+	_u.mutation.ClearAssignments()
+	return _u
+}
+
+// RemoveAssignmentIDs removes the "assignments" edge to LeadAssignment entities by IDs.
+func (_u *LeadUpdateOne) RemoveAssignmentIDs(ids ...int) *LeadUpdateOne {
+	_u.mutation.RemoveAssignmentIDs(ids...)
+	return _u
+}
+
+// RemoveAssignments removes "assignments" edges to LeadAssignment entities.
+func (_u *LeadUpdateOne) RemoveAssignments(v ...*LeadAssignment) *LeadUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAssignmentIDs(ids...)
 }
 
 // Where appends a list predicates to the LeadUpdate builder.
@@ -1714,6 +1832,51 @@ func (_u *LeadUpdateOne) sqlSave(ctx context.Context) (_node *Lead, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(leadstatushistory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.AssignmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.AssignmentsTable,
+			Columns: []string{lead.AssignmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAssignmentsIDs(); len(nodes) > 0 && !_u.mutation.AssignmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.AssignmentsTable,
+			Columns: []string{lead.AssignmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AssignmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.AssignmentsTable,
+			Columns: []string{lead.AssignmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

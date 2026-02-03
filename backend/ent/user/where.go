@@ -1548,6 +1548,52 @@ func HasLeadStatusChangesWith(preds ...predicate.LeadStatusHistory) predicate.Us
 	})
 }
 
+// HasAssignedLeads applies the HasEdge predicate on the "assigned_leads" edge.
+func HasAssignedLeads() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, AssignedLeadsTable, AssignedLeadsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAssignedLeadsWith applies the HasEdge predicate on the "assigned_leads" edge with a given conditions (other predicates).
+func HasAssignedLeadsWith(preds ...predicate.LeadAssignment) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newAssignedLeadsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasLeadAssignmentsMade applies the HasEdge predicate on the "lead_assignments_made" edge.
+func HasLeadAssignmentsMade() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, LeadAssignmentsMadeTable, LeadAssignmentsMadeColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasLeadAssignmentsMadeWith applies the HasEdge predicate on the "lead_assignments_made" edge with a given conditions (other predicates).
+func HasLeadAssignmentsMadeWith(preds ...predicate.LeadAssignment) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newLeadAssignmentsMadeStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.User) predicate.User {
 	return predicate.User(sql.AndPredicates(predicates...))

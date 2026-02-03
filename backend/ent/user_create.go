@@ -13,6 +13,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/export"
+	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/organization"
@@ -508,6 +509,36 @@ func (_c *UserCreate) AddLeadStatusChanges(v ...*LeadStatusHistory) *UserCreate 
 	return _c.AddLeadStatusChangeIDs(ids...)
 }
 
+// AddAssignedLeadIDs adds the "assigned_leads" edge to the LeadAssignment entity by IDs.
+func (_c *UserCreate) AddAssignedLeadIDs(ids ...int) *UserCreate {
+	_c.mutation.AddAssignedLeadIDs(ids...)
+	return _c
+}
+
+// AddAssignedLeads adds the "assigned_leads" edges to the LeadAssignment entity.
+func (_c *UserCreate) AddAssignedLeads(v ...*LeadAssignment) *UserCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddAssignedLeadIDs(ids...)
+}
+
+// AddLeadAssignmentsMadeIDs adds the "lead_assignments_made" edge to the LeadAssignment entity by IDs.
+func (_c *UserCreate) AddLeadAssignmentsMadeIDs(ids ...int) *UserCreate {
+	_c.mutation.AddLeadAssignmentsMadeIDs(ids...)
+	return _c
+}
+
+// AddLeadAssignmentsMade adds the "lead_assignments_made" edges to the LeadAssignment entity.
+func (_c *UserCreate) AddLeadAssignmentsMade(v ...*LeadAssignment) *UserCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddLeadAssignmentsMadeIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_c *UserCreate) Mutation() *UserMutation {
 	return _c.mutation
@@ -964,6 +995,38 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(leadstatushistory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.AssignedLeadsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AssignedLeadsTable,
+			Columns: []string{user.AssignedLeadsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.LeadAssignmentsMadeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadAssignmentsMadeTable,
+			Columns: []string{user.LeadAssignmentsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

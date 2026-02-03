@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/jordanlanch/industrydb/ent/lead"
+	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/predicate"
@@ -27,6 +28,7 @@ type LeadQuery struct {
 	predicates        []predicate.Lead
 	withNotes         *LeadNoteQuery
 	withStatusHistory *LeadStatusHistoryQuery
+	withAssignments   *LeadAssignmentQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -100,6 +102,28 @@ func (_q *LeadQuery) QueryStatusHistory() *LeadStatusHistoryQuery {
 			sqlgraph.From(lead.Table, lead.FieldID, selector),
 			sqlgraph.To(leadstatushistory.Table, leadstatushistory.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, lead.StatusHistoryTable, lead.StatusHistoryColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryAssignments chains the current query on the "assignments" edge.
+func (_q *LeadQuery) QueryAssignments() *LeadAssignmentQuery {
+	query := (&LeadAssignmentClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(lead.Table, lead.FieldID, selector),
+			sqlgraph.To(leadassignment.Table, leadassignment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, lead.AssignmentsTable, lead.AssignmentsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -301,6 +325,7 @@ func (_q *LeadQuery) Clone() *LeadQuery {
 		predicates:        append([]predicate.Lead{}, _q.predicates...),
 		withNotes:         _q.withNotes.Clone(),
 		withStatusHistory: _q.withStatusHistory.Clone(),
+		withAssignments:   _q.withAssignments.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -326,6 +351,17 @@ func (_q *LeadQuery) WithStatusHistory(opts ...func(*LeadStatusHistoryQuery)) *L
 		opt(query)
 	}
 	_q.withStatusHistory = query
+	return _q
+}
+
+// WithAssignments tells the query-builder to eager-load the nodes that are connected to
+// the "assignments" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *LeadQuery) WithAssignments(opts ...func(*LeadAssignmentQuery)) *LeadQuery {
+	query := (&LeadAssignmentClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withAssignments = query
 	return _q
 }
 
@@ -407,9 +443,10 @@ func (_q *LeadQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Lead, e
 	var (
 		nodes       = []*Lead{}
 		_spec       = _q.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			_q.withNotes != nil,
 			_q.withStatusHistory != nil,
+			_q.withAssignments != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -441,6 +478,13 @@ func (_q *LeadQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Lead, e
 		if err := _q.loadStatusHistory(ctx, query, nodes,
 			func(n *Lead) { n.Edges.StatusHistory = []*LeadStatusHistory{} },
 			func(n *Lead, e *LeadStatusHistory) { n.Edges.StatusHistory = append(n.Edges.StatusHistory, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withAssignments; query != nil {
+		if err := _q.loadAssignments(ctx, query, nodes,
+			func(n *Lead) { n.Edges.Assignments = []*LeadAssignment{} },
+			func(n *Lead, e *LeadAssignment) { n.Edges.Assignments = append(n.Edges.Assignments, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -492,6 +536,36 @@ func (_q *LeadQuery) loadStatusHistory(ctx context.Context, query *LeadStatusHis
 	}
 	query.Where(predicate.LeadStatusHistory(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(lead.StatusHistoryColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.LeadID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "lead_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *LeadQuery) loadAssignments(ctx context.Context, query *LeadAssignmentQuery, nodes []*Lead, init func(*Lead), assign func(*Lead, *LeadAssignment)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Lead)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(leadassignment.FieldLeadID)
+	}
+	query.Where(predicate.LeadAssignment(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(lead.AssignmentsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

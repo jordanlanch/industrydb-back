@@ -85,6 +85,10 @@ const (
 	EdgeLeadNotes = "lead_notes"
 	// EdgeLeadStatusChanges holds the string denoting the lead_status_changes edge name in mutations.
 	EdgeLeadStatusChanges = "lead_status_changes"
+	// EdgeAssignedLeads holds the string denoting the assigned_leads edge name in mutations.
+	EdgeAssignedLeads = "assigned_leads"
+	// EdgeLeadAssignmentsMade holds the string denoting the lead_assignments_made edge name in mutations.
+	EdgeLeadAssignmentsMade = "lead_assignments_made"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// SubscriptionsTable is the table that holds the subscriptions relation/edge.
@@ -164,6 +168,20 @@ const (
 	LeadStatusChangesInverseTable = "lead_status_histories"
 	// LeadStatusChangesColumn is the table column denoting the lead_status_changes relation/edge.
 	LeadStatusChangesColumn = "user_id"
+	// AssignedLeadsTable is the table that holds the assigned_leads relation/edge.
+	AssignedLeadsTable = "lead_assignments"
+	// AssignedLeadsInverseTable is the table name for the LeadAssignment entity.
+	// It exists in this package in order to avoid circular dependency with the "leadassignment" package.
+	AssignedLeadsInverseTable = "lead_assignments"
+	// AssignedLeadsColumn is the table column denoting the assigned_leads relation/edge.
+	AssignedLeadsColumn = "user_id"
+	// LeadAssignmentsMadeTable is the table that holds the lead_assignments_made relation/edge.
+	LeadAssignmentsMadeTable = "lead_assignments"
+	// LeadAssignmentsMadeInverseTable is the table name for the LeadAssignment entity.
+	// It exists in this package in order to avoid circular dependency with the "leadassignment" package.
+	LeadAssignmentsMadeInverseTable = "lead_assignments"
+	// LeadAssignmentsMadeColumn is the table column denoting the lead_assignments_made relation/edge.
+	LeadAssignmentsMadeColumn = "assigned_by_user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -576,6 +594,34 @@ func ByLeadStatusChanges(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption
 		sqlgraph.OrderByNeighborTerms(s, newLeadStatusChangesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByAssignedLeadsCount orders the results by assigned_leads count.
+func ByAssignedLeadsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAssignedLeadsStep(), opts...)
+	}
+}
+
+// ByAssignedLeads orders the results by assigned_leads terms.
+func ByAssignedLeads(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAssignedLeadsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByLeadAssignmentsMadeCount orders the results by lead_assignments_made count.
+func ByLeadAssignmentsMadeCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newLeadAssignmentsMadeStep(), opts...)
+	}
+}
+
+// ByLeadAssignmentsMade orders the results by lead_assignments_made terms.
+func ByLeadAssignmentsMade(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newLeadAssignmentsMadeStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSubscriptionsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -651,5 +697,19 @@ func newLeadStatusChangesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(LeadStatusChangesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, LeadStatusChangesTable, LeadStatusChangesColumn),
+	)
+}
+func newAssignedLeadsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AssignedLeadsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AssignedLeadsTable, AssignedLeadsColumn),
+	)
+}
+func newLeadAssignmentsMadeStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(LeadAssignmentsMadeInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, LeadAssignmentsMadeTable, LeadAssignmentsMadeColumn),
 	)
 }

@@ -95,9 +95,13 @@ type UserEdges struct {
 	LeadNotes []*LeadNote `json:"lead_notes,omitempty"`
 	// Lead status changes made by this user
 	LeadStatusChanges []*LeadStatusHistory `json:"lead_status_changes,omitempty"`
+	// Leads assigned to this user
+	AssignedLeads []*LeadAssignment `json:"assigned_leads,omitempty"`
+	// Lead assignments made by this user
+	LeadAssignmentsMade []*LeadAssignment `json:"lead_assignments_made,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [11]bool
+	loadedTypes [13]bool
 }
 
 // SubscriptionsOrErr returns the Subscriptions value or an error if the edge
@@ -197,6 +201,24 @@ func (e UserEdges) LeadStatusChangesOrErr() ([]*LeadStatusHistory, error) {
 		return e.LeadStatusChanges, nil
 	}
 	return nil, &NotLoadedError{edge: "lead_status_changes"}
+}
+
+// AssignedLeadsOrErr returns the AssignedLeads value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) AssignedLeadsOrErr() ([]*LeadAssignment, error) {
+	if e.loadedTypes[11] {
+		return e.AssignedLeads, nil
+	}
+	return nil, &NotLoadedError{edge: "assigned_leads"}
+}
+
+// LeadAssignmentsMadeOrErr returns the LeadAssignmentsMade value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) LeadAssignmentsMadeOrErr() ([]*LeadAssignment, error) {
+	if e.loadedTypes[12] {
+		return e.LeadAssignmentsMade, nil
+	}
+	return nil, &NotLoadedError{edge: "lead_assignments_made"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -453,6 +475,16 @@ func (_m *User) QueryLeadNotes() *LeadNoteQuery {
 // QueryLeadStatusChanges queries the "lead_status_changes" edge of the User entity.
 func (_m *User) QueryLeadStatusChanges() *LeadStatusHistoryQuery {
 	return NewUserClient(_m.config).QueryLeadStatusChanges(_m)
+}
+
+// QueryAssignedLeads queries the "assigned_leads" edge of the User entity.
+func (_m *User) QueryAssignedLeads() *LeadAssignmentQuery {
+	return NewUserClient(_m.config).QueryAssignedLeads(_m)
+}
+
+// QueryLeadAssignmentsMade queries the "lead_assignments_made" edge of the User entity.
+func (_m *User) QueryLeadAssignmentsMade() *LeadAssignmentQuery {
+	return NewUserClient(_m.config).QueryLeadAssignmentsMade(_m)
 }
 
 // Update returns a builder for updating this User.

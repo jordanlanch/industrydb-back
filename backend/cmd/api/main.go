@@ -354,6 +354,7 @@ func main() {
 	leadLifecycleHandler := handlers.NewLeadLifecycleHandler(db.Ent, auditLogger)
 	customFieldsHandler := handlers.NewCustomFieldsHandler(db.Ent)
 	phoneHandler := handlers.NewPhoneHandler()
+	leadAssignmentHandler := handlers.NewLeadAssignmentHandler(db.Ent, auditLogger)
 	log.Printf("✅ Webhook and batch handlers initialized")
 
 	// Backup handler (admin only, if enabled)
@@ -407,6 +408,12 @@ func main() {
 			leadsGroup.PUT("/:id/custom-fields", customFieldsHandler.UpdateCustomFields)
 			leadsGroup.DELETE("/:id/custom-fields", customFieldsHandler.ClearCustomFields)
 			leadsGroup.DELETE("/:id/custom-fields/:key", customFieldsHandler.RemoveCustomField)
+
+			// Lead assignment
+			leadsGroup.POST("/:id/assign", leadAssignmentHandler.AssignLead)
+			leadsGroup.POST("/:id/auto-assign", leadAssignmentHandler.AutoAssignLead)
+			leadsGroup.GET("/:id/assignment-history", leadAssignmentHandler.GetLeadAssignmentHistory)
+			leadsGroup.GET("/:id/current-assignment", leadAssignmentHandler.GetCurrentAssignment)
 		}
 
 		// Lead notes routes (require email verification)
@@ -429,6 +436,7 @@ func main() {
 			userGroup.GET("/data-export", userHandler.ExportPersonalData)
 			userGroup.DELETE("/account", userHandler.DeleteAccount)
 			userGroup.GET("/audit-logs", auditHandler.GetUserLogs)
+			userGroup.GET("/assigned-leads", leadAssignmentHandler.GetUserLeads)
 		}
 
 		// Analytics routes

@@ -10,6 +10,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/industry"
 	"github.com/jordanlanch/industrydb/ent/lead"
+	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/organization"
@@ -192,6 +193,32 @@ func init() {
 	lead.DefaultUpdatedAt = leadDescUpdatedAt.Default.(func() time.Time)
 	// lead.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	lead.UpdateDefaultUpdatedAt = leadDescUpdatedAt.UpdateDefault.(func() time.Time)
+	leadassignmentFields := schema.LeadAssignment{}.Fields()
+	_ = leadassignmentFields
+	// leadassignmentDescLeadID is the schema descriptor for lead_id field.
+	leadassignmentDescLeadID := leadassignmentFields[0].Descriptor()
+	// leadassignment.LeadIDValidator is a validator for the "lead_id" field. It is called by the builders before save.
+	leadassignment.LeadIDValidator = leadassignmentDescLeadID.Validators[0].(func(int) error)
+	// leadassignmentDescUserID is the schema descriptor for user_id field.
+	leadassignmentDescUserID := leadassignmentFields[1].Descriptor()
+	// leadassignment.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
+	leadassignment.UserIDValidator = leadassignmentDescUserID.Validators[0].(func(int) error)
+	// leadassignmentDescAssignmentReason is the schema descriptor for assignment_reason field.
+	leadassignmentDescAssignmentReason := leadassignmentFields[4].Descriptor()
+	// leadassignment.AssignmentReasonValidator is a validator for the "assignment_reason" field. It is called by the builders before save.
+	leadassignment.AssignmentReasonValidator = leadassignmentDescAssignmentReason.Validators[0].(func(string) error)
+	// leadassignmentDescAssignedAt is the schema descriptor for assigned_at field.
+	leadassignmentDescAssignedAt := leadassignmentFields[5].Descriptor()
+	// leadassignment.DefaultAssignedAt holds the default value on creation for the assigned_at field.
+	leadassignment.DefaultAssignedAt = leadassignmentDescAssignedAt.Default.(func() time.Time)
+	// leadassignmentDescIsActive is the schema descriptor for is_active field.
+	leadassignmentDescIsActive := leadassignmentFields[6].Descriptor()
+	// leadassignment.DefaultIsActive holds the default value on creation for the is_active field.
+	leadassignment.DefaultIsActive = leadassignmentDescIsActive.Default.(bool)
+	// leadassignmentDescCreatedAt is the schema descriptor for created_at field.
+	leadassignmentDescCreatedAt := leadassignmentFields[7].Descriptor()
+	// leadassignment.DefaultCreatedAt holds the default value on creation for the created_at field.
+	leadassignment.DefaultCreatedAt = leadassignmentDescCreatedAt.Default.(func() time.Time)
 	leadnoteFields := schema.LeadNote{}.Fields()
 	_ = leadnoteFields
 	// leadnoteDescLeadID is the schema descriptor for lead_id field.
