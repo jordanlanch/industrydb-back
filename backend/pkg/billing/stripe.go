@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jordanlanch/industrydb/ent"
+	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/subscription"
 	"github.com/jordanlanch/industrydb/ent/user"
 	"github.com/jordanlanch/industrydb/pkg/leads"
@@ -50,43 +51,107 @@ func NewService(db *ent.Client, leadService *leads.Service, config *StripeConfig
 }
 
 // CreateCheckoutSession creates a Stripe checkout session
-func (s *Service) CreateCheckoutSession(ctx context.Context, userID int, tier string) (*models.CheckoutResponse, error) {
-	// Get user
-	u, err := s.db.User.Get(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user: %w", err)
-	}
-
+// If organizationID is provided, creates subscription for organization instead of user
+func (s *Service) CreateCheckoutSession(ctx context.Context, userID int, tier string, organizationID *int) (*models.CheckoutResponse, error) {
 	// Get price ID for tier
 	priceID, err := s.getPriceIDForTier(tier)
 	if err != nil {
 		return nil, err
 	}
 
-	// Create or get Stripe customer
-	customerID := ""
-	if u.StripeCustomerID != nil && *u.StripeCustomerID != "" {
-		customerID = *u.StripeCustomerID
-	} else {
-		// Create new customer
-		params := &stripe.CustomerParams{
-			Email: stripe.String(u.Email),
-			Metadata: map[string]string{
-				"user_id": fmt.Sprintf("%d", userID),
-			},
-		}
-		cust, err := customer.New(params)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create customer: %w", err)
-		}
-		customerID = cust.ID
+	// Determine if creating subscription for organization or user
+	var customerID string
+	var email string
+	metadata := map[string]string{
+		"user_id": fmt.Sprintf("%d", userID),
+		"tier":    tier,
+	}
 
-		// Save customer ID to user
-		_, err = s.db.User.UpdateOneID(userID).
-			SetStripeCustomerID(customerID).
-			Save(ctx)
+	if organizationID != nil {
+		// Organization subscription
+		org, err := s.db.Organization.Get(ctx, *organizationID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to save customer ID: %w", err)
+			return nil, fmt.Errorf("failed to get organization: %w", err)
+		}
+
+		// Verify user is owner of organization
+		// TODO Phase 4: Allow admin members to manage subscriptions
+		if org.OwnerID != userID {
+			return nil, fmt.Errorf("only organization owner can manage subscriptions")
+		}
+
+		// Use organization's stripe customer ID or create new
+		if org.StripeCustomerID != nil && *org.StripeCustomerID != "" {
+			customerID = *org.StripeCustomerID
+		} else {
+			// Use billing email or owner's email
+			if org.BillingEmail != nil && *org.BillingEmail != "" {
+				email = *org.BillingEmail
+			} else {
+				owner, err := org.QueryOwner().Only(ctx)
+				if err != nil {
+					return nil, fmt.Errorf("failed to get owner: %w", err)
+				}
+				email = owner.Email
+			}
+
+			// Create new Stripe customer for organization
+			params := &stripe.CustomerParams{
+				Email: stripe.String(email),
+				Name:  stripe.String(org.Name),
+				Metadata: map[string]string{
+					"organization_id": fmt.Sprintf("%d", *organizationID),
+					"user_id":         fmt.Sprintf("%d", userID),
+				},
+			}
+			cust, err := customer.New(params)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create customer: %w", err)
+			}
+			customerID = cust.ID
+
+			// Save customer ID to organization
+			_, err = s.db.Organization.UpdateOneID(*organizationID).
+				SetStripeCustomerID(customerID).
+				Save(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("failed to save customer ID: %w", err)
+			}
+		}
+
+		// Add organization_id to metadata for webhook
+		metadata["organization_id"] = fmt.Sprintf("%d", *organizationID)
+	} else {
+		// User subscription
+		u, err := s.db.User.Get(ctx, userID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get user: %w", err)
+		}
+
+		// Create or get Stripe customer
+		if u.StripeCustomerID != nil && *u.StripeCustomerID != "" {
+			customerID = *u.StripeCustomerID
+		} else {
+			// Create new customer
+			params := &stripe.CustomerParams{
+				Email: stripe.String(u.Email),
+				Metadata: map[string]string{
+					"user_id": fmt.Sprintf("%d", userID),
+				},
+			}
+			cust, err := customer.New(params)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create customer: %w", err)
+			}
+			customerID = cust.ID
+
+			// Save customer ID to user
+			_, err = s.db.User.UpdateOneID(userID).
+				SetStripeCustomerID(customerID).
+				Save(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("failed to save customer ID: %w", err)
+			}
 		}
 	}
 
@@ -102,10 +167,7 @@ func (s *Service) CreateCheckoutSession(ctx context.Context, userID int, tier st
 		},
 		SuccessURL: stripe.String(s.config.SuccessURL),
 		CancelURL:  stripe.String(s.config.CancelURL),
-		Metadata: map[string]string{
-			"user_id": fmt.Sprintf("%d", userID),
-			"tier":    tier,
-		},
+		Metadata:   metadata,
 	}
 
 	sess, err := checkoutsession.New(params)
@@ -197,30 +259,70 @@ func (s *Service) handleCheckoutCompleted(ctx context.Context, event stripe.Even
 
 	tier := sess.Metadata["tier"]
 
-	log.Printf("✅ Checkout completed: user_id=%d, tier=%s, subscription=%s", userID, tier, sess.Subscription.ID)
+	// Check if this is an organization subscription
+	if orgIDStr, hasOrg := sess.Metadata["organization_id"]; hasOrg {
+		var orgID int
+		fmt.Sscanf(orgIDStr, "%d", &orgID)
 
-	// Update user subscription tier
-	_, err := s.db.User.UpdateOneID(userID).
-		SetSubscriptionTier(user.SubscriptionTier(tier)).
-		Save(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to update user tier: %w", err)
-	}
+		log.Printf("✅ Organization checkout completed: org_id=%d, user_id=%d, tier=%s, subscription=%s", orgID, userID, tier, sess.Subscription.ID)
 
-	// Update usage limit based on tier
-	if err := s.leadService.UpdateUsageLimitFromTier(ctx, userID); err != nil {
-		log.Printf("⚠️  Failed to update usage limit: %v", err)
-	}
+		// Update organization subscription tier
+		org, err := s.db.Organization.UpdateOneID(orgID).
+			SetSubscriptionTier(organization.SubscriptionTier(tier)).
+			Save(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to update organization tier: %w", err)
+		}
 
-	// Create subscription record
-	_, err = s.db.Subscription.Create().
-		SetUserID(userID).
-		SetTier(subscription.Tier(tier)).
-		SetStatus(subscription.StatusActive).
-		SetStripeSubscriptionID(sess.Subscription.ID).
-		Save(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to create subscription: %w", err)
+		// Update organization usage limit based on tier
+		limit := s.getUsageLimitForTier(tier)
+		_, err = s.db.Organization.UpdateOneID(orgID).
+			SetUsageLimit(limit).
+			Save(ctx)
+		if err != nil {
+			log.Printf("⚠️  Failed to update organization usage limit: %v", err)
+		}
+
+		log.Printf("✅ Organization %s upgraded to %s tier with %d leads/month", org.Name, tier, limit)
+
+		// Create subscription record associated with organization
+		// Note: Subscription schema may need organization_id field
+		_, err = s.db.Subscription.Create().
+			SetUserID(userID). // Keep user ID for tracking
+			SetTier(subscription.Tier(tier)).
+			SetStatus(subscription.StatusActive).
+			SetStripeSubscriptionID(sess.Subscription.ID).
+			Save(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to create organization subscription: %w", err)
+		}
+	} else {
+		// User subscription (original behavior)
+		log.Printf("✅ User checkout completed: user_id=%d, tier=%s, subscription=%s", userID, tier, sess.Subscription.ID)
+
+		// Update user subscription tier
+		_, err := s.db.User.UpdateOneID(userID).
+			SetSubscriptionTier(user.SubscriptionTier(tier)).
+			Save(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to update user tier: %w", err)
+		}
+
+		// Update usage limit based on tier
+		if err := s.leadService.UpdateUsageLimitFromTier(ctx, userID); err != nil {
+			log.Printf("⚠️  Failed to update usage limit: %v", err)
+		}
+
+		// Create subscription record
+		_, err = s.db.Subscription.Create().
+			SetUserID(userID).
+			SetTier(subscription.Tier(tier)).
+			SetStatus(subscription.StatusActive).
+			SetStripeSubscriptionID(sess.Subscription.ID).
+			Save(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to create subscription: %w", err)
+		}
 	}
 
 	return nil
@@ -363,6 +465,22 @@ func (s *Service) getPriceIDForTier(tier string) (string, error) {
 		return s.config.PriceBusiness, nil
 	default:
 		return "", fmt.Errorf("invalid tier: %s", tier)
+	}
+}
+
+// getUsageLimitForTier returns the usage limit for a subscription tier
+func (s *Service) getUsageLimitForTier(tier string) int {
+	switch tier {
+	case "free":
+		return 50
+	case "starter":
+		return 500
+	case "pro":
+		return 2000
+	case "business":
+		return 10000
+	default:
+		return 50 // Default to free tier limit
 	}
 }
 

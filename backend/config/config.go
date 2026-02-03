@@ -69,6 +69,10 @@ type Config struct {
 	FeatureEmailExports bool
 	FeatureAPIAccess    bool
 	FeatureSocialLogin  bool
+
+	// Monitoring
+	SentryDSN         string
+	SentryEnvironment string
 }
 
 // Load loads configuration from environment variables
@@ -133,6 +137,10 @@ func Load() *Config {
 		FeatureEmailExports: getEnvAsBool("FEATURE_EMAIL_EXPORTS", true),
 		FeatureAPIAccess:    getEnvAsBool("FEATURE_API_ACCESS", true),
 		FeatureSocialLogin:  getEnvAsBool("FEATURE_SOCIAL_LOGIN", false),
+
+		// Monitoring
+		SentryDSN:         getEnv("SENTRY_DSN", ""),
+		SentryEnvironment: getEnv("SENTRY_ENVIRONMENT", "development"),
 	}
 }
 

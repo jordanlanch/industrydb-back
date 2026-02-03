@@ -35,6 +35,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/getsentry/sentry-go"
+	sentryecho "github.com/getsentry/sentry-go/echo"
 	"github.com/jordanlanch/industrydb/config"
 	"github.com/jordanlanch/industrydb/pkg/analytics"
 	"github.com/jordanlanch/industrydb/pkg/api/handlers"
@@ -63,6 +65,28 @@ func main() {
 	// Load configuration
 	cfg := config.Load()
 	log.Printf("🔧 Configuration loaded (environment: %s)", cfg.APIEnvironment)
+
+	// Initialize Sentry for error tracking
+	if cfg.SentryDSN != "" {
+		err := sentry.Init(sentry.ClientOptions{
+			Dsn:              cfg.SentryDSN,
+			Environment:      cfg.SentryEnvironment,
+			TracesSampleRate: 1.0, // Capture 100% of transactions in development, adjust in production
+			AttachStacktrace: true,
+			BeforeSend: func(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
+				// Filter out sensitive data or customize events here
+				return event
+			},
+		})
+		if err != nil {
+			log.Printf("⚠️  Failed to initialize Sentry: %v", err)
+		} else {
+			log.Printf("✅ Sentry initialized (environment: %s)", cfg.SentryEnvironment)
+			defer sentry.Flush(2 * time.Second)
+		}
+	} else {
+		log.Printf("ℹ️  Sentry disabled (no DSN configured)")
+	}
 
 	// Initialize database
 	db, err := database.NewClient(cfg.DatabaseURL)
@@ -100,6 +124,13 @@ func main() {
 		},
 	}))
 	e.Use(middleware.Recover())
+
+	// Sentry error tracking middleware (if configured)
+	if cfg.SentryDSN != "" {
+		e.Use(sentryecho.New(sentryecho.Options{
+			Repanic: true, // Repanic after capturing to let the Recover middleware handle it
+		}))
+	}
 
 	// CORS with restricted origins
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{

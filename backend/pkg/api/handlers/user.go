@@ -373,3 +373,40 @@ func (h *UserHandler) CompleteOnboarding(c echo.Context) error {
 		"message": "Onboarding completed successfully",
 	})
 }
+
+// @Summary Reset onboarding status
+// @Description Reset the user's onboarding wizard so they can go through it again
+// @Tags User
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]string "Onboarding reset"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /user/onboarding/reset [post]
+func (h *UserHandler) ResetOnboarding(c echo.Context) error {
+	// Get user ID from context
+	userID, ok := c.Get("user_id").(int)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, models.ErrorResponse{
+			Error: "unauthorized",
+		})
+	}
+
+	// Create context with timeout
+	ctx, cancel := context.WithTimeout(c.Request().Context(), 5*time.Second)
+	defer cancel()
+
+	// Update user to reset onboarding
+	_, err := h.db.User.UpdateOneID(userID).
+		SetOnboardingCompleted(false).
+		Save(ctx)
+
+	if err != nil {
+		return errors.InternalError(c, err)
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Onboarding reset successfully",
+	})
+}

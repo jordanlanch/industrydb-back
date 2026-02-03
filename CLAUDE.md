@@ -1093,6 +1093,140 @@ GET /api/v1/version
 - **Deprecation period**: 6 months minimum before sunset
 - **Sunset notification**: 6 months advance notice before removal
 
+### Error Tracking with Sentry
+**Implemented:** 2026-02-03
+
+Sentry is integrated for comprehensive error tracking, monitoring, and alerting across the application.
+
+**Features:**
+- **Automatic error capture**: All unhandled errors are automatically sent to Sentry
+- **Performance monitoring**: Track API endpoint performance and slow queries
+- **Stack traces**: Full stack traces with source maps for debugging
+- **Context enrichment**: Request data, user info, and environment details attached to errors
+- **Alert notifications**: Real-time alerts via email, Slack, PagerDuty
+- **Release tracking**: Track errors by deployment version
+- **Environment separation**: Development, staging, and production environments
+
+**Configuration:**
+
+Environment variables:
+```env
+SENTRY_DSN=https://your-dsn@sentry.io/project-id
+SENTRY_ENVIRONMENT=production  # development, staging, or production
+```
+
+**Initialization:**
+```go
+// backend/cmd/api/main.go
+if cfg.SentryDSN != "" {
+    err := sentry.Init(sentry.ClientOptions{
+        Dsn:              cfg.SentryDSN,
+        Environment:      cfg.SentryEnvironment,
+        TracesSampleRate: 1.0, // Adjust in production (0.1 = 10% sampling)
+        AttachStacktrace: true,
+    })
+    if err != nil {
+        log.Printf("⚠️  Failed to initialize Sentry: %v", err)
+    } else {
+        log.Printf("✅ Sentry initialized (environment: %s)", cfg.SentryEnvironment)
+        defer sentry.Flush(2 * time.Second)
+    }
+}
+```
+
+**Echo Middleware:**
+```go
+// Automatically captures errors from Echo handlers
+e.Use(sentryecho.New(sentryecho.Options{
+    Repanic: true, // Let Echo's Recover middleware handle it
+}))
+```
+
+**What Gets Tracked:**
+1. **Panic Recovery**: All panics are captured with full stack trace
+2. **HTTP Errors**: 5xx errors are automatically reported
+3. **Slow Queries**: Database queries exceeding threshold
+4. **Failed API Calls**: External API failures (Stripe, SendGrid)
+5. **Business Logic Errors**: Custom error reporting where needed
+
+**Manual Error Capture:**
+```go
+// In any handler or service
+if err != nil {
+    sentry.CaptureException(err)
+    return fmt.Errorf("failed to process: %w", err)
+}
+
+// With context
+sentry.WithScope(func(scope *sentry.Scope) {
+    scope.SetTag("user_id", userID)
+    scope.SetContext("lead_search", map[string]interface{}{
+        "industry": industry,
+        "country":  country,
+    })
+    sentry.CaptureException(err)
+})
+```
+
+**Performance Tracking:**
+```go
+// Track transaction performance
+span := sentry.StartSpan(ctx, "database.query")
+defer span.Finish()
+
+// Execute query
+results, err := db.Query(...)
+```
+
+**Setup Instructions:**
+
+1. **Create Sentry Project:**
+   - Visit [sentry.io](https://sentry.io)
+   - Create account and project (select Go/Echo)
+   - Copy DSN from project settings
+
+2. **Configure Environment:**
+   ```bash
+   # Add to .env
+   SENTRY_DSN=https://abc123@o123.ingest.sentry.io/456
+   SENTRY_ENVIRONMENT=production
+   ```
+
+3. **Test Integration:**
+   ```bash
+   # Start server
+   make dev
+
+   # Trigger test error
+   curl http://localhost:7890/api/v1/test-error
+
+   # Check Sentry dashboard for captured error
+   ```
+
+4. **Production Best Practices:**
+   - Set `TracesSampleRate` to 0.1-0.3 (10-30%) to reduce overhead
+   - Configure alert rules in Sentry dashboard
+   - Set up Slack/PagerDuty integrations for critical errors
+   - Use error fingerprinting to group similar errors
+   - Enable breadcrumbs for request trail
+
+**Benefits:**
+- **Proactive debugging**: Catch errors before users report them
+- **Faster resolution**: Stack traces and context speed up debugging
+- **Performance insights**: Identify slow endpoints and optimize
+- **Production confidence**: Monitor application health in real-time
+- **Team collaboration**: Share error context across engineering team
+
+**Cost:**
+- **Free tier**: 5,000 events/month (suitable for development/small projects)
+- **Team plan**: $26/month for 50,000 events (recommended for production)
+- **Business plan**: $80/month for 500,000 events (high-traffic applications)
+
+**Documentation:**
+- Sentry Go SDK: https://docs.sentry.io/platforms/go/
+- Echo integration: https://docs.sentry.io/platforms/go/guides/echo/
+- Best practices: https://docs.sentry.io/platforms/go/best-practices/
+
 ### Authentication
 ```
 POST /api/v1/auth/register    # Create account

@@ -104,8 +104,8 @@ func (h *BillingHandler) CreateCheckout(c echo.Context) error {
 		return errors.ValidationError(c, err)
 	}
 
-	// Create checkout session
-	session, err := h.billingService.CreateCheckoutSession(c.Request().Context(), userID, req.Tier)
+	// Create checkout session (user or organization)
+	session, err := h.billingService.CreateCheckoutSession(c.Request().Context(), userID, req.Tier, req.OrganizationID)
 	if err != nil {
 		return errors.InternalError(c, err)
 	}

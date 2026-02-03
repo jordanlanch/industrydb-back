@@ -2,7 +2,8 @@ package models
 
 // CheckoutRequest represents a request to create a checkout session
 type CheckoutRequest struct {
-	Tier string `json:"tier" validate:"required,oneof=starter pro business"`
+	Tier           string `json:"tier" validate:"required,oneof=starter pro business"`
+	OrganizationID *int   `json:"organization_id,omitempty"` // Optional: If set, subscription applies to organization
 }
 
 // CheckoutResponse represents a checkout session response
