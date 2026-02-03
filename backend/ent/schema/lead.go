@@ -99,6 +99,15 @@ func (Lead) Fields() []ent.Field {
 			Min(0).
 			Max(100).
 			Comment("Data quality score (0-100)"),
+
+		// CRM Lifecycle fields
+		field.Enum("status").
+			Values("new", "contacted", "qualified", "negotiating", "won", "lost", "archived").
+			Default("new").
+			Comment("Lead lifecycle status"),
+		field.Time("status_changed_at").
+			Default(time.Now).
+			Comment("When the status was last changed"),
 		field.String("osm_id").
 			Optional().
 			Comment("OpenStreetMap ID"),
@@ -141,6 +150,9 @@ func (Lead) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("notes", LeadNote.Type).
 			Comment("Notes and comments on this lead"),
+
+		edge.To("status_history", LeadStatusHistory.Type).
+			Comment("History of status changes for this lead"),
 	}
 }
 

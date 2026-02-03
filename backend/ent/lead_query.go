@@ -14,17 +14,19 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/jordanlanch/industrydb/ent/lead"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
+	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/predicate"
 )
 
 // LeadQuery is the builder for querying Lead entities.
 type LeadQuery struct {
 	config
-	ctx        *QueryContext
-	order      []lead.OrderOption
-	inters     []Interceptor
-	predicates []predicate.Lead
-	withNotes  *LeadNoteQuery
+	ctx               *QueryContext
+	order             []lead.OrderOption
+	inters            []Interceptor
+	predicates        []predicate.Lead
+	withNotes         *LeadNoteQuery
+	withStatusHistory *LeadStatusHistoryQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -76,6 +78,28 @@ func (_q *LeadQuery) QueryNotes() *LeadNoteQuery {
 			sqlgraph.From(lead.Table, lead.FieldID, selector),
 			sqlgraph.To(leadnote.Table, leadnote.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, lead.NotesTable, lead.NotesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryStatusHistory chains the current query on the "status_history" edge.
+func (_q *LeadQuery) QueryStatusHistory() *LeadStatusHistoryQuery {
+	query := (&LeadStatusHistoryClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(lead.Table, lead.FieldID, selector),
+			sqlgraph.To(leadstatushistory.Table, leadstatushistory.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, lead.StatusHistoryTable, lead.StatusHistoryColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -270,12 +294,13 @@ func (_q *LeadQuery) Clone() *LeadQuery {
 		return nil
 	}
 	return &LeadQuery{
-		config:     _q.config,
-		ctx:        _q.ctx.Clone(),
-		order:      append([]lead.OrderOption{}, _q.order...),
-		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.Lead{}, _q.predicates...),
-		withNotes:  _q.withNotes.Clone(),
+		config:            _q.config,
+		ctx:               _q.ctx.Clone(),
+		order:             append([]lead.OrderOption{}, _q.order...),
+		inters:            append([]Interceptor{}, _q.inters...),
+		predicates:        append([]predicate.Lead{}, _q.predicates...),
+		withNotes:         _q.withNotes.Clone(),
+		withStatusHistory: _q.withStatusHistory.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -290,6 +315,17 @@ func (_q *LeadQuery) WithNotes(opts ...func(*LeadNoteQuery)) *LeadQuery {
 		opt(query)
 	}
 	_q.withNotes = query
+	return _q
+}
+
+// WithStatusHistory tells the query-builder to eager-load the nodes that are connected to
+// the "status_history" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *LeadQuery) WithStatusHistory(opts ...func(*LeadStatusHistoryQuery)) *LeadQuery {
+	query := (&LeadStatusHistoryClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withStatusHistory = query
 	return _q
 }
 
@@ -371,8 +407,9 @@ func (_q *LeadQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Lead, e
 	var (
 		nodes       = []*Lead{}
 		_spec       = _q.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			_q.withNotes != nil,
+			_q.withStatusHistory != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -400,6 +437,13 @@ func (_q *LeadQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Lead, e
 			return nil, err
 		}
 	}
+	if query := _q.withStatusHistory; query != nil {
+		if err := _q.loadStatusHistory(ctx, query, nodes,
+			func(n *Lead) { n.Edges.StatusHistory = []*LeadStatusHistory{} },
+			func(n *Lead, e *LeadStatusHistory) { n.Edges.StatusHistory = append(n.Edges.StatusHistory, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -418,6 +462,36 @@ func (_q *LeadQuery) loadNotes(ctx context.Context, query *LeadNoteQuery, nodes 
 	}
 	query.Where(predicate.LeadNote(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(lead.NotesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.LeadID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "lead_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *LeadQuery) loadStatusHistory(ctx context.Context, query *LeadStatusHistoryQuery, nodes []*Lead, init func(*Lead), assign func(*Lead, *LeadStatusHistory)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Lead)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(leadstatushistory.FieldLeadID)
+	}
+	query.Where(predicate.LeadStatusHistory(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(lead.StatusHistoryColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/jordanlanch/industrydb/ent/lead"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
+	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 )
 
 // LeadCreate is the builder for creating a Lead entity.
@@ -177,6 +178,34 @@ func (_c *LeadCreate) SetNillableQualityScore(v *int) *LeadCreate {
 	return _c
 }
 
+// SetStatus sets the "status" field.
+func (_c *LeadCreate) SetStatus(v lead.Status) *LeadCreate {
+	_c.mutation.SetStatus(v)
+	return _c
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (_c *LeadCreate) SetNillableStatus(v *lead.Status) *LeadCreate {
+	if v != nil {
+		_c.SetStatus(*v)
+	}
+	return _c
+}
+
+// SetStatusChangedAt sets the "status_changed_at" field.
+func (_c *LeadCreate) SetStatusChangedAt(v time.Time) *LeadCreate {
+	_c.mutation.SetStatusChangedAt(v)
+	return _c
+}
+
+// SetNillableStatusChangedAt sets the "status_changed_at" field if the given value is not nil.
+func (_c *LeadCreate) SetNillableStatusChangedAt(v *time.Time) *LeadCreate {
+	if v != nil {
+		_c.SetStatusChangedAt(*v)
+	}
+	return _c
+}
+
 // SetOsmID sets the "osm_id" field.
 func (_c *LeadCreate) SetOsmID(v string) *LeadCreate {
 	_c.mutation.SetOsmID(v)
@@ -302,6 +331,21 @@ func (_c *LeadCreate) AddNotes(v ...*LeadNote) *LeadCreate {
 	return _c.AddNoteIDs(ids...)
 }
 
+// AddStatusHistoryIDs adds the "status_history" edge to the LeadStatusHistory entity by IDs.
+func (_c *LeadCreate) AddStatusHistoryIDs(ids ...int) *LeadCreate {
+	_c.mutation.AddStatusHistoryIDs(ids...)
+	return _c
+}
+
+// AddStatusHistory adds the "status_history" edges to the LeadStatusHistory entity.
+func (_c *LeadCreate) AddStatusHistory(v ...*LeadStatusHistory) *LeadCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddStatusHistoryIDs(ids...)
+}
+
 // Mutation returns the LeadMutation object of the builder.
 func (_c *LeadCreate) Mutation() *LeadMutation {
 	return _c.mutation
@@ -344,6 +388,14 @@ func (_c *LeadCreate) defaults() {
 	if _, ok := _c.mutation.QualityScore(); !ok {
 		v := lead.DefaultQualityScore
 		_c.mutation.SetQualityScore(v)
+	}
+	if _, ok := _c.mutation.Status(); !ok {
+		v := lead.DefaultStatus
+		_c.mutation.SetStatus(v)
+	}
+	if _, ok := _c.mutation.StatusChangedAt(); !ok {
+		v := lead.DefaultStatusChangedAt()
+		_c.mutation.SetStatusChangedAt(v)
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := lead.DefaultCreatedAt()
@@ -399,6 +451,17 @@ func (_c *LeadCreate) check() error {
 		if err := lead.QualityScoreValidator(v); err != nil {
 			return &ValidationError{Name: "quality_score", err: fmt.Errorf(`ent: validator failed for field "Lead.quality_score": %w`, err)}
 		}
+	}
+	if _, ok := _c.mutation.Status(); !ok {
+		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Lead.status"`)}
+	}
+	if v, ok := _c.mutation.Status(); ok {
+		if err := lead.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Lead.status": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.StatusChangedAt(); !ok {
+		return &ValidationError{Name: "status_changed_at", err: errors.New(`ent: missing required field "Lead.status_changed_at"`)}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Lead.created_at"`)}
@@ -488,6 +551,14 @@ func (_c *LeadCreate) createSpec() (*Lead, *sqlgraph.CreateSpec) {
 		_spec.SetField(lead.FieldQualityScore, field.TypeInt, value)
 		_node.QualityScore = value
 	}
+	if value, ok := _c.mutation.Status(); ok {
+		_spec.SetField(lead.FieldStatus, field.TypeEnum, value)
+		_node.Status = value
+	}
+	if value, ok := _c.mutation.StatusChangedAt(); ok {
+		_spec.SetField(lead.FieldStatusChangedAt, field.TypeTime, value)
+		_node.StatusChangedAt = value
+	}
 	if value, ok := _c.mutation.OsmID(); ok {
 		_spec.SetField(lead.FieldOsmID, field.TypeString, value)
 		_node.OsmID = value
@@ -533,6 +604,22 @@ func (_c *LeadCreate) createSpec() (*Lead, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(leadnote.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.StatusHistoryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.StatusHistoryTable,
+			Columns: []string{lead.StatusHistoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadstatushistory.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

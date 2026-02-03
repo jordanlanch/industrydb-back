@@ -43,6 +43,10 @@ const (
 	FieldVerified = "verified"
 	// FieldQualityScore holds the string denoting the quality_score field in the database.
 	FieldQualityScore = "quality_score"
+	// FieldStatus holds the string denoting the status field in the database.
+	FieldStatus = "status"
+	// FieldStatusChangedAt holds the string denoting the status_changed_at field in the database.
+	FieldStatusChangedAt = "status_changed_at"
 	// FieldOsmID holds the string denoting the osm_id field in the database.
 	FieldOsmID = "osm_id"
 	// FieldMetadata holds the string denoting the metadata field in the database.
@@ -63,6 +67,8 @@ const (
 	FieldUpdatedAt = "updated_at"
 	// EdgeNotes holds the string denoting the notes edge name in mutations.
 	EdgeNotes = "notes"
+	// EdgeStatusHistory holds the string denoting the status_history edge name in mutations.
+	EdgeStatusHistory = "status_history"
 	// Table holds the table name of the lead in the database.
 	Table = "leads"
 	// NotesTable is the table that holds the notes relation/edge.
@@ -72,6 +78,13 @@ const (
 	NotesInverseTable = "lead_notes"
 	// NotesColumn is the table column denoting the notes relation/edge.
 	NotesColumn = "lead_id"
+	// StatusHistoryTable is the table that holds the status_history relation/edge.
+	StatusHistoryTable = "lead_status_histories"
+	// StatusHistoryInverseTable is the table name for the LeadStatusHistory entity.
+	// It exists in this package in order to avoid circular dependency with the "leadstatushistory" package.
+	StatusHistoryInverseTable = "lead_status_histories"
+	// StatusHistoryColumn is the table column denoting the status_history relation/edge.
+	StatusHistoryColumn = "lead_id"
 )
 
 // Columns holds all SQL columns for lead fields.
@@ -91,6 +104,8 @@ var Columns = []string{
 	FieldLongitude,
 	FieldVerified,
 	FieldQualityScore,
+	FieldStatus,
+	FieldStatusChangedAt,
 	FieldOsmID,
 	FieldMetadata,
 	FieldSubNiche,
@@ -125,6 +140,8 @@ var (
 	DefaultQualityScore int
 	// QualityScoreValidator is a validator for the "quality_score" field. It is called by the builders before save.
 	QualityScoreValidator func(int) error
+	// DefaultStatusChangedAt holds the default value on creation for the "status_changed_at" field.
+	DefaultStatusChangedAt func() time.Time
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -244,6 +261,37 @@ func IndustryValidator(i Industry) error {
 	}
 }
 
+// Status defines the type for the "status" enum field.
+type Status string
+
+// StatusNew is the default value of the Status enum.
+const DefaultStatus = StatusNew
+
+// Status values.
+const (
+	StatusNew         Status = "new"
+	StatusContacted   Status = "contacted"
+	StatusQualified   Status = "qualified"
+	StatusNegotiating Status = "negotiating"
+	StatusWon         Status = "won"
+	StatusLost        Status = "lost"
+	StatusArchived    Status = "archived"
+)
+
+func (s Status) String() string {
+	return string(s)
+}
+
+// StatusValidator is a validator for the "status" field enum values. It is called by the builders before save.
+func StatusValidator(s Status) error {
+	switch s {
+	case StatusNew, StatusContacted, StatusQualified, StatusNegotiating, StatusWon, StatusLost, StatusArchived:
+		return nil
+	default:
+		return fmt.Errorf("lead: invalid enum value for status field: %q", s)
+	}
+}
+
 // OrderOption defines the ordering options for the Lead queries.
 type OrderOption func(*sql.Selector)
 
@@ -317,6 +365,16 @@ func ByQualityScore(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldQualityScore, opts...).ToFunc()
 }
 
+// ByStatus orders the results by the status field.
+func ByStatus(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldStatus, opts...).ToFunc()
+}
+
+// ByStatusChangedAt orders the results by the status_changed_at field.
+func ByStatusChangedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldStatusChangedAt, opts...).ToFunc()
+}
+
 // ByOsmID orders the results by the osm_id field.
 func ByOsmID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldOsmID, opts...).ToFunc()
@@ -365,10 +423,31 @@ func ByNotes(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newNotesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByStatusHistoryCount orders the results by status_history count.
+func ByStatusHistoryCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newStatusHistoryStep(), opts...)
+	}
+}
+
+// ByStatusHistory orders the results by status_history terms.
+func ByStatusHistory(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newStatusHistoryStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newNotesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(NotesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, NotesTable, NotesColumn),
+	)
+}
+func newStatusHistoryStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(StatusHistoryInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, StatusHistoryTable, StatusHistoryColumn),
 	)
 }

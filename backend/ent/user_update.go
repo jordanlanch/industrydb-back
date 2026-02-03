@@ -15,6 +15,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
+	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/predicate"
@@ -583,6 +584,21 @@ func (_u *UserUpdate) AddLeadNotes(v ...*LeadNote) *UserUpdate {
 	return _u.AddLeadNoteIDs(ids...)
 }
 
+// AddLeadStatusChangeIDs adds the "lead_status_changes" edge to the LeadStatusHistory entity by IDs.
+func (_u *UserUpdate) AddLeadStatusChangeIDs(ids ...int) *UserUpdate {
+	_u.mutation.AddLeadStatusChangeIDs(ids...)
+	return _u
+}
+
+// AddLeadStatusChanges adds the "lead_status_changes" edges to the LeadStatusHistory entity.
+func (_u *UserUpdate) AddLeadStatusChanges(v ...*LeadStatusHistory) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddLeadStatusChangeIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -796,6 +812,27 @@ func (_u *UserUpdate) RemoveLeadNotes(v ...*LeadNote) *UserUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveLeadNoteIDs(ids...)
+}
+
+// ClearLeadStatusChanges clears all "lead_status_changes" edges to the LeadStatusHistory entity.
+func (_u *UserUpdate) ClearLeadStatusChanges() *UserUpdate {
+	_u.mutation.ClearLeadStatusChanges()
+	return _u
+}
+
+// RemoveLeadStatusChangeIDs removes the "lead_status_changes" edge to LeadStatusHistory entities by IDs.
+func (_u *UserUpdate) RemoveLeadStatusChangeIDs(ids ...int) *UserUpdate {
+	_u.mutation.RemoveLeadStatusChangeIDs(ids...)
+	return _u
+}
+
+// RemoveLeadStatusChanges removes "lead_status_changes" edges to LeadStatusHistory entities.
+func (_u *UserUpdate) RemoveLeadStatusChanges(v ...*LeadStatusHistory) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveLeadStatusChangeIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -1449,6 +1486,51 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.LeadStatusChangesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadStatusChangesTable,
+			Columns: []string{user.LeadStatusChangesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadstatushistory.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedLeadStatusChangesIDs(); len(nodes) > 0 && !_u.mutation.LeadStatusChangesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadStatusChangesTable,
+			Columns: []string{user.LeadStatusChangesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadstatushistory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.LeadStatusChangesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadStatusChangesTable,
+			Columns: []string{user.LeadStatusChangesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadstatushistory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -2014,6 +2096,21 @@ func (_u *UserUpdateOne) AddLeadNotes(v ...*LeadNote) *UserUpdateOne {
 	return _u.AddLeadNoteIDs(ids...)
 }
 
+// AddLeadStatusChangeIDs adds the "lead_status_changes" edge to the LeadStatusHistory entity by IDs.
+func (_u *UserUpdateOne) AddLeadStatusChangeIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.AddLeadStatusChangeIDs(ids...)
+	return _u
+}
+
+// AddLeadStatusChanges adds the "lead_status_changes" edges to the LeadStatusHistory entity.
+func (_u *UserUpdateOne) AddLeadStatusChanges(v ...*LeadStatusHistory) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddLeadStatusChangeIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -2227,6 +2324,27 @@ func (_u *UserUpdateOne) RemoveLeadNotes(v ...*LeadNote) *UserUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveLeadNoteIDs(ids...)
+}
+
+// ClearLeadStatusChanges clears all "lead_status_changes" edges to the LeadStatusHistory entity.
+func (_u *UserUpdateOne) ClearLeadStatusChanges() *UserUpdateOne {
+	_u.mutation.ClearLeadStatusChanges()
+	return _u
+}
+
+// RemoveLeadStatusChangeIDs removes the "lead_status_changes" edge to LeadStatusHistory entities by IDs.
+func (_u *UserUpdateOne) RemoveLeadStatusChangeIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.RemoveLeadStatusChangeIDs(ids...)
+	return _u
+}
+
+// RemoveLeadStatusChanges removes "lead_status_changes" edges to LeadStatusHistory entities.
+func (_u *UserUpdateOne) RemoveLeadStatusChanges(v ...*LeadStatusHistory) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveLeadStatusChangeIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -2903,6 +3021,51 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(leadnote.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.LeadStatusChangesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadStatusChangesTable,
+			Columns: []string{user.LeadStatusChangesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadstatushistory.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedLeadStatusChangesIDs(); len(nodes) > 0 && !_u.mutation.LeadStatusChangesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadStatusChangesTable,
+			Columns: []string{user.LeadStatusChangesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadstatushistory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.LeadStatusChangesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadStatusChangesTable,
+			Columns: []string{user.LeadStatusChangesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadstatushistory.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

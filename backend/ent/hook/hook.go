@@ -81,6 +81,18 @@ func (f LeadNoteFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.LeadNoteMutation", m)
 }
 
+// The LeadStatusHistoryFunc type is an adapter to allow the use of ordinary
+// function as LeadStatusHistory mutator.
+type LeadStatusHistoryFunc func(context.Context, *ent.LeadStatusHistoryMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f LeadStatusHistoryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.LeadStatusHistoryMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.LeadStatusHistoryMutation", m)
+}
+
 // The OrganizationFunc type is an adapter to allow the use of ordinary
 // function as Organization mutator.
 type OrganizationFunc func(context.Context, *ent.OrganizationMutation) (ent.Value, error)

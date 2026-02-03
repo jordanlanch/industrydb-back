@@ -115,6 +115,11 @@ func QualityScore(v int) predicate.Lead {
 	return predicate.Lead(sql.FieldEQ(FieldQualityScore, v))
 }
 
+// StatusChangedAt applies equality check predicate on the "status_changed_at" field. It's identical to StatusChangedAtEQ.
+func StatusChangedAt(v time.Time) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldStatusChangedAt, v))
+}
+
 // OsmID applies equality check predicate on the "osm_id" field. It's identical to OsmIDEQ.
 func OsmID(v string) predicate.Lead {
 	return predicate.Lead(sql.FieldEQ(FieldOsmID, v))
@@ -900,6 +905,66 @@ func QualityScoreLTE(v int) predicate.Lead {
 	return predicate.Lead(sql.FieldLTE(FieldQualityScore, v))
 }
 
+// StatusEQ applies the EQ predicate on the "status" field.
+func StatusEQ(v Status) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldStatus, v))
+}
+
+// StatusNEQ applies the NEQ predicate on the "status" field.
+func StatusNEQ(v Status) predicate.Lead {
+	return predicate.Lead(sql.FieldNEQ(FieldStatus, v))
+}
+
+// StatusIn applies the In predicate on the "status" field.
+func StatusIn(vs ...Status) predicate.Lead {
+	return predicate.Lead(sql.FieldIn(FieldStatus, vs...))
+}
+
+// StatusNotIn applies the NotIn predicate on the "status" field.
+func StatusNotIn(vs ...Status) predicate.Lead {
+	return predicate.Lead(sql.FieldNotIn(FieldStatus, vs...))
+}
+
+// StatusChangedAtEQ applies the EQ predicate on the "status_changed_at" field.
+func StatusChangedAtEQ(v time.Time) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldStatusChangedAt, v))
+}
+
+// StatusChangedAtNEQ applies the NEQ predicate on the "status_changed_at" field.
+func StatusChangedAtNEQ(v time.Time) predicate.Lead {
+	return predicate.Lead(sql.FieldNEQ(FieldStatusChangedAt, v))
+}
+
+// StatusChangedAtIn applies the In predicate on the "status_changed_at" field.
+func StatusChangedAtIn(vs ...time.Time) predicate.Lead {
+	return predicate.Lead(sql.FieldIn(FieldStatusChangedAt, vs...))
+}
+
+// StatusChangedAtNotIn applies the NotIn predicate on the "status_changed_at" field.
+func StatusChangedAtNotIn(vs ...time.Time) predicate.Lead {
+	return predicate.Lead(sql.FieldNotIn(FieldStatusChangedAt, vs...))
+}
+
+// StatusChangedAtGT applies the GT predicate on the "status_changed_at" field.
+func StatusChangedAtGT(v time.Time) predicate.Lead {
+	return predicate.Lead(sql.FieldGT(FieldStatusChangedAt, v))
+}
+
+// StatusChangedAtGTE applies the GTE predicate on the "status_changed_at" field.
+func StatusChangedAtGTE(v time.Time) predicate.Lead {
+	return predicate.Lead(sql.FieldGTE(FieldStatusChangedAt, v))
+}
+
+// StatusChangedAtLT applies the LT predicate on the "status_changed_at" field.
+func StatusChangedAtLT(v time.Time) predicate.Lead {
+	return predicate.Lead(sql.FieldLT(FieldStatusChangedAt, v))
+}
+
+// StatusChangedAtLTE applies the LTE predicate on the "status_changed_at" field.
+func StatusChangedAtLTE(v time.Time) predicate.Lead {
+	return predicate.Lead(sql.FieldLTE(FieldStatusChangedAt, v))
+}
+
 // OsmIDEQ applies the EQ predicate on the "osm_id" field.
 func OsmIDEQ(v string) predicate.Lead {
 	return predicate.Lead(sql.FieldEQ(FieldOsmID, v))
@@ -1390,6 +1455,29 @@ func HasNotes() predicate.Lead {
 func HasNotesWith(preds ...predicate.LeadNote) predicate.Lead {
 	return predicate.Lead(func(s *sql.Selector) {
 		step := newNotesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasStatusHistory applies the HasEdge predicate on the "status_history" edge.
+func HasStatusHistory() predicate.Lead {
+	return predicate.Lead(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, StatusHistoryTable, StatusHistoryColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasStatusHistoryWith applies the HasEdge predicate on the "status_history" edge with a given conditions (other predicates).
+func HasStatusHistoryWith(preds ...predicate.LeadStatusHistory) predicate.Lead {
+	return predicate.Lead(func(s *sql.Selector) {
+		step := newStatusHistoryStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

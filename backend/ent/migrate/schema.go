@@ -231,6 +231,8 @@ var (
 		{Name: "longitude", Type: field.TypeFloat64, Nullable: true},
 		{Name: "verified", Type: field.TypeBool, Default: false},
 		{Name: "quality_score", Type: field.TypeInt, Default: 50},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"new", "contacted", "qualified", "negotiating", "won", "lost", "archived"}, Default: "new"},
+		{Name: "status_changed_at", Type: field.TypeTime},
 		{Name: "osm_id", Type: field.TypeString, Nullable: true},
 		{Name: "metadata", Type: field.TypeJSON, Nullable: true},
 		{Name: "sub_niche", Type: field.TypeString, Nullable: true},
@@ -290,42 +292,42 @@ var (
 			{
 				Name:    "lead_osm_id",
 				Unique:  true,
-				Columns: []*schema.Column{LeadsColumns[15]},
+				Columns: []*schema.Column{LeadsColumns[17]},
 			},
 			{
 				Name:    "lead_industry_sub_niche",
 				Unique:  false,
-				Columns: []*schema.Column{LeadsColumns[2], LeadsColumns[17]},
+				Columns: []*schema.Column{LeadsColumns[2], LeadsColumns[19]},
 			},
 			{
 				Name:    "lead_industry_country_sub_niche",
 				Unique:  false,
-				Columns: []*schema.Column{LeadsColumns[2], LeadsColumns[3], LeadsColumns[17]},
+				Columns: []*schema.Column{LeadsColumns[2], LeadsColumns[3], LeadsColumns[19]},
 			},
 			{
 				Name:    "lead_sub_niche",
 				Unique:  false,
-				Columns: []*schema.Column{LeadsColumns[17]},
+				Columns: []*schema.Column{LeadsColumns[19]},
 			},
 			{
 				Name:    "lead_cuisine_type",
 				Unique:  false,
-				Columns: []*schema.Column{LeadsColumns[19]},
+				Columns: []*schema.Column{LeadsColumns[21]},
 			},
 			{
 				Name:    "lead_sport_type",
 				Unique:  false,
-				Columns: []*schema.Column{LeadsColumns[20]},
+				Columns: []*schema.Column{LeadsColumns[22]},
 			},
 			{
 				Name:    "lead_tattoo_style",
 				Unique:  false,
-				Columns: []*schema.Column{LeadsColumns[21]},
+				Columns: []*schema.Column{LeadsColumns[23]},
 			},
 			{
 				Name:    "lead_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{LeadsColumns[22]},
+				Columns: []*schema.Column{LeadsColumns[24]},
 			},
 		},
 	}
@@ -373,6 +375,53 @@ var (
 				Name:    "leadnote_lead_id_is_pinned_created_at",
 				Unique:  false,
 				Columns: []*schema.Column{LeadNotesColumns[5], LeadNotesColumns[2], LeadNotesColumns[3]},
+			},
+		},
+	}
+	// LeadStatusHistoriesColumns holds the columns for the "lead_status_histories" table.
+	LeadStatusHistoriesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "old_status", Type: field.TypeEnum, Nullable: true, Enums: []string{"new", "contacted", "qualified", "negotiating", "won", "lost", "archived"}},
+		{Name: "new_status", Type: field.TypeEnum, Enums: []string{"new", "contacted", "qualified", "negotiating", "won", "lost", "archived"}},
+		{Name: "reason", Type: field.TypeString, Nullable: true, Size: 1000},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "lead_id", Type: field.TypeInt},
+		{Name: "user_id", Type: field.TypeInt},
+	}
+	// LeadStatusHistoriesTable holds the schema information for the "lead_status_histories" table.
+	LeadStatusHistoriesTable = &schema.Table{
+		Name:       "lead_status_histories",
+		Columns:    LeadStatusHistoriesColumns,
+		PrimaryKey: []*schema.Column{LeadStatusHistoriesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "lead_status_histories_leads_status_history",
+				Columns:    []*schema.Column{LeadStatusHistoriesColumns[5]},
+				RefColumns: []*schema.Column{LeadsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "lead_status_histories_users_lead_status_changes",
+				Columns:    []*schema.Column{LeadStatusHistoriesColumns[6]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "idx_lead_status_history_lead_time",
+				Unique:  false,
+				Columns: []*schema.Column{LeadStatusHistoriesColumns[5], LeadStatusHistoriesColumns[4]},
+			},
+			{
+				Name:    "idx_lead_status_history_status_time",
+				Unique:  false,
+				Columns: []*schema.Column{LeadStatusHistoriesColumns[2], LeadStatusHistoriesColumns[4]},
+			},
+			{
+				Name:    "idx_lead_status_history_user",
+				Unique:  false,
+				Columns: []*schema.Column{LeadStatusHistoriesColumns[6]},
 			},
 		},
 	}
@@ -730,6 +779,7 @@ var (
 		IndustriesTable,
 		LeadsTable,
 		LeadNotesTable,
+		LeadStatusHistoriesTable,
 		OrganizationsTable,
 		OrganizationMembersTable,
 		SavedSearchesTable,
@@ -747,6 +797,8 @@ func init() {
 	ExportsTable.ForeignKeys[1].RefTable = UsersTable
 	LeadNotesTable.ForeignKeys[0].RefTable = LeadsTable
 	LeadNotesTable.ForeignKeys[1].RefTable = UsersTable
+	LeadStatusHistoriesTable.ForeignKeys[0].RefTable = LeadsTable
+	LeadStatusHistoriesTable.ForeignKeys[1].RefTable = UsersTable
 	OrganizationsTable.ForeignKeys[0].RefTable = UsersTable
 	OrganizationMembersTable.ForeignKeys[0].RefTable = OrganizationsTable
 	OrganizationMembersTable.ForeignKeys[1].RefTable = UsersTable

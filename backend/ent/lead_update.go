@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/jordanlanch/industrydb/ent/lead"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
+	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/predicate"
 )
 
@@ -287,6 +288,34 @@ func (_u *LeadUpdate) AddQualityScore(v int) *LeadUpdate {
 	return _u
 }
 
+// SetStatus sets the "status" field.
+func (_u *LeadUpdate) SetStatus(v lead.Status) *LeadUpdate {
+	_u.mutation.SetStatus(v)
+	return _u
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (_u *LeadUpdate) SetNillableStatus(v *lead.Status) *LeadUpdate {
+	if v != nil {
+		_u.SetStatus(*v)
+	}
+	return _u
+}
+
+// SetStatusChangedAt sets the "status_changed_at" field.
+func (_u *LeadUpdate) SetStatusChangedAt(v time.Time) *LeadUpdate {
+	_u.mutation.SetStatusChangedAt(v)
+	return _u
+}
+
+// SetNillableStatusChangedAt sets the "status_changed_at" field if the given value is not nil.
+func (_u *LeadUpdate) SetNillableStatusChangedAt(v *time.Time) *LeadUpdate {
+	if v != nil {
+		_u.SetStatusChangedAt(*v)
+	}
+	return _u
+}
+
 // SetOsmID sets the "osm_id" field.
 func (_u *LeadUpdate) SetOsmID(v string) *LeadUpdate {
 	_u.mutation.SetOsmID(v)
@@ -438,6 +467,21 @@ func (_u *LeadUpdate) AddNotes(v ...*LeadNote) *LeadUpdate {
 	return _u.AddNoteIDs(ids...)
 }
 
+// AddStatusHistoryIDs adds the "status_history" edge to the LeadStatusHistory entity by IDs.
+func (_u *LeadUpdate) AddStatusHistoryIDs(ids ...int) *LeadUpdate {
+	_u.mutation.AddStatusHistoryIDs(ids...)
+	return _u
+}
+
+// AddStatusHistory adds the "status_history" edges to the LeadStatusHistory entity.
+func (_u *LeadUpdate) AddStatusHistory(v ...*LeadStatusHistory) *LeadUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddStatusHistoryIDs(ids...)
+}
+
 // Mutation returns the LeadMutation object of the builder.
 func (_u *LeadUpdate) Mutation() *LeadMutation {
 	return _u.mutation
@@ -462,6 +506,27 @@ func (_u *LeadUpdate) RemoveNotes(v ...*LeadNote) *LeadUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveNoteIDs(ids...)
+}
+
+// ClearStatusHistory clears all "status_history" edges to the LeadStatusHistory entity.
+func (_u *LeadUpdate) ClearStatusHistory() *LeadUpdate {
+	_u.mutation.ClearStatusHistory()
+	return _u
+}
+
+// RemoveStatusHistoryIDs removes the "status_history" edge to LeadStatusHistory entities by IDs.
+func (_u *LeadUpdate) RemoveStatusHistoryIDs(ids ...int) *LeadUpdate {
+	_u.mutation.RemoveStatusHistoryIDs(ids...)
+	return _u
+}
+
+// RemoveStatusHistory removes "status_history" edges to LeadStatusHistory entities.
+func (_u *LeadUpdate) RemoveStatusHistory(v ...*LeadStatusHistory) *LeadUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveStatusHistoryIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -525,6 +590,11 @@ func (_u *LeadUpdate) check() error {
 	if v, ok := _u.mutation.QualityScore(); ok {
 		if err := lead.QualityScoreValidator(v); err != nil {
 			return &ValidationError{Name: "quality_score", err: fmt.Errorf(`ent: validator failed for field "Lead.quality_score": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Status(); ok {
+		if err := lead.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Lead.status": %w`, err)}
 		}
 	}
 	return nil
@@ -617,6 +687,12 @@ func (_u *LeadUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedQualityScore(); ok {
 		_spec.AddField(lead.FieldQualityScore, field.TypeInt, value)
 	}
+	if value, ok := _u.mutation.Status(); ok {
+		_spec.SetField(lead.FieldStatus, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.StatusChangedAt(); ok {
+		_spec.SetField(lead.FieldStatusChangedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.OsmID(); ok {
 		_spec.SetField(lead.FieldOsmID, field.TypeString, value)
 	}
@@ -705,6 +781,51 @@ func (_u *LeadUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(leadnote.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.StatusHistoryCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.StatusHistoryTable,
+			Columns: []string{lead.StatusHistoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadstatushistory.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedStatusHistoryIDs(); len(nodes) > 0 && !_u.mutation.StatusHistoryCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.StatusHistoryTable,
+			Columns: []string{lead.StatusHistoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadstatushistory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.StatusHistoryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.StatusHistoryTable,
+			Columns: []string{lead.StatusHistoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadstatushistory.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -989,6 +1110,34 @@ func (_u *LeadUpdateOne) AddQualityScore(v int) *LeadUpdateOne {
 	return _u
 }
 
+// SetStatus sets the "status" field.
+func (_u *LeadUpdateOne) SetStatus(v lead.Status) *LeadUpdateOne {
+	_u.mutation.SetStatus(v)
+	return _u
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (_u *LeadUpdateOne) SetNillableStatus(v *lead.Status) *LeadUpdateOne {
+	if v != nil {
+		_u.SetStatus(*v)
+	}
+	return _u
+}
+
+// SetStatusChangedAt sets the "status_changed_at" field.
+func (_u *LeadUpdateOne) SetStatusChangedAt(v time.Time) *LeadUpdateOne {
+	_u.mutation.SetStatusChangedAt(v)
+	return _u
+}
+
+// SetNillableStatusChangedAt sets the "status_changed_at" field if the given value is not nil.
+func (_u *LeadUpdateOne) SetNillableStatusChangedAt(v *time.Time) *LeadUpdateOne {
+	if v != nil {
+		_u.SetStatusChangedAt(*v)
+	}
+	return _u
+}
+
 // SetOsmID sets the "osm_id" field.
 func (_u *LeadUpdateOne) SetOsmID(v string) *LeadUpdateOne {
 	_u.mutation.SetOsmID(v)
@@ -1140,6 +1289,21 @@ func (_u *LeadUpdateOne) AddNotes(v ...*LeadNote) *LeadUpdateOne {
 	return _u.AddNoteIDs(ids...)
 }
 
+// AddStatusHistoryIDs adds the "status_history" edge to the LeadStatusHistory entity by IDs.
+func (_u *LeadUpdateOne) AddStatusHistoryIDs(ids ...int) *LeadUpdateOne {
+	_u.mutation.AddStatusHistoryIDs(ids...)
+	return _u
+}
+
+// AddStatusHistory adds the "status_history" edges to the LeadStatusHistory entity.
+func (_u *LeadUpdateOne) AddStatusHistory(v ...*LeadStatusHistory) *LeadUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddStatusHistoryIDs(ids...)
+}
+
 // Mutation returns the LeadMutation object of the builder.
 func (_u *LeadUpdateOne) Mutation() *LeadMutation {
 	return _u.mutation
@@ -1164,6 +1328,27 @@ func (_u *LeadUpdateOne) RemoveNotes(v ...*LeadNote) *LeadUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveNoteIDs(ids...)
+}
+
+// ClearStatusHistory clears all "status_history" edges to the LeadStatusHistory entity.
+func (_u *LeadUpdateOne) ClearStatusHistory() *LeadUpdateOne {
+	_u.mutation.ClearStatusHistory()
+	return _u
+}
+
+// RemoveStatusHistoryIDs removes the "status_history" edge to LeadStatusHistory entities by IDs.
+func (_u *LeadUpdateOne) RemoveStatusHistoryIDs(ids ...int) *LeadUpdateOne {
+	_u.mutation.RemoveStatusHistoryIDs(ids...)
+	return _u
+}
+
+// RemoveStatusHistory removes "status_history" edges to LeadStatusHistory entities.
+func (_u *LeadUpdateOne) RemoveStatusHistory(v ...*LeadStatusHistory) *LeadUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveStatusHistoryIDs(ids...)
 }
 
 // Where appends a list predicates to the LeadUpdate builder.
@@ -1240,6 +1425,11 @@ func (_u *LeadUpdateOne) check() error {
 	if v, ok := _u.mutation.QualityScore(); ok {
 		if err := lead.QualityScoreValidator(v); err != nil {
 			return &ValidationError{Name: "quality_score", err: fmt.Errorf(`ent: validator failed for field "Lead.quality_score": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Status(); ok {
+		if err := lead.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Lead.status": %w`, err)}
 		}
 	}
 	return nil
@@ -1349,6 +1539,12 @@ func (_u *LeadUpdateOne) sqlSave(ctx context.Context) (_node *Lead, err error) {
 	if value, ok := _u.mutation.AddedQualityScore(); ok {
 		_spec.AddField(lead.FieldQualityScore, field.TypeInt, value)
 	}
+	if value, ok := _u.mutation.Status(); ok {
+		_spec.SetField(lead.FieldStatus, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.StatusChangedAt(); ok {
+		_spec.SetField(lead.FieldStatusChangedAt, field.TypeTime, value)
+	}
 	if value, ok := _u.mutation.OsmID(); ok {
 		_spec.SetField(lead.FieldOsmID, field.TypeString, value)
 	}
@@ -1437,6 +1633,51 @@ func (_u *LeadUpdateOne) sqlSave(ctx context.Context) (_node *Lead, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(leadnote.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.StatusHistoryCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.StatusHistoryTable,
+			Columns: []string{lead.StatusHistoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadstatushistory.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedStatusHistoryIDs(); len(nodes) > 0 && !_u.mutation.StatusHistoryCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.StatusHistoryTable,
+			Columns: []string{lead.StatusHistoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadstatushistory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.StatusHistoryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.StatusHistoryTable,
+			Columns: []string{lead.StatusHistoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadstatushistory.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

@@ -351,6 +351,7 @@ func main() {
 	webhookHandler := handlers.NewWebhookHandler(webhookService)
 	batchHandler := handlers.NewBatchHandler(db.Ent, webhookService)
 	leadNoteHandler := handlers.NewLeadNoteHandler(db.Ent, auditLogger)
+	leadLifecycleHandler := handlers.NewLeadLifecycleHandler(db.Ent, auditLogger)
 	phoneHandler := handlers.NewPhoneHandler()
 	log.Printf("✅ Webhook and batch handlers initialized")
 
@@ -394,6 +395,11 @@ func main() {
 			leadsGroup.GET("/:id", leadHandler.GetByID)
 			// Lead notes
 			leadsGroup.GET("/:lead_id/notes", leadNoteHandler.ListNotesByLead)
+			// Lead lifecycle
+			leadsGroup.PATCH("/:id/status", leadLifecycleHandler.UpdateLeadStatus)
+			leadsGroup.GET("/:id/status-history", leadLifecycleHandler.GetLeadStatusHistory)
+			leadsGroup.GET("/by-status/:status", leadLifecycleHandler.GetLeadsByStatus)
+			leadsGroup.GET("/status-counts", leadLifecycleHandler.GetStatusCounts)
 		}
 
 		// Lead notes routes (require email verification)

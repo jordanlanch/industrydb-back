@@ -136,6 +136,8 @@ func (User) Edges() []ent.Edge {
 			Comment("User's configured webhooks"),
 		edge.To("lead_notes", LeadNote.Type).
 			Comment("Notes created by this user on leads"),
+		edge.To("lead_status_changes", LeadStatusHistory.Type).
+			Comment("Lead status changes made by this user"),
 	}
 }
 

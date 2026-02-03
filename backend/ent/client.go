@@ -21,6 +21,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/industry"
 	"github.com/jordanlanch/industrydb/ent/lead"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
+	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
@@ -47,6 +48,8 @@ type Client struct {
 	Lead *LeadClient
 	// LeadNote is the client for interacting with the LeadNote builders.
 	LeadNote *LeadNoteClient
+	// LeadStatusHistory is the client for interacting with the LeadStatusHistory builders.
+	LeadStatusHistory *LeadStatusHistoryClient
 	// Organization is the client for interacting with the Organization builders.
 	Organization *OrganizationClient
 	// OrganizationMember is the client for interacting with the OrganizationMember builders.
@@ -78,6 +81,7 @@ func (c *Client) init() {
 	c.Industry = NewIndustryClient(c.config)
 	c.Lead = NewLeadClient(c.config)
 	c.LeadNote = NewLeadNoteClient(c.config)
+	c.LeadStatusHistory = NewLeadStatusHistoryClient(c.config)
 	c.Organization = NewOrganizationClient(c.config)
 	c.OrganizationMember = NewOrganizationMemberClient(c.config)
 	c.SavedSearch = NewSavedSearchClient(c.config)
@@ -183,6 +187,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Industry:           NewIndustryClient(cfg),
 		Lead:               NewLeadClient(cfg),
 		LeadNote:           NewLeadNoteClient(cfg),
+		LeadStatusHistory:  NewLeadStatusHistoryClient(cfg),
 		Organization:       NewOrganizationClient(cfg),
 		OrganizationMember: NewOrganizationMemberClient(cfg),
 		SavedSearch:        NewSavedSearchClient(cfg),
@@ -215,6 +220,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Industry:           NewIndustryClient(cfg),
 		Lead:               NewLeadClient(cfg),
 		LeadNote:           NewLeadNoteClient(cfg),
+		LeadStatusHistory:  NewLeadStatusHistoryClient(cfg),
 		Organization:       NewOrganizationClient(cfg),
 		OrganizationMember: NewOrganizationMemberClient(cfg),
 		SavedSearch:        NewSavedSearchClient(cfg),
@@ -251,9 +257,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.APIKey, c.AuditLog, c.Export, c.Industry, c.Lead, c.LeadNote, c.Organization,
-		c.OrganizationMember, c.SavedSearch, c.Subscription, c.UsageLog, c.User,
-		c.Webhook,
+		c.APIKey, c.AuditLog, c.Export, c.Industry, c.Lead, c.LeadNote,
+		c.LeadStatusHistory, c.Organization, c.OrganizationMember, c.SavedSearch,
+		c.Subscription, c.UsageLog, c.User, c.Webhook,
 	} {
 		n.Use(hooks...)
 	}
@@ -263,9 +269,9 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.APIKey, c.AuditLog, c.Export, c.Industry, c.Lead, c.LeadNote, c.Organization,
-		c.OrganizationMember, c.SavedSearch, c.Subscription, c.UsageLog, c.User,
-		c.Webhook,
+		c.APIKey, c.AuditLog, c.Export, c.Industry, c.Lead, c.LeadNote,
+		c.LeadStatusHistory, c.Organization, c.OrganizationMember, c.SavedSearch,
+		c.Subscription, c.UsageLog, c.User, c.Webhook,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -286,6 +292,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Lead.mutate(ctx, m)
 	case *LeadNoteMutation:
 		return c.LeadNote.mutate(ctx, m)
+	case *LeadStatusHistoryMutation:
+		return c.LeadStatusHistory.mutate(ctx, m)
 	case *OrganizationMutation:
 		return c.Organization.mutate(ctx, m)
 	case *OrganizationMemberMutation:
@@ -1025,6 +1033,22 @@ func (c *LeadClient) QueryNotes(_m *Lead) *LeadNoteQuery {
 	return query
 }
 
+// QueryStatusHistory queries the status_history edge of a Lead.
+func (c *LeadClient) QueryStatusHistory(_m *Lead) *LeadStatusHistoryQuery {
+	query := (&LeadStatusHistoryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(lead.Table, lead.FieldID, id),
+			sqlgraph.To(leadstatushistory.Table, leadstatushistory.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, lead.StatusHistoryTable, lead.StatusHistoryColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *LeadClient) Hooks() []Hook {
 	return c.hooks.Lead
@@ -1212,6 +1236,171 @@ func (c *LeadNoteClient) mutate(ctx context.Context, m *LeadNoteMutation) (Value
 		return (&LeadNoteDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown LeadNote mutation op: %q", m.Op())
+	}
+}
+
+// LeadStatusHistoryClient is a client for the LeadStatusHistory schema.
+type LeadStatusHistoryClient struct {
+	config
+}
+
+// NewLeadStatusHistoryClient returns a client for the LeadStatusHistory from the given config.
+func NewLeadStatusHistoryClient(c config) *LeadStatusHistoryClient {
+	return &LeadStatusHistoryClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `leadstatushistory.Hooks(f(g(h())))`.
+func (c *LeadStatusHistoryClient) Use(hooks ...Hook) {
+	c.hooks.LeadStatusHistory = append(c.hooks.LeadStatusHistory, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `leadstatushistory.Intercept(f(g(h())))`.
+func (c *LeadStatusHistoryClient) Intercept(interceptors ...Interceptor) {
+	c.inters.LeadStatusHistory = append(c.inters.LeadStatusHistory, interceptors...)
+}
+
+// Create returns a builder for creating a LeadStatusHistory entity.
+func (c *LeadStatusHistoryClient) Create() *LeadStatusHistoryCreate {
+	mutation := newLeadStatusHistoryMutation(c.config, OpCreate)
+	return &LeadStatusHistoryCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of LeadStatusHistory entities.
+func (c *LeadStatusHistoryClient) CreateBulk(builders ...*LeadStatusHistoryCreate) *LeadStatusHistoryCreateBulk {
+	return &LeadStatusHistoryCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *LeadStatusHistoryClient) MapCreateBulk(slice any, setFunc func(*LeadStatusHistoryCreate, int)) *LeadStatusHistoryCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &LeadStatusHistoryCreateBulk{err: fmt.Errorf("calling to LeadStatusHistoryClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*LeadStatusHistoryCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &LeadStatusHistoryCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for LeadStatusHistory.
+func (c *LeadStatusHistoryClient) Update() *LeadStatusHistoryUpdate {
+	mutation := newLeadStatusHistoryMutation(c.config, OpUpdate)
+	return &LeadStatusHistoryUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *LeadStatusHistoryClient) UpdateOne(_m *LeadStatusHistory) *LeadStatusHistoryUpdateOne {
+	mutation := newLeadStatusHistoryMutation(c.config, OpUpdateOne, withLeadStatusHistory(_m))
+	return &LeadStatusHistoryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *LeadStatusHistoryClient) UpdateOneID(id int) *LeadStatusHistoryUpdateOne {
+	mutation := newLeadStatusHistoryMutation(c.config, OpUpdateOne, withLeadStatusHistoryID(id))
+	return &LeadStatusHistoryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for LeadStatusHistory.
+func (c *LeadStatusHistoryClient) Delete() *LeadStatusHistoryDelete {
+	mutation := newLeadStatusHistoryMutation(c.config, OpDelete)
+	return &LeadStatusHistoryDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *LeadStatusHistoryClient) DeleteOne(_m *LeadStatusHistory) *LeadStatusHistoryDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *LeadStatusHistoryClient) DeleteOneID(id int) *LeadStatusHistoryDeleteOne {
+	builder := c.Delete().Where(leadstatushistory.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &LeadStatusHistoryDeleteOne{builder}
+}
+
+// Query returns a query builder for LeadStatusHistory.
+func (c *LeadStatusHistoryClient) Query() *LeadStatusHistoryQuery {
+	return &LeadStatusHistoryQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeLeadStatusHistory},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a LeadStatusHistory entity by its id.
+func (c *LeadStatusHistoryClient) Get(ctx context.Context, id int) (*LeadStatusHistory, error) {
+	return c.Query().Where(leadstatushistory.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *LeadStatusHistoryClient) GetX(ctx context.Context, id int) *LeadStatusHistory {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryLead queries the lead edge of a LeadStatusHistory.
+func (c *LeadStatusHistoryClient) QueryLead(_m *LeadStatusHistory) *LeadQuery {
+	query := (&LeadClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(leadstatushistory.Table, leadstatushistory.FieldID, id),
+			sqlgraph.To(lead.Table, lead.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, leadstatushistory.LeadTable, leadstatushistory.LeadColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUser queries the user edge of a LeadStatusHistory.
+func (c *LeadStatusHistoryClient) QueryUser(_m *LeadStatusHistory) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(leadstatushistory.Table, leadstatushistory.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, leadstatushistory.UserTable, leadstatushistory.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *LeadStatusHistoryClient) Hooks() []Hook {
+	return c.hooks.LeadStatusHistory
+}
+
+// Interceptors returns the client interceptors.
+func (c *LeadStatusHistoryClient) Interceptors() []Interceptor {
+	return c.inters.LeadStatusHistory
+}
+
+func (c *LeadStatusHistoryClient) mutate(ctx context.Context, m *LeadStatusHistoryMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&LeadStatusHistoryCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&LeadStatusHistoryUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&LeadStatusHistoryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&LeadStatusHistoryDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown LeadStatusHistory mutation op: %q", m.Op())
 	}
 }
 
@@ -2276,6 +2465,22 @@ func (c *UserClient) QueryLeadNotes(_m *User) *LeadNoteQuery {
 	return query
 }
 
+// QueryLeadStatusChanges queries the lead_status_changes edge of a User.
+func (c *UserClient) QueryLeadStatusChanges(_m *User) *LeadStatusHistoryQuery {
+	query := (&LeadStatusHistoryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(leadstatushistory.Table, leadstatushistory.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.LeadStatusChangesTable, user.LeadStatusChangesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -2453,13 +2658,13 @@ func (c *WebhookClient) mutate(ctx context.Context, m *WebhookMutation) (Value, 
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		APIKey, AuditLog, Export, Industry, Lead, LeadNote, Organization,
-		OrganizationMember, SavedSearch, Subscription, UsageLog, User,
+		APIKey, AuditLog, Export, Industry, Lead, LeadNote, LeadStatusHistory,
+		Organization, OrganizationMember, SavedSearch, Subscription, UsageLog, User,
 		Webhook []ent.Hook
 	}
 	inters struct {
-		APIKey, AuditLog, Export, Industry, Lead, LeadNote, Organization,
-		OrganizationMember, SavedSearch, Subscription, UsageLog, User,
+		APIKey, AuditLog, Export, Industry, Lead, LeadNote, LeadStatusHistory,
+		Organization, OrganizationMember, SavedSearch, Subscription, UsageLog, User,
 		Webhook []ent.Interceptor
 	}
 )

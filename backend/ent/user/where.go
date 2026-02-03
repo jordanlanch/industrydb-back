@@ -1525,6 +1525,29 @@ func HasLeadNotesWith(preds ...predicate.LeadNote) predicate.User {
 	})
 }
 
+// HasLeadStatusChanges applies the HasEdge predicate on the "lead_status_changes" edge.
+func HasLeadStatusChanges() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, LeadStatusChangesTable, LeadStatusChangesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasLeadStatusChangesWith applies the HasEdge predicate on the "lead_status_changes" edge with a given conditions (other predicates).
+func HasLeadStatusChangesWith(preds ...predicate.LeadStatusHistory) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newLeadStatusChangesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.User) predicate.User {
 	return predicate.User(sql.AndPredicates(predicates...))

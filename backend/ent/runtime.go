@@ -11,6 +11,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/industry"
 	"github.com/jordanlanch/industrydb/ent/lead"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
+	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
@@ -177,12 +178,16 @@ func init() {
 			return nil
 		}
 	}()
+	// leadDescStatusChangedAt is the schema descriptor for status_changed_at field.
+	leadDescStatusChangedAt := leadFields[15].Descriptor()
+	// lead.DefaultStatusChangedAt holds the default value on creation for the status_changed_at field.
+	lead.DefaultStatusChangedAt = leadDescStatusChangedAt.Default.(func() time.Time)
 	// leadDescCreatedAt is the schema descriptor for created_at field.
-	leadDescCreatedAt := leadFields[21].Descriptor()
+	leadDescCreatedAt := leadFields[23].Descriptor()
 	// lead.DefaultCreatedAt holds the default value on creation for the created_at field.
 	lead.DefaultCreatedAt = leadDescCreatedAt.Default.(func() time.Time)
 	// leadDescUpdatedAt is the schema descriptor for updated_at field.
-	leadDescUpdatedAt := leadFields[22].Descriptor()
+	leadDescUpdatedAt := leadFields[24].Descriptor()
 	// lead.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	lead.DefaultUpdatedAt = leadDescUpdatedAt.Default.(func() time.Time)
 	// lead.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
@@ -229,6 +234,24 @@ func init() {
 	leadnote.DefaultUpdatedAt = leadnoteDescUpdatedAt.Default.(func() time.Time)
 	// leadnote.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	leadnote.UpdateDefaultUpdatedAt = leadnoteDescUpdatedAt.UpdateDefault.(func() time.Time)
+	leadstatushistoryFields := schema.LeadStatusHistory{}.Fields()
+	_ = leadstatushistoryFields
+	// leadstatushistoryDescLeadID is the schema descriptor for lead_id field.
+	leadstatushistoryDescLeadID := leadstatushistoryFields[0].Descriptor()
+	// leadstatushistory.LeadIDValidator is a validator for the "lead_id" field. It is called by the builders before save.
+	leadstatushistory.LeadIDValidator = leadstatushistoryDescLeadID.Validators[0].(func(int) error)
+	// leadstatushistoryDescUserID is the schema descriptor for user_id field.
+	leadstatushistoryDescUserID := leadstatushistoryFields[1].Descriptor()
+	// leadstatushistory.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
+	leadstatushistory.UserIDValidator = leadstatushistoryDescUserID.Validators[0].(func(int) error)
+	// leadstatushistoryDescReason is the schema descriptor for reason field.
+	leadstatushistoryDescReason := leadstatushistoryFields[4].Descriptor()
+	// leadstatushistory.ReasonValidator is a validator for the "reason" field. It is called by the builders before save.
+	leadstatushistory.ReasonValidator = leadstatushistoryDescReason.Validators[0].(func(string) error)
+	// leadstatushistoryDescCreatedAt is the schema descriptor for created_at field.
+	leadstatushistoryDescCreatedAt := leadstatushistoryFields[5].Descriptor()
+	// leadstatushistory.DefaultCreatedAt holds the default value on creation for the created_at field.
+	leadstatushistory.DefaultCreatedAt = leadstatushistoryDescCreatedAt.Default.(func() time.Time)
 	organizationFields := schema.Organization{}.Fields()
 	_ = organizationFields
 	// organizationDescName is the schema descriptor for name field.

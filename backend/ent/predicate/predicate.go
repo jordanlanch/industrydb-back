@@ -24,6 +24,9 @@ type Lead func(*sql.Selector)
 // LeadNote is the predicate function for leadnote builders.
 type LeadNote func(*sql.Selector)
 
+// LeadStatusHistory is the predicate function for leadstatushistory builders.
+type LeadStatusHistory func(*sql.Selector)
+
 // Organization is the predicate function for organization builders.
 type Organization func(*sql.Selector)
 

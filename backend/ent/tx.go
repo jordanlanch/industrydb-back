@@ -24,6 +24,8 @@ type Tx struct {
 	Lead *LeadClient
 	// LeadNote is the client for interacting with the LeadNote builders.
 	LeadNote *LeadNoteClient
+	// LeadStatusHistory is the client for interacting with the LeadStatusHistory builders.
+	LeadStatusHistory *LeadStatusHistoryClient
 	// Organization is the client for interacting with the Organization builders.
 	Organization *OrganizationClient
 	// OrganizationMember is the client for interacting with the OrganizationMember builders.
@@ -175,6 +177,7 @@ func (tx *Tx) init() {
 	tx.Industry = NewIndustryClient(tx.config)
 	tx.Lead = NewLeadClient(tx.config)
 	tx.LeadNote = NewLeadNoteClient(tx.config)
+	tx.LeadStatusHistory = NewLeadStatusHistoryClient(tx.config)
 	tx.Organization = NewOrganizationClient(tx.config)
 	tx.OrganizationMember = NewOrganizationMemberClient(tx.config)
 	tx.SavedSearch = NewSavedSearchClient(tx.config)

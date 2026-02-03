@@ -17,6 +17,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/industry"
 	"github.com/jordanlanch/industrydb/ent/lead"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
+	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/predicate"
@@ -42,6 +43,7 @@ const (
 	TypeIndustry           = "Industry"
 	TypeLead               = "Lead"
 	TypeLeadNote           = "LeadNote"
+	TypeLeadStatusHistory  = "LeadStatusHistory"
 	TypeOrganization       = "Organization"
 	TypeOrganizationMember = "OrganizationMember"
 	TypeSavedSearch        = "SavedSearch"
@@ -4179,43 +4181,48 @@ func (m *IndustryMutation) ResetEdge(name string) error {
 // LeadMutation represents an operation that mutates the Lead nodes in the graph.
 type LeadMutation struct {
 	config
-	op                Op
-	typ               string
-	id                *int
-	name              *string
-	industry          *lead.Industry
-	country           *string
-	city              *string
-	address           *string
-	postal_code       *string
-	phone             *string
-	email             *string
-	website           *string
-	social_media      *map[string]string
-	latitude          *float64
-	addlatitude       *float64
-	longitude         *float64
-	addlongitude      *float64
-	verified          *bool
-	quality_score     *int
-	addquality_score  *int
-	osm_id            *string
-	metadata          *map[string]interface{}
-	sub_niche         *string
-	specialties       *[]string
-	appendspecialties []string
-	cuisine_type      *string
-	sport_type        *string
-	tattoo_style      *string
-	created_at        *time.Time
-	updated_at        *time.Time
-	clearedFields     map[string]struct{}
-	notes             map[int]struct{}
-	removednotes      map[int]struct{}
-	clearednotes      bool
-	done              bool
-	oldValue          func(context.Context) (*Lead, error)
-	predicates        []predicate.Lead
+	op                    Op
+	typ                   string
+	id                    *int
+	name                  *string
+	industry              *lead.Industry
+	country               *string
+	city                  *string
+	address               *string
+	postal_code           *string
+	phone                 *string
+	email                 *string
+	website               *string
+	social_media          *map[string]string
+	latitude              *float64
+	addlatitude           *float64
+	longitude             *float64
+	addlongitude          *float64
+	verified              *bool
+	quality_score         *int
+	addquality_score      *int
+	status                *lead.Status
+	status_changed_at     *time.Time
+	osm_id                *string
+	metadata              *map[string]interface{}
+	sub_niche             *string
+	specialties           *[]string
+	appendspecialties     []string
+	cuisine_type          *string
+	sport_type            *string
+	tattoo_style          *string
+	created_at            *time.Time
+	updated_at            *time.Time
+	clearedFields         map[string]struct{}
+	notes                 map[int]struct{}
+	removednotes          map[int]struct{}
+	clearednotes          bool
+	status_history        map[int]struct{}
+	removedstatus_history map[int]struct{}
+	clearedstatus_history bool
+	done                  bool
+	oldValue              func(context.Context) (*Lead, error)
+	predicates            []predicate.Lead
 }
 
 var _ ent.Mutation = (*LeadMutation)(nil)
@@ -4986,6 +4993,78 @@ func (m *LeadMutation) ResetQualityScore() {
 	m.addquality_score = nil
 }
 
+// SetStatus sets the "status" field.
+func (m *LeadMutation) SetStatus(l lead.Status) {
+	m.status = &l
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *LeadMutation) Status() (r lead.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the Lead entity.
+// If the Lead object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadMutation) OldStatus(ctx context.Context) (v lead.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *LeadMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetStatusChangedAt sets the "status_changed_at" field.
+func (m *LeadMutation) SetStatusChangedAt(t time.Time) {
+	m.status_changed_at = &t
+}
+
+// StatusChangedAt returns the value of the "status_changed_at" field in the mutation.
+func (m *LeadMutation) StatusChangedAt() (r time.Time, exists bool) {
+	v := m.status_changed_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatusChangedAt returns the old "status_changed_at" field's value of the Lead entity.
+// If the Lead object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadMutation) OldStatusChangedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatusChangedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatusChangedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatusChangedAt: %w", err)
+	}
+	return oldValue.StatusChangedAt, nil
+}
+
+// ResetStatusChangedAt resets all changes to the "status_changed_at" field.
+func (m *LeadMutation) ResetStatusChangedAt() {
+	m.status_changed_at = nil
+}
+
 // SetOsmID sets the "osm_id" field.
 func (m *LeadMutation) SetOsmID(s string) {
 	m.osm_id = &s
@@ -5471,6 +5550,60 @@ func (m *LeadMutation) ResetNotes() {
 	m.removednotes = nil
 }
 
+// AddStatusHistoryIDs adds the "status_history" edge to the LeadStatusHistory entity by ids.
+func (m *LeadMutation) AddStatusHistoryIDs(ids ...int) {
+	if m.status_history == nil {
+		m.status_history = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.status_history[ids[i]] = struct{}{}
+	}
+}
+
+// ClearStatusHistory clears the "status_history" edge to the LeadStatusHistory entity.
+func (m *LeadMutation) ClearStatusHistory() {
+	m.clearedstatus_history = true
+}
+
+// StatusHistoryCleared reports if the "status_history" edge to the LeadStatusHistory entity was cleared.
+func (m *LeadMutation) StatusHistoryCleared() bool {
+	return m.clearedstatus_history
+}
+
+// RemoveStatusHistoryIDs removes the "status_history" edge to the LeadStatusHistory entity by IDs.
+func (m *LeadMutation) RemoveStatusHistoryIDs(ids ...int) {
+	if m.removedstatus_history == nil {
+		m.removedstatus_history = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.status_history, ids[i])
+		m.removedstatus_history[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedStatusHistory returns the removed IDs of the "status_history" edge to the LeadStatusHistory entity.
+func (m *LeadMutation) RemovedStatusHistoryIDs() (ids []int) {
+	for id := range m.removedstatus_history {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// StatusHistoryIDs returns the "status_history" edge IDs in the mutation.
+func (m *LeadMutation) StatusHistoryIDs() (ids []int) {
+	for id := range m.status_history {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetStatusHistory resets all changes to the "status_history" edge.
+func (m *LeadMutation) ResetStatusHistory() {
+	m.status_history = nil
+	m.clearedstatus_history = false
+	m.removedstatus_history = nil
+}
+
 // Where appends a list predicates to the LeadMutation builder.
 func (m *LeadMutation) Where(ps ...predicate.Lead) {
 	m.predicates = append(m.predicates, ps...)
@@ -5505,7 +5638,7 @@ func (m *LeadMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *LeadMutation) Fields() []string {
-	fields := make([]string, 0, 23)
+	fields := make([]string, 0, 25)
 	if m.name != nil {
 		fields = append(fields, lead.FieldName)
 	}
@@ -5547,6 +5680,12 @@ func (m *LeadMutation) Fields() []string {
 	}
 	if m.quality_score != nil {
 		fields = append(fields, lead.FieldQualityScore)
+	}
+	if m.status != nil {
+		fields = append(fields, lead.FieldStatus)
+	}
+	if m.status_changed_at != nil {
+		fields = append(fields, lead.FieldStatusChangedAt)
 	}
 	if m.osm_id != nil {
 		fields = append(fields, lead.FieldOsmID)
@@ -5611,6 +5750,10 @@ func (m *LeadMutation) Field(name string) (ent.Value, bool) {
 		return m.Verified()
 	case lead.FieldQualityScore:
 		return m.QualityScore()
+	case lead.FieldStatus:
+		return m.Status()
+	case lead.FieldStatusChangedAt:
+		return m.StatusChangedAt()
 	case lead.FieldOsmID:
 		return m.OsmID()
 	case lead.FieldMetadata:
@@ -5666,6 +5809,10 @@ func (m *LeadMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldVerified(ctx)
 	case lead.FieldQualityScore:
 		return m.OldQualityScore(ctx)
+	case lead.FieldStatus:
+		return m.OldStatus(ctx)
+	case lead.FieldStatusChangedAt:
+		return m.OldStatusChangedAt(ctx)
 	case lead.FieldOsmID:
 		return m.OldOsmID(ctx)
 	case lead.FieldMetadata:
@@ -5790,6 +5937,20 @@ func (m *LeadMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetQualityScore(v)
+		return nil
+	case lead.FieldStatus:
+		v, ok := value.(lead.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case lead.FieldStatusChangedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatusChangedAt(v)
 		return nil
 	case lead.FieldOsmID:
 		v, ok := value.(string)
@@ -6077,6 +6238,12 @@ func (m *LeadMutation) ResetField(name string) error {
 	case lead.FieldQualityScore:
 		m.ResetQualityScore()
 		return nil
+	case lead.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case lead.FieldStatusChangedAt:
+		m.ResetStatusChangedAt()
+		return nil
 	case lead.FieldOsmID:
 		m.ResetOsmID()
 		return nil
@@ -6110,9 +6277,12 @@ func (m *LeadMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *LeadMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.notes != nil {
 		edges = append(edges, lead.EdgeNotes)
+	}
+	if m.status_history != nil {
+		edges = append(edges, lead.EdgeStatusHistory)
 	}
 	return edges
 }
@@ -6127,15 +6297,24 @@ func (m *LeadMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case lead.EdgeStatusHistory:
+		ids := make([]ent.Value, 0, len(m.status_history))
+		for id := range m.status_history {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *LeadMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removednotes != nil {
 		edges = append(edges, lead.EdgeNotes)
+	}
+	if m.removedstatus_history != nil {
+		edges = append(edges, lead.EdgeStatusHistory)
 	}
 	return edges
 }
@@ -6150,15 +6329,24 @@ func (m *LeadMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case lead.EdgeStatusHistory:
+		ids := make([]ent.Value, 0, len(m.removedstatus_history))
+		for id := range m.removedstatus_history {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *LeadMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearednotes {
 		edges = append(edges, lead.EdgeNotes)
+	}
+	if m.clearedstatus_history {
+		edges = append(edges, lead.EdgeStatusHistory)
 	}
 	return edges
 }
@@ -6169,6 +6357,8 @@ func (m *LeadMutation) EdgeCleared(name string) bool {
 	switch name {
 	case lead.EdgeNotes:
 		return m.clearednotes
+	case lead.EdgeStatusHistory:
+		return m.clearedstatus_history
 	}
 	return false
 }
@@ -6187,6 +6377,9 @@ func (m *LeadMutation) ResetEdge(name string) error {
 	switch name {
 	case lead.EdgeNotes:
 		m.ResetNotes()
+		return nil
+	case lead.EdgeStatusHistory:
+		m.ResetStatusHistory()
 		return nil
 	}
 	return fmt.Errorf("unknown Lead edge %s", name)
@@ -6889,6 +7082,746 @@ func (m *LeadNoteMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown LeadNote edge %s", name)
+}
+
+// LeadStatusHistoryMutation represents an operation that mutates the LeadStatusHistory nodes in the graph.
+type LeadStatusHistoryMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	old_status    *leadstatushistory.OldStatus
+	new_status    *leadstatushistory.NewStatus
+	reason        *string
+	created_at    *time.Time
+	clearedFields map[string]struct{}
+	lead          *int
+	clearedlead   bool
+	user          *int
+	cleareduser   bool
+	done          bool
+	oldValue      func(context.Context) (*LeadStatusHistory, error)
+	predicates    []predicate.LeadStatusHistory
+}
+
+var _ ent.Mutation = (*LeadStatusHistoryMutation)(nil)
+
+// leadstatushistoryOption allows management of the mutation configuration using functional options.
+type leadstatushistoryOption func(*LeadStatusHistoryMutation)
+
+// newLeadStatusHistoryMutation creates new mutation for the LeadStatusHistory entity.
+func newLeadStatusHistoryMutation(c config, op Op, opts ...leadstatushistoryOption) *LeadStatusHistoryMutation {
+	m := &LeadStatusHistoryMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeLeadStatusHistory,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withLeadStatusHistoryID sets the ID field of the mutation.
+func withLeadStatusHistoryID(id int) leadstatushistoryOption {
+	return func(m *LeadStatusHistoryMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *LeadStatusHistory
+		)
+		m.oldValue = func(ctx context.Context) (*LeadStatusHistory, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().LeadStatusHistory.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withLeadStatusHistory sets the old LeadStatusHistory of the mutation.
+func withLeadStatusHistory(node *LeadStatusHistory) leadstatushistoryOption {
+	return func(m *LeadStatusHistoryMutation) {
+		m.oldValue = func(context.Context) (*LeadStatusHistory, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m LeadStatusHistoryMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m LeadStatusHistoryMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *LeadStatusHistoryMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *LeadStatusHistoryMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().LeadStatusHistory.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetLeadID sets the "lead_id" field.
+func (m *LeadStatusHistoryMutation) SetLeadID(i int) {
+	m.lead = &i
+}
+
+// LeadID returns the value of the "lead_id" field in the mutation.
+func (m *LeadStatusHistoryMutation) LeadID() (r int, exists bool) {
+	v := m.lead
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLeadID returns the old "lead_id" field's value of the LeadStatusHistory entity.
+// If the LeadStatusHistory object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadStatusHistoryMutation) OldLeadID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLeadID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLeadID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLeadID: %w", err)
+	}
+	return oldValue.LeadID, nil
+}
+
+// ResetLeadID resets all changes to the "lead_id" field.
+func (m *LeadStatusHistoryMutation) ResetLeadID() {
+	m.lead = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *LeadStatusHistoryMutation) SetUserID(i int) {
+	m.user = &i
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *LeadStatusHistoryMutation) UserID() (r int, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the LeadStatusHistory entity.
+// If the LeadStatusHistory object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadStatusHistoryMutation) OldUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *LeadStatusHistoryMutation) ResetUserID() {
+	m.user = nil
+}
+
+// SetOldStatus sets the "old_status" field.
+func (m *LeadStatusHistoryMutation) SetOldStatus(ls leadstatushistory.OldStatus) {
+	m.old_status = &ls
+}
+
+// OldStatus returns the value of the "old_status" field in the mutation.
+func (m *LeadStatusHistoryMutation) OldStatus() (r leadstatushistory.OldStatus, exists bool) {
+	v := m.old_status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOldStatus returns the old "old_status" field's value of the LeadStatusHistory entity.
+// If the LeadStatusHistory object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadStatusHistoryMutation) OldOldStatus(ctx context.Context) (v *leadstatushistory.OldStatus, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOldStatus: %w", err)
+	}
+	return oldValue.OldStatus, nil
+}
+
+// ClearOldStatus clears the value of the "old_status" field.
+func (m *LeadStatusHistoryMutation) ClearOldStatus() {
+	m.old_status = nil
+	m.clearedFields[leadstatushistory.FieldOldStatus] = struct{}{}
+}
+
+// OldStatusCleared returns if the "old_status" field was cleared in this mutation.
+func (m *LeadStatusHistoryMutation) OldStatusCleared() bool {
+	_, ok := m.clearedFields[leadstatushistory.FieldOldStatus]
+	return ok
+}
+
+// ResetOldStatus resets all changes to the "old_status" field.
+func (m *LeadStatusHistoryMutation) ResetOldStatus() {
+	m.old_status = nil
+	delete(m.clearedFields, leadstatushistory.FieldOldStatus)
+}
+
+// SetNewStatus sets the "new_status" field.
+func (m *LeadStatusHistoryMutation) SetNewStatus(ls leadstatushistory.NewStatus) {
+	m.new_status = &ls
+}
+
+// NewStatus returns the value of the "new_status" field in the mutation.
+func (m *LeadStatusHistoryMutation) NewStatus() (r leadstatushistory.NewStatus, exists bool) {
+	v := m.new_status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNewStatus returns the old "new_status" field's value of the LeadStatusHistory entity.
+// If the LeadStatusHistory object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadStatusHistoryMutation) OldNewStatus(ctx context.Context) (v leadstatushistory.NewStatus, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNewStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNewStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNewStatus: %w", err)
+	}
+	return oldValue.NewStatus, nil
+}
+
+// ResetNewStatus resets all changes to the "new_status" field.
+func (m *LeadStatusHistoryMutation) ResetNewStatus() {
+	m.new_status = nil
+}
+
+// SetReason sets the "reason" field.
+func (m *LeadStatusHistoryMutation) SetReason(s string) {
+	m.reason = &s
+}
+
+// Reason returns the value of the "reason" field in the mutation.
+func (m *LeadStatusHistoryMutation) Reason() (r string, exists bool) {
+	v := m.reason
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReason returns the old "reason" field's value of the LeadStatusHistory entity.
+// If the LeadStatusHistory object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadStatusHistoryMutation) OldReason(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReason is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReason requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReason: %w", err)
+	}
+	return oldValue.Reason, nil
+}
+
+// ClearReason clears the value of the "reason" field.
+func (m *LeadStatusHistoryMutation) ClearReason() {
+	m.reason = nil
+	m.clearedFields[leadstatushistory.FieldReason] = struct{}{}
+}
+
+// ReasonCleared returns if the "reason" field was cleared in this mutation.
+func (m *LeadStatusHistoryMutation) ReasonCleared() bool {
+	_, ok := m.clearedFields[leadstatushistory.FieldReason]
+	return ok
+}
+
+// ResetReason resets all changes to the "reason" field.
+func (m *LeadStatusHistoryMutation) ResetReason() {
+	m.reason = nil
+	delete(m.clearedFields, leadstatushistory.FieldReason)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *LeadStatusHistoryMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *LeadStatusHistoryMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the LeadStatusHistory entity.
+// If the LeadStatusHistory object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadStatusHistoryMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *LeadStatusHistoryMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// ClearLead clears the "lead" edge to the Lead entity.
+func (m *LeadStatusHistoryMutation) ClearLead() {
+	m.clearedlead = true
+	m.clearedFields[leadstatushistory.FieldLeadID] = struct{}{}
+}
+
+// LeadCleared reports if the "lead" edge to the Lead entity was cleared.
+func (m *LeadStatusHistoryMutation) LeadCleared() bool {
+	return m.clearedlead
+}
+
+// LeadIDs returns the "lead" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// LeadID instead. It exists only for internal usage by the builders.
+func (m *LeadStatusHistoryMutation) LeadIDs() (ids []int) {
+	if id := m.lead; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetLead resets all changes to the "lead" edge.
+func (m *LeadStatusHistoryMutation) ResetLead() {
+	m.lead = nil
+	m.clearedlead = false
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (m *LeadStatusHistoryMutation) ClearUser() {
+	m.cleareduser = true
+	m.clearedFields[leadstatushistory.FieldUserID] = struct{}{}
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *LeadStatusHistoryMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *LeadStatusHistoryMutation) UserIDs() (ids []int) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *LeadStatusHistoryMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
+// Where appends a list predicates to the LeadStatusHistoryMutation builder.
+func (m *LeadStatusHistoryMutation) Where(ps ...predicate.LeadStatusHistory) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the LeadStatusHistoryMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *LeadStatusHistoryMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.LeadStatusHistory, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *LeadStatusHistoryMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *LeadStatusHistoryMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (LeadStatusHistory).
+func (m *LeadStatusHistoryMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *LeadStatusHistoryMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.lead != nil {
+		fields = append(fields, leadstatushistory.FieldLeadID)
+	}
+	if m.user != nil {
+		fields = append(fields, leadstatushistory.FieldUserID)
+	}
+	if m.old_status != nil {
+		fields = append(fields, leadstatushistory.FieldOldStatus)
+	}
+	if m.new_status != nil {
+		fields = append(fields, leadstatushistory.FieldNewStatus)
+	}
+	if m.reason != nil {
+		fields = append(fields, leadstatushistory.FieldReason)
+	}
+	if m.created_at != nil {
+		fields = append(fields, leadstatushistory.FieldCreatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *LeadStatusHistoryMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case leadstatushistory.FieldLeadID:
+		return m.LeadID()
+	case leadstatushistory.FieldUserID:
+		return m.UserID()
+	case leadstatushistory.FieldOldStatus:
+		return m.OldStatus()
+	case leadstatushistory.FieldNewStatus:
+		return m.NewStatus()
+	case leadstatushistory.FieldReason:
+		return m.Reason()
+	case leadstatushistory.FieldCreatedAt:
+		return m.CreatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *LeadStatusHistoryMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case leadstatushistory.FieldLeadID:
+		return m.OldLeadID(ctx)
+	case leadstatushistory.FieldUserID:
+		return m.OldUserID(ctx)
+	case leadstatushistory.FieldOldStatus:
+		return m.OldOldStatus(ctx)
+	case leadstatushistory.FieldNewStatus:
+		return m.OldNewStatus(ctx)
+	case leadstatushistory.FieldReason:
+		return m.OldReason(ctx)
+	case leadstatushistory.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown LeadStatusHistory field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *LeadStatusHistoryMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case leadstatushistory.FieldLeadID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLeadID(v)
+		return nil
+	case leadstatushistory.FieldUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case leadstatushistory.FieldOldStatus:
+		v, ok := value.(leadstatushistory.OldStatus)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOldStatus(v)
+		return nil
+	case leadstatushistory.FieldNewStatus:
+		v, ok := value.(leadstatushistory.NewStatus)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNewStatus(v)
+		return nil
+	case leadstatushistory.FieldReason:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReason(v)
+		return nil
+	case leadstatushistory.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown LeadStatusHistory field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *LeadStatusHistoryMutation) AddedFields() []string {
+	var fields []string
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *LeadStatusHistoryMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *LeadStatusHistoryMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown LeadStatusHistory numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *LeadStatusHistoryMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(leadstatushistory.FieldOldStatus) {
+		fields = append(fields, leadstatushistory.FieldOldStatus)
+	}
+	if m.FieldCleared(leadstatushistory.FieldReason) {
+		fields = append(fields, leadstatushistory.FieldReason)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *LeadStatusHistoryMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *LeadStatusHistoryMutation) ClearField(name string) error {
+	switch name {
+	case leadstatushistory.FieldOldStatus:
+		m.ClearOldStatus()
+		return nil
+	case leadstatushistory.FieldReason:
+		m.ClearReason()
+		return nil
+	}
+	return fmt.Errorf("unknown LeadStatusHistory nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *LeadStatusHistoryMutation) ResetField(name string) error {
+	switch name {
+	case leadstatushistory.FieldLeadID:
+		m.ResetLeadID()
+		return nil
+	case leadstatushistory.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case leadstatushistory.FieldOldStatus:
+		m.ResetOldStatus()
+		return nil
+	case leadstatushistory.FieldNewStatus:
+		m.ResetNewStatus()
+		return nil
+	case leadstatushistory.FieldReason:
+		m.ResetReason()
+		return nil
+	case leadstatushistory.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown LeadStatusHistory field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *LeadStatusHistoryMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.lead != nil {
+		edges = append(edges, leadstatushistory.EdgeLead)
+	}
+	if m.user != nil {
+		edges = append(edges, leadstatushistory.EdgeUser)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *LeadStatusHistoryMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case leadstatushistory.EdgeLead:
+		if id := m.lead; id != nil {
+			return []ent.Value{*id}
+		}
+	case leadstatushistory.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *LeadStatusHistoryMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *LeadStatusHistoryMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *LeadStatusHistoryMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedlead {
+		edges = append(edges, leadstatushistory.EdgeLead)
+	}
+	if m.cleareduser {
+		edges = append(edges, leadstatushistory.EdgeUser)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *LeadStatusHistoryMutation) EdgeCleared(name string) bool {
+	switch name {
+	case leadstatushistory.EdgeLead:
+		return m.clearedlead
+	case leadstatushistory.EdgeUser:
+		return m.cleareduser
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *LeadStatusHistoryMutation) ClearEdge(name string) error {
+	switch name {
+	case leadstatushistory.EdgeLead:
+		m.ClearLead()
+		return nil
+	case leadstatushistory.EdgeUser:
+		m.ClearUser()
+		return nil
+	}
+	return fmt.Errorf("unknown LeadStatusHistory unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *LeadStatusHistoryMutation) ResetEdge(name string) error {
+	switch name {
+	case leadstatushistory.EdgeLead:
+		m.ResetLead()
+		return nil
+	case leadstatushistory.EdgeUser:
+		m.ResetUser()
+		return nil
+	}
+	return fmt.Errorf("unknown LeadStatusHistory edge %s", name)
 }
 
 // OrganizationMutation represents an operation that mutates the Organization nodes in the graph.
@@ -11383,6 +12316,9 @@ type UserMutation struct {
 	lead_notes                          map[int]struct{}
 	removedlead_notes                   map[int]struct{}
 	clearedlead_notes                   bool
+	lead_status_changes                 map[int]struct{}
+	removedlead_status_changes          map[int]struct{}
+	clearedlead_status_changes          bool
 	done                                bool
 	oldValue                            func(context.Context) (*User, error)
 	predicates                          []predicate.User
@@ -13080,6 +14016,60 @@ func (m *UserMutation) ResetLeadNotes() {
 	m.removedlead_notes = nil
 }
 
+// AddLeadStatusChangeIDs adds the "lead_status_changes" edge to the LeadStatusHistory entity by ids.
+func (m *UserMutation) AddLeadStatusChangeIDs(ids ...int) {
+	if m.lead_status_changes == nil {
+		m.lead_status_changes = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.lead_status_changes[ids[i]] = struct{}{}
+	}
+}
+
+// ClearLeadStatusChanges clears the "lead_status_changes" edge to the LeadStatusHistory entity.
+func (m *UserMutation) ClearLeadStatusChanges() {
+	m.clearedlead_status_changes = true
+}
+
+// LeadStatusChangesCleared reports if the "lead_status_changes" edge to the LeadStatusHistory entity was cleared.
+func (m *UserMutation) LeadStatusChangesCleared() bool {
+	return m.clearedlead_status_changes
+}
+
+// RemoveLeadStatusChangeIDs removes the "lead_status_changes" edge to the LeadStatusHistory entity by IDs.
+func (m *UserMutation) RemoveLeadStatusChangeIDs(ids ...int) {
+	if m.removedlead_status_changes == nil {
+		m.removedlead_status_changes = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.lead_status_changes, ids[i])
+		m.removedlead_status_changes[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedLeadStatusChanges returns the removed IDs of the "lead_status_changes" edge to the LeadStatusHistory entity.
+func (m *UserMutation) RemovedLeadStatusChangesIDs() (ids []int) {
+	for id := range m.removedlead_status_changes {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// LeadStatusChangesIDs returns the "lead_status_changes" edge IDs in the mutation.
+func (m *UserMutation) LeadStatusChangesIDs() (ids []int) {
+	for id := range m.lead_status_changes {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetLeadStatusChanges resets all changes to the "lead_status_changes" edge.
+func (m *UserMutation) ResetLeadStatusChanges() {
+	m.lead_status_changes = nil
+	m.clearedlead_status_changes = false
+	m.removedlead_status_changes = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -13706,7 +14696,7 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 10)
+	edges := make([]string, 0, 11)
 	if m.subscriptions != nil {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -13736,6 +14726,9 @@ func (m *UserMutation) AddedEdges() []string {
 	}
 	if m.lead_notes != nil {
 		edges = append(edges, user.EdgeLeadNotes)
+	}
+	if m.lead_status_changes != nil {
+		edges = append(edges, user.EdgeLeadStatusChanges)
 	}
 	return edges
 }
@@ -13804,13 +14797,19 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeLeadStatusChanges:
+		ids := make([]ent.Value, 0, len(m.lead_status_changes))
+		for id := range m.lead_status_changes {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 10)
+	edges := make([]string, 0, 11)
 	if m.removedsubscriptions != nil {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -13840,6 +14839,9 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedlead_notes != nil {
 		edges = append(edges, user.EdgeLeadNotes)
+	}
+	if m.removedlead_status_changes != nil {
+		edges = append(edges, user.EdgeLeadStatusChanges)
 	}
 	return edges
 }
@@ -13908,13 +14910,19 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeLeadStatusChanges:
+		ids := make([]ent.Value, 0, len(m.removedlead_status_changes))
+		for id := range m.removedlead_status_changes {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 10)
+	edges := make([]string, 0, 11)
 	if m.clearedsubscriptions {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -13945,6 +14953,9 @@ func (m *UserMutation) ClearedEdges() []string {
 	if m.clearedlead_notes {
 		edges = append(edges, user.EdgeLeadNotes)
 	}
+	if m.clearedlead_status_changes {
+		edges = append(edges, user.EdgeLeadStatusChanges)
+	}
 	return edges
 }
 
@@ -13972,6 +14983,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedwebhooks
 	case user.EdgeLeadNotes:
 		return m.clearedlead_notes
+	case user.EdgeLeadStatusChanges:
+		return m.clearedlead_status_changes
 	}
 	return false
 }
@@ -14017,6 +15030,9 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgeLeadNotes:
 		m.ResetLeadNotes()
+		return nil
+	case user.EdgeLeadStatusChanges:
+		m.ResetLeadStatusChanges()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

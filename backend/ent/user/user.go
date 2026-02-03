@@ -83,6 +83,8 @@ const (
 	EdgeWebhooks = "webhooks"
 	// EdgeLeadNotes holds the string denoting the lead_notes edge name in mutations.
 	EdgeLeadNotes = "lead_notes"
+	// EdgeLeadStatusChanges holds the string denoting the lead_status_changes edge name in mutations.
+	EdgeLeadStatusChanges = "lead_status_changes"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// SubscriptionsTable is the table that holds the subscriptions relation/edge.
@@ -155,6 +157,13 @@ const (
 	LeadNotesInverseTable = "lead_notes"
 	// LeadNotesColumn is the table column denoting the lead_notes relation/edge.
 	LeadNotesColumn = "user_id"
+	// LeadStatusChangesTable is the table that holds the lead_status_changes relation/edge.
+	LeadStatusChangesTable = "lead_status_histories"
+	// LeadStatusChangesInverseTable is the table name for the LeadStatusHistory entity.
+	// It exists in this package in order to avoid circular dependency with the "leadstatushistory" package.
+	LeadStatusChangesInverseTable = "lead_status_histories"
+	// LeadStatusChangesColumn is the table column denoting the lead_status_changes relation/edge.
+	LeadStatusChangesColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -553,6 +562,20 @@ func ByLeadNotes(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newLeadNotesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByLeadStatusChangesCount orders the results by lead_status_changes count.
+func ByLeadStatusChangesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newLeadStatusChangesStep(), opts...)
+	}
+}
+
+// ByLeadStatusChanges orders the results by lead_status_changes terms.
+func ByLeadStatusChanges(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newLeadStatusChangesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSubscriptionsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -621,5 +644,12 @@ func newLeadNotesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(LeadNotesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, LeadNotesTable, LeadNotesColumn),
+	)
+}
+func newLeadStatusChangesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(LeadStatusChangesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, LeadStatusChangesTable, LeadStatusChangesColumn),
 	)
 }

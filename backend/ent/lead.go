@@ -46,6 +46,10 @@ type Lead struct {
 	Verified bool `json:"verified,omitempty"`
 	// Data quality score (0-100)
 	QualityScore int `json:"quality_score,omitempty"`
+	// Lead lifecycle status
+	Status lead.Status `json:"status,omitempty"`
+	// When the status was last changed
+	StatusChangedAt time.Time `json:"status_changed_at,omitempty"`
 	// OpenStreetMap ID
 	OsmID string `json:"osm_id,omitempty"`
 	// Additional metadata from OSM
@@ -74,9 +78,11 @@ type Lead struct {
 type LeadEdges struct {
 	// Notes and comments on this lead
 	Notes []*LeadNote `json:"notes,omitempty"`
+	// History of status changes for this lead
+	StatusHistory []*LeadStatusHistory `json:"status_history,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // NotesOrErr returns the Notes value or an error if the edge
@@ -86,6 +92,15 @@ func (e LeadEdges) NotesOrErr() ([]*LeadNote, error) {
 		return e.Notes, nil
 	}
 	return nil, &NotLoadedError{edge: "notes"}
+}
+
+// StatusHistoryOrErr returns the StatusHistory value or an error if the edge
+// was not loaded in eager-loading.
+func (e LeadEdges) StatusHistoryOrErr() ([]*LeadStatusHistory, error) {
+	if e.loadedTypes[1] {
+		return e.StatusHistory, nil
+	}
+	return nil, &NotLoadedError{edge: "status_history"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -101,9 +116,9 @@ func (*Lead) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullFloat64)
 		case lead.FieldID, lead.FieldQualityScore:
 			values[i] = new(sql.NullInt64)
-		case lead.FieldName, lead.FieldIndustry, lead.FieldCountry, lead.FieldCity, lead.FieldAddress, lead.FieldPostalCode, lead.FieldPhone, lead.FieldEmail, lead.FieldWebsite, lead.FieldOsmID, lead.FieldSubNiche, lead.FieldCuisineType, lead.FieldSportType, lead.FieldTattooStyle:
+		case lead.FieldName, lead.FieldIndustry, lead.FieldCountry, lead.FieldCity, lead.FieldAddress, lead.FieldPostalCode, lead.FieldPhone, lead.FieldEmail, lead.FieldWebsite, lead.FieldStatus, lead.FieldOsmID, lead.FieldSubNiche, lead.FieldCuisineType, lead.FieldSportType, lead.FieldTattooStyle:
 			values[i] = new(sql.NullString)
-		case lead.FieldCreatedAt, lead.FieldUpdatedAt:
+		case lead.FieldStatusChangedAt, lead.FieldCreatedAt, lead.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -212,6 +227,18 @@ func (_m *Lead) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.QualityScore = int(value.Int64)
 			}
+		case lead.FieldStatus:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field status", values[i])
+			} else if value.Valid {
+				_m.Status = lead.Status(value.String)
+			}
+		case lead.FieldStatusChangedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field status_changed_at", values[i])
+			} else if value.Valid {
+				_m.StatusChangedAt = value.Time
+			}
 		case lead.FieldOsmID:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field osm_id", values[i])
@@ -288,6 +315,11 @@ func (_m *Lead) QueryNotes() *LeadNoteQuery {
 	return NewLeadClient(_m.config).QueryNotes(_m)
 }
 
+// QueryStatusHistory queries the "status_history" edge of the Lead entity.
+func (_m *Lead) QueryStatusHistory() *LeadStatusHistoryQuery {
+	return NewLeadClient(_m.config).QueryStatusHistory(_m)
+}
+
 // Update returns a builder for updating this Lead.
 // Note that you need to call Lead.Unwrap() before calling this method if this Lead
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -352,6 +384,12 @@ func (_m *Lead) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("quality_score=")
 	builder.WriteString(fmt.Sprintf("%v", _m.QualityScore))
+	builder.WriteString(", ")
+	builder.WriteString("status=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Status))
+	builder.WriteString(", ")
+	builder.WriteString("status_changed_at=")
+	builder.WriteString(_m.StatusChangedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("osm_id=")
 	builder.WriteString(_m.OsmID)
