@@ -81,6 +81,13 @@ func (s *Service) Search(ctx context.Context, req models.LeadSearchRequest) (*mo
 	if req.HasPhone != nil && *req.HasPhone {
 		query = query.Where(lead.PhoneNEQ(""), lead.PhoneNotNil())
 	}
+	if req.HasWebsite != nil && *req.HasWebsite {
+		query = query.Where(lead.WebsiteNEQ(""), lead.WebsiteNotNil())
+	}
+	if req.HasSocialMedia != nil && *req.HasSocialMedia {
+		// Filter for leads with non-empty social_media JSON
+		query = query.Where(lead.SocialMediaNotNil())
+	}
 	if req.Verified != nil {
 		query = query.Where(lead.VerifiedEQ(*req.Verified))
 	}
@@ -123,17 +130,19 @@ func (s *Service) Search(ctx context.Context, req models.LeadSearchRequest) (*mo
 			HasPrev:    req.Page > 1,
 		},
 		Filters: models.AppliedFilters{
-			Industry:    req.Industry,
-			SubNiche:    req.SubNiche,
-			Specialties: req.Specialties,
-			CuisineType: req.CuisineType,
-			SportType:   req.SportType,
-			TattooStyle: req.TattooStyle,
-			Country:     req.Country,
-			City:        req.City,
-			HasEmail:    req.HasEmail,
-			HasPhone:    req.HasPhone,
-			Verified:    req.Verified,
+			Industry:       req.Industry,
+			SubNiche:       req.SubNiche,
+			Specialties:    req.Specialties,
+			CuisineType:    req.CuisineType,
+			SportType:      req.SportType,
+			TattooStyle:    req.TattooStyle,
+			Country:        req.Country,
+			City:           req.City,
+			HasEmail:       req.HasEmail,
+			HasPhone:       req.HasPhone,
+			HasWebsite:     req.HasWebsite,
+			HasSocialMedia: req.HasSocialMedia,
+			Verified:       req.Verified,
 		},
 	}
 
@@ -196,15 +205,23 @@ func (s *Service) generateCacheKey(req models.LeadSearchRequest) string {
 	if req.HasPhone != nil {
 		hasPhone = fmt.Sprintf("%t", *req.HasPhone)
 	}
+	hasWebsite := ""
+	if req.HasWebsite != nil {
+		hasWebsite = fmt.Sprintf("%t", *req.HasWebsite)
+	}
+	hasSocialMedia := ""
+	if req.HasSocialMedia != nil {
+		hasSocialMedia = fmt.Sprintf("%t", *req.HasSocialMedia)
+	}
 	verified := ""
 	if req.Verified != nil {
 		verified = fmt.Sprintf("%t", *req.Verified)
 	}
 
-	return fmt.Sprintf("leads:search:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%d:%d",
+	return fmt.Sprintf("leads:search:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%d:%d",
 		req.Industry, req.SubNiche, req.CuisineType, req.SportType, req.TattooStyle,
 		req.Country, req.City,
-		hasEmail, hasPhone, verified,
+		hasEmail, hasPhone, hasWebsite, hasSocialMedia, verified,
 		req.Page, req.Limit)
 }
 
@@ -255,6 +272,13 @@ func (s *Service) Preview(ctx context.Context, req models.LeadSearchRequest) (*m
 	}
 	if req.HasPhone != nil && *req.HasPhone {
 		query = query.Where(lead.PhoneNEQ(""), lead.PhoneNotNil())
+	}
+	if req.HasWebsite != nil && *req.HasWebsite {
+		query = query.Where(lead.WebsiteNEQ(""), lead.WebsiteNotNil())
+	}
+	if req.HasSocialMedia != nil && *req.HasSocialMedia {
+		// Filter for leads with non-empty social_media JSON
+		query = query.Where(lead.SocialMediaNotNil())
 	}
 	if req.Verified != nil {
 		query = query.Where(lead.VerifiedEQ(*req.Verified))

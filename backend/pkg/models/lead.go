@@ -10,9 +10,11 @@ type LeadSearchRequest struct {
 	TattooStyle string   `query:"tattoo_style"`
 	Country     string   `query:"country" validate:"omitempty,len=2"`
 	City        string   `query:"city"`
-	HasEmail    *bool    `query:"has_email"`
-	HasPhone    *bool    `query:"has_phone"`
-	Verified    *bool    `query:"verified"`
+	HasEmail       *bool    `query:"has_email"`
+	HasPhone       *bool    `query:"has_phone"`
+	HasWebsite     *bool    `query:"has_website"`
+	HasSocialMedia *bool    `query:"has_social_media"`
+	Verified       *bool    `query:"verified"`
 	Page        int      `query:"page" validate:"min=1"`
 	Limit       int      `query:"limit" validate:"min=1,max=100"`
 }
@@ -69,9 +71,11 @@ type AppliedFilters struct {
 	TattooStyle string   `json:"tattoo_style,omitempty"`
 	Country     string   `json:"country,omitempty"`
 	City        string   `json:"city,omitempty"`
-	HasEmail    *bool    `json:"has_email,omitempty"`
-	HasPhone    *bool    `json:"has_phone,omitempty"`
-	Verified    *bool    `json:"verified,omitempty"`
+	HasEmail       *bool    `json:"has_email,omitempty"`
+	HasPhone       *bool    `json:"has_phone,omitempty"`
+	HasWebsite     *bool    `json:"has_website,omitempty"`
+	HasSocialMedia *bool    `json:"has_social_media,omitempty"`
+	Verified       *bool    `json:"verified,omitempty"`
 }
 
 // ExportRequest represents an export request

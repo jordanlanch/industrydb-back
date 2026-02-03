@@ -1413,14 +1413,32 @@ curl -H "X-API-Key: idb_abc123..." https://api.industrydb.io/api/v1/leads
 - Schema: `backend/ent/schema/apikey.go`
 
 ### Query Parameters for /api/v1/leads
+**Enhanced:** 2026-02-03 - Added website and social media filters
+
 ```
 ?industry=tattoo|beauty|barber|gym|restaurant
 &country=US|GB|ES|DE|...
 &city=New York
 &has_email=true
 &has_phone=true
+&has_website=true
+&has_social_media=true
+&verified=true
 &page=1
 &limit=50
+```
+
+**Advanced Filters:**
+- `has_email` - Filter leads with email addresses
+- `has_phone` - Filter leads with phone numbers
+- `has_website` - Filter leads with website URLs
+- `has_social_media` - Filter leads with social media presence (Facebook, Instagram, Twitter, etc.)
+- `verified` - Filter by verification status
+
+**Example:**
+```bash
+# Find verified tattoo studios in US with website and social media
+GET /api/v1/leads?industry=tattoo&country=US&has_website=true&has_social_media=true&verified=true
 ```
 
 ## Security & Rate Limiting
