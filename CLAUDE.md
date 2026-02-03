@@ -1477,6 +1477,108 @@ POST /api/v1/leads/export     # Export to CSV/Excel
 GET  /api/v1/leads/:id        # Get single lead
 ```
 
+### Lead Notes & Comments
+**Implemented:** 2026-02-03
+
+Collaborative CRM-style notes system allowing users to add comments and annotations on leads. Features include user attribution, pinning important notes, and full CRUD operations with ownership validation.
+
+**Endpoints:**
+```
+POST   /api/v1/lead-notes           # Create note on a lead
+GET    /api/v1/lead-notes/:id       # Get single note
+PATCH  /api/v1/lead-notes/:id       # Update note (content or pinned status)
+DELETE /api/v1/lead-notes/:id       # Delete note
+GET    /api/v1/leads/:lead_id/notes # List all notes for a lead
+```
+
+**Create Note:**
+```json
+POST /api/v1/lead-notes
+{
+  "lead_id": 123,
+  "content": "Called studio, confirmed phone number is correct. Ask for Maria.",
+  "is_pinned": false
+}
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "lead_id": 123,
+  "user_id": 456,
+  "user_name": "John Doe",
+  "content": "Called studio, confirmed phone number is correct. Ask for Maria.",
+  "is_pinned": false,
+  "created_at": "2026-02-03T12:00:00Z",
+  "updated_at": "2026-02-03T12:00:00Z"
+}
+```
+
+**Update Note (only owner):**
+```json
+PATCH /api/v1/lead-notes/1
+{
+  "content": "Updated: Phone confirmed, ask for Maria or Tom",
+  "is_pinned": true
+}
+```
+
+**List Notes (ordered by pinned, then date):**
+```json
+GET /api/v1/leads/123/notes
+
+Response:
+[
+  {
+    "id": 2,
+    "lead_id": 123,
+    "user_name": "Jane Smith",
+    "content": "IMPORTANT: Decision maker is the owner",
+    "is_pinned": true,
+    "created_at": "2026-02-03T10:00:00Z"
+  },
+  {
+    "id": 1,
+    "lead_id": 123,
+    "user_name": "John Doe",
+    "content": "Called studio, confirmed contact info",
+    "is_pinned": false,
+    "created_at": "2026-02-03T09:00:00Z"
+  }
+]
+```
+
+**Features:**
+- User attribution (tracks who created each note)
+- Pin important notes (appear first in lists)
+- Ownership validation (only creator can update/delete)
+- Audit logging for all operations
+- Email verification required
+- Max 10,000 characters per note
+- Context timeouts (10 seconds)
+- Ordered display (pinned first, then by date descending)
+
+**Security:**
+- Only authenticated users can create notes
+- Users can only update/delete their own notes
+- All operations require email verification
+- Input validation on content length
+- Audit trail for compliance
+
+**Use Cases:**
+- Track call attempts and outcomes
+- Document conversations with leads
+- Flag important information (pin notes)
+- Team collaboration on lead qualification
+- Historical context for lead interactions
+
+**Implementation:**
+- Schema: `ent/schema/leadnote.go`
+- Service: `pkg/leadnote/service.go`
+- Handler: `pkg/api/handlers/leadnote.go`
+- Tests: `pkg/leadnote/service_test.go` (83.3% coverage)
+
 ### User & Billing
 ```
 GET  /api/v1/user/usage       # Usage statistics
