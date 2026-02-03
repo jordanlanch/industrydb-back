@@ -357,6 +357,7 @@ func main() {
 	leadAssignmentHandler := handlers.NewLeadAssignmentHandler(db.Ent, auditLogger)
 	leadScoringHandler := handlers.NewLeadScoringHandler(db.Ent)
 	territoryHandler := handlers.NewTerritoryHandler(db.Ent)
+	emailSequenceHandler := handlers.NewEmailSequenceHandler(db.Ent)
 	log.Printf("✅ Webhook and batch handlers initialized")
 
 	// Backup handler (admin only, if enabled)
@@ -423,6 +424,9 @@ func main() {
 			leadsGroup.GET("/top-scoring", leadScoringHandler.GetTopScoringLeads)
 			leadsGroup.GET("/low-scoring", leadScoringHandler.GetLowScoringLeads)
 			leadsGroup.GET("/score-distribution", leadScoringHandler.GetScoreDistribution)
+
+			// Email sequence enrollments
+			leadsGroup.GET("/:id/enrollments", emailSequenceHandler.ListLeadEnrollments)
 		}
 
 		// Lead notes routes (require email verification)
@@ -449,6 +453,27 @@ func main() {
 			territoriesGroup.POST("/:id/members", territoryHandler.AddMember)
 			territoriesGroup.GET("/:id/members", territoryHandler.GetTerritoryMembers)
 			territoriesGroup.DELETE("/:id/members/:user_id", territoryHandler.RemoveMember)
+		}
+
+		// Email sequence routes (require email verification)
+		emailSequencesGroup := protected.Group("/email-sequences")
+		emailSequencesGroup.Use(custommiddleware.RequireEmailVerified(db.Ent))
+		{
+			// Sequence CRUD
+			emailSequencesGroup.POST("", emailSequenceHandler.CreateSequence)
+			emailSequencesGroup.GET("", emailSequenceHandler.ListSequences)
+			emailSequencesGroup.GET("/:id", emailSequenceHandler.GetSequence)
+			emailSequencesGroup.PUT("/:id", emailSequenceHandler.UpdateSequence)
+			emailSequencesGroup.DELETE("/:id", emailSequenceHandler.DeleteSequence)
+
+			// Steps
+			emailSequencesGroup.POST("/steps", emailSequenceHandler.CreateStep)
+			emailSequencesGroup.GET("/steps/:id", emailSequenceHandler.GetStep)
+
+			// Enrollments
+			emailSequencesGroup.POST("/enroll", emailSequenceHandler.EnrollLead)
+			emailSequencesGroup.GET("/enrollments/:id", emailSequenceHandler.GetEnrollment)
+			emailSequencesGroup.POST("/enrollments/:id/stop", emailSequenceHandler.StopEnrollment)
 		}
 
 		// User routes
