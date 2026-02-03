@@ -249,6 +249,30 @@ func (f ReferralFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ReferralMutation", m)
 }
 
+// The SMSCampaignFunc type is an adapter to allow the use of ordinary
+// function as SMSCampaign mutator.
+type SMSCampaignFunc func(context.Context, *ent.SMSCampaignMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SMSCampaignFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SMSCampaignMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SMSCampaignMutation", m)
+}
+
+// The SMSMessageFunc type is an adapter to allow the use of ordinary
+// function as SMSMessage mutator.
+type SMSMessageFunc func(context.Context, *ent.SMSMessageMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SMSMessageFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SMSMessageMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SMSMessageMutation", m)
+}
+
 // The SavedSearchFunc type is an adapter to allow the use of ordinary
 // function as SavedSearch mutator.
 type SavedSearchFunc func(context.Context, *ent.SavedSearchMutation) (ent.Value, error)

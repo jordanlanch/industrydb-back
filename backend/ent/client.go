@@ -36,6 +36,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/referral"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
+	"github.com/jordanlanch/industrydb/ent/smscampaign"
+	"github.com/jordanlanch/industrydb/ent/smsmessage"
 	"github.com/jordanlanch/industrydb/ent/subscription"
 	"github.com/jordanlanch/industrydb/ent/territory"
 	"github.com/jordanlanch/industrydb/ent/territorymember"
@@ -89,6 +91,10 @@ type Client struct {
 	OrganizationMember *OrganizationMemberClient
 	// Referral is the client for interacting with the Referral builders.
 	Referral *ReferralClient
+	// SMSCampaign is the client for interacting with the SMSCampaign builders.
+	SMSCampaign *SMSCampaignClient
+	// SMSMessage is the client for interacting with the SMSMessage builders.
+	SMSMessage *SMSMessageClient
 	// SavedSearch is the client for interacting with the SavedSearch builders.
 	SavedSearch *SavedSearchClient
 	// Subscription is the client for interacting with the Subscription builders.
@@ -134,6 +140,8 @@ func (c *Client) init() {
 	c.Organization = NewOrganizationClient(c.config)
 	c.OrganizationMember = NewOrganizationMemberClient(c.config)
 	c.Referral = NewReferralClient(c.config)
+	c.SMSCampaign = NewSMSCampaignClient(c.config)
+	c.SMSMessage = NewSMSMessageClient(c.config)
 	c.SavedSearch = NewSavedSearchClient(c.config)
 	c.Subscription = NewSubscriptionClient(c.config)
 	c.Territory = NewTerritoryClient(c.config)
@@ -253,6 +261,8 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Organization:            NewOrganizationClient(cfg),
 		OrganizationMember:      NewOrganizationMemberClient(cfg),
 		Referral:                NewReferralClient(cfg),
+		SMSCampaign:             NewSMSCampaignClient(cfg),
+		SMSMessage:              NewSMSMessageClient(cfg),
 		SavedSearch:             NewSavedSearchClient(cfg),
 		Subscription:            NewSubscriptionClient(cfg),
 		Territory:               NewTerritoryClient(cfg),
@@ -299,6 +309,8 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Organization:            NewOrganizationClient(cfg),
 		OrganizationMember:      NewOrganizationMemberClient(cfg),
 		Referral:                NewReferralClient(cfg),
+		SMSCampaign:             NewSMSCampaignClient(cfg),
+		SMSMessage:              NewSMSMessageClient(cfg),
 		SavedSearch:             NewSavedSearchClient(cfg),
 		Subscription:            NewSubscriptionClient(cfg),
 		Territory:               NewTerritoryClient(cfg),
@@ -339,8 +351,9 @@ func (c *Client) Use(hooks ...Hook) {
 		c.EmailSequence, c.EmailSequenceEnrollment, c.EmailSequenceSend,
 		c.EmailSequenceStep, c.Experiment, c.ExperimentAssignment, c.Export,
 		c.Industry, c.Lead, c.LeadAssignment, c.LeadNote, c.LeadStatusHistory,
-		c.Organization, c.OrganizationMember, c.Referral, c.SavedSearch,
-		c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog, c.User, c.Webhook,
+		c.Organization, c.OrganizationMember, c.Referral, c.SMSCampaign, c.SMSMessage,
+		c.SavedSearch, c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog,
+		c.User, c.Webhook,
 	} {
 		n.Use(hooks...)
 	}
@@ -354,8 +367,9 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.EmailSequence, c.EmailSequenceEnrollment, c.EmailSequenceSend,
 		c.EmailSequenceStep, c.Experiment, c.ExperimentAssignment, c.Export,
 		c.Industry, c.Lead, c.LeadAssignment, c.LeadNote, c.LeadStatusHistory,
-		c.Organization, c.OrganizationMember, c.Referral, c.SavedSearch,
-		c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog, c.User, c.Webhook,
+		c.Organization, c.OrganizationMember, c.Referral, c.SMSCampaign, c.SMSMessage,
+		c.SavedSearch, c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog,
+		c.User, c.Webhook,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -404,6 +418,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.OrganizationMember.mutate(ctx, m)
 	case *ReferralMutation:
 		return c.Referral.mutate(ctx, m)
+	case *SMSCampaignMutation:
+		return c.SMSCampaign.mutate(ctx, m)
+	case *SMSMessageMutation:
+		return c.SMSMessage.mutate(ctx, m)
 	case *SavedSearchMutation:
 		return c.SavedSearch.mutate(ctx, m)
 	case *SubscriptionMutation:
@@ -2756,6 +2774,22 @@ func (c *LeadClient) QueryTerritory(_m *Lead) *TerritoryQuery {
 	return query
 }
 
+// QuerySmsMessages queries the sms_messages edge of a Lead.
+func (c *LeadClient) QuerySmsMessages(_m *Lead) *SMSMessageQuery {
+	query := (&SMSMessageClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(lead.Table, lead.FieldID, id),
+			sqlgraph.To(smsmessage.Table, smsmessage.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, lead.SmsMessagesTable, lead.SmsMessagesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *LeadClient) Hooks() []Hook {
 	return c.hooks.Lead
@@ -3800,6 +3834,336 @@ func (c *ReferralClient) mutate(ctx context.Context, m *ReferralMutation) (Value
 		return (&ReferralDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Referral mutation op: %q", m.Op())
+	}
+}
+
+// SMSCampaignClient is a client for the SMSCampaign schema.
+type SMSCampaignClient struct {
+	config
+}
+
+// NewSMSCampaignClient returns a client for the SMSCampaign from the given config.
+func NewSMSCampaignClient(c config) *SMSCampaignClient {
+	return &SMSCampaignClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `smscampaign.Hooks(f(g(h())))`.
+func (c *SMSCampaignClient) Use(hooks ...Hook) {
+	c.hooks.SMSCampaign = append(c.hooks.SMSCampaign, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `smscampaign.Intercept(f(g(h())))`.
+func (c *SMSCampaignClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SMSCampaign = append(c.inters.SMSCampaign, interceptors...)
+}
+
+// Create returns a builder for creating a SMSCampaign entity.
+func (c *SMSCampaignClient) Create() *SMSCampaignCreate {
+	mutation := newSMSCampaignMutation(c.config, OpCreate)
+	return &SMSCampaignCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SMSCampaign entities.
+func (c *SMSCampaignClient) CreateBulk(builders ...*SMSCampaignCreate) *SMSCampaignCreateBulk {
+	return &SMSCampaignCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SMSCampaignClient) MapCreateBulk(slice any, setFunc func(*SMSCampaignCreate, int)) *SMSCampaignCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SMSCampaignCreateBulk{err: fmt.Errorf("calling to SMSCampaignClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SMSCampaignCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SMSCampaignCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SMSCampaign.
+func (c *SMSCampaignClient) Update() *SMSCampaignUpdate {
+	mutation := newSMSCampaignMutation(c.config, OpUpdate)
+	return &SMSCampaignUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SMSCampaignClient) UpdateOne(_m *SMSCampaign) *SMSCampaignUpdateOne {
+	mutation := newSMSCampaignMutation(c.config, OpUpdateOne, withSMSCampaign(_m))
+	return &SMSCampaignUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SMSCampaignClient) UpdateOneID(id int) *SMSCampaignUpdateOne {
+	mutation := newSMSCampaignMutation(c.config, OpUpdateOne, withSMSCampaignID(id))
+	return &SMSCampaignUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SMSCampaign.
+func (c *SMSCampaignClient) Delete() *SMSCampaignDelete {
+	mutation := newSMSCampaignMutation(c.config, OpDelete)
+	return &SMSCampaignDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SMSCampaignClient) DeleteOne(_m *SMSCampaign) *SMSCampaignDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SMSCampaignClient) DeleteOneID(id int) *SMSCampaignDeleteOne {
+	builder := c.Delete().Where(smscampaign.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SMSCampaignDeleteOne{builder}
+}
+
+// Query returns a query builder for SMSCampaign.
+func (c *SMSCampaignClient) Query() *SMSCampaignQuery {
+	return &SMSCampaignQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSMSCampaign},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SMSCampaign entity by its id.
+func (c *SMSCampaignClient) Get(ctx context.Context, id int) (*SMSCampaign, error) {
+	return c.Query().Where(smscampaign.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SMSCampaignClient) GetX(ctx context.Context, id int) *SMSCampaign {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a SMSCampaign.
+func (c *SMSCampaignClient) QueryUser(_m *SMSCampaign) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(smscampaign.Table, smscampaign.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, smscampaign.UserTable, smscampaign.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryMessages queries the messages edge of a SMSCampaign.
+func (c *SMSCampaignClient) QueryMessages(_m *SMSCampaign) *SMSMessageQuery {
+	query := (&SMSMessageClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(smscampaign.Table, smscampaign.FieldID, id),
+			sqlgraph.To(smsmessage.Table, smsmessage.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, smscampaign.MessagesTable, smscampaign.MessagesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *SMSCampaignClient) Hooks() []Hook {
+	return c.hooks.SMSCampaign
+}
+
+// Interceptors returns the client interceptors.
+func (c *SMSCampaignClient) Interceptors() []Interceptor {
+	return c.inters.SMSCampaign
+}
+
+func (c *SMSCampaignClient) mutate(ctx context.Context, m *SMSCampaignMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SMSCampaignCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SMSCampaignUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SMSCampaignUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SMSCampaignDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SMSCampaign mutation op: %q", m.Op())
+	}
+}
+
+// SMSMessageClient is a client for the SMSMessage schema.
+type SMSMessageClient struct {
+	config
+}
+
+// NewSMSMessageClient returns a client for the SMSMessage from the given config.
+func NewSMSMessageClient(c config) *SMSMessageClient {
+	return &SMSMessageClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `smsmessage.Hooks(f(g(h())))`.
+func (c *SMSMessageClient) Use(hooks ...Hook) {
+	c.hooks.SMSMessage = append(c.hooks.SMSMessage, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `smsmessage.Intercept(f(g(h())))`.
+func (c *SMSMessageClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SMSMessage = append(c.inters.SMSMessage, interceptors...)
+}
+
+// Create returns a builder for creating a SMSMessage entity.
+func (c *SMSMessageClient) Create() *SMSMessageCreate {
+	mutation := newSMSMessageMutation(c.config, OpCreate)
+	return &SMSMessageCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SMSMessage entities.
+func (c *SMSMessageClient) CreateBulk(builders ...*SMSMessageCreate) *SMSMessageCreateBulk {
+	return &SMSMessageCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SMSMessageClient) MapCreateBulk(slice any, setFunc func(*SMSMessageCreate, int)) *SMSMessageCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SMSMessageCreateBulk{err: fmt.Errorf("calling to SMSMessageClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SMSMessageCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SMSMessageCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SMSMessage.
+func (c *SMSMessageClient) Update() *SMSMessageUpdate {
+	mutation := newSMSMessageMutation(c.config, OpUpdate)
+	return &SMSMessageUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SMSMessageClient) UpdateOne(_m *SMSMessage) *SMSMessageUpdateOne {
+	mutation := newSMSMessageMutation(c.config, OpUpdateOne, withSMSMessage(_m))
+	return &SMSMessageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SMSMessageClient) UpdateOneID(id int) *SMSMessageUpdateOne {
+	mutation := newSMSMessageMutation(c.config, OpUpdateOne, withSMSMessageID(id))
+	return &SMSMessageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SMSMessage.
+func (c *SMSMessageClient) Delete() *SMSMessageDelete {
+	mutation := newSMSMessageMutation(c.config, OpDelete)
+	return &SMSMessageDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SMSMessageClient) DeleteOne(_m *SMSMessage) *SMSMessageDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SMSMessageClient) DeleteOneID(id int) *SMSMessageDeleteOne {
+	builder := c.Delete().Where(smsmessage.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SMSMessageDeleteOne{builder}
+}
+
+// Query returns a query builder for SMSMessage.
+func (c *SMSMessageClient) Query() *SMSMessageQuery {
+	return &SMSMessageQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSMSMessage},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SMSMessage entity by its id.
+func (c *SMSMessageClient) Get(ctx context.Context, id int) (*SMSMessage, error) {
+	return c.Query().Where(smsmessage.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SMSMessageClient) GetX(ctx context.Context, id int) *SMSMessage {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryCampaign queries the campaign edge of a SMSMessage.
+func (c *SMSMessageClient) QueryCampaign(_m *SMSMessage) *SMSCampaignQuery {
+	query := (&SMSCampaignClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(smsmessage.Table, smsmessage.FieldID, id),
+			sqlgraph.To(smscampaign.Table, smscampaign.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, smsmessage.CampaignTable, smsmessage.CampaignColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLead queries the lead edge of a SMSMessage.
+func (c *SMSMessageClient) QueryLead(_m *SMSMessage) *LeadQuery {
+	query := (&LeadClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(smsmessage.Table, smsmessage.FieldID, id),
+			sqlgraph.To(lead.Table, lead.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, smsmessage.LeadTable, smsmessage.LeadColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *SMSMessageClient) Hooks() []Hook {
+	return c.hooks.SMSMessage
+}
+
+// Interceptors returns the client interceptors.
+func (c *SMSMessageClient) Interceptors() []Interceptor {
+	return c.inters.SMSMessage
+}
+
+func (c *SMSMessageClient) mutate(ctx context.Context, m *SMSMessageMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SMSMessageCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SMSMessageUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SMSMessageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SMSMessageDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SMSMessage mutation op: %q", m.Op())
 	}
 }
 
@@ -5088,6 +5452,22 @@ func (c *UserClient) QueryAffiliateConversions(_m *User) *AffiliateConversionQue
 	return query
 }
 
+// QuerySmsCampaigns queries the sms_campaigns edge of a User.
+func (c *UserClient) QuerySmsCampaigns(_m *User) *SMSCampaignQuery {
+	query := (&SMSCampaignClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(smscampaign.Table, smscampaign.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.SmsCampaignsTable, user.SmsCampaignsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -5268,15 +5648,16 @@ type (
 		APIKey, Affiliate, AffiliateClick, AffiliateConversion, AuditLog, EmailSequence,
 		EmailSequenceEnrollment, EmailSequenceSend, EmailSequenceStep, Experiment,
 		ExperimentAssignment, Export, Industry, Lead, LeadAssignment, LeadNote,
-		LeadStatusHistory, Organization, OrganizationMember, Referral, SavedSearch,
-		Subscription, Territory, TerritoryMember, UsageLog, User, Webhook []ent.Hook
+		LeadStatusHistory, Organization, OrganizationMember, Referral, SMSCampaign,
+		SMSMessage, SavedSearch, Subscription, Territory, TerritoryMember, UsageLog,
+		User, Webhook []ent.Hook
 	}
 	inters struct {
 		APIKey, Affiliate, AffiliateClick, AffiliateConversion, AuditLog, EmailSequence,
 		EmailSequenceEnrollment, EmailSequenceSend, EmailSequenceStep, Experiment,
 		ExperimentAssignment, Export, Industry, Lead, LeadAssignment, LeadNote,
-		LeadStatusHistory, Organization, OrganizationMember, Referral, SavedSearch,
-		Subscription, Territory, TerritoryMember, UsageLog, User,
-		Webhook []ent.Interceptor
+		LeadStatusHistory, Organization, OrganizationMember, Referral, SMSCampaign,
+		SMSMessage, SavedSearch, Subscription, Territory, TerritoryMember, UsageLog,
+		User, Webhook []ent.Interceptor
 	}
 )

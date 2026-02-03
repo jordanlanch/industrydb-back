@@ -109,6 +109,8 @@ const (
 	EdgeAffiliate = "affiliate"
 	// EdgeAffiliateConversions holds the string denoting the affiliate_conversions edge name in mutations.
 	EdgeAffiliateConversions = "affiliate_conversions"
+	// EdgeSmsCampaigns holds the string denoting the sms_campaigns edge name in mutations.
+	EdgeSmsCampaigns = "sms_campaigns"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// SubscriptionsTable is the table that holds the subscriptions relation/edge.
@@ -272,6 +274,13 @@ const (
 	AffiliateConversionsInverseTable = "affiliate_conversions"
 	// AffiliateConversionsColumn is the table column denoting the affiliate_conversions relation/edge.
 	AffiliateConversionsColumn = "user_id"
+	// SmsCampaignsTable is the table that holds the sms_campaigns relation/edge.
+	SmsCampaignsTable = "sms_campaigns"
+	// SmsCampaignsInverseTable is the table name for the SMSCampaign entity.
+	// It exists in this package in order to avoid circular dependency with the "smscampaign" package.
+	SmsCampaignsInverseTable = "sms_campaigns"
+	// SmsCampaignsColumn is the table column denoting the sms_campaigns relation/edge.
+	SmsCampaignsColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -845,6 +854,20 @@ func ByAffiliateConversions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOpt
 		sqlgraph.OrderByNeighborTerms(s, newAffiliateConversionsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// BySmsCampaignsCount orders the results by sms_campaigns count.
+func BySmsCampaignsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newSmsCampaignsStep(), opts...)
+	}
+}
+
+// BySmsCampaigns orders the results by sms_campaigns terms.
+func BySmsCampaigns(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSmsCampaignsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSubscriptionsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -1004,5 +1027,12 @@ func newAffiliateConversionsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(AffiliateConversionsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, AffiliateConversionsTable, AffiliateConversionsColumn),
+	)
+}
+func newSmsCampaignsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SmsCampaignsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, SmsCampaignsTable, SmsCampaignsColumn),
 	)
 }

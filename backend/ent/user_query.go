@@ -28,6 +28,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/predicate"
 	"github.com/jordanlanch/industrydb/ent/referral"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
+	"github.com/jordanlanch/industrydb/ent/smscampaign"
 	"github.com/jordanlanch/industrydb/ent/subscription"
 	"github.com/jordanlanch/industrydb/ent/territory"
 	"github.com/jordanlanch/industrydb/ent/territorymember"
@@ -66,6 +67,7 @@ type UserQuery struct {
 	withExperimentAssignments        *ExperimentAssignmentQuery
 	withAffiliate                    *AffiliateQuery
 	withAffiliateConversions         *AffiliateConversionQuery
+	withSmsCampaigns                 *SMSCampaignQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -608,6 +610,28 @@ func (_q *UserQuery) QueryAffiliateConversions() *AffiliateConversionQuery {
 	return query
 }
 
+// QuerySmsCampaigns chains the current query on the "sms_campaigns" edge.
+func (_q *UserQuery) QuerySmsCampaigns() *SMSCampaignQuery {
+	query := (&SMSCampaignClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(smscampaign.Table, smscampaign.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.SmsCampaignsTable, user.SmsCampaignsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first User entity from the query.
 // Returns a *NotFoundError when no User was found.
 func (_q *UserQuery) First(ctx context.Context) (*User, error) {
@@ -823,6 +847,7 @@ func (_q *UserQuery) Clone() *UserQuery {
 		withExperimentAssignments:        _q.withExperimentAssignments.Clone(),
 		withAffiliate:                    _q.withAffiliate.Clone(),
 		withAffiliateConversions:         _q.withAffiliateConversions.Clone(),
+		withSmsCampaigns:                 _q.withSmsCampaigns.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -1082,6 +1107,17 @@ func (_q *UserQuery) WithAffiliateConversions(opts ...func(*AffiliateConversionQ
 	return _q
 }
 
+// WithSmsCampaigns tells the query-builder to eager-load the nodes that are connected to
+// the "sms_campaigns" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithSmsCampaigns(opts ...func(*SMSCampaignQuery)) *UserQuery {
+	query := (&SMSCampaignClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withSmsCampaigns = query
+	return _q
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -1160,7 +1196,7 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
-		loadedTypes = [23]bool{
+		loadedTypes = [24]bool{
 			_q.withSubscriptions != nil,
 			_q.withExports != nil,
 			_q.withAPIKeys != nil,
@@ -1184,6 +1220,7 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			_q.withExperimentAssignments != nil,
 			_q.withAffiliate != nil,
 			_q.withAffiliateConversions != nil,
+			_q.withSmsCampaigns != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -1375,6 +1412,13 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			func(n *User, e *AffiliateConversion) {
 				n.Edges.AffiliateConversions = append(n.Edges.AffiliateConversions, e)
 			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withSmsCampaigns; query != nil {
+		if err := _q.loadSmsCampaigns(ctx, query, nodes,
+			func(n *User) { n.Edges.SmsCampaigns = []*SMSCampaign{} },
+			func(n *User, e *SMSCampaign) { n.Edges.SmsCampaigns = append(n.Edges.SmsCampaigns, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -2063,6 +2107,36 @@ func (_q *UserQuery) loadAffiliateConversions(ctx context.Context, query *Affili
 	}
 	query.Where(predicate.AffiliateConversion(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(user.AffiliateConversionsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.UserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadSmsCampaigns(ctx context.Context, query *SMSCampaignQuery, nodes []*User, init func(*User), assign func(*User, *SMSCampaign)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(smscampaign.FieldUserID)
+	}
+	query.Where(predicate.SMSCampaign(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.SmsCampaignsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

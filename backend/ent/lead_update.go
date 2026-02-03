@@ -19,6 +19,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/predicate"
+	"github.com/jordanlanch/industrydb/ent/smsmessage"
 	"github.com/jordanlanch/industrydb/ent/territory"
 )
 
@@ -737,6 +738,21 @@ func (_u *LeadUpdate) SetTerritory(v *Territory) *LeadUpdate {
 	return _u.SetTerritoryID(v.ID)
 }
 
+// AddSmsMessageIDs adds the "sms_messages" edge to the SMSMessage entity by IDs.
+func (_u *LeadUpdate) AddSmsMessageIDs(ids ...int) *LeadUpdate {
+	_u.mutation.AddSmsMessageIDs(ids...)
+	return _u
+}
+
+// AddSmsMessages adds the "sms_messages" edges to the SMSMessage entity.
+func (_u *LeadUpdate) AddSmsMessages(v ...*SMSMessage) *LeadUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSmsMessageIDs(ids...)
+}
+
 // Mutation returns the LeadMutation object of the builder.
 func (_u *LeadUpdate) Mutation() *LeadMutation {
 	return _u.mutation
@@ -851,6 +867,27 @@ func (_u *LeadUpdate) RemoveEmailSequenceSends(v ...*EmailSequenceSend) *LeadUpd
 func (_u *LeadUpdate) ClearTerritory() *LeadUpdate {
 	_u.mutation.ClearTerritory()
 	return _u
+}
+
+// ClearSmsMessages clears all "sms_messages" edges to the SMSMessage entity.
+func (_u *LeadUpdate) ClearSmsMessages() *LeadUpdate {
+	_u.mutation.ClearSmsMessages()
+	return _u
+}
+
+// RemoveSmsMessageIDs removes the "sms_messages" edge to SMSMessage entities by IDs.
+func (_u *LeadUpdate) RemoveSmsMessageIDs(ids ...int) *LeadUpdate {
+	_u.mutation.RemoveSmsMessageIDs(ids...)
+	return _u
+}
+
+// RemoveSmsMessages removes "sms_messages" edges to SMSMessage entities.
+func (_u *LeadUpdate) RemoveSmsMessages(v ...*SMSMessage) *LeadUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSmsMessageIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -1371,6 +1408,51 @@ func (_u *LeadUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(territory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SmsMessagesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.SmsMessagesTable,
+			Columns: []string{lead.SmsMessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(smsmessage.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSmsMessagesIDs(); len(nodes) > 0 && !_u.mutation.SmsMessagesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.SmsMessagesTable,
+			Columns: []string{lead.SmsMessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(smsmessage.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SmsMessagesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.SmsMessagesTable,
+			Columns: []string{lead.SmsMessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(smsmessage.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -2100,6 +2182,21 @@ func (_u *LeadUpdateOne) SetTerritory(v *Territory) *LeadUpdateOne {
 	return _u.SetTerritoryID(v.ID)
 }
 
+// AddSmsMessageIDs adds the "sms_messages" edge to the SMSMessage entity by IDs.
+func (_u *LeadUpdateOne) AddSmsMessageIDs(ids ...int) *LeadUpdateOne {
+	_u.mutation.AddSmsMessageIDs(ids...)
+	return _u
+}
+
+// AddSmsMessages adds the "sms_messages" edges to the SMSMessage entity.
+func (_u *LeadUpdateOne) AddSmsMessages(v ...*SMSMessage) *LeadUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSmsMessageIDs(ids...)
+}
+
 // Mutation returns the LeadMutation object of the builder.
 func (_u *LeadUpdateOne) Mutation() *LeadMutation {
 	return _u.mutation
@@ -2214,6 +2311,27 @@ func (_u *LeadUpdateOne) RemoveEmailSequenceSends(v ...*EmailSequenceSend) *Lead
 func (_u *LeadUpdateOne) ClearTerritory() *LeadUpdateOne {
 	_u.mutation.ClearTerritory()
 	return _u
+}
+
+// ClearSmsMessages clears all "sms_messages" edges to the SMSMessage entity.
+func (_u *LeadUpdateOne) ClearSmsMessages() *LeadUpdateOne {
+	_u.mutation.ClearSmsMessages()
+	return _u
+}
+
+// RemoveSmsMessageIDs removes the "sms_messages" edge to SMSMessage entities by IDs.
+func (_u *LeadUpdateOne) RemoveSmsMessageIDs(ids ...int) *LeadUpdateOne {
+	_u.mutation.RemoveSmsMessageIDs(ids...)
+	return _u
+}
+
+// RemoveSmsMessages removes "sms_messages" edges to SMSMessage entities.
+func (_u *LeadUpdateOne) RemoveSmsMessages(v ...*SMSMessage) *LeadUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSmsMessageIDs(ids...)
 }
 
 // Where appends a list predicates to the LeadUpdate builder.
@@ -2764,6 +2882,51 @@ func (_u *LeadUpdateOne) sqlSave(ctx context.Context) (_node *Lead, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(territory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SmsMessagesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.SmsMessagesTable,
+			Columns: []string{lead.SmsMessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(smsmessage.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSmsMessagesIDs(); len(nodes) > 0 && !_u.mutation.SmsMessagesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.SmsMessagesTable,
+			Columns: []string{lead.SmsMessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(smsmessage.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SmsMessagesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.SmsMessagesTable,
+			Columns: []string{lead.SmsMessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(smsmessage.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

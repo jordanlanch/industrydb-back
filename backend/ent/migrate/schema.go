@@ -1157,6 +1157,125 @@ var (
 			},
 		},
 	}
+	// SmsCampaignsColumns holds the columns for the "sms_campaigns" table.
+	SmsCampaignsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString, Size: 200},
+		{Name: "message_template", Type: field.TypeString, Size: 2147483647},
+		{Name: "target_filters", Type: field.TypeJSON, Nullable: true},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"draft", "scheduled", "sending", "sent", "failed"}, Default: "draft"},
+		{Name: "scheduled_at", Type: field.TypeTime, Nullable: true},
+		{Name: "sent_at", Type: field.TypeTime, Nullable: true},
+		{Name: "total_recipients", Type: field.TypeInt, Default: 0},
+		{Name: "sent_count", Type: field.TypeInt, Default: 0},
+		{Name: "delivered_count", Type: field.TypeInt, Default: 0},
+		{Name: "failed_count", Type: field.TypeInt, Default: 0},
+		{Name: "estimated_cost", Type: field.TypeFloat64, Default: 0},
+		{Name: "actual_cost", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "user_id", Type: field.TypeInt},
+	}
+	// SmsCampaignsTable holds the schema information for the "sms_campaigns" table.
+	SmsCampaignsTable = &schema.Table{
+		Name:       "sms_campaigns",
+		Columns:    SmsCampaignsColumns,
+		PrimaryKey: []*schema.Column{SmsCampaignsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "sms_campaigns_users_sms_campaigns",
+				Columns:    []*schema.Column{SmsCampaignsColumns[15]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "smscampaign_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{SmsCampaignsColumns[15]},
+			},
+			{
+				Name:    "smscampaign_status",
+				Unique:  false,
+				Columns: []*schema.Column{SmsCampaignsColumns[4]},
+			},
+			{
+				Name:    "smscampaign_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{SmsCampaignsColumns[13]},
+			},
+			{
+				Name:    "smscampaign_scheduled_at",
+				Unique:  false,
+				Columns: []*schema.Column{SmsCampaignsColumns[5]},
+			},
+		},
+	}
+	// SmsMessagesColumns holds the columns for the "sms_messages" table.
+	SmsMessagesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "phone_number", Type: field.TypeString, Size: 20},
+		{Name: "message_body", Type: field.TypeString, Size: 2147483647},
+		{Name: "twilio_sid", Type: field.TypeString, Nullable: true, Size: 100},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"queued", "sending", "sent", "delivered", "failed", "undelivered"}, Default: "queued"},
+		{Name: "error_message", Type: field.TypeString, Nullable: true},
+		{Name: "error_code", Type: field.TypeInt, Nullable: true},
+		{Name: "cost", Type: field.TypeFloat64, Default: 0},
+		{Name: "sent_at", Type: field.TypeTime, Nullable: true},
+		{Name: "delivered_at", Type: field.TypeTime, Nullable: true},
+		{Name: "failed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "lead_id", Type: field.TypeInt, Nullable: true},
+		{Name: "campaign_id", Type: field.TypeInt, Nullable: true},
+	}
+	// SmsMessagesTable holds the schema information for the "sms_messages" table.
+	SmsMessagesTable = &schema.Table{
+		Name:       "sms_messages",
+		Columns:    SmsMessagesColumns,
+		PrimaryKey: []*schema.Column{SmsMessagesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "sms_messages_leads_sms_messages",
+				Columns:    []*schema.Column{SmsMessagesColumns[12]},
+				RefColumns: []*schema.Column{LeadsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "sms_messages_sms_campaigns_messages",
+				Columns:    []*schema.Column{SmsMessagesColumns[13]},
+				RefColumns: []*schema.Column{SmsCampaignsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "smsmessage_campaign_id",
+				Unique:  false,
+				Columns: []*schema.Column{SmsMessagesColumns[13]},
+			},
+			{
+				Name:    "smsmessage_lead_id",
+				Unique:  false,
+				Columns: []*schema.Column{SmsMessagesColumns[12]},
+			},
+			{
+				Name:    "smsmessage_status",
+				Unique:  false,
+				Columns: []*schema.Column{SmsMessagesColumns[4]},
+			},
+			{
+				Name:    "smsmessage_twilio_sid",
+				Unique:  false,
+				Columns: []*schema.Column{SmsMessagesColumns[3]},
+			},
+			{
+				Name:    "smsmessage_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{SmsMessagesColumns[11]},
+			},
+		},
+	}
 	// SavedSearchesColumns holds the columns for the "saved_searches" table.
 	SavedSearchesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -1500,6 +1619,8 @@ var (
 		OrganizationsTable,
 		OrganizationMembersTable,
 		ReferralsTable,
+		SmsCampaignsTable,
+		SmsMessagesTable,
 		SavedSearchesTable,
 		SubscriptionsTable,
 		TerritoriesTable,
@@ -1542,6 +1663,9 @@ func init() {
 	OrganizationMembersTable.ForeignKeys[1].RefTable = UsersTable
 	ReferralsTable.ForeignKeys[0].RefTable = UsersTable
 	ReferralsTable.ForeignKeys[1].RefTable = UsersTable
+	SmsCampaignsTable.ForeignKeys[0].RefTable = UsersTable
+	SmsMessagesTable.ForeignKeys[0].RefTable = LeadsTable
+	SmsMessagesTable.ForeignKeys[1].RefTable = SmsCampaignsTable
 	SavedSearchesTable.ForeignKeys[0].RefTable = UsersTable
 	SubscriptionsTable.ForeignKeys[0].RefTable = UsersTable
 	TerritoriesTable.ForeignKeys[0].RefTable = UsersTable

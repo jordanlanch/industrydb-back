@@ -27,6 +27,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/referral"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
 	"github.com/jordanlanch/industrydb/ent/schema"
+	"github.com/jordanlanch/industrydb/ent/smscampaign"
+	"github.com/jordanlanch/industrydb/ent/smsmessage"
 	"github.com/jordanlanch/industrydb/ent/subscription"
 	"github.com/jordanlanch/industrydb/ent/territory"
 	"github.com/jordanlanch/industrydb/ent/territorymember"
@@ -655,6 +657,114 @@ func init() {
 	referralDescCreatedAt := referralFields[6].Descriptor()
 	// referral.DefaultCreatedAt holds the default value on creation for the created_at field.
 	referral.DefaultCreatedAt = referralDescCreatedAt.Default.(func() time.Time)
+	smscampaignFields := schema.SMSCampaign{}.Fields()
+	_ = smscampaignFields
+	// smscampaignDescName is the schema descriptor for name field.
+	smscampaignDescName := smscampaignFields[1].Descriptor()
+	// smscampaign.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	smscampaign.NameValidator = func() func(string) error {
+		validators := smscampaignDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// smscampaignDescMessageTemplate is the schema descriptor for message_template field.
+	smscampaignDescMessageTemplate := smscampaignFields[2].Descriptor()
+	// smscampaign.MessageTemplateValidator is a validator for the "message_template" field. It is called by the builders before save.
+	smscampaign.MessageTemplateValidator = smscampaignDescMessageTemplate.Validators[0].(func(string) error)
+	// smscampaignDescTotalRecipients is the schema descriptor for total_recipients field.
+	smscampaignDescTotalRecipients := smscampaignFields[7].Descriptor()
+	// smscampaign.DefaultTotalRecipients holds the default value on creation for the total_recipients field.
+	smscampaign.DefaultTotalRecipients = smscampaignDescTotalRecipients.Default.(int)
+	// smscampaign.TotalRecipientsValidator is a validator for the "total_recipients" field. It is called by the builders before save.
+	smscampaign.TotalRecipientsValidator = smscampaignDescTotalRecipients.Validators[0].(func(int) error)
+	// smscampaignDescSentCount is the schema descriptor for sent_count field.
+	smscampaignDescSentCount := smscampaignFields[8].Descriptor()
+	// smscampaign.DefaultSentCount holds the default value on creation for the sent_count field.
+	smscampaign.DefaultSentCount = smscampaignDescSentCount.Default.(int)
+	// smscampaign.SentCountValidator is a validator for the "sent_count" field. It is called by the builders before save.
+	smscampaign.SentCountValidator = smscampaignDescSentCount.Validators[0].(func(int) error)
+	// smscampaignDescDeliveredCount is the schema descriptor for delivered_count field.
+	smscampaignDescDeliveredCount := smscampaignFields[9].Descriptor()
+	// smscampaign.DefaultDeliveredCount holds the default value on creation for the delivered_count field.
+	smscampaign.DefaultDeliveredCount = smscampaignDescDeliveredCount.Default.(int)
+	// smscampaign.DeliveredCountValidator is a validator for the "delivered_count" field. It is called by the builders before save.
+	smscampaign.DeliveredCountValidator = smscampaignDescDeliveredCount.Validators[0].(func(int) error)
+	// smscampaignDescFailedCount is the schema descriptor for failed_count field.
+	smscampaignDescFailedCount := smscampaignFields[10].Descriptor()
+	// smscampaign.DefaultFailedCount holds the default value on creation for the failed_count field.
+	smscampaign.DefaultFailedCount = smscampaignDescFailedCount.Default.(int)
+	// smscampaign.FailedCountValidator is a validator for the "failed_count" field. It is called by the builders before save.
+	smscampaign.FailedCountValidator = smscampaignDescFailedCount.Validators[0].(func(int) error)
+	// smscampaignDescEstimatedCost is the schema descriptor for estimated_cost field.
+	smscampaignDescEstimatedCost := smscampaignFields[11].Descriptor()
+	// smscampaign.DefaultEstimatedCost holds the default value on creation for the estimated_cost field.
+	smscampaign.DefaultEstimatedCost = smscampaignDescEstimatedCost.Default.(float64)
+	// smscampaign.EstimatedCostValidator is a validator for the "estimated_cost" field. It is called by the builders before save.
+	smscampaign.EstimatedCostValidator = smscampaignDescEstimatedCost.Validators[0].(func(float64) error)
+	// smscampaignDescActualCost is the schema descriptor for actual_cost field.
+	smscampaignDescActualCost := smscampaignFields[12].Descriptor()
+	// smscampaign.DefaultActualCost holds the default value on creation for the actual_cost field.
+	smscampaign.DefaultActualCost = smscampaignDescActualCost.Default.(float64)
+	// smscampaign.ActualCostValidator is a validator for the "actual_cost" field. It is called by the builders before save.
+	smscampaign.ActualCostValidator = smscampaignDescActualCost.Validators[0].(func(float64) error)
+	// smscampaignDescCreatedAt is the schema descriptor for created_at field.
+	smscampaignDescCreatedAt := smscampaignFields[13].Descriptor()
+	// smscampaign.DefaultCreatedAt holds the default value on creation for the created_at field.
+	smscampaign.DefaultCreatedAt = smscampaignDescCreatedAt.Default.(func() time.Time)
+	// smscampaignDescUpdatedAt is the schema descriptor for updated_at field.
+	smscampaignDescUpdatedAt := smscampaignFields[14].Descriptor()
+	// smscampaign.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	smscampaign.DefaultUpdatedAt = smscampaignDescUpdatedAt.Default.(func() time.Time)
+	// smscampaign.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	smscampaign.UpdateDefaultUpdatedAt = smscampaignDescUpdatedAt.UpdateDefault.(func() time.Time)
+	smsmessageFields := schema.SMSMessage{}.Fields()
+	_ = smsmessageFields
+	// smsmessageDescPhoneNumber is the schema descriptor for phone_number field.
+	smsmessageDescPhoneNumber := smsmessageFields[2].Descriptor()
+	// smsmessage.PhoneNumberValidator is a validator for the "phone_number" field. It is called by the builders before save.
+	smsmessage.PhoneNumberValidator = func() func(string) error {
+		validators := smsmessageDescPhoneNumber.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(phone_number string) error {
+			for _, fn := range fns {
+				if err := fn(phone_number); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// smsmessageDescMessageBody is the schema descriptor for message_body field.
+	smsmessageDescMessageBody := smsmessageFields[3].Descriptor()
+	// smsmessage.MessageBodyValidator is a validator for the "message_body" field. It is called by the builders before save.
+	smsmessage.MessageBodyValidator = smsmessageDescMessageBody.Validators[0].(func(string) error)
+	// smsmessageDescTwilioSid is the schema descriptor for twilio_sid field.
+	smsmessageDescTwilioSid := smsmessageFields[4].Descriptor()
+	// smsmessage.TwilioSidValidator is a validator for the "twilio_sid" field. It is called by the builders before save.
+	smsmessage.TwilioSidValidator = smsmessageDescTwilioSid.Validators[0].(func(string) error)
+	// smsmessageDescCost is the schema descriptor for cost field.
+	smsmessageDescCost := smsmessageFields[8].Descriptor()
+	// smsmessage.DefaultCost holds the default value on creation for the cost field.
+	smsmessage.DefaultCost = smsmessageDescCost.Default.(float64)
+	// smsmessage.CostValidator is a validator for the "cost" field. It is called by the builders before save.
+	smsmessage.CostValidator = smsmessageDescCost.Validators[0].(func(float64) error)
+	// smsmessageDescCreatedAt is the schema descriptor for created_at field.
+	smsmessageDescCreatedAt := smsmessageFields[12].Descriptor()
+	// smsmessage.DefaultCreatedAt holds the default value on creation for the created_at field.
+	smsmessage.DefaultCreatedAt = smsmessageDescCreatedAt.Default.(func() time.Time)
 	savedsearchFields := schema.SavedSearch{}.Fields()
 	_ = savedsearchFields
 	// savedsearchDescName is the schema descriptor for name field.

@@ -163,6 +163,8 @@ func (User) Edges() []ent.Edge {
 			Comment("Affiliate account for this user"),
 		edge.To("affiliate_conversions", AffiliateConversion.Type).
 			Comment("Conversions attributed to this user"),
+		edge.To("sms_campaigns", SMSCampaign.Type).
+			Comment("SMS campaigns created by this user"),
 	}
 }
 

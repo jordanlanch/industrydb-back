@@ -2128,6 +2128,29 @@ func HasTerritoryWith(preds ...predicate.Territory) predicate.Lead {
 	})
 }
 
+// HasSmsMessages applies the HasEdge predicate on the "sms_messages" edge.
+func HasSmsMessages() predicate.Lead {
+	return predicate.Lead(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, SmsMessagesTable, SmsMessagesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSmsMessagesWith applies the HasEdge predicate on the "sms_messages" edge with a given conditions (other predicates).
+func HasSmsMessagesWith(preds ...predicate.SMSMessage) predicate.Lead {
+	return predicate.Lead(func(s *sql.Selector) {
+		step := newSmsMessagesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Lead) predicate.Lead {
 	return predicate.Lead(sql.AndPredicates(predicates...))

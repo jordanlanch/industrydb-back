@@ -120,9 +120,11 @@ type UserEdges struct {
 	Affiliate *Affiliate `json:"affiliate,omitempty"`
 	// Conversions attributed to this user
 	AffiliateConversions []*AffiliateConversion `json:"affiliate_conversions,omitempty"`
+	// SMS campaigns created by this user
+	SmsCampaigns []*SMSCampaign `json:"sms_campaigns,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [23]bool
+	loadedTypes [24]bool
 }
 
 // SubscriptionsOrErr returns the Subscriptions value or an error if the edge
@@ -332,6 +334,15 @@ func (e UserEdges) AffiliateConversionsOrErr() ([]*AffiliateConversion, error) {
 		return e.AffiliateConversions, nil
 	}
 	return nil, &NotLoadedError{edge: "affiliate_conversions"}
+}
+
+// SmsCampaignsOrErr returns the SmsCampaigns value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) SmsCampaignsOrErr() ([]*SMSCampaign, error) {
+	if e.loadedTypes[23] {
+		return e.SmsCampaigns, nil
+	}
+	return nil, &NotLoadedError{edge: "sms_campaigns"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -648,6 +659,11 @@ func (_m *User) QueryAffiliate() *AffiliateQuery {
 // QueryAffiliateConversions queries the "affiliate_conversions" edge of the User entity.
 func (_m *User) QueryAffiliateConversions() *AffiliateConversionQuery {
 	return NewUserClient(_m.config).QueryAffiliateConversions(_m)
+}
+
+// QuerySmsCampaigns queries the "sms_campaigns" edge of the User entity.
+func (_m *User) QuerySmsCampaigns() *SMSCampaignQuery {
+	return NewUserClient(_m.config).QuerySmsCampaigns(_m)
 }
 
 // Update returns a builder for updating this User.

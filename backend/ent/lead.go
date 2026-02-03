@@ -110,9 +110,11 @@ type LeadEdges struct {
 	EmailSequenceSends []*EmailSequenceSend `json:"email_sequence_sends,omitempty"`
 	// Territory this lead belongs to
 	Territory *Territory `json:"territory,omitempty"`
+	// SMS messages sent to this lead
+	SmsMessages []*SMSMessage `json:"sms_messages,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [6]bool
+	loadedTypes [7]bool
 }
 
 // NotesOrErr returns the Notes value or an error if the edge
@@ -169,6 +171,15 @@ func (e LeadEdges) TerritoryOrErr() (*Territory, error) {
 		return nil, &NotFoundError{label: territory.Label}
 	}
 	return nil, &NotLoadedError{edge: "territory"}
+}
+
+// SmsMessagesOrErr returns the SmsMessages value or an error if the edge
+// was not loaded in eager-loading.
+func (e LeadEdges) SmsMessagesOrErr() ([]*SMSMessage, error) {
+	if e.loadedTypes[6] {
+		return e.SmsMessages, nil
+	}
+	return nil, &NotLoadedError{edge: "sms_messages"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -478,6 +489,11 @@ func (_m *Lead) QueryEmailSequenceSends() *EmailSequenceSendQuery {
 // QueryTerritory queries the "territory" edge of the Lead entity.
 func (_m *Lead) QueryTerritory() *TerritoryQuery {
 	return NewLeadClient(_m.config).QueryTerritory(_m)
+}
+
+// QuerySmsMessages queries the "sms_messages" edge of the Lead entity.
+func (_m *Lead) QuerySmsMessages() *SMSMessageQuery {
+	return NewLeadClient(_m.config).QuerySmsMessages(_m)
 }
 
 // Update returns a builder for updating this Lead.

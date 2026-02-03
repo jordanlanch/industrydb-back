@@ -97,6 +97,8 @@ const (
 	EdgeEmailSequenceSends = "email_sequence_sends"
 	// EdgeTerritory holds the string denoting the territory edge name in mutations.
 	EdgeTerritory = "territory"
+	// EdgeSmsMessages holds the string denoting the sms_messages edge name in mutations.
+	EdgeSmsMessages = "sms_messages"
 	// Table holds the table name of the lead in the database.
 	Table = "leads"
 	// NotesTable is the table that holds the notes relation/edge.
@@ -141,6 +143,13 @@ const (
 	TerritoryInverseTable = "territories"
 	// TerritoryColumn is the table column denoting the territory relation/edge.
 	TerritoryColumn = "territory_leads"
+	// SmsMessagesTable is the table that holds the sms_messages relation/edge.
+	SmsMessagesTable = "sms_messages"
+	// SmsMessagesInverseTable is the table name for the SMSMessage entity.
+	// It exists in this package in order to avoid circular dependency with the "smsmessage" package.
+	SmsMessagesInverseTable = "sms_messages"
+	// SmsMessagesColumn is the table column denoting the sms_messages relation/edge.
+	SmsMessagesColumn = "lead_id"
 )
 
 // Columns holds all SQL columns for lead fields.
@@ -612,6 +621,20 @@ func ByTerritoryField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newTerritoryStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// BySmsMessagesCount orders the results by sms_messages count.
+func BySmsMessagesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newSmsMessagesStep(), opts...)
+	}
+}
+
+// BySmsMessages orders the results by sms_messages terms.
+func BySmsMessages(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSmsMessagesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newNotesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -652,5 +675,12 @@ func newTerritoryStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(TerritoryInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, TerritoryTable, TerritoryColumn),
+	)
+}
+func newSmsMessagesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SmsMessagesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, SmsMessagesTable, SmsMessagesColumn),
 	)
 }

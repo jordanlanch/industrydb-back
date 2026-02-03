@@ -66,6 +66,12 @@ type OrganizationMember func(*sql.Selector)
 // Referral is the predicate function for referral builders.
 type Referral func(*sql.Selector)
 
+// SMSCampaign is the predicate function for smscampaign builders.
+type SMSCampaign func(*sql.Selector)
+
+// SMSMessage is the predicate function for smsmessage builders.
+type SMSMessage func(*sql.Selector)
+
 // SavedSearch is the predicate function for savedsearch builders.
 type SavedSearch func(*sql.Selector)
 

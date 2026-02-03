@@ -16,6 +16,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
+	"github.com/jordanlanch/industrydb/ent/smsmessage"
 	"github.com/jordanlanch/industrydb/ent/territory"
 )
 
@@ -546,6 +547,21 @@ func (_c *LeadCreate) SetTerritory(v *Territory) *LeadCreate {
 	return _c.SetTerritoryID(v.ID)
 }
 
+// AddSmsMessageIDs adds the "sms_messages" edge to the SMSMessage entity by IDs.
+func (_c *LeadCreate) AddSmsMessageIDs(ids ...int) *LeadCreate {
+	_c.mutation.AddSmsMessageIDs(ids...)
+	return _c
+}
+
+// AddSmsMessages adds the "sms_messages" edges to the SMSMessage entity.
+func (_c *LeadCreate) AddSmsMessages(v ...*SMSMessage) *LeadCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddSmsMessageIDs(ids...)
+}
+
 // Mutation returns the LeadMutation object of the builder.
 func (_c *LeadCreate) Mutation() *LeadMutation {
 	return _c.mutation
@@ -944,6 +960,22 @@ func (_c *LeadCreate) createSpec() (*Lead, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.territory_leads = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.SmsMessagesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.SmsMessagesTable,
+			Columns: []string{lead.SmsMessagesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(smsmessage.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

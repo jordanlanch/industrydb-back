@@ -52,6 +52,10 @@ type Tx struct {
 	OrganizationMember *OrganizationMemberClient
 	// Referral is the client for interacting with the Referral builders.
 	Referral *ReferralClient
+	// SMSCampaign is the client for interacting with the SMSCampaign builders.
+	SMSCampaign *SMSCampaignClient
+	// SMSMessage is the client for interacting with the SMSMessage builders.
+	SMSMessage *SMSMessageClient
 	// SavedSearch is the client for interacting with the SavedSearch builders.
 	SavedSearch *SavedSearchClient
 	// Subscription is the client for interacting with the Subscription builders.
@@ -217,6 +221,8 @@ func (tx *Tx) init() {
 	tx.Organization = NewOrganizationClient(tx.config)
 	tx.OrganizationMember = NewOrganizationMemberClient(tx.config)
 	tx.Referral = NewReferralClient(tx.config)
+	tx.SMSCampaign = NewSMSCampaignClient(tx.config)
+	tx.SMSMessage = NewSMSMessageClient(tx.config)
 	tx.SavedSearch = NewSavedSearchClient(tx.config)
 	tx.Subscription = NewSubscriptionClient(tx.config)
 	tx.Territory = NewTerritoryClient(tx.config)

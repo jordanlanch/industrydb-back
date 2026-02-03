@@ -200,6 +200,9 @@ func (Lead) Edges() []ent.Edge {
 			Ref("leads").
 			Unique().
 			Comment("Territory this lead belongs to"),
+
+		edge.To("sms_messages", SMSMessage.Type).
+			Comment("SMS messages sent to this lead"),
 	}
 }
 

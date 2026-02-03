@@ -27,6 +27,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/predicate"
 	"github.com/jordanlanch/industrydb/ent/referral"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
+	"github.com/jordanlanch/industrydb/ent/smscampaign"
 	"github.com/jordanlanch/industrydb/ent/subscription"
 	"github.com/jordanlanch/industrydb/ent/territory"
 	"github.com/jordanlanch/industrydb/ent/territorymember"
@@ -792,6 +793,21 @@ func (_u *UserUpdate) AddAffiliateConversions(v ...*AffiliateConversion) *UserUp
 	return _u.AddAffiliateConversionIDs(ids...)
 }
 
+// AddSmsCampaignIDs adds the "sms_campaigns" edge to the SMSCampaign entity by IDs.
+func (_u *UserUpdate) AddSmsCampaignIDs(ids ...int) *UserUpdate {
+	_u.mutation.AddSmsCampaignIDs(ids...)
+	return _u
+}
+
+// AddSmsCampaigns adds the "sms_campaigns" edges to the SMSCampaign entity.
+func (_u *UserUpdate) AddSmsCampaigns(v ...*SMSCampaign) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSmsCampaignIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -1263,6 +1279,27 @@ func (_u *UserUpdate) RemoveAffiliateConversions(v ...*AffiliateConversion) *Use
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveAffiliateConversionIDs(ids...)
+}
+
+// ClearSmsCampaigns clears all "sms_campaigns" edges to the SMSCampaign entity.
+func (_u *UserUpdate) ClearSmsCampaigns() *UserUpdate {
+	_u.mutation.ClearSmsCampaigns()
+	return _u
+}
+
+// RemoveSmsCampaignIDs removes the "sms_campaigns" edge to SMSCampaign entities by IDs.
+func (_u *UserUpdate) RemoveSmsCampaignIDs(ids ...int) *UserUpdate {
+	_u.mutation.RemoveSmsCampaignIDs(ids...)
+	return _u
+}
+
+// RemoveSmsCampaigns removes "sms_campaigns" edges to SMSCampaign entities.
+func (_u *UserUpdate) RemoveSmsCampaigns(v ...*SMSCampaign) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSmsCampaignIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -2485,6 +2522,51 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.SmsCampaignsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SmsCampaignsTable,
+			Columns: []string{user.SmsCampaignsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(smscampaign.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSmsCampaignsIDs(); len(nodes) > 0 && !_u.mutation.SmsCampaignsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SmsCampaignsTable,
+			Columns: []string{user.SmsCampaignsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(smscampaign.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SmsCampaignsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SmsCampaignsTable,
+			Columns: []string{user.SmsCampaignsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(smscampaign.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -3249,6 +3331,21 @@ func (_u *UserUpdateOne) AddAffiliateConversions(v ...*AffiliateConversion) *Use
 	return _u.AddAffiliateConversionIDs(ids...)
 }
 
+// AddSmsCampaignIDs adds the "sms_campaigns" edge to the SMSCampaign entity by IDs.
+func (_u *UserUpdateOne) AddSmsCampaignIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.AddSmsCampaignIDs(ids...)
+	return _u
+}
+
+// AddSmsCampaigns adds the "sms_campaigns" edges to the SMSCampaign entity.
+func (_u *UserUpdateOne) AddSmsCampaigns(v ...*SMSCampaign) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSmsCampaignIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -3720,6 +3817,27 @@ func (_u *UserUpdateOne) RemoveAffiliateConversions(v ...*AffiliateConversion) *
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveAffiliateConversionIDs(ids...)
+}
+
+// ClearSmsCampaigns clears all "sms_campaigns" edges to the SMSCampaign entity.
+func (_u *UserUpdateOne) ClearSmsCampaigns() *UserUpdateOne {
+	_u.mutation.ClearSmsCampaigns()
+	return _u
+}
+
+// RemoveSmsCampaignIDs removes the "sms_campaigns" edge to SMSCampaign entities by IDs.
+func (_u *UserUpdateOne) RemoveSmsCampaignIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.RemoveSmsCampaignIDs(ids...)
+	return _u
+}
+
+// RemoveSmsCampaigns removes "sms_campaigns" edges to SMSCampaign entities.
+func (_u *UserUpdateOne) RemoveSmsCampaigns(v ...*SMSCampaign) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSmsCampaignIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -4965,6 +5083,51 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(affiliateconversion.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SmsCampaignsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SmsCampaignsTable,
+			Columns: []string{user.SmsCampaignsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(smscampaign.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSmsCampaignsIDs(); len(nodes) > 0 && !_u.mutation.SmsCampaignsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SmsCampaignsTable,
+			Columns: []string{user.SmsCampaignsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(smscampaign.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SmsCampaignsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SmsCampaignsTable,
+			Columns: []string{user.SmsCampaignsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(smscampaign.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

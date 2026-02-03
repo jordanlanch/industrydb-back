@@ -19,6 +19,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/predicate"
+	"github.com/jordanlanch/industrydb/ent/smsmessage"
 	"github.com/jordanlanch/industrydb/ent/territory"
 )
 
@@ -35,6 +36,7 @@ type LeadQuery struct {
 	withEmailSequenceEnrollments *EmailSequenceEnrollmentQuery
 	withEmailSequenceSends       *EmailSequenceSendQuery
 	withTerritory                *TerritoryQuery
+	withSmsMessages              *SMSMessageQuery
 	withFKs                      bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -197,6 +199,28 @@ func (_q *LeadQuery) QueryTerritory() *TerritoryQuery {
 			sqlgraph.From(lead.Table, lead.FieldID, selector),
 			sqlgraph.To(territory.Table, territory.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, lead.TerritoryTable, lead.TerritoryColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySmsMessages chains the current query on the "sms_messages" edge.
+func (_q *LeadQuery) QuerySmsMessages() *SMSMessageQuery {
+	query := (&SMSMessageClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(lead.Table, lead.FieldID, selector),
+			sqlgraph.To(smsmessage.Table, smsmessage.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, lead.SmsMessagesTable, lead.SmsMessagesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -402,6 +426,7 @@ func (_q *LeadQuery) Clone() *LeadQuery {
 		withEmailSequenceEnrollments: _q.withEmailSequenceEnrollments.Clone(),
 		withEmailSequenceSends:       _q.withEmailSequenceSends.Clone(),
 		withTerritory:                _q.withTerritory.Clone(),
+		withSmsMessages:              _q.withSmsMessages.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -471,6 +496,17 @@ func (_q *LeadQuery) WithTerritory(opts ...func(*TerritoryQuery)) *LeadQuery {
 		opt(query)
 	}
 	_q.withTerritory = query
+	return _q
+}
+
+// WithSmsMessages tells the query-builder to eager-load the nodes that are connected to
+// the "sms_messages" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *LeadQuery) WithSmsMessages(opts ...func(*SMSMessageQuery)) *LeadQuery {
+	query := (&SMSMessageClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withSmsMessages = query
 	return _q
 }
 
@@ -553,13 +589,14 @@ func (_q *LeadQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Lead, e
 		nodes       = []*Lead{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [6]bool{
+		loadedTypes = [7]bool{
 			_q.withNotes != nil,
 			_q.withStatusHistory != nil,
 			_q.withAssignments != nil,
 			_q.withEmailSequenceEnrollments != nil,
 			_q.withEmailSequenceSends != nil,
 			_q.withTerritory != nil,
+			_q.withSmsMessages != nil,
 		}
 	)
 	if _q.withTerritory != nil {
@@ -628,6 +665,13 @@ func (_q *LeadQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Lead, e
 	if query := _q.withTerritory; query != nil {
 		if err := _q.loadTerritory(ctx, query, nodes, nil,
 			func(n *Lead, e *Territory) { n.Edges.Territory = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withSmsMessages; query != nil {
+		if err := _q.loadSmsMessages(ctx, query, nodes,
+			func(n *Lead) { n.Edges.SmsMessages = []*SMSMessage{} },
+			func(n *Lead, e *SMSMessage) { n.Edges.SmsMessages = append(n.Edges.SmsMessages, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -813,6 +857,39 @@ func (_q *LeadQuery) loadTerritory(ctx context.Context, query *TerritoryQuery, n
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (_q *LeadQuery) loadSmsMessages(ctx context.Context, query *SMSMessageQuery, nodes []*Lead, init func(*Lead), assign func(*Lead, *SMSMessage)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Lead)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(smsmessage.FieldLeadID)
+	}
+	query.Where(predicate.SMSMessage(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(lead.SmsMessagesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.LeadID
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "lead_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "lead_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

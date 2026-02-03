@@ -25,6 +25,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/referral"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
+	"github.com/jordanlanch/industrydb/ent/smscampaign"
 	"github.com/jordanlanch/industrydb/ent/subscription"
 	"github.com/jordanlanch/industrydb/ent/territory"
 	"github.com/jordanlanch/industrydb/ent/territorymember"
@@ -701,6 +702,21 @@ func (_c *UserCreate) AddAffiliateConversions(v ...*AffiliateConversion) *UserCr
 	return _c.AddAffiliateConversionIDs(ids...)
 }
 
+// AddSmsCampaignIDs adds the "sms_campaigns" edge to the SMSCampaign entity by IDs.
+func (_c *UserCreate) AddSmsCampaignIDs(ids ...int) *UserCreate {
+	_c.mutation.AddSmsCampaignIDs(ids...)
+	return _c
+}
+
+// AddSmsCampaigns adds the "sms_campaigns" edges to the SMSCampaign entity.
+func (_c *UserCreate) AddSmsCampaigns(v ...*SMSCampaign) *UserCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddSmsCampaignIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_c *UserCreate) Mutation() *UserMutation {
 	return _c.mutation
@@ -1349,6 +1365,22 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(affiliateconversion.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.SmsCampaignsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SmsCampaignsTable,
+			Columns: []string{user.SmsCampaignsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(smscampaign.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
