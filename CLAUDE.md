@@ -1413,7 +1413,7 @@ curl -H "X-API-Key: idb_abc123..." https://api.industrydb.io/api/v1/leads
 - Schema: `backend/ent/schema/apikey.go`
 
 ### Query Parameters for /api/v1/leads
-**Enhanced:** 2026-02-03 - Added website and social media filters
+**Enhanced:** 2026-02-03 - Added website, social media, and radius search filters
 
 ```
 ?industry=tattoo|beauty|barber|gym|restaurant
@@ -1424,6 +1424,10 @@ curl -H "X-API-Key: idb_abc123..." https://api.industrydb.io/api/v1/leads
 &has_website=true
 &has_social_media=true
 &verified=true
+&latitude=40.7128
+&longitude=-74.0060
+&radius=10
+&unit=km|miles
 &page=1
 &limit=50
 ```
@@ -1435,11 +1439,31 @@ curl -H "X-API-Key: idb_abc123..." https://api.industrydb.io/api/v1/leads
 - `has_social_media` - Filter leads with social media presence (Facebook, Instagram, Twitter, etc.)
 - `verified` - Filter by verification status
 
-**Example:**
+**Geospatial Search (PostGIS):**
+- `latitude` - Center point latitude (-90 to 90)
+- `longitude` - Center point longitude (-180 to 180)
+- `radius` - Search radius (positive number)
+- `unit` - Distance unit (`km` or `miles`, default: `km`)
+
+All three parameters (`latitude`, `longitude`, `radius`) must be provided for radius search to activate.
+
+**Examples:**
 ```bash
 # Find verified tattoo studios in US with website and social media
 GET /api/v1/leads?industry=tattoo&country=US&has_website=true&has_social_media=true&verified=true
+
+# Find tattoo studios within 10km of New York City coordinates
+GET /api/v1/leads?industry=tattoo&latitude=40.7128&longitude=-74.0060&radius=10&unit=km
+
+# Find restaurants within 5 miles with email
+GET /api/v1/leads?industry=restaurant&latitude=34.0522&longitude=-118.2437&radius=5&unit=miles&has_email=true
 ```
+
+**Implementation:**
+- Uses PostGIS `ST_DWithin` for efficient spatial queries
+- Leverages spatial index on (latitude, longitude)
+- Converts units to meters internally (km × 1000, miles × 1609.34)
+- Compatible with PostgreSQL + PostGIS only
 
 ## Security & Rate Limiting
 

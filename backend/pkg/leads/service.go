@@ -10,6 +10,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/lead"
 	"github.com/jordanlanch/industrydb/pkg/cache"
 	"github.com/jordanlanch/industrydb/pkg/models"
+	"entgo.io/ent/dialect/sql"
 )
 
 // Service handles lead business logic
@@ -90,6 +91,29 @@ func (s *Service) Search(ctx context.Context, req models.LeadSearchRequest) (*mo
 	}
 	if req.Verified != nil {
 		query = query.Where(lead.VerifiedEQ(*req.Verified))
+	}
+
+	// Radius search using PostGIS
+	if req.Latitude != nil && req.Longitude != nil && req.Radius != nil {
+		// Convert radius to meters (PostGIS uses meters)
+		radiusMeters := *req.Radius * 1000 // Default to km
+		if req.Unit == "miles" {
+			radiusMeters = *req.Radius * 1609.34 // Miles to meters
+		}
+
+		// Use PostGIS ST_DWithin for efficient radius search
+		// ST_DWithin uses spatial index and is faster than ST_Distance
+		query = query.Where(func(s *sql.Selector) {
+			s.Where(sql.P(func(b *sql.Builder) {
+				b.WriteString("ST_DWithin(")
+				b.WriteString("ST_MakePoint(longitude, latitude)::geography, ")
+				b.WriteString("ST_MakePoint(")
+				b.Arg(*req.Longitude).Comma().Arg(*req.Latitude)
+				b.WriteString(")::geography, ")
+				b.Arg(radiusMeters)
+				b.WriteString(")")
+			}))
+		})
 	}
 
 	// Get total count
@@ -217,11 +241,26 @@ func (s *Service) generateCacheKey(req models.LeadSearchRequest) string {
 	if req.Verified != nil {
 		verified = fmt.Sprintf("%t", *req.Verified)
 	}
+	// Radius search parameters
+	latitude := ""
+	longitude := ""
+	radius := ""
+	unit := req.Unit
+	if req.Latitude != nil {
+		latitude = fmt.Sprintf("%f", *req.Latitude)
+	}
+	if req.Longitude != nil {
+		longitude = fmt.Sprintf("%f", *req.Longitude)
+	}
+	if req.Radius != nil {
+		radius = fmt.Sprintf("%f", *req.Radius)
+	}
 
-	return fmt.Sprintf("leads:search:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%d:%d",
+	return fmt.Sprintf("leads:search:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%d:%d",
 		req.Industry, req.SubNiche, req.CuisineType, req.SportType, req.TattooStyle,
 		req.Country, req.City,
 		hasEmail, hasPhone, hasWebsite, hasSocialMedia, verified,
+		latitude, longitude, radius, unit,
 		req.Page, req.Limit)
 }
 
@@ -282,6 +321,29 @@ func (s *Service) Preview(ctx context.Context, req models.LeadSearchRequest) (*m
 	}
 	if req.Verified != nil {
 		query = query.Where(lead.VerifiedEQ(*req.Verified))
+	}
+
+	// Radius search using PostGIS
+	if req.Latitude != nil && req.Longitude != nil && req.Radius != nil {
+		// Convert radius to meters (PostGIS uses meters)
+		radiusMeters := *req.Radius * 1000 // Default to km
+		if req.Unit == "miles" {
+			radiusMeters = *req.Radius * 1609.34 // Miles to meters
+		}
+
+		// Use PostGIS ST_DWithin for efficient radius search
+		// ST_DWithin uses spatial index and is faster than ST_Distance
+		query = query.Where(func(s *sql.Selector) {
+			s.Where(sql.P(func(b *sql.Builder) {
+				b.WriteString("ST_DWithin(")
+				b.WriteString("ST_MakePoint(longitude, latitude)::geography, ")
+				b.WriteString("ST_MakePoint(")
+				b.Arg(*req.Longitude).Comma().Arg(*req.Latitude)
+				b.WriteString(")::geography, ")
+				b.Arg(radiusMeters)
+				b.WriteString(")")
+			}))
+		})
 	}
 
 	// Get total count

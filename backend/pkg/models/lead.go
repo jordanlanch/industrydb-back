@@ -15,8 +15,13 @@ type LeadSearchRequest struct {
 	HasWebsite     *bool    `query:"has_website"`
 	HasSocialMedia *bool    `query:"has_social_media"`
 	Verified       *bool    `query:"verified"`
-	Page        int      `query:"page" validate:"min=1"`
-	Limit       int      `query:"limit" validate:"min=1,max=100"`
+	// Radius search parameters
+	Latitude  *float64 `query:"latitude" validate:"omitempty,min=-90,max=90"`
+	Longitude *float64 `query:"longitude" validate:"omitempty,min=-180,max=180"`
+	Radius    *float64 `query:"radius" validate:"omitempty,min=0"`
+	Unit      string   `query:"unit" validate:"omitempty,oneof=km miles"`
+	Page      int      `query:"page" validate:"min=1"`
+	Limit     int      `query:"limit" validate:"min=1,max=100"`
 }
 
 // LeadResponse represents a single lead in API responses

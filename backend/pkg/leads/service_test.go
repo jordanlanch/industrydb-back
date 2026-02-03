@@ -242,3 +242,172 @@ func TestSearch_NoFilterReturnsAll(t *testing.T) {
 	assert.NotNil(t, result)
 	assert.Equal(t, 3, result.Pagination.Total, "Should return all leads when no filters applied")
 }
+
+func createTestLeadWithCoordinates(t *testing.T, client *ent.Client, name string, lat, lng float64) *ent.Lead {
+	lead, err := client.Lead.Create().
+		SetName(name).
+		SetIndustry(lead.IndustryTattoo).
+		SetCountry("US").
+		SetCity("Test City").
+		SetLatitude(lat).
+		SetLongitude(lng).
+		Save(context.Background())
+	require.NoError(t, err)
+	return lead
+}
+
+func TestSearch_WithRadiusFilterKm(t *testing.T) {
+	service, client := setupTestService(t)
+	defer client.Close()
+
+	// Create leads at different locations
+	// Center point: New York City (40.7128, -74.0060)
+	createTestLeadWithCoordinates(t, client, "Lead in NYC", 40.7128, -74.0060)
+
+	// ~5km away (about 0.045 degrees latitude)
+	createTestLeadWithCoordinates(t, client, "Lead 5km away", 40.7578, -74.0060)
+
+	// ~15km away
+	createTestLeadWithCoordinates(t, client, "Lead 15km away", 40.8478, -74.0060)
+
+	// ~50km away
+	createTestLeadWithCoordinates(t, client, "Lead 50km away", 41.1628, -74.0060)
+
+	// Search within 10km radius
+	lat := 40.7128
+	lng := -74.0060
+	radius := 10.0
+	req := models.LeadSearchRequest{
+		Industry:  "tattoo",
+		Latitude:  &lat,
+		Longitude: &lng,
+		Radius:    &radius,
+		Unit:      "km",
+		Page:      1,
+		Limit:     10,
+	}
+
+	result, err := service.Search(context.Background(), req)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, 2, result.Pagination.Total, "Should return 2 leads within 10km")
+}
+
+func TestSearch_WithRadiusFilterMiles(t *testing.T) {
+	service, client := setupTestService(t)
+	defer client.Close()
+
+	// Create leads at different distances
+	// Center: 40.7128, -74.0060
+	createTestLeadWithCoordinates(t, client, "Lead at center", 40.7128, -74.0060)
+
+	// ~3 miles away (about 0.04 degrees)
+	createTestLeadWithCoordinates(t, client, "Lead 3mi away", 40.7528, -74.0060)
+
+	// ~10 miles away
+	createTestLeadWithCoordinates(t, client, "Lead 10mi away", 40.8528, -74.0060)
+
+	// Search within 5 miles radius
+	lat := 40.7128
+	lng := -74.0060
+	radius := 5.0
+	req := models.LeadSearchRequest{
+		Industry:  "tattoo",
+		Latitude:  &lat,
+		Longitude: &lng,
+		Radius:    &radius,
+		Unit:      "miles",
+		Page:      1,
+		Limit:     10,
+	}
+
+	result, err := service.Search(context.Background(), req)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, 2, result.Pagination.Total, "Should return 2 leads within 5 miles")
+}
+
+func TestSearch_RadiusWithOtherFilters(t *testing.T) {
+	service, client := setupTestService(t)
+	defer client.Close()
+
+	// Create leads with coordinates and contact info
+	// All near same location
+	lead1 := createTestLeadWithCoordinates(t, client, "Lead with email", 40.7128, -74.0060)
+	_, err := client.Lead.UpdateOne(lead1).SetEmail("test@example.com").Save(context.Background())
+	require.NoError(t, err)
+
+	lead2 := createTestLeadWithCoordinates(t, client, "Lead with phone", 40.7178, -74.0060)
+	_, err = client.Lead.UpdateOne(lead2).SetPhone("+1234567890").Save(context.Background())
+	require.NoError(t, err)
+
+	createTestLeadWithCoordinates(t, client, "Lead no contact", 40.7228, -74.0060)
+
+	// Search within radius AND with email
+	lat := 40.7128
+	lng := -74.0060
+	radius := 2.0
+	hasEmail := true
+	req := models.LeadSearchRequest{
+		Industry:  "tattoo",
+		Latitude:  &lat,
+		Longitude: &lng,
+		Radius:    &radius,
+		Unit:      "km",
+		HasEmail:  &hasEmail,
+		Page:      1,
+		Limit:     10,
+	}
+
+	result, err := service.Search(context.Background(), req)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, 1, result.Pagination.Total, "Should return 1 lead within radius with email")
+	if len(result.Data) > 0 {
+		assert.NotEmpty(t, result.Data[0].Email, "Result should have email")
+	}
+}
+
+func TestSearch_NoRadiusParametersIgnoresRadiusFilter(t *testing.T) {
+	service, client := setupTestService(t)
+	defer client.Close()
+
+	// Create leads at various locations
+	createTestLeadWithCoordinates(t, client, "Lead 1", 40.7128, -74.0060)
+	createTestLeadWithCoordinates(t, client, "Lead 2", 41.8781, -87.6298) // Chicago
+	createTestLeadWithCoordinates(t, client, "Lead 3", 34.0522, -118.2437) // Los Angeles
+
+	// Search without radius parameters
+	req := models.LeadSearchRequest{
+		Industry: "tattoo",
+		Page:     1,
+		Limit:    10,
+	}
+
+	result, err := service.Search(context.Background(), req)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, 3, result.Pagination.Total, "Should return all leads when no radius filter")
+}
+
+func TestSearch_PartialRadiusParametersIgnoresFilter(t *testing.T) {
+	service, client := setupTestService(t)
+	defer client.Close()
+
+	createTestLeadWithCoordinates(t, client, "Lead 1", 40.7128, -74.0060)
+	createTestLeadWithCoordinates(t, client, "Lead 2", 41.8781, -87.6298)
+
+	// Only latitude provided (incomplete)
+	lat := 40.7128
+	req := models.LeadSearchRequest{
+		Industry: "tattoo",
+		Latitude: &lat,
+		Page:     1,
+		Limit:    10,
+	}
+
+	result, err := service.Search(context.Background(), req)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, 2, result.Pagination.Total, "Should ignore radius filter if parameters incomplete")
+}
