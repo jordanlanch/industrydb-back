@@ -2704,6 +2704,42 @@ IndustryDB contains **82,740 verified business leads** from **184 countries** ac
 
 Multi-layer caching and query optimization ensure fast response times with 100K+ leads.
 
+### Database Connection Pooling
+**Implemented:** 2026-02-03
+
+PostgreSQL connection pooling optimizes database performance and resource usage.
+
+**Configuration:**
+- **Max Open Connections:** 25 (25% of PostgreSQL default 100)
+- **Max Idle Connections:** 5 (kept warm for quick reuse)
+- **Connection Max Lifetime:** 5 minutes (recycled periodically)
+- **Connection Max Idle Time:** 10 minutes (close idle connections)
+
+**Benefits:**
+- **Reduced latency:** Reuse existing connections instead of creating new ones
+- **Resource efficiency:** Limit concurrent connections to prevent database overload
+- **Connection recycling:** Prevent stale connections and connection leaks
+- **Better under load:** Graceful degradation during traffic spikes
+
+**Implementation:**
+- `backend/pkg/database/database.go` - Connection pool configuration
+- Configures underlying `database/sql` pool via `sql.DB` methods
+- Custom `PoolConfig` struct for easy tuning
+- `Stats()` method for monitoring pool health
+
+**Monitoring:**
+```go
+stats := db.Stats()
+fmt.Printf("Open: %d, Idle: %d, InUse: %d, WaitCount: %d\n",
+    stats.OpenConnections, stats.Idle, stats.InUse, stats.WaitCount)
+```
+
+**Tuning Guidelines:**
+- Increase `MaxOpenConns` for high-traffic applications
+- Increase `MaxIdleConns` to reduce connection creation overhead
+- Decrease `ConnMaxLifetime` if database has aggressive timeouts
+- Monitor `WaitCount` - high values indicate need for more connections
+
 ### Backend Caching
 **Redis Caching** with strategic TTL values:
 - Industry list: 1 hour (rarely changes)
