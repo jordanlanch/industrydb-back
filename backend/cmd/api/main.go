@@ -360,6 +360,7 @@ func main() {
 	emailSequenceHandler := handlers.NewEmailSequenceHandler(db.Ent)
 	funnelHandler := handlers.NewFunnelHandler(db.Ent)
 	cohortHandler := handlers.NewCohortHandler(db.Ent)
+	revenueHandler := handlers.NewRevenueHandler(db.Ent)
 	log.Printf("✅ Webhook and batch handlers initialized")
 
 	// Backup handler (admin only, if enabled)
@@ -518,6 +519,16 @@ func main() {
 			cohortGroup.GET("/retention", cohortHandler.GetCohortRetention)
 			cohortGroup.GET("/comparison", cohortHandler.GetCohortComparison)
 			cohortGroup.GET("/activity", cohortHandler.GetCohortActivityMetrics)
+		}
+
+		// Revenue forecasting routes (admin only)
+		revenueGroup := protected.Group("/analytics/revenue")
+		revenueGroup.Use(custommiddleware.RequireAdmin(db.Ent))
+		{
+			revenueGroup.GET("/monthly-forecast", revenueHandler.GetMonthlyRevenueForecast)
+			revenueGroup.GET("/annual-forecast", revenueHandler.GetAnnualRevenueForecast)
+			revenueGroup.GET("/by-tier", revenueHandler.GetRevenueByTier)
+			revenueGroup.GET("/growth-rate", revenueHandler.GetGrowthRate)
 		}
 
 		// Export routes (require email verification)
