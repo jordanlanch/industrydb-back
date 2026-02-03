@@ -351,6 +351,7 @@ func main() {
 	webhookHandler := handlers.NewWebhookHandler(webhookService)
 	batchHandler := handlers.NewBatchHandler(db.Ent, webhookService)
 	leadNoteHandler := handlers.NewLeadNoteHandler(db.Ent, auditLogger)
+	phoneHandler := handlers.NewPhoneHandler()
 	log.Printf("✅ Webhook and batch handlers initialized")
 
 	// Backup handler (admin only, if enabled)
@@ -497,6 +498,14 @@ func main() {
 			batchGroup.POST("/webhooks/delete", batchHandler.BatchWebhookDelete)
 			batchGroup.POST("/leads/enrich", batchHandler.BatchLeadEnrich)
 			batchGroup.POST("/execute", batchHandler.BatchExecute)
+		}
+
+		// Phone validation routes
+		phoneGroup := protected.Group("/phone")
+		{
+			phoneGroup.POST("/validate", phoneHandler.ValidatePhone)
+			phoneGroup.POST("/normalize", phoneHandler.NormalizePhone)
+			phoneGroup.POST("/batch-validate", phoneHandler.BatchValidatePhones)
 		}
 
 		// Admin routes (require admin role)
