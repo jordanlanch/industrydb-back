@@ -166,6 +166,79 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/import/csv": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Bulk import leads from CSV file (admin only) - max 10k rows per upload",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Import leads from CSV",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "CSV file to import",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Only validate, don't import",
+                        "name": "validate_only",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Import results",
+                        "schema": {
+                            "$ref": "#/definitions/importpkg.ImportResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid file or format",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - Admin access required",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "413": {
+                        "description": "File too large",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/admin/stats": {
             "get": {
                 "security": [
@@ -1887,6 +1960,69 @@ const docTemplate = `{
                 "usage_limit": {
                     "type": "integer",
                     "minimum": 0
+                }
+            }
+        },
+        "importpkg.ImportError": {
+            "type": "object",
+            "properties": {
+                "field": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "row": {
+                    "type": "integer"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "importpkg.ImportResult": {
+            "type": "object",
+            "properties": {
+                "duration": {
+                    "type": "string"
+                },
+                "errors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/importpkg.ImportError"
+                    }
+                },
+                "failure_count": {
+                    "type": "integer"
+                },
+                "imported_leads": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/importpkg.ImportedLead"
+                    }
+                },
+                "success_count": {
+                    "type": "integer"
+                },
+                "total_rows": {
+                    "type": "integer"
+                }
+            }
+        },
+        "importpkg.ImportedLead": {
+            "type": "object",
+            "properties": {
+                "industry": {
+                    "type": "string"
+                },
+                "lead_id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "row": {
+                    "type": "integer"
                 }
             }
         },

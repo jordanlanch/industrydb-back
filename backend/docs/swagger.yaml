@@ -33,6 +33,47 @@ definitions:
         minimum: 0
         type: integer
     type: object
+  importpkg.ImportError:
+    properties:
+      field:
+        type: string
+      message:
+        type: string
+      row:
+        type: integer
+      value:
+        type: string
+    type: object
+  importpkg.ImportResult:
+    properties:
+      duration:
+        type: string
+      errors:
+        items:
+          $ref: '#/definitions/importpkg.ImportError'
+        type: array
+      failure_count:
+        type: integer
+      imported_leads:
+        items:
+          $ref: '#/definitions/importpkg.ImportedLead'
+        type: array
+      success_count:
+        type: integer
+      total_rows:
+        type: integer
+    type: object
+  importpkg.ImportedLead:
+    properties:
+      industry:
+        type: string
+      lead_id:
+        type: string
+      name:
+        type: string
+      row:
+        type: integer
+    type: object
   models.AppliedFilters:
     properties:
       city:
@@ -487,6 +528,54 @@ paths:
       tags:
       - admin
       - backup
+  /admin/import/csv:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Bulk import leads from CSV file (admin only) - max 10k rows per
+        upload
+      parameters:
+      - description: CSV file to import
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: Only validate, don't import
+        in: formData
+        name: validate_only
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Import results
+          schema:
+            $ref: '#/definitions/importpkg.ImportResult'
+        "400":
+          description: Invalid file or format
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: Forbidden - Admin access required
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "413":
+          description: File too large
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Import leads from CSV
+      tags:
+      - Admin
   /admin/stats:
     get:
       description: Get aggregated statistics about users, subscriptions, and exports
