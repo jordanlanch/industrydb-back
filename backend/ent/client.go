@@ -20,6 +20,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/industry"
 	"github.com/jordanlanch/industrydb/ent/lead"
+	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
@@ -44,6 +45,8 @@ type Client struct {
 	Industry *IndustryClient
 	// Lead is the client for interacting with the Lead builders.
 	Lead *LeadClient
+	// LeadNote is the client for interacting with the LeadNote builders.
+	LeadNote *LeadNoteClient
 	// Organization is the client for interacting with the Organization builders.
 	Organization *OrganizationClient
 	// OrganizationMember is the client for interacting with the OrganizationMember builders.
@@ -74,6 +77,7 @@ func (c *Client) init() {
 	c.Export = NewExportClient(c.config)
 	c.Industry = NewIndustryClient(c.config)
 	c.Lead = NewLeadClient(c.config)
+	c.LeadNote = NewLeadNoteClient(c.config)
 	c.Organization = NewOrganizationClient(c.config)
 	c.OrganizationMember = NewOrganizationMemberClient(c.config)
 	c.SavedSearch = NewSavedSearchClient(c.config)
@@ -178,6 +182,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Export:             NewExportClient(cfg),
 		Industry:           NewIndustryClient(cfg),
 		Lead:               NewLeadClient(cfg),
+		LeadNote:           NewLeadNoteClient(cfg),
 		Organization:       NewOrganizationClient(cfg),
 		OrganizationMember: NewOrganizationMemberClient(cfg),
 		SavedSearch:        NewSavedSearchClient(cfg),
@@ -209,6 +214,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Export:             NewExportClient(cfg),
 		Industry:           NewIndustryClient(cfg),
 		Lead:               NewLeadClient(cfg),
+		LeadNote:           NewLeadNoteClient(cfg),
 		Organization:       NewOrganizationClient(cfg),
 		OrganizationMember: NewOrganizationMemberClient(cfg),
 		SavedSearch:        NewSavedSearchClient(cfg),
@@ -245,7 +251,7 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.APIKey, c.AuditLog, c.Export, c.Industry, c.Lead, c.Organization,
+		c.APIKey, c.AuditLog, c.Export, c.Industry, c.Lead, c.LeadNote, c.Organization,
 		c.OrganizationMember, c.SavedSearch, c.Subscription, c.UsageLog, c.User,
 		c.Webhook,
 	} {
@@ -257,7 +263,7 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.APIKey, c.AuditLog, c.Export, c.Industry, c.Lead, c.Organization,
+		c.APIKey, c.AuditLog, c.Export, c.Industry, c.Lead, c.LeadNote, c.Organization,
 		c.OrganizationMember, c.SavedSearch, c.Subscription, c.UsageLog, c.User,
 		c.Webhook,
 	} {
@@ -278,6 +284,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Industry.mutate(ctx, m)
 	case *LeadMutation:
 		return c.Lead.mutate(ctx, m)
+	case *LeadNoteMutation:
+		return c.LeadNote.mutate(ctx, m)
 	case *OrganizationMutation:
 		return c.Organization.mutate(ctx, m)
 	case *OrganizationMemberMutation:
@@ -1001,6 +1009,22 @@ func (c *LeadClient) GetX(ctx context.Context, id int) *Lead {
 	return obj
 }
 
+// QueryNotes queries the notes edge of a Lead.
+func (c *LeadClient) QueryNotes(_m *Lead) *LeadNoteQuery {
+	query := (&LeadNoteClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(lead.Table, lead.FieldID, id),
+			sqlgraph.To(leadnote.Table, leadnote.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, lead.NotesTable, lead.NotesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *LeadClient) Hooks() []Hook {
 	return c.hooks.Lead
@@ -1023,6 +1047,171 @@ func (c *LeadClient) mutate(ctx context.Context, m *LeadMutation) (Value, error)
 		return (&LeadDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Lead mutation op: %q", m.Op())
+	}
+}
+
+// LeadNoteClient is a client for the LeadNote schema.
+type LeadNoteClient struct {
+	config
+}
+
+// NewLeadNoteClient returns a client for the LeadNote from the given config.
+func NewLeadNoteClient(c config) *LeadNoteClient {
+	return &LeadNoteClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `leadnote.Hooks(f(g(h())))`.
+func (c *LeadNoteClient) Use(hooks ...Hook) {
+	c.hooks.LeadNote = append(c.hooks.LeadNote, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `leadnote.Intercept(f(g(h())))`.
+func (c *LeadNoteClient) Intercept(interceptors ...Interceptor) {
+	c.inters.LeadNote = append(c.inters.LeadNote, interceptors...)
+}
+
+// Create returns a builder for creating a LeadNote entity.
+func (c *LeadNoteClient) Create() *LeadNoteCreate {
+	mutation := newLeadNoteMutation(c.config, OpCreate)
+	return &LeadNoteCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of LeadNote entities.
+func (c *LeadNoteClient) CreateBulk(builders ...*LeadNoteCreate) *LeadNoteCreateBulk {
+	return &LeadNoteCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *LeadNoteClient) MapCreateBulk(slice any, setFunc func(*LeadNoteCreate, int)) *LeadNoteCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &LeadNoteCreateBulk{err: fmt.Errorf("calling to LeadNoteClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*LeadNoteCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &LeadNoteCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for LeadNote.
+func (c *LeadNoteClient) Update() *LeadNoteUpdate {
+	mutation := newLeadNoteMutation(c.config, OpUpdate)
+	return &LeadNoteUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *LeadNoteClient) UpdateOne(_m *LeadNote) *LeadNoteUpdateOne {
+	mutation := newLeadNoteMutation(c.config, OpUpdateOne, withLeadNote(_m))
+	return &LeadNoteUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *LeadNoteClient) UpdateOneID(id int) *LeadNoteUpdateOne {
+	mutation := newLeadNoteMutation(c.config, OpUpdateOne, withLeadNoteID(id))
+	return &LeadNoteUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for LeadNote.
+func (c *LeadNoteClient) Delete() *LeadNoteDelete {
+	mutation := newLeadNoteMutation(c.config, OpDelete)
+	return &LeadNoteDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *LeadNoteClient) DeleteOne(_m *LeadNote) *LeadNoteDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *LeadNoteClient) DeleteOneID(id int) *LeadNoteDeleteOne {
+	builder := c.Delete().Where(leadnote.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &LeadNoteDeleteOne{builder}
+}
+
+// Query returns a query builder for LeadNote.
+func (c *LeadNoteClient) Query() *LeadNoteQuery {
+	return &LeadNoteQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeLeadNote},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a LeadNote entity by its id.
+func (c *LeadNoteClient) Get(ctx context.Context, id int) (*LeadNote, error) {
+	return c.Query().Where(leadnote.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *LeadNoteClient) GetX(ctx context.Context, id int) *LeadNote {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryLead queries the lead edge of a LeadNote.
+func (c *LeadNoteClient) QueryLead(_m *LeadNote) *LeadQuery {
+	query := (&LeadClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(leadnote.Table, leadnote.FieldID, id),
+			sqlgraph.To(lead.Table, lead.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, leadnote.LeadTable, leadnote.LeadColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUser queries the user edge of a LeadNote.
+func (c *LeadNoteClient) QueryUser(_m *LeadNote) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(leadnote.Table, leadnote.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, leadnote.UserTable, leadnote.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *LeadNoteClient) Hooks() []Hook {
+	return c.hooks.LeadNote
+}
+
+// Interceptors returns the client interceptors.
+func (c *LeadNoteClient) Interceptors() []Interceptor {
+	return c.inters.LeadNote
+}
+
+func (c *LeadNoteClient) mutate(ctx context.Context, m *LeadNoteMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&LeadNoteCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&LeadNoteUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&LeadNoteUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&LeadNoteDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown LeadNote mutation op: %q", m.Op())
 	}
 }
 
@@ -2071,6 +2260,22 @@ func (c *UserClient) QueryWebhooks(_m *User) *WebhookQuery {
 	return query
 }
 
+// QueryLeadNotes queries the lead_notes edge of a User.
+func (c *UserClient) QueryLeadNotes(_m *User) *LeadNoteQuery {
+	query := (&LeadNoteClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(leadnote.Table, leadnote.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.LeadNotesTable, user.LeadNotesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -2248,11 +2453,13 @@ func (c *WebhookClient) mutate(ctx context.Context, m *WebhookMutation) (Value, 
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		APIKey, AuditLog, Export, Industry, Lead, Organization, OrganizationMember,
-		SavedSearch, Subscription, UsageLog, User, Webhook []ent.Hook
+		APIKey, AuditLog, Export, Industry, Lead, LeadNote, Organization,
+		OrganizationMember, SavedSearch, Subscription, UsageLog, User,
+		Webhook []ent.Hook
 	}
 	inters struct {
-		APIKey, AuditLog, Export, Industry, Lead, Organization, OrganizationMember,
-		SavedSearch, Subscription, UsageLog, User, Webhook []ent.Interceptor
+		APIKey, AuditLog, Export, Industry, Lead, LeadNote, Organization,
+		OrganizationMember, SavedSearch, Subscription, UsageLog, User,
+		Webhook []ent.Interceptor
 	}
 )

@@ -16,6 +16,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/industry"
 	"github.com/jordanlanch/industrydb/ent/lead"
+	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/predicate"
@@ -40,6 +41,7 @@ const (
 	TypeExport             = "Export"
 	TypeIndustry           = "Industry"
 	TypeLead               = "Lead"
+	TypeLeadNote           = "LeadNote"
 	TypeOrganization       = "Organization"
 	TypeOrganizationMember = "OrganizationMember"
 	TypeSavedSearch        = "SavedSearch"
@@ -4208,6 +4210,9 @@ type LeadMutation struct {
 	created_at        *time.Time
 	updated_at        *time.Time
 	clearedFields     map[string]struct{}
+	notes             map[int]struct{}
+	removednotes      map[int]struct{}
+	clearednotes      bool
 	done              bool
 	oldValue          func(context.Context) (*Lead, error)
 	predicates        []predicate.Lead
@@ -5412,6 +5417,60 @@ func (m *LeadMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// AddNoteIDs adds the "notes" edge to the LeadNote entity by ids.
+func (m *LeadMutation) AddNoteIDs(ids ...int) {
+	if m.notes == nil {
+		m.notes = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.notes[ids[i]] = struct{}{}
+	}
+}
+
+// ClearNotes clears the "notes" edge to the LeadNote entity.
+func (m *LeadMutation) ClearNotes() {
+	m.clearednotes = true
+}
+
+// NotesCleared reports if the "notes" edge to the LeadNote entity was cleared.
+func (m *LeadMutation) NotesCleared() bool {
+	return m.clearednotes
+}
+
+// RemoveNoteIDs removes the "notes" edge to the LeadNote entity by IDs.
+func (m *LeadMutation) RemoveNoteIDs(ids ...int) {
+	if m.removednotes == nil {
+		m.removednotes = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.notes, ids[i])
+		m.removednotes[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedNotes returns the removed IDs of the "notes" edge to the LeadNote entity.
+func (m *LeadMutation) RemovedNotesIDs() (ids []int) {
+	for id := range m.removednotes {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// NotesIDs returns the "notes" edge IDs in the mutation.
+func (m *LeadMutation) NotesIDs() (ids []int) {
+	for id := range m.notes {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetNotes resets all changes to the "notes" edge.
+func (m *LeadMutation) ResetNotes() {
+	m.notes = nil
+	m.clearednotes = false
+	m.removednotes = nil
+}
+
 // Where appends a list predicates to the LeadMutation builder.
 func (m *LeadMutation) Where(ps ...predicate.Lead) {
 	m.predicates = append(m.predicates, ps...)
@@ -6051,50 +6110,785 @@ func (m *LeadMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *LeadMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.notes != nil {
+		edges = append(edges, lead.EdgeNotes)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *LeadMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case lead.EdgeNotes:
+		ids := make([]ent.Value, 0, len(m.notes))
+		for id := range m.notes {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *LeadMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.removednotes != nil {
+		edges = append(edges, lead.EdgeNotes)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *LeadMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case lead.EdgeNotes:
+		ids := make([]ent.Value, 0, len(m.removednotes))
+		for id := range m.removednotes {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *LeadMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearednotes {
+		edges = append(edges, lead.EdgeNotes)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *LeadMutation) EdgeCleared(name string) bool {
+	switch name {
+	case lead.EdgeNotes:
+		return m.clearednotes
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *LeadMutation) ClearEdge(name string) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown Lead unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *LeadMutation) ResetEdge(name string) error {
+	switch name {
+	case lead.EdgeNotes:
+		m.ResetNotes()
+		return nil
+	}
 	return fmt.Errorf("unknown Lead edge %s", name)
+}
+
+// LeadNoteMutation represents an operation that mutates the LeadNote nodes in the graph.
+type LeadNoteMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	content       *string
+	is_pinned     *bool
+	created_at    *time.Time
+	updated_at    *time.Time
+	clearedFields map[string]struct{}
+	lead          *int
+	clearedlead   bool
+	user          *int
+	cleareduser   bool
+	done          bool
+	oldValue      func(context.Context) (*LeadNote, error)
+	predicates    []predicate.LeadNote
+}
+
+var _ ent.Mutation = (*LeadNoteMutation)(nil)
+
+// leadnoteOption allows management of the mutation configuration using functional options.
+type leadnoteOption func(*LeadNoteMutation)
+
+// newLeadNoteMutation creates new mutation for the LeadNote entity.
+func newLeadNoteMutation(c config, op Op, opts ...leadnoteOption) *LeadNoteMutation {
+	m := &LeadNoteMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeLeadNote,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withLeadNoteID sets the ID field of the mutation.
+func withLeadNoteID(id int) leadnoteOption {
+	return func(m *LeadNoteMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *LeadNote
+		)
+		m.oldValue = func(ctx context.Context) (*LeadNote, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().LeadNote.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withLeadNote sets the old LeadNote of the mutation.
+func withLeadNote(node *LeadNote) leadnoteOption {
+	return func(m *LeadNoteMutation) {
+		m.oldValue = func(context.Context) (*LeadNote, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m LeadNoteMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m LeadNoteMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *LeadNoteMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *LeadNoteMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().LeadNote.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetLeadID sets the "lead_id" field.
+func (m *LeadNoteMutation) SetLeadID(i int) {
+	m.lead = &i
+}
+
+// LeadID returns the value of the "lead_id" field in the mutation.
+func (m *LeadNoteMutation) LeadID() (r int, exists bool) {
+	v := m.lead
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLeadID returns the old "lead_id" field's value of the LeadNote entity.
+// If the LeadNote object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadNoteMutation) OldLeadID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLeadID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLeadID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLeadID: %w", err)
+	}
+	return oldValue.LeadID, nil
+}
+
+// ResetLeadID resets all changes to the "lead_id" field.
+func (m *LeadNoteMutation) ResetLeadID() {
+	m.lead = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *LeadNoteMutation) SetUserID(i int) {
+	m.user = &i
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *LeadNoteMutation) UserID() (r int, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the LeadNote entity.
+// If the LeadNote object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadNoteMutation) OldUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *LeadNoteMutation) ResetUserID() {
+	m.user = nil
+}
+
+// SetContent sets the "content" field.
+func (m *LeadNoteMutation) SetContent(s string) {
+	m.content = &s
+}
+
+// Content returns the value of the "content" field in the mutation.
+func (m *LeadNoteMutation) Content() (r string, exists bool) {
+	v := m.content
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContent returns the old "content" field's value of the LeadNote entity.
+// If the LeadNote object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadNoteMutation) OldContent(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContent: %w", err)
+	}
+	return oldValue.Content, nil
+}
+
+// ResetContent resets all changes to the "content" field.
+func (m *LeadNoteMutation) ResetContent() {
+	m.content = nil
+}
+
+// SetIsPinned sets the "is_pinned" field.
+func (m *LeadNoteMutation) SetIsPinned(b bool) {
+	m.is_pinned = &b
+}
+
+// IsPinned returns the value of the "is_pinned" field in the mutation.
+func (m *LeadNoteMutation) IsPinned() (r bool, exists bool) {
+	v := m.is_pinned
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsPinned returns the old "is_pinned" field's value of the LeadNote entity.
+// If the LeadNote object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadNoteMutation) OldIsPinned(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsPinned is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsPinned requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsPinned: %w", err)
+	}
+	return oldValue.IsPinned, nil
+}
+
+// ResetIsPinned resets all changes to the "is_pinned" field.
+func (m *LeadNoteMutation) ResetIsPinned() {
+	m.is_pinned = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *LeadNoteMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *LeadNoteMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the LeadNote entity.
+// If the LeadNote object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadNoteMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *LeadNoteMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *LeadNoteMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *LeadNoteMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the LeadNote entity.
+// If the LeadNote object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadNoteMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *LeadNoteMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearLead clears the "lead" edge to the Lead entity.
+func (m *LeadNoteMutation) ClearLead() {
+	m.clearedlead = true
+	m.clearedFields[leadnote.FieldLeadID] = struct{}{}
+}
+
+// LeadCleared reports if the "lead" edge to the Lead entity was cleared.
+func (m *LeadNoteMutation) LeadCleared() bool {
+	return m.clearedlead
+}
+
+// LeadIDs returns the "lead" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// LeadID instead. It exists only for internal usage by the builders.
+func (m *LeadNoteMutation) LeadIDs() (ids []int) {
+	if id := m.lead; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetLead resets all changes to the "lead" edge.
+func (m *LeadNoteMutation) ResetLead() {
+	m.lead = nil
+	m.clearedlead = false
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (m *LeadNoteMutation) ClearUser() {
+	m.cleareduser = true
+	m.clearedFields[leadnote.FieldUserID] = struct{}{}
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *LeadNoteMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *LeadNoteMutation) UserIDs() (ids []int) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *LeadNoteMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
+// Where appends a list predicates to the LeadNoteMutation builder.
+func (m *LeadNoteMutation) Where(ps ...predicate.LeadNote) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the LeadNoteMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *LeadNoteMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.LeadNote, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *LeadNoteMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *LeadNoteMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (LeadNote).
+func (m *LeadNoteMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *LeadNoteMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.lead != nil {
+		fields = append(fields, leadnote.FieldLeadID)
+	}
+	if m.user != nil {
+		fields = append(fields, leadnote.FieldUserID)
+	}
+	if m.content != nil {
+		fields = append(fields, leadnote.FieldContent)
+	}
+	if m.is_pinned != nil {
+		fields = append(fields, leadnote.FieldIsPinned)
+	}
+	if m.created_at != nil {
+		fields = append(fields, leadnote.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, leadnote.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *LeadNoteMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case leadnote.FieldLeadID:
+		return m.LeadID()
+	case leadnote.FieldUserID:
+		return m.UserID()
+	case leadnote.FieldContent:
+		return m.Content()
+	case leadnote.FieldIsPinned:
+		return m.IsPinned()
+	case leadnote.FieldCreatedAt:
+		return m.CreatedAt()
+	case leadnote.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *LeadNoteMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case leadnote.FieldLeadID:
+		return m.OldLeadID(ctx)
+	case leadnote.FieldUserID:
+		return m.OldUserID(ctx)
+	case leadnote.FieldContent:
+		return m.OldContent(ctx)
+	case leadnote.FieldIsPinned:
+		return m.OldIsPinned(ctx)
+	case leadnote.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case leadnote.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown LeadNote field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *LeadNoteMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case leadnote.FieldLeadID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLeadID(v)
+		return nil
+	case leadnote.FieldUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case leadnote.FieldContent:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContent(v)
+		return nil
+	case leadnote.FieldIsPinned:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsPinned(v)
+		return nil
+	case leadnote.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case leadnote.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown LeadNote field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *LeadNoteMutation) AddedFields() []string {
+	var fields []string
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *LeadNoteMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *LeadNoteMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown LeadNote numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *LeadNoteMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *LeadNoteMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *LeadNoteMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown LeadNote nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *LeadNoteMutation) ResetField(name string) error {
+	switch name {
+	case leadnote.FieldLeadID:
+		m.ResetLeadID()
+		return nil
+	case leadnote.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case leadnote.FieldContent:
+		m.ResetContent()
+		return nil
+	case leadnote.FieldIsPinned:
+		m.ResetIsPinned()
+		return nil
+	case leadnote.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case leadnote.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown LeadNote field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *LeadNoteMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.lead != nil {
+		edges = append(edges, leadnote.EdgeLead)
+	}
+	if m.user != nil {
+		edges = append(edges, leadnote.EdgeUser)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *LeadNoteMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case leadnote.EdgeLead:
+		if id := m.lead; id != nil {
+			return []ent.Value{*id}
+		}
+	case leadnote.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *LeadNoteMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *LeadNoteMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *LeadNoteMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedlead {
+		edges = append(edges, leadnote.EdgeLead)
+	}
+	if m.cleareduser {
+		edges = append(edges, leadnote.EdgeUser)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *LeadNoteMutation) EdgeCleared(name string) bool {
+	switch name {
+	case leadnote.EdgeLead:
+		return m.clearedlead
+	case leadnote.EdgeUser:
+		return m.cleareduser
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *LeadNoteMutation) ClearEdge(name string) error {
+	switch name {
+	case leadnote.EdgeLead:
+		m.ClearLead()
+		return nil
+	case leadnote.EdgeUser:
+		m.ClearUser()
+		return nil
+	}
+	return fmt.Errorf("unknown LeadNote unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *LeadNoteMutation) ResetEdge(name string) error {
+	switch name {
+	case leadnote.EdgeLead:
+		m.ResetLead()
+		return nil
+	case leadnote.EdgeUser:
+		m.ResetUser()
+		return nil
+	}
+	return fmt.Errorf("unknown LeadNote edge %s", name)
 }
 
 // OrganizationMutation represents an operation that mutates the Organization nodes in the graph.
@@ -10586,6 +11380,9 @@ type UserMutation struct {
 	webhooks                            map[int]struct{}
 	removedwebhooks                     map[int]struct{}
 	clearedwebhooks                     bool
+	lead_notes                          map[int]struct{}
+	removedlead_notes                   map[int]struct{}
+	clearedlead_notes                   bool
 	done                                bool
 	oldValue                            func(context.Context) (*User, error)
 	predicates                          []predicate.User
@@ -12229,6 +13026,60 @@ func (m *UserMutation) ResetWebhooks() {
 	m.removedwebhooks = nil
 }
 
+// AddLeadNoteIDs adds the "lead_notes" edge to the LeadNote entity by ids.
+func (m *UserMutation) AddLeadNoteIDs(ids ...int) {
+	if m.lead_notes == nil {
+		m.lead_notes = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.lead_notes[ids[i]] = struct{}{}
+	}
+}
+
+// ClearLeadNotes clears the "lead_notes" edge to the LeadNote entity.
+func (m *UserMutation) ClearLeadNotes() {
+	m.clearedlead_notes = true
+}
+
+// LeadNotesCleared reports if the "lead_notes" edge to the LeadNote entity was cleared.
+func (m *UserMutation) LeadNotesCleared() bool {
+	return m.clearedlead_notes
+}
+
+// RemoveLeadNoteIDs removes the "lead_notes" edge to the LeadNote entity by IDs.
+func (m *UserMutation) RemoveLeadNoteIDs(ids ...int) {
+	if m.removedlead_notes == nil {
+		m.removedlead_notes = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.lead_notes, ids[i])
+		m.removedlead_notes[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedLeadNotes returns the removed IDs of the "lead_notes" edge to the LeadNote entity.
+func (m *UserMutation) RemovedLeadNotesIDs() (ids []int) {
+	for id := range m.removedlead_notes {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// LeadNotesIDs returns the "lead_notes" edge IDs in the mutation.
+func (m *UserMutation) LeadNotesIDs() (ids []int) {
+	for id := range m.lead_notes {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetLeadNotes resets all changes to the "lead_notes" edge.
+func (m *UserMutation) ResetLeadNotes() {
+	m.lead_notes = nil
+	m.clearedlead_notes = false
+	m.removedlead_notes = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -12855,7 +13706,7 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 9)
+	edges := make([]string, 0, 10)
 	if m.subscriptions != nil {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -12882,6 +13733,9 @@ func (m *UserMutation) AddedEdges() []string {
 	}
 	if m.webhooks != nil {
 		edges = append(edges, user.EdgeWebhooks)
+	}
+	if m.lead_notes != nil {
+		edges = append(edges, user.EdgeLeadNotes)
 	}
 	return edges
 }
@@ -12944,13 +13798,19 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeLeadNotes:
+		ids := make([]ent.Value, 0, len(m.lead_notes))
+		for id := range m.lead_notes {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 9)
+	edges := make([]string, 0, 10)
 	if m.removedsubscriptions != nil {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -12977,6 +13837,9 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedwebhooks != nil {
 		edges = append(edges, user.EdgeWebhooks)
+	}
+	if m.removedlead_notes != nil {
+		edges = append(edges, user.EdgeLeadNotes)
 	}
 	return edges
 }
@@ -13039,13 +13902,19 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeLeadNotes:
+		ids := make([]ent.Value, 0, len(m.removedlead_notes))
+		for id := range m.removedlead_notes {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 9)
+	edges := make([]string, 0, 10)
 	if m.clearedsubscriptions {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -13073,6 +13942,9 @@ func (m *UserMutation) ClearedEdges() []string {
 	if m.clearedwebhooks {
 		edges = append(edges, user.EdgeWebhooks)
 	}
+	if m.clearedlead_notes {
+		edges = append(edges, user.EdgeLeadNotes)
+	}
 	return edges
 }
 
@@ -13098,6 +13970,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedsaved_searches
 	case user.EdgeWebhooks:
 		return m.clearedwebhooks
+	case user.EdgeLeadNotes:
+		return m.clearedlead_notes
 	}
 	return false
 }
@@ -13140,6 +14014,9 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgeWebhooks:
 		m.ResetWebhooks()
+		return nil
+	case user.EdgeLeadNotes:
+		m.ResetLeadNotes()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

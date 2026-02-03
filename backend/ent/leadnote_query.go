@@ -4,7 +4,6 @@ package ent
 
 import (
 	"context"
-	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -15,55 +14,57 @@ import (
 	"github.com/jordanlanch/industrydb/ent/lead"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/predicate"
+	"github.com/jordanlanch/industrydb/ent/user"
 )
 
-// LeadQuery is the builder for querying Lead entities.
-type LeadQuery struct {
+// LeadNoteQuery is the builder for querying LeadNote entities.
+type LeadNoteQuery struct {
 	config
 	ctx        *QueryContext
-	order      []lead.OrderOption
+	order      []leadnote.OrderOption
 	inters     []Interceptor
-	predicates []predicate.Lead
-	withNotes  *LeadNoteQuery
+	predicates []predicate.LeadNote
+	withLead   *LeadQuery
+	withUser   *UserQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the LeadQuery builder.
-func (_q *LeadQuery) Where(ps ...predicate.Lead) *LeadQuery {
+// Where adds a new predicate for the LeadNoteQuery builder.
+func (_q *LeadNoteQuery) Where(ps ...predicate.LeadNote) *LeadNoteQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *LeadQuery) Limit(limit int) *LeadQuery {
+func (_q *LeadNoteQuery) Limit(limit int) *LeadNoteQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *LeadQuery) Offset(offset int) *LeadQuery {
+func (_q *LeadNoteQuery) Offset(offset int) *LeadNoteQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *LeadQuery) Unique(unique bool) *LeadQuery {
+func (_q *LeadNoteQuery) Unique(unique bool) *LeadNoteQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *LeadQuery) Order(o ...lead.OrderOption) *LeadQuery {
+func (_q *LeadNoteQuery) Order(o ...leadnote.OrderOption) *LeadNoteQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
-// QueryNotes chains the current query on the "notes" edge.
-func (_q *LeadQuery) QueryNotes() *LeadNoteQuery {
-	query := (&LeadNoteClient{config: _q.config}).Query()
+// QueryLead chains the current query on the "lead" edge.
+func (_q *LeadNoteQuery) QueryLead() *LeadQuery {
+	query := (&LeadClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -73,9 +74,9 @@ func (_q *LeadQuery) QueryNotes() *LeadNoteQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(lead.Table, lead.FieldID, selector),
-			sqlgraph.To(leadnote.Table, leadnote.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, lead.NotesTable, lead.NotesColumn),
+			sqlgraph.From(leadnote.Table, leadnote.FieldID, selector),
+			sqlgraph.To(lead.Table, lead.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, leadnote.LeadTable, leadnote.LeadColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -83,21 +84,43 @@ func (_q *LeadQuery) QueryNotes() *LeadNoteQuery {
 	return query
 }
 
-// First returns the first Lead entity from the query.
-// Returns a *NotFoundError when no Lead was found.
-func (_q *LeadQuery) First(ctx context.Context) (*Lead, error) {
+// QueryUser chains the current query on the "user" edge.
+func (_q *LeadNoteQuery) QueryUser() *UserQuery {
+	query := (&UserClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(leadnote.Table, leadnote.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, leadnote.UserTable, leadnote.UserColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// First returns the first LeadNote entity from the query.
+// Returns a *NotFoundError when no LeadNote was found.
+func (_q *LeadNoteQuery) First(ctx context.Context) (*LeadNote, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{lead.Label}
+		return nil, &NotFoundError{leadnote.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *LeadQuery) FirstX(ctx context.Context) *Lead {
+func (_q *LeadNoteQuery) FirstX(ctx context.Context) *LeadNote {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -105,22 +128,22 @@ func (_q *LeadQuery) FirstX(ctx context.Context) *Lead {
 	return node
 }
 
-// FirstID returns the first Lead ID from the query.
-// Returns a *NotFoundError when no Lead ID was found.
-func (_q *LeadQuery) FirstID(ctx context.Context) (id int, err error) {
+// FirstID returns the first LeadNote ID from the query.
+// Returns a *NotFoundError when no LeadNote ID was found.
+func (_q *LeadNoteQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{lead.Label}
+		err = &NotFoundError{leadnote.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *LeadQuery) FirstIDX(ctx context.Context) int {
+func (_q *LeadNoteQuery) FirstIDX(ctx context.Context) int {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -128,10 +151,10 @@ func (_q *LeadQuery) FirstIDX(ctx context.Context) int {
 	return id
 }
 
-// Only returns a single Lead entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one Lead entity is found.
-// Returns a *NotFoundError when no Lead entities are found.
-func (_q *LeadQuery) Only(ctx context.Context) (*Lead, error) {
+// Only returns a single LeadNote entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one LeadNote entity is found.
+// Returns a *NotFoundError when no LeadNote entities are found.
+func (_q *LeadNoteQuery) Only(ctx context.Context) (*LeadNote, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -140,14 +163,14 @@ func (_q *LeadQuery) Only(ctx context.Context) (*Lead, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{lead.Label}
+		return nil, &NotFoundError{leadnote.Label}
 	default:
-		return nil, &NotSingularError{lead.Label}
+		return nil, &NotSingularError{leadnote.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *LeadQuery) OnlyX(ctx context.Context) *Lead {
+func (_q *LeadNoteQuery) OnlyX(ctx context.Context) *LeadNote {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -155,10 +178,10 @@ func (_q *LeadQuery) OnlyX(ctx context.Context) *Lead {
 	return node
 }
 
-// OnlyID is like Only, but returns the only Lead ID in the query.
-// Returns a *NotSingularError when more than one Lead ID is found.
+// OnlyID is like Only, but returns the only LeadNote ID in the query.
+// Returns a *NotSingularError when more than one LeadNote ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *LeadQuery) OnlyID(ctx context.Context) (id int, err error) {
+func (_q *LeadNoteQuery) OnlyID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -167,15 +190,15 @@ func (_q *LeadQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{lead.Label}
+		err = &NotFoundError{leadnote.Label}
 	default:
-		err = &NotSingularError{lead.Label}
+		err = &NotSingularError{leadnote.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *LeadQuery) OnlyIDX(ctx context.Context) int {
+func (_q *LeadNoteQuery) OnlyIDX(ctx context.Context) int {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -183,18 +206,18 @@ func (_q *LeadQuery) OnlyIDX(ctx context.Context) int {
 	return id
 }
 
-// All executes the query and returns a list of Leads.
-func (_q *LeadQuery) All(ctx context.Context) ([]*Lead, error) {
+// All executes the query and returns a list of LeadNotes.
+func (_q *LeadNoteQuery) All(ctx context.Context) ([]*LeadNote, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*Lead, *LeadQuery]()
-	return withInterceptors[[]*Lead](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*LeadNote, *LeadNoteQuery]()
+	return withInterceptors[[]*LeadNote](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *LeadQuery) AllX(ctx context.Context) []*Lead {
+func (_q *LeadNoteQuery) AllX(ctx context.Context) []*LeadNote {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -202,20 +225,20 @@ func (_q *LeadQuery) AllX(ctx context.Context) []*Lead {
 	return nodes
 }
 
-// IDs executes the query and returns a list of Lead IDs.
-func (_q *LeadQuery) IDs(ctx context.Context) (ids []int, err error) {
+// IDs executes the query and returns a list of LeadNote IDs.
+func (_q *LeadNoteQuery) IDs(ctx context.Context) (ids []int, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(lead.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(leadnote.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *LeadQuery) IDsX(ctx context.Context) []int {
+func (_q *LeadNoteQuery) IDsX(ctx context.Context) []int {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -224,16 +247,16 @@ func (_q *LeadQuery) IDsX(ctx context.Context) []int {
 }
 
 // Count returns the count of the given query.
-func (_q *LeadQuery) Count(ctx context.Context) (int, error) {
+func (_q *LeadNoteQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*LeadQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*LeadNoteQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *LeadQuery) CountX(ctx context.Context) int {
+func (_q *LeadNoteQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -242,7 +265,7 @@ func (_q *LeadQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *LeadQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *LeadNoteQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -255,7 +278,7 @@ func (_q *LeadQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *LeadQuery) ExistX(ctx context.Context) bool {
+func (_q *LeadNoteQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -263,33 +286,45 @@ func (_q *LeadQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the LeadQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the LeadNoteQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *LeadQuery) Clone() *LeadQuery {
+func (_q *LeadNoteQuery) Clone() *LeadNoteQuery {
 	if _q == nil {
 		return nil
 	}
-	return &LeadQuery{
+	return &LeadNoteQuery{
 		config:     _q.config,
 		ctx:        _q.ctx.Clone(),
-		order:      append([]lead.OrderOption{}, _q.order...),
+		order:      append([]leadnote.OrderOption{}, _q.order...),
 		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.Lead{}, _q.predicates...),
-		withNotes:  _q.withNotes.Clone(),
+		predicates: append([]predicate.LeadNote{}, _q.predicates...),
+		withLead:   _q.withLead.Clone(),
+		withUser:   _q.withUser.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
 }
 
-// WithNotes tells the query-builder to eager-load the nodes that are connected to
-// the "notes" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *LeadQuery) WithNotes(opts ...func(*LeadNoteQuery)) *LeadQuery {
-	query := (&LeadNoteClient{config: _q.config}).Query()
+// WithLead tells the query-builder to eager-load the nodes that are connected to
+// the "lead" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *LeadNoteQuery) WithLead(opts ...func(*LeadQuery)) *LeadNoteQuery {
+	query := (&LeadClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withNotes = query
+	_q.withLead = query
+	return _q
+}
+
+// WithUser tells the query-builder to eager-load the nodes that are connected to
+// the "user" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *LeadNoteQuery) WithUser(opts ...func(*UserQuery)) *LeadNoteQuery {
+	query := (&UserClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withUser = query
 	return _q
 }
 
@@ -299,19 +334,19 @@ func (_q *LeadQuery) WithNotes(opts ...func(*LeadNoteQuery)) *LeadQuery {
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		LeadID int `json:"lead_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.Lead.Query().
-//		GroupBy(lead.FieldName).
+//	client.LeadNote.Query().
+//		GroupBy(leadnote.FieldLeadID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *LeadQuery) GroupBy(field string, fields ...string) *LeadGroupBy {
+func (_q *LeadNoteQuery) GroupBy(field string, fields ...string) *LeadNoteGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &LeadGroupBy{build: _q}
+	grbuild := &LeadNoteGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = lead.Label
+	grbuild.label = leadnote.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -322,26 +357,26 @@ func (_q *LeadQuery) GroupBy(field string, fields ...string) *LeadGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Name string `json:"name,omitempty"`
+//		LeadID int `json:"lead_id,omitempty"`
 //	}
 //
-//	client.Lead.Query().
-//		Select(lead.FieldName).
+//	client.LeadNote.Query().
+//		Select(leadnote.FieldLeadID).
 //		Scan(ctx, &v)
-func (_q *LeadQuery) Select(fields ...string) *LeadSelect {
+func (_q *LeadNoteQuery) Select(fields ...string) *LeadNoteSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &LeadSelect{LeadQuery: _q}
-	sbuild.label = lead.Label
+	sbuild := &LeadNoteSelect{LeadNoteQuery: _q}
+	sbuild.label = leadnote.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a LeadSelect configured with the given aggregations.
-func (_q *LeadQuery) Aggregate(fns ...AggregateFunc) *LeadSelect {
+// Aggregate returns a LeadNoteSelect configured with the given aggregations.
+func (_q *LeadNoteQuery) Aggregate(fns ...AggregateFunc) *LeadNoteSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *LeadQuery) prepareQuery(ctx context.Context) error {
+func (_q *LeadNoteQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -353,7 +388,7 @@ func (_q *LeadQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !lead.ValidColumn(f) {
+		if !leadnote.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -367,19 +402,20 @@ func (_q *LeadQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *LeadQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Lead, error) {
+func (_q *LeadNoteQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*LeadNote, error) {
 	var (
-		nodes       = []*Lead{}
+		nodes       = []*LeadNote{}
 		_spec       = _q.querySpec()
-		loadedTypes = [1]bool{
-			_q.withNotes != nil,
+		loadedTypes = [2]bool{
+			_q.withLead != nil,
+			_q.withUser != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*Lead).scanValues(nil, columns)
+		return (*LeadNote).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &Lead{config: _q.config}
+		node := &LeadNote{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -393,48 +429,81 @@ func (_q *LeadQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Lead, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withNotes; query != nil {
-		if err := _q.loadNotes(ctx, query, nodes,
-			func(n *Lead) { n.Edges.Notes = []*LeadNote{} },
-			func(n *Lead, e *LeadNote) { n.Edges.Notes = append(n.Edges.Notes, e) }); err != nil {
+	if query := _q.withLead; query != nil {
+		if err := _q.loadLead(ctx, query, nodes, nil,
+			func(n *LeadNote, e *Lead) { n.Edges.Lead = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withUser; query != nil {
+		if err := _q.loadUser(ctx, query, nodes, nil,
+			func(n *LeadNote, e *User) { n.Edges.User = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *LeadQuery) loadNotes(ctx context.Context, query *LeadNoteQuery, nodes []*Lead, init func(*Lead), assign func(*Lead, *LeadNote)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int]*Lead)
+func (_q *LeadNoteQuery) loadLead(ctx context.Context, query *LeadQuery, nodes []*LeadNote, init func(*LeadNote), assign func(*LeadNote, *Lead)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*LeadNote)
 	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
+		fk := nodes[i].LeadID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
 		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(leadnote.FieldLeadID)
+	if len(ids) == 0 {
+		return nil
 	}
-	query.Where(predicate.LeadNote(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(lead.NotesColumn), fks...))
-	}))
+	query.Where(lead.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.LeadID
-		node, ok := nodeids[fk]
+		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "lead_id" returned %v for node %v`, fk, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "lead_id" returned %v`, n.ID)
 		}
-		assign(node, n)
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (_q *LeadNoteQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*LeadNote, init func(*LeadNote), assign func(*LeadNote, *User)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*LeadNote)
+	for i := range nodes {
+		fk := nodes[i].UserID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "user_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
 	}
 	return nil
 }
 
-func (_q *LeadQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *LeadNoteQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -443,8 +512,8 @@ func (_q *LeadQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *LeadQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(lead.Table, lead.Columns, sqlgraph.NewFieldSpec(lead.FieldID, field.TypeInt))
+func (_q *LeadNoteQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(leadnote.Table, leadnote.Columns, sqlgraph.NewFieldSpec(leadnote.FieldID, field.TypeInt))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -453,11 +522,17 @@ func (_q *LeadQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, lead.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, leadnote.FieldID)
 		for i := range fields {
-			if fields[i] != lead.FieldID {
+			if fields[i] != leadnote.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withLead != nil {
+			_spec.Node.AddColumnOnce(leadnote.FieldLeadID)
+		}
+		if _q.withUser != nil {
+			_spec.Node.AddColumnOnce(leadnote.FieldUserID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {
@@ -483,12 +558,12 @@ func (_q *LeadQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *LeadQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *LeadNoteQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(lead.Table)
+	t1 := builder.Table(leadnote.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = lead.Columns
+		columns = leadnote.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -515,28 +590,28 @@ func (_q *LeadQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// LeadGroupBy is the group-by builder for Lead entities.
-type LeadGroupBy struct {
+// LeadNoteGroupBy is the group-by builder for LeadNote entities.
+type LeadNoteGroupBy struct {
 	selector
-	build *LeadQuery
+	build *LeadNoteQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *LeadGroupBy) Aggregate(fns ...AggregateFunc) *LeadGroupBy {
+func (_g *LeadNoteGroupBy) Aggregate(fns ...AggregateFunc) *LeadNoteGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *LeadGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *LeadNoteGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*LeadQuery, *LeadGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*LeadNoteQuery, *LeadNoteGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *LeadGroupBy) sqlScan(ctx context.Context, root *LeadQuery, v any) error {
+func (_g *LeadNoteGroupBy) sqlScan(ctx context.Context, root *LeadNoteQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -563,28 +638,28 @@ func (_g *LeadGroupBy) sqlScan(ctx context.Context, root *LeadQuery, v any) erro
 	return sql.ScanSlice(rows, v)
 }
 
-// LeadSelect is the builder for selecting fields of Lead entities.
-type LeadSelect struct {
-	*LeadQuery
+// LeadNoteSelect is the builder for selecting fields of LeadNote entities.
+type LeadNoteSelect struct {
+	*LeadNoteQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *LeadSelect) Aggregate(fns ...AggregateFunc) *LeadSelect {
+func (_s *LeadNoteSelect) Aggregate(fns ...AggregateFunc) *LeadNoteSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *LeadSelect) Scan(ctx context.Context, v any) error {
+func (_s *LeadNoteSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*LeadQuery, *LeadSelect](ctx, _s.LeadQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*LeadNoteQuery, *LeadNoteSelect](ctx, _s.LeadNoteQuery, _s, _s.inters, v)
 }
 
-func (_s *LeadSelect) sqlScan(ctx context.Context, root *LeadQuery, v any) error {
+func (_s *LeadNoteSelect) sqlScan(ctx context.Context, root *LeadNoteQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

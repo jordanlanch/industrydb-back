@@ -10,6 +10,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/industry"
 	"github.com/jordanlanch/industrydb/ent/lead"
+	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
@@ -186,6 +187,48 @@ func init() {
 	lead.DefaultUpdatedAt = leadDescUpdatedAt.Default.(func() time.Time)
 	// lead.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	lead.UpdateDefaultUpdatedAt = leadDescUpdatedAt.UpdateDefault.(func() time.Time)
+	leadnoteFields := schema.LeadNote{}.Fields()
+	_ = leadnoteFields
+	// leadnoteDescLeadID is the schema descriptor for lead_id field.
+	leadnoteDescLeadID := leadnoteFields[0].Descriptor()
+	// leadnote.LeadIDValidator is a validator for the "lead_id" field. It is called by the builders before save.
+	leadnote.LeadIDValidator = leadnoteDescLeadID.Validators[0].(func(int) error)
+	// leadnoteDescUserID is the schema descriptor for user_id field.
+	leadnoteDescUserID := leadnoteFields[1].Descriptor()
+	// leadnote.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
+	leadnote.UserIDValidator = leadnoteDescUserID.Validators[0].(func(int) error)
+	// leadnoteDescContent is the schema descriptor for content field.
+	leadnoteDescContent := leadnoteFields[2].Descriptor()
+	// leadnote.ContentValidator is a validator for the "content" field. It is called by the builders before save.
+	leadnote.ContentValidator = func() func(string) error {
+		validators := leadnoteDescContent.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(content string) error {
+			for _, fn := range fns {
+				if err := fn(content); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// leadnoteDescIsPinned is the schema descriptor for is_pinned field.
+	leadnoteDescIsPinned := leadnoteFields[3].Descriptor()
+	// leadnote.DefaultIsPinned holds the default value on creation for the is_pinned field.
+	leadnote.DefaultIsPinned = leadnoteDescIsPinned.Default.(bool)
+	// leadnoteDescCreatedAt is the schema descriptor for created_at field.
+	leadnoteDescCreatedAt := leadnoteFields[4].Descriptor()
+	// leadnote.DefaultCreatedAt holds the default value on creation for the created_at field.
+	leadnote.DefaultCreatedAt = leadnoteDescCreatedAt.Default.(func() time.Time)
+	// leadnoteDescUpdatedAt is the schema descriptor for updated_at field.
+	leadnoteDescUpdatedAt := leadnoteFields[5].Descriptor()
+	// leadnote.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	leadnote.DefaultUpdatedAt = leadnoteDescUpdatedAt.Default.(func() time.Time)
+	// leadnote.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	leadnote.UpdateDefaultUpdatedAt = leadnoteDescUpdatedAt.UpdateDefault.(func() time.Time)
 	organizationFields := schema.Organization{}.Fields()
 	_ = organizationFields
 	// organizationDescName is the schema descriptor for name field.

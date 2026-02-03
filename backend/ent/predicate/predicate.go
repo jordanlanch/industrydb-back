@@ -21,6 +21,9 @@ type Industry func(*sql.Selector)
 // Lead is the predicate function for lead builders.
 type Lead func(*sql.Selector)
 
+// LeadNote is the predicate function for leadnote builders.
+type LeadNote func(*sql.Selector)
+
 // Organization is the predicate function for organization builders.
 type Organization func(*sql.Selector)
 

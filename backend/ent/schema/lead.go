@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"entgo.io/ent"
+	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
 )
@@ -137,7 +138,10 @@ func (Lead) Fields() []ent.Field {
 
 // Edges of the Lead.
 func (Lead) Edges() []ent.Edge {
-	return nil
+	return []ent.Edge{
+		edge.To("notes", LeadNote.Type).
+			Comment("Notes and comments on this lead"),
+	}
 }
 
 // Indexes of the Lead.

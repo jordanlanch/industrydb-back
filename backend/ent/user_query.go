@@ -15,6 +15,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/export"
+	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/predicate"
@@ -41,6 +42,7 @@ type UserQuery struct {
 	withOrganizationMemberships *OrganizationMemberQuery
 	withSavedSearches           *SavedSearchQuery
 	withWebhooks                *WebhookQuery
+	withLeadNotes               *LeadNoteQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -275,6 +277,28 @@ func (_q *UserQuery) QueryWebhooks() *WebhookQuery {
 	return query
 }
 
+// QueryLeadNotes chains the current query on the "lead_notes" edge.
+func (_q *UserQuery) QueryLeadNotes() *LeadNoteQuery {
+	query := (&LeadNoteClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(leadnote.Table, leadnote.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.LeadNotesTable, user.LeadNotesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first User entity from the query.
 // Returns a *NotFoundError when no User was found.
 func (_q *UserQuery) First(ctx context.Context) (*User, error) {
@@ -476,6 +500,7 @@ func (_q *UserQuery) Clone() *UserQuery {
 		withOrganizationMemberships: _q.withOrganizationMemberships.Clone(),
 		withSavedSearches:           _q.withSavedSearches.Clone(),
 		withWebhooks:                _q.withWebhooks.Clone(),
+		withLeadNotes:               _q.withLeadNotes.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -581,6 +606,17 @@ func (_q *UserQuery) WithWebhooks(opts ...func(*WebhookQuery)) *UserQuery {
 	return _q
 }
 
+// WithLeadNotes tells the query-builder to eager-load the nodes that are connected to
+// the "lead_notes" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithLeadNotes(opts ...func(*LeadNoteQuery)) *UserQuery {
+	query := (&LeadNoteClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withLeadNotes = query
+	return _q
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -659,7 +695,7 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
-		loadedTypes = [9]bool{
+		loadedTypes = [10]bool{
 			_q.withSubscriptions != nil,
 			_q.withExports != nil,
 			_q.withAPIKeys != nil,
@@ -669,6 +705,7 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			_q.withOrganizationMemberships != nil,
 			_q.withSavedSearches != nil,
 			_q.withWebhooks != nil,
+			_q.withLeadNotes != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -751,6 +788,13 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := _q.loadWebhooks(ctx, query, nodes,
 			func(n *User) { n.Edges.Webhooks = []*Webhook{} },
 			func(n *User, e *Webhook) { n.Edges.Webhooks = append(n.Edges.Webhooks, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withLeadNotes; query != nil {
+		if err := _q.loadLeadNotes(ctx, query, nodes,
+			func(n *User) { n.Edges.LeadNotes = []*LeadNote{} },
+			func(n *User, e *LeadNote) { n.Edges.LeadNotes = append(n.Edges.LeadNotes, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -1026,6 +1070,36 @@ func (_q *UserQuery) loadWebhooks(ctx context.Context, query *WebhookQuery, node
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "user_webhooks" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadLeadNotes(ctx context.Context, query *LeadNoteQuery, nodes []*User, init func(*User), assign func(*User, *LeadNote)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(leadnote.FieldUserID)
+	}
+	query.Where(predicate.LeadNote(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.LeadNotesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.UserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

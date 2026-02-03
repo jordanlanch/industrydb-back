@@ -81,6 +81,8 @@ const (
 	EdgeSavedSearches = "saved_searches"
 	// EdgeWebhooks holds the string denoting the webhooks edge name in mutations.
 	EdgeWebhooks = "webhooks"
+	// EdgeLeadNotes holds the string denoting the lead_notes edge name in mutations.
+	EdgeLeadNotes = "lead_notes"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// SubscriptionsTable is the table that holds the subscriptions relation/edge.
@@ -146,6 +148,13 @@ const (
 	WebhooksInverseTable = "webhooks"
 	// WebhooksColumn is the table column denoting the webhooks relation/edge.
 	WebhooksColumn = "user_webhooks"
+	// LeadNotesTable is the table that holds the lead_notes relation/edge.
+	LeadNotesTable = "lead_notes"
+	// LeadNotesInverseTable is the table name for the LeadNote entity.
+	// It exists in this package in order to avoid circular dependency with the "leadnote" package.
+	LeadNotesInverseTable = "lead_notes"
+	// LeadNotesColumn is the table column denoting the lead_notes relation/edge.
+	LeadNotesColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -530,6 +539,20 @@ func ByWebhooks(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newWebhooksStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByLeadNotesCount orders the results by lead_notes count.
+func ByLeadNotesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newLeadNotesStep(), opts...)
+	}
+}
+
+// ByLeadNotes orders the results by lead_notes terms.
+func ByLeadNotes(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newLeadNotesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSubscriptionsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -591,5 +614,12 @@ func newWebhooksStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(WebhooksInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, WebhooksTable, WebhooksColumn),
+	)
+}
+func newLeadNotesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(LeadNotesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, LeadNotesTable, LeadNotesColumn),
 	)
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/export"
+	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/predicate"
@@ -567,6 +568,21 @@ func (_u *UserUpdate) AddWebhooks(v ...*Webhook) *UserUpdate {
 	return _u.AddWebhookIDs(ids...)
 }
 
+// AddLeadNoteIDs adds the "lead_notes" edge to the LeadNote entity by IDs.
+func (_u *UserUpdate) AddLeadNoteIDs(ids ...int) *UserUpdate {
+	_u.mutation.AddLeadNoteIDs(ids...)
+	return _u
+}
+
+// AddLeadNotes adds the "lead_notes" edges to the LeadNote entity.
+func (_u *UserUpdate) AddLeadNotes(v ...*LeadNote) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddLeadNoteIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -759,6 +775,27 @@ func (_u *UserUpdate) RemoveWebhooks(v ...*Webhook) *UserUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveWebhookIDs(ids...)
+}
+
+// ClearLeadNotes clears all "lead_notes" edges to the LeadNote entity.
+func (_u *UserUpdate) ClearLeadNotes() *UserUpdate {
+	_u.mutation.ClearLeadNotes()
+	return _u
+}
+
+// RemoveLeadNoteIDs removes the "lead_notes" edge to LeadNote entities by IDs.
+func (_u *UserUpdate) RemoveLeadNoteIDs(ids ...int) *UserUpdate {
+	_u.mutation.RemoveLeadNoteIDs(ids...)
+	return _u
+}
+
+// RemoveLeadNotes removes "lead_notes" edges to LeadNote entities.
+func (_u *UserUpdate) RemoveLeadNotes(v ...*LeadNote) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveLeadNoteIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -1367,6 +1404,51 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.LeadNotesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadNotesTable,
+			Columns: []string{user.LeadNotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadnote.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedLeadNotesIDs(); len(nodes) > 0 && !_u.mutation.LeadNotesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadNotesTable,
+			Columns: []string{user.LeadNotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadnote.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.LeadNotesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadNotesTable,
+			Columns: []string{user.LeadNotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadnote.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -1917,6 +1999,21 @@ func (_u *UserUpdateOne) AddWebhooks(v ...*Webhook) *UserUpdateOne {
 	return _u.AddWebhookIDs(ids...)
 }
 
+// AddLeadNoteIDs adds the "lead_notes" edge to the LeadNote entity by IDs.
+func (_u *UserUpdateOne) AddLeadNoteIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.AddLeadNoteIDs(ids...)
+	return _u
+}
+
+// AddLeadNotes adds the "lead_notes" edges to the LeadNote entity.
+func (_u *UserUpdateOne) AddLeadNotes(v ...*LeadNote) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddLeadNoteIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -2109,6 +2206,27 @@ func (_u *UserUpdateOne) RemoveWebhooks(v ...*Webhook) *UserUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveWebhookIDs(ids...)
+}
+
+// ClearLeadNotes clears all "lead_notes" edges to the LeadNote entity.
+func (_u *UserUpdateOne) ClearLeadNotes() *UserUpdateOne {
+	_u.mutation.ClearLeadNotes()
+	return _u
+}
+
+// RemoveLeadNoteIDs removes the "lead_notes" edge to LeadNote entities by IDs.
+func (_u *UserUpdateOne) RemoveLeadNoteIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.RemoveLeadNoteIDs(ids...)
+	return _u
+}
+
+// RemoveLeadNotes removes "lead_notes" edges to LeadNote entities.
+func (_u *UserUpdateOne) RemoveLeadNotes(v ...*LeadNote) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveLeadNoteIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -2740,6 +2858,51 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.LeadNotesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadNotesTable,
+			Columns: []string{user.LeadNotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadnote.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedLeadNotesIDs(); len(nodes) > 0 && !_u.mutation.LeadNotesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadNotesTable,
+			Columns: []string{user.LeadNotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadnote.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.LeadNotesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadNotesTable,
+			Columns: []string{user.LeadNotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadnote.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/jordanlanch/industrydb/ent/lead"
+	"github.com/jordanlanch/industrydb/ent/leadnote"
 )
 
 // LeadCreate is the builder for creating a Lead entity.
@@ -286,6 +287,21 @@ func (_c *LeadCreate) SetNillableUpdatedAt(v *time.Time) *LeadCreate {
 	return _c
 }
 
+// AddNoteIDs adds the "notes" edge to the LeadNote entity by IDs.
+func (_c *LeadCreate) AddNoteIDs(ids ...int) *LeadCreate {
+	_c.mutation.AddNoteIDs(ids...)
+	return _c
+}
+
+// AddNotes adds the "notes" edges to the LeadNote entity.
+func (_c *LeadCreate) AddNotes(v ...*LeadNote) *LeadCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddNoteIDs(ids...)
+}
+
 // Mutation returns the LeadMutation object of the builder.
 func (_c *LeadCreate) Mutation() *LeadMutation {
 	return _c.mutation
@@ -507,6 +523,22 @@ func (_c *LeadCreate) createSpec() (*Lead, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(lead.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if nodes := _c.mutation.NotesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.NotesTable,
+			Columns: []string{lead.NotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadnote.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

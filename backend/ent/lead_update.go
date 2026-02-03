@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/jordanlanch/industrydb/ent/lead"
+	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/predicate"
 )
 
@@ -422,9 +423,45 @@ func (_u *LeadUpdate) SetUpdatedAt(v time.Time) *LeadUpdate {
 	return _u
 }
 
+// AddNoteIDs adds the "notes" edge to the LeadNote entity by IDs.
+func (_u *LeadUpdate) AddNoteIDs(ids ...int) *LeadUpdate {
+	_u.mutation.AddNoteIDs(ids...)
+	return _u
+}
+
+// AddNotes adds the "notes" edges to the LeadNote entity.
+func (_u *LeadUpdate) AddNotes(v ...*LeadNote) *LeadUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddNoteIDs(ids...)
+}
+
 // Mutation returns the LeadMutation object of the builder.
 func (_u *LeadUpdate) Mutation() *LeadMutation {
 	return _u.mutation
+}
+
+// ClearNotes clears all "notes" edges to the LeadNote entity.
+func (_u *LeadUpdate) ClearNotes() *LeadUpdate {
+	_u.mutation.ClearNotes()
+	return _u
+}
+
+// RemoveNoteIDs removes the "notes" edge to LeadNote entities by IDs.
+func (_u *LeadUpdate) RemoveNoteIDs(ids ...int) *LeadUpdate {
+	_u.mutation.RemoveNoteIDs(ids...)
+	return _u
+}
+
+// RemoveNotes removes "notes" edges to LeadNote entities.
+func (_u *LeadUpdate) RemoveNotes(v ...*LeadNote) *LeadUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveNoteIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -629,6 +666,51 @@ func (_u *LeadUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(lead.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.NotesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.NotesTable,
+			Columns: []string{lead.NotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadnote.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedNotesIDs(); len(nodes) > 0 && !_u.mutation.NotesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.NotesTable,
+			Columns: []string{lead.NotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadnote.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.NotesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.NotesTable,
+			Columns: []string{lead.NotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadnote.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -1043,9 +1125,45 @@ func (_u *LeadUpdateOne) SetUpdatedAt(v time.Time) *LeadUpdateOne {
 	return _u
 }
 
+// AddNoteIDs adds the "notes" edge to the LeadNote entity by IDs.
+func (_u *LeadUpdateOne) AddNoteIDs(ids ...int) *LeadUpdateOne {
+	_u.mutation.AddNoteIDs(ids...)
+	return _u
+}
+
+// AddNotes adds the "notes" edges to the LeadNote entity.
+func (_u *LeadUpdateOne) AddNotes(v ...*LeadNote) *LeadUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddNoteIDs(ids...)
+}
+
 // Mutation returns the LeadMutation object of the builder.
 func (_u *LeadUpdateOne) Mutation() *LeadMutation {
 	return _u.mutation
+}
+
+// ClearNotes clears all "notes" edges to the LeadNote entity.
+func (_u *LeadUpdateOne) ClearNotes() *LeadUpdateOne {
+	_u.mutation.ClearNotes()
+	return _u
+}
+
+// RemoveNoteIDs removes the "notes" edge to LeadNote entities by IDs.
+func (_u *LeadUpdateOne) RemoveNoteIDs(ids ...int) *LeadUpdateOne {
+	_u.mutation.RemoveNoteIDs(ids...)
+	return _u
+}
+
+// RemoveNotes removes "notes" edges to LeadNote entities.
+func (_u *LeadUpdateOne) RemoveNotes(v ...*LeadNote) *LeadUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveNoteIDs(ids...)
 }
 
 // Where appends a list predicates to the LeadUpdate builder.
@@ -1280,6 +1398,51 @@ func (_u *LeadUpdateOne) sqlSave(ctx context.Context) (_node *Lead, err error) {
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(lead.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if _u.mutation.NotesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.NotesTable,
+			Columns: []string{lead.NotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadnote.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedNotesIDs(); len(nodes) > 0 && !_u.mutation.NotesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.NotesTable,
+			Columns: []string{lead.NotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadnote.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.NotesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.NotesTable,
+			Columns: []string{lead.NotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadnote.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Lead{config: _u.config}
 	_spec.Assign = _node.assignValues

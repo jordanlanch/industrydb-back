@@ -91,9 +91,11 @@ type UserEdges struct {
 	SavedSearches []*SavedSearch `json:"saved_searches,omitempty"`
 	// User's configured webhooks
 	Webhooks []*Webhook `json:"webhooks,omitempty"`
+	// Notes created by this user on leads
+	LeadNotes []*LeadNote `json:"lead_notes,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [9]bool
+	loadedTypes [10]bool
 }
 
 // SubscriptionsOrErr returns the Subscriptions value or an error if the edge
@@ -175,6 +177,15 @@ func (e UserEdges) WebhooksOrErr() ([]*Webhook, error) {
 		return e.Webhooks, nil
 	}
 	return nil, &NotLoadedError{edge: "webhooks"}
+}
+
+// LeadNotesOrErr returns the LeadNotes value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) LeadNotesOrErr() ([]*LeadNote, error) {
+	if e.loadedTypes[9] {
+		return e.LeadNotes, nil
+	}
+	return nil, &NotLoadedError{edge: "lead_notes"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -421,6 +432,11 @@ func (_m *User) QuerySavedSearches() *SavedSearchQuery {
 // QueryWebhooks queries the "webhooks" edge of the User entity.
 func (_m *User) QueryWebhooks() *WebhookQuery {
 	return NewUserClient(_m.config).QueryWebhooks(_m)
+}
+
+// QueryLeadNotes queries the "lead_notes" edge of the User entity.
+func (_m *User) QueryLeadNotes() *LeadNoteQuery {
+	return NewUserClient(_m.config).QueryLeadNotes(_m)
 }
 
 // Update returns a builder for updating this User.

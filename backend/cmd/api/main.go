@@ -350,6 +350,7 @@ func main() {
 	savedSearchHandler := handlers.NewSavedSearchHandler(savedSearchService)
 	webhookHandler := handlers.NewWebhookHandler(webhookService)
 	batchHandler := handlers.NewBatchHandler(db.Ent, webhookService)
+	leadNoteHandler := handlers.NewLeadNoteHandler(db.Ent, auditLogger)
 	log.Printf("✅ Webhook and batch handlers initialized")
 
 	// Backup handler (admin only, if enabled)
@@ -390,6 +391,18 @@ func main() {
 			leadsGroup.GET("", leadHandler.Search)
 			leadsGroup.GET("/preview", leadHandler.Preview) // Must be before /:id to avoid route conflict
 			leadsGroup.GET("/:id", leadHandler.GetByID)
+			// Lead notes
+			leadsGroup.GET("/:lead_id/notes", leadNoteHandler.ListNotesByLead)
+		}
+
+		// Lead notes routes (require email verification)
+		leadNotesGroup := protected.Group("/lead-notes")
+		leadNotesGroup.Use(custommiddleware.RequireEmailVerified(db.Ent))
+		{
+			leadNotesGroup.POST("", leadNoteHandler.CreateNote)
+			leadNotesGroup.GET("/:id", leadNoteHandler.GetNote)
+			leadNotesGroup.PATCH("/:id", leadNoteHandler.UpdateNote)
+			leadNotesGroup.DELETE("/:id", leadNoteHandler.DeleteNote)
 		}
 
 		// User routes

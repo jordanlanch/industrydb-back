@@ -329,6 +329,53 @@ var (
 			},
 		},
 	}
+	// LeadNotesColumns holds the columns for the "lead_notes" table.
+	LeadNotesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "content", Type: field.TypeString, Size: 10000},
+		{Name: "is_pinned", Type: field.TypeBool, Default: false},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "lead_id", Type: field.TypeInt},
+		{Name: "user_id", Type: field.TypeInt},
+	}
+	// LeadNotesTable holds the schema information for the "lead_notes" table.
+	LeadNotesTable = &schema.Table{
+		Name:       "lead_notes",
+		Columns:    LeadNotesColumns,
+		PrimaryKey: []*schema.Column{LeadNotesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "lead_notes_leads_notes",
+				Columns:    []*schema.Column{LeadNotesColumns[5]},
+				RefColumns: []*schema.Column{LeadsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "lead_notes_users_lead_notes",
+				Columns:    []*schema.Column{LeadNotesColumns[6]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "leadnote_lead_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{LeadNotesColumns[5], LeadNotesColumns[3]},
+			},
+			{
+				Name:    "leadnote_user_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{LeadNotesColumns[6], LeadNotesColumns[3]},
+			},
+			{
+				Name:    "leadnote_lead_id_is_pinned_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{LeadNotesColumns[5], LeadNotesColumns[2], LeadNotesColumns[3]},
+			},
+		},
+	}
 	// OrganizationsColumns holds the columns for the "organizations" table.
 	OrganizationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -682,6 +729,7 @@ var (
 		ExportsTable,
 		IndustriesTable,
 		LeadsTable,
+		LeadNotesTable,
 		OrganizationsTable,
 		OrganizationMembersTable,
 		SavedSearchesTable,
@@ -697,6 +745,8 @@ func init() {
 	AuditLogsTable.ForeignKeys[0].RefTable = UsersTable
 	ExportsTable.ForeignKeys[0].RefTable = OrganizationsTable
 	ExportsTable.ForeignKeys[1].RefTable = UsersTable
+	LeadNotesTable.ForeignKeys[0].RefTable = LeadsTable
+	LeadNotesTable.ForeignKeys[1].RefTable = UsersTable
 	OrganizationsTable.ForeignKeys[0].RefTable = UsersTable
 	OrganizationMembersTable.ForeignKeys[0].RefTable = OrganizationsTable
 	OrganizationMembersTable.ForeignKeys[1].RefTable = UsersTable

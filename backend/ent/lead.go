@@ -63,8 +63,29 @@ type Lead struct {
 	// Creation timestamp
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Last update timestamp
-	UpdatedAt    time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the LeadQuery when eager-loading is set.
+	Edges        LeadEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// LeadEdges holds the relations/edges for other nodes in the graph.
+type LeadEdges struct {
+	// Notes and comments on this lead
+	Notes []*LeadNote `json:"notes,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// NotesOrErr returns the Notes value or an error if the edge
+// was not loaded in eager-loading.
+func (e LeadEdges) NotesOrErr() ([]*LeadNote, error) {
+	if e.loadedTypes[0] {
+		return e.Notes, nil
+	}
+	return nil, &NotLoadedError{edge: "notes"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -260,6 +281,11 @@ func (_m *Lead) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *Lead) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
+}
+
+// QueryNotes queries the "notes" edge of the Lead entity.
+func (_m *Lead) QueryNotes() *LeadNoteQuery {
+	return NewLeadClient(_m.config).QueryNotes(_m)
 }
 
 // Update returns a builder for updating this Lead.

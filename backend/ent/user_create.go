@@ -13,6 +13,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/export"
+	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
@@ -476,6 +477,21 @@ func (_c *UserCreate) AddWebhooks(v ...*Webhook) *UserCreate {
 	return _c.AddWebhookIDs(ids...)
 }
 
+// AddLeadNoteIDs adds the "lead_notes" edge to the LeadNote entity by IDs.
+func (_c *UserCreate) AddLeadNoteIDs(ids ...int) *UserCreate {
+	_c.mutation.AddLeadNoteIDs(ids...)
+	return _c
+}
+
+// AddLeadNotes adds the "lead_notes" edges to the LeadNote entity.
+func (_c *UserCreate) AddLeadNotes(v ...*LeadNote) *UserCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddLeadNoteIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_c *UserCreate) Mutation() *UserMutation {
 	return _c.mutation
@@ -900,6 +916,22 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.LeadNotesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadNotesTable,
+			Columns: []string{user.LeadNotesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadnote.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
