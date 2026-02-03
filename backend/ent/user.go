@@ -99,9 +99,13 @@ type UserEdges struct {
 	AssignedLeads []*LeadAssignment `json:"assigned_leads,omitempty"`
 	// Lead assignments made by this user
 	LeadAssignmentsMade []*LeadAssignment `json:"lead_assignments_made,omitempty"`
+	// Email sequences created by this user
+	EmailSequencesCreated []*EmailSequence `json:"email_sequences_created,omitempty"`
+	// Email sequence enrollments made by this user
+	EmailSequenceEnrollmentsMade []*EmailSequenceEnrollment `json:"email_sequence_enrollments_made,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [13]bool
+	loadedTypes [15]bool
 }
 
 // SubscriptionsOrErr returns the Subscriptions value or an error if the edge
@@ -219,6 +223,24 @@ func (e UserEdges) LeadAssignmentsMadeOrErr() ([]*LeadAssignment, error) {
 		return e.LeadAssignmentsMade, nil
 	}
 	return nil, &NotLoadedError{edge: "lead_assignments_made"}
+}
+
+// EmailSequencesCreatedOrErr returns the EmailSequencesCreated value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) EmailSequencesCreatedOrErr() ([]*EmailSequence, error) {
+	if e.loadedTypes[13] {
+		return e.EmailSequencesCreated, nil
+	}
+	return nil, &NotLoadedError{edge: "email_sequences_created"}
+}
+
+// EmailSequenceEnrollmentsMadeOrErr returns the EmailSequenceEnrollmentsMade value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) EmailSequenceEnrollmentsMadeOrErr() ([]*EmailSequenceEnrollment, error) {
+	if e.loadedTypes[14] {
+		return e.EmailSequenceEnrollmentsMade, nil
+	}
+	return nil, &NotLoadedError{edge: "email_sequence_enrollments_made"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -485,6 +507,16 @@ func (_m *User) QueryAssignedLeads() *LeadAssignmentQuery {
 // QueryLeadAssignmentsMade queries the "lead_assignments_made" edge of the User entity.
 func (_m *User) QueryLeadAssignmentsMade() *LeadAssignmentQuery {
 	return NewUserClient(_m.config).QueryLeadAssignmentsMade(_m)
+}
+
+// QueryEmailSequencesCreated queries the "email_sequences_created" edge of the User entity.
+func (_m *User) QueryEmailSequencesCreated() *EmailSequenceQuery {
+	return NewUserClient(_m.config).QueryEmailSequencesCreated(_m)
+}
+
+// QueryEmailSequenceEnrollmentsMade queries the "email_sequence_enrollments_made" edge of the User entity.
+func (_m *User) QueryEmailSequenceEnrollmentsMade() *EmailSequenceEnrollmentQuery {
+	return NewUserClient(_m.config).QueryEmailSequenceEnrollmentsMade(_m)
 }
 
 // Update returns a builder for updating this User.

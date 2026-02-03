@@ -12,6 +12,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
+	"github.com/jordanlanch/industrydb/ent/emailsequencesend"
 	"github.com/jordanlanch/industrydb/ent/lead"
 	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
@@ -22,13 +24,15 @@ import (
 // LeadQuery is the builder for querying Lead entities.
 type LeadQuery struct {
 	config
-	ctx               *QueryContext
-	order             []lead.OrderOption
-	inters            []Interceptor
-	predicates        []predicate.Lead
-	withNotes         *LeadNoteQuery
-	withStatusHistory *LeadStatusHistoryQuery
-	withAssignments   *LeadAssignmentQuery
+	ctx                          *QueryContext
+	order                        []lead.OrderOption
+	inters                       []Interceptor
+	predicates                   []predicate.Lead
+	withNotes                    *LeadNoteQuery
+	withStatusHistory            *LeadStatusHistoryQuery
+	withAssignments              *LeadAssignmentQuery
+	withEmailSequenceEnrollments *EmailSequenceEnrollmentQuery
+	withEmailSequenceSends       *EmailSequenceSendQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -124,6 +128,50 @@ func (_q *LeadQuery) QueryAssignments() *LeadAssignmentQuery {
 			sqlgraph.From(lead.Table, lead.FieldID, selector),
 			sqlgraph.To(leadassignment.Table, leadassignment.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, lead.AssignmentsTable, lead.AssignmentsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryEmailSequenceEnrollments chains the current query on the "email_sequence_enrollments" edge.
+func (_q *LeadQuery) QueryEmailSequenceEnrollments() *EmailSequenceEnrollmentQuery {
+	query := (&EmailSequenceEnrollmentClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(lead.Table, lead.FieldID, selector),
+			sqlgraph.To(emailsequenceenrollment.Table, emailsequenceenrollment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, lead.EmailSequenceEnrollmentsTable, lead.EmailSequenceEnrollmentsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryEmailSequenceSends chains the current query on the "email_sequence_sends" edge.
+func (_q *LeadQuery) QueryEmailSequenceSends() *EmailSequenceSendQuery {
+	query := (&EmailSequenceSendClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(lead.Table, lead.FieldID, selector),
+			sqlgraph.To(emailsequencesend.Table, emailsequencesend.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, lead.EmailSequenceSendsTable, lead.EmailSequenceSendsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -318,14 +366,16 @@ func (_q *LeadQuery) Clone() *LeadQuery {
 		return nil
 	}
 	return &LeadQuery{
-		config:            _q.config,
-		ctx:               _q.ctx.Clone(),
-		order:             append([]lead.OrderOption{}, _q.order...),
-		inters:            append([]Interceptor{}, _q.inters...),
-		predicates:        append([]predicate.Lead{}, _q.predicates...),
-		withNotes:         _q.withNotes.Clone(),
-		withStatusHistory: _q.withStatusHistory.Clone(),
-		withAssignments:   _q.withAssignments.Clone(),
+		config:                       _q.config,
+		ctx:                          _q.ctx.Clone(),
+		order:                        append([]lead.OrderOption{}, _q.order...),
+		inters:                       append([]Interceptor{}, _q.inters...),
+		predicates:                   append([]predicate.Lead{}, _q.predicates...),
+		withNotes:                    _q.withNotes.Clone(),
+		withStatusHistory:            _q.withStatusHistory.Clone(),
+		withAssignments:              _q.withAssignments.Clone(),
+		withEmailSequenceEnrollments: _q.withEmailSequenceEnrollments.Clone(),
+		withEmailSequenceSends:       _q.withEmailSequenceSends.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -362,6 +412,28 @@ func (_q *LeadQuery) WithAssignments(opts ...func(*LeadAssignmentQuery)) *LeadQu
 		opt(query)
 	}
 	_q.withAssignments = query
+	return _q
+}
+
+// WithEmailSequenceEnrollments tells the query-builder to eager-load the nodes that are connected to
+// the "email_sequence_enrollments" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *LeadQuery) WithEmailSequenceEnrollments(opts ...func(*EmailSequenceEnrollmentQuery)) *LeadQuery {
+	query := (&EmailSequenceEnrollmentClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withEmailSequenceEnrollments = query
+	return _q
+}
+
+// WithEmailSequenceSends tells the query-builder to eager-load the nodes that are connected to
+// the "email_sequence_sends" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *LeadQuery) WithEmailSequenceSends(opts ...func(*EmailSequenceSendQuery)) *LeadQuery {
+	query := (&EmailSequenceSendClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withEmailSequenceSends = query
 	return _q
 }
 
@@ -443,10 +515,12 @@ func (_q *LeadQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Lead, e
 	var (
 		nodes       = []*Lead{}
 		_spec       = _q.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [5]bool{
 			_q.withNotes != nil,
 			_q.withStatusHistory != nil,
 			_q.withAssignments != nil,
+			_q.withEmailSequenceEnrollments != nil,
+			_q.withEmailSequenceSends != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -485,6 +559,24 @@ func (_q *LeadQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Lead, e
 		if err := _q.loadAssignments(ctx, query, nodes,
 			func(n *Lead) { n.Edges.Assignments = []*LeadAssignment{} },
 			func(n *Lead, e *LeadAssignment) { n.Edges.Assignments = append(n.Edges.Assignments, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withEmailSequenceEnrollments; query != nil {
+		if err := _q.loadEmailSequenceEnrollments(ctx, query, nodes,
+			func(n *Lead) { n.Edges.EmailSequenceEnrollments = []*EmailSequenceEnrollment{} },
+			func(n *Lead, e *EmailSequenceEnrollment) {
+				n.Edges.EmailSequenceEnrollments = append(n.Edges.EmailSequenceEnrollments, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withEmailSequenceSends; query != nil {
+		if err := _q.loadEmailSequenceSends(ctx, query, nodes,
+			func(n *Lead) { n.Edges.EmailSequenceSends = []*EmailSequenceSend{} },
+			func(n *Lead, e *EmailSequenceSend) {
+				n.Edges.EmailSequenceSends = append(n.Edges.EmailSequenceSends, e)
+			}); err != nil {
 			return nil, err
 		}
 	}
@@ -566,6 +658,66 @@ func (_q *LeadQuery) loadAssignments(ctx context.Context, query *LeadAssignmentQ
 	}
 	query.Where(predicate.LeadAssignment(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(lead.AssignmentsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.LeadID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "lead_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *LeadQuery) loadEmailSequenceEnrollments(ctx context.Context, query *EmailSequenceEnrollmentQuery, nodes []*Lead, init func(*Lead), assign func(*Lead, *EmailSequenceEnrollment)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Lead)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(emailsequenceenrollment.FieldLeadID)
+	}
+	query.Where(predicate.EmailSequenceEnrollment(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(lead.EmailSequenceEnrollmentsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.LeadID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "lead_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *LeadQuery) loadEmailSequenceSends(ctx context.Context, query *EmailSequenceSendQuery, nodes []*Lead, init func(*Lead), assign func(*Lead, *EmailSequenceSend)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Lead)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(emailsequencesend.FieldLeadID)
+	}
+	query.Where(predicate.EmailSequenceSend(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(lead.EmailSequenceSendsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

@@ -12,6 +12,18 @@ type APIKey func(*sql.Selector)
 // AuditLog is the predicate function for auditlog builders.
 type AuditLog func(*sql.Selector)
 
+// EmailSequence is the predicate function for emailsequence builders.
+type EmailSequence func(*sql.Selector)
+
+// EmailSequenceEnrollment is the predicate function for emailsequenceenrollment builders.
+type EmailSequenceEnrollment func(*sql.Selector)
+
+// EmailSequenceSend is the predicate function for emailsequencesend builders.
+type EmailSequenceSend func(*sql.Selector)
+
+// EmailSequenceStep is the predicate function for emailsequencestep builders.
+type EmailSequenceStep func(*sql.Selector)
+
 // Export is the predicate function for export builders.
 type Export func(*sql.Selector)
 

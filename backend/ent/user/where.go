@@ -1594,6 +1594,52 @@ func HasLeadAssignmentsMadeWith(preds ...predicate.LeadAssignment) predicate.Use
 	})
 }
 
+// HasEmailSequencesCreated applies the HasEdge predicate on the "email_sequences_created" edge.
+func HasEmailSequencesCreated() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, EmailSequencesCreatedTable, EmailSequencesCreatedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasEmailSequencesCreatedWith applies the HasEdge predicate on the "email_sequences_created" edge with a given conditions (other predicates).
+func HasEmailSequencesCreatedWith(preds ...predicate.EmailSequence) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newEmailSequencesCreatedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasEmailSequenceEnrollmentsMade applies the HasEdge predicate on the "email_sequence_enrollments_made" edge.
+func HasEmailSequenceEnrollmentsMade() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, EmailSequenceEnrollmentsMadeTable, EmailSequenceEnrollmentsMadeColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasEmailSequenceEnrollmentsMadeWith applies the HasEdge predicate on the "email_sequence_enrollments_made" edge with a given conditions (other predicates).
+func HasEmailSequenceEnrollmentsMadeWith(preds ...predicate.EmailSequenceEnrollment) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newEmailSequenceEnrollmentsMadeStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.User) predicate.User {
 	return predicate.User(sql.AndPredicates(predicates...))

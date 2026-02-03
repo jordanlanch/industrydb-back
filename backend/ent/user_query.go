@@ -14,6 +14,8 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
+	"github.com/jordanlanch/industrydb/ent/emailsequence"
+	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
@@ -31,23 +33,25 @@ import (
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	ctx                         *QueryContext
-	order                       []user.OrderOption
-	inters                      []Interceptor
-	predicates                  []predicate.User
-	withSubscriptions           *SubscriptionQuery
-	withExports                 *ExportQuery
-	withAPIKeys                 *APIKeyQuery
-	withAuditLogs               *AuditLogQuery
-	withUsageLogs               *UsageLogQuery
-	withOwnedOrganizations      *OrganizationQuery
-	withOrganizationMemberships *OrganizationMemberQuery
-	withSavedSearches           *SavedSearchQuery
-	withWebhooks                *WebhookQuery
-	withLeadNotes               *LeadNoteQuery
-	withLeadStatusChanges       *LeadStatusHistoryQuery
-	withAssignedLeads           *LeadAssignmentQuery
-	withLeadAssignmentsMade     *LeadAssignmentQuery
+	ctx                              *QueryContext
+	order                            []user.OrderOption
+	inters                           []Interceptor
+	predicates                       []predicate.User
+	withSubscriptions                *SubscriptionQuery
+	withExports                      *ExportQuery
+	withAPIKeys                      *APIKeyQuery
+	withAuditLogs                    *AuditLogQuery
+	withUsageLogs                    *UsageLogQuery
+	withOwnedOrganizations           *OrganizationQuery
+	withOrganizationMemberships      *OrganizationMemberQuery
+	withSavedSearches                *SavedSearchQuery
+	withWebhooks                     *WebhookQuery
+	withLeadNotes                    *LeadNoteQuery
+	withLeadStatusChanges            *LeadStatusHistoryQuery
+	withAssignedLeads                *LeadAssignmentQuery
+	withLeadAssignmentsMade          *LeadAssignmentQuery
+	withEmailSequencesCreated        *EmailSequenceQuery
+	withEmailSequenceEnrollmentsMade *EmailSequenceEnrollmentQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -370,6 +374,50 @@ func (_q *UserQuery) QueryLeadAssignmentsMade() *LeadAssignmentQuery {
 	return query
 }
 
+// QueryEmailSequencesCreated chains the current query on the "email_sequences_created" edge.
+func (_q *UserQuery) QueryEmailSequencesCreated() *EmailSequenceQuery {
+	query := (&EmailSequenceClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(emailsequence.Table, emailsequence.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.EmailSequencesCreatedTable, user.EmailSequencesCreatedColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryEmailSequenceEnrollmentsMade chains the current query on the "email_sequence_enrollments_made" edge.
+func (_q *UserQuery) QueryEmailSequenceEnrollmentsMade() *EmailSequenceEnrollmentQuery {
+	query := (&EmailSequenceEnrollmentClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(emailsequenceenrollment.Table, emailsequenceenrollment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.EmailSequenceEnrollmentsMadeTable, user.EmailSequenceEnrollmentsMadeColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first User entity from the query.
 // Returns a *NotFoundError when no User was found.
 func (_q *UserQuery) First(ctx context.Context) (*User, error) {
@@ -557,24 +605,26 @@ func (_q *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:                      _q.config,
-		ctx:                         _q.ctx.Clone(),
-		order:                       append([]user.OrderOption{}, _q.order...),
-		inters:                      append([]Interceptor{}, _q.inters...),
-		predicates:                  append([]predicate.User{}, _q.predicates...),
-		withSubscriptions:           _q.withSubscriptions.Clone(),
-		withExports:                 _q.withExports.Clone(),
-		withAPIKeys:                 _q.withAPIKeys.Clone(),
-		withAuditLogs:               _q.withAuditLogs.Clone(),
-		withUsageLogs:               _q.withUsageLogs.Clone(),
-		withOwnedOrganizations:      _q.withOwnedOrganizations.Clone(),
-		withOrganizationMemberships: _q.withOrganizationMemberships.Clone(),
-		withSavedSearches:           _q.withSavedSearches.Clone(),
-		withWebhooks:                _q.withWebhooks.Clone(),
-		withLeadNotes:               _q.withLeadNotes.Clone(),
-		withLeadStatusChanges:       _q.withLeadStatusChanges.Clone(),
-		withAssignedLeads:           _q.withAssignedLeads.Clone(),
-		withLeadAssignmentsMade:     _q.withLeadAssignmentsMade.Clone(),
+		config:                           _q.config,
+		ctx:                              _q.ctx.Clone(),
+		order:                            append([]user.OrderOption{}, _q.order...),
+		inters:                           append([]Interceptor{}, _q.inters...),
+		predicates:                       append([]predicate.User{}, _q.predicates...),
+		withSubscriptions:                _q.withSubscriptions.Clone(),
+		withExports:                      _q.withExports.Clone(),
+		withAPIKeys:                      _q.withAPIKeys.Clone(),
+		withAuditLogs:                    _q.withAuditLogs.Clone(),
+		withUsageLogs:                    _q.withUsageLogs.Clone(),
+		withOwnedOrganizations:           _q.withOwnedOrganizations.Clone(),
+		withOrganizationMemberships:      _q.withOrganizationMemberships.Clone(),
+		withSavedSearches:                _q.withSavedSearches.Clone(),
+		withWebhooks:                     _q.withWebhooks.Clone(),
+		withLeadNotes:                    _q.withLeadNotes.Clone(),
+		withLeadStatusChanges:            _q.withLeadStatusChanges.Clone(),
+		withAssignedLeads:                _q.withAssignedLeads.Clone(),
+		withLeadAssignmentsMade:          _q.withLeadAssignmentsMade.Clone(),
+		withEmailSequencesCreated:        _q.withEmailSequencesCreated.Clone(),
+		withEmailSequenceEnrollmentsMade: _q.withEmailSequenceEnrollmentsMade.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -724,6 +774,28 @@ func (_q *UserQuery) WithLeadAssignmentsMade(opts ...func(*LeadAssignmentQuery))
 	return _q
 }
 
+// WithEmailSequencesCreated tells the query-builder to eager-load the nodes that are connected to
+// the "email_sequences_created" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithEmailSequencesCreated(opts ...func(*EmailSequenceQuery)) *UserQuery {
+	query := (&EmailSequenceClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withEmailSequencesCreated = query
+	return _q
+}
+
+// WithEmailSequenceEnrollmentsMade tells the query-builder to eager-load the nodes that are connected to
+// the "email_sequence_enrollments_made" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithEmailSequenceEnrollmentsMade(opts ...func(*EmailSequenceEnrollmentQuery)) *UserQuery {
+	query := (&EmailSequenceEnrollmentClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withEmailSequenceEnrollmentsMade = query
+	return _q
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -802,7 +874,7 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
-		loadedTypes = [13]bool{
+		loadedTypes = [15]bool{
 			_q.withSubscriptions != nil,
 			_q.withExports != nil,
 			_q.withAPIKeys != nil,
@@ -816,6 +888,8 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			_q.withLeadStatusChanges != nil,
 			_q.withAssignedLeads != nil,
 			_q.withLeadAssignmentsMade != nil,
+			_q.withEmailSequencesCreated != nil,
+			_q.withEmailSequenceEnrollmentsMade != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -926,6 +1000,24 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := _q.loadLeadAssignmentsMade(ctx, query, nodes,
 			func(n *User) { n.Edges.LeadAssignmentsMade = []*LeadAssignment{} },
 			func(n *User, e *LeadAssignment) { n.Edges.LeadAssignmentsMade = append(n.Edges.LeadAssignmentsMade, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withEmailSequencesCreated; query != nil {
+		if err := _q.loadEmailSequencesCreated(ctx, query, nodes,
+			func(n *User) { n.Edges.EmailSequencesCreated = []*EmailSequence{} },
+			func(n *User, e *EmailSequence) {
+				n.Edges.EmailSequencesCreated = append(n.Edges.EmailSequencesCreated, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withEmailSequenceEnrollmentsMade; query != nil {
+		if err := _q.loadEmailSequenceEnrollmentsMade(ctx, query, nodes,
+			func(n *User) { n.Edges.EmailSequenceEnrollmentsMade = []*EmailSequenceEnrollment{} },
+			func(n *User, e *EmailSequenceEnrollment) {
+				n.Edges.EmailSequenceEnrollmentsMade = append(n.Edges.EmailSequenceEnrollmentsMade, e)
+			}); err != nil {
 			return nil, err
 		}
 	}
@@ -1324,6 +1416,66 @@ func (_q *UserQuery) loadLeadAssignmentsMade(ctx context.Context, query *LeadAss
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "assigned_by_user_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadEmailSequencesCreated(ctx context.Context, query *EmailSequenceQuery, nodes []*User, init func(*User), assign func(*User, *EmailSequence)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(emailsequence.FieldCreatedByUserID)
+	}
+	query.Where(predicate.EmailSequence(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.EmailSequencesCreatedColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.CreatedByUserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "created_by_user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadEmailSequenceEnrollmentsMade(ctx context.Context, query *EmailSequenceEnrollmentQuery, nodes []*User, init func(*User), assign func(*User, *EmailSequenceEnrollment)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(emailsequenceenrollment.FieldEnrolledByUserID)
+	}
+	query.Where(predicate.EmailSequenceEnrollment(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.EmailSequenceEnrollmentsMadeColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.EnrolledByUserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "enrolled_by_user_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

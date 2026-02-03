@@ -1519,6 +1519,52 @@ func HasAssignmentsWith(preds ...predicate.LeadAssignment) predicate.Lead {
 	})
 }
 
+// HasEmailSequenceEnrollments applies the HasEdge predicate on the "email_sequence_enrollments" edge.
+func HasEmailSequenceEnrollments() predicate.Lead {
+	return predicate.Lead(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, EmailSequenceEnrollmentsTable, EmailSequenceEnrollmentsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasEmailSequenceEnrollmentsWith applies the HasEdge predicate on the "email_sequence_enrollments" edge with a given conditions (other predicates).
+func HasEmailSequenceEnrollmentsWith(preds ...predicate.EmailSequenceEnrollment) predicate.Lead {
+	return predicate.Lead(func(s *sql.Selector) {
+		step := newEmailSequenceEnrollmentsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasEmailSequenceSends applies the HasEdge predicate on the "email_sequence_sends" edge.
+func HasEmailSequenceSends() predicate.Lead {
+	return predicate.Lead(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, EmailSequenceSendsTable, EmailSequenceSendsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasEmailSequenceSendsWith applies the HasEdge predicate on the "email_sequence_sends" edge with a given conditions (other predicates).
+func HasEmailSequenceSendsWith(preds ...predicate.EmailSequenceSend) predicate.Lead {
+	return predicate.Lead(func(s *sql.Selector) {
+		step := newEmailSequenceSendsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Lead) predicate.Lead {
 	return predicate.Lead(sql.AndPredicates(predicates...))

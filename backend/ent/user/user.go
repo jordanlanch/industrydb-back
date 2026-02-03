@@ -89,6 +89,10 @@ const (
 	EdgeAssignedLeads = "assigned_leads"
 	// EdgeLeadAssignmentsMade holds the string denoting the lead_assignments_made edge name in mutations.
 	EdgeLeadAssignmentsMade = "lead_assignments_made"
+	// EdgeEmailSequencesCreated holds the string denoting the email_sequences_created edge name in mutations.
+	EdgeEmailSequencesCreated = "email_sequences_created"
+	// EdgeEmailSequenceEnrollmentsMade holds the string denoting the email_sequence_enrollments_made edge name in mutations.
+	EdgeEmailSequenceEnrollmentsMade = "email_sequence_enrollments_made"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// SubscriptionsTable is the table that holds the subscriptions relation/edge.
@@ -182,6 +186,20 @@ const (
 	LeadAssignmentsMadeInverseTable = "lead_assignments"
 	// LeadAssignmentsMadeColumn is the table column denoting the lead_assignments_made relation/edge.
 	LeadAssignmentsMadeColumn = "assigned_by_user_id"
+	// EmailSequencesCreatedTable is the table that holds the email_sequences_created relation/edge.
+	EmailSequencesCreatedTable = "email_sequences"
+	// EmailSequencesCreatedInverseTable is the table name for the EmailSequence entity.
+	// It exists in this package in order to avoid circular dependency with the "emailsequence" package.
+	EmailSequencesCreatedInverseTable = "email_sequences"
+	// EmailSequencesCreatedColumn is the table column denoting the email_sequences_created relation/edge.
+	EmailSequencesCreatedColumn = "created_by_user_id"
+	// EmailSequenceEnrollmentsMadeTable is the table that holds the email_sequence_enrollments_made relation/edge.
+	EmailSequenceEnrollmentsMadeTable = "email_sequence_enrollments"
+	// EmailSequenceEnrollmentsMadeInverseTable is the table name for the EmailSequenceEnrollment entity.
+	// It exists in this package in order to avoid circular dependency with the "emailsequenceenrollment" package.
+	EmailSequenceEnrollmentsMadeInverseTable = "email_sequence_enrollments"
+	// EmailSequenceEnrollmentsMadeColumn is the table column denoting the email_sequence_enrollments_made relation/edge.
+	EmailSequenceEnrollmentsMadeColumn = "enrolled_by_user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -622,6 +640,34 @@ func ByLeadAssignmentsMade(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOpti
 		sqlgraph.OrderByNeighborTerms(s, newLeadAssignmentsMadeStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByEmailSequencesCreatedCount orders the results by email_sequences_created count.
+func ByEmailSequencesCreatedCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newEmailSequencesCreatedStep(), opts...)
+	}
+}
+
+// ByEmailSequencesCreated orders the results by email_sequences_created terms.
+func ByEmailSequencesCreated(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newEmailSequencesCreatedStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByEmailSequenceEnrollmentsMadeCount orders the results by email_sequence_enrollments_made count.
+func ByEmailSequenceEnrollmentsMadeCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newEmailSequenceEnrollmentsMadeStep(), opts...)
+	}
+}
+
+// ByEmailSequenceEnrollmentsMade orders the results by email_sequence_enrollments_made terms.
+func ByEmailSequenceEnrollmentsMade(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newEmailSequenceEnrollmentsMadeStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSubscriptionsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -711,5 +757,19 @@ func newLeadAssignmentsMadeStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(LeadAssignmentsMadeInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, LeadAssignmentsMadeTable, LeadAssignmentsMadeColumn),
+	)
+}
+func newEmailSequencesCreatedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(EmailSequencesCreatedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, EmailSequencesCreatedTable, EmailSequencesCreatedColumn),
+	)
+}
+func newEmailSequenceEnrollmentsMadeStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(EmailSequenceEnrollmentsMadeInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, EmailSequenceEnrollmentsMadeTable, EmailSequenceEnrollmentsMadeColumn),
 	)
 }

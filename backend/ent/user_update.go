@@ -13,6 +13,8 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
+	"github.com/jordanlanch/industrydb/ent/emailsequence"
+	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
@@ -630,6 +632,36 @@ func (_u *UserUpdate) AddLeadAssignmentsMade(v ...*LeadAssignment) *UserUpdate {
 	return _u.AddLeadAssignmentsMadeIDs(ids...)
 }
 
+// AddEmailSequencesCreatedIDs adds the "email_sequences_created" edge to the EmailSequence entity by IDs.
+func (_u *UserUpdate) AddEmailSequencesCreatedIDs(ids ...int) *UserUpdate {
+	_u.mutation.AddEmailSequencesCreatedIDs(ids...)
+	return _u
+}
+
+// AddEmailSequencesCreated adds the "email_sequences_created" edges to the EmailSequence entity.
+func (_u *UserUpdate) AddEmailSequencesCreated(v ...*EmailSequence) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddEmailSequencesCreatedIDs(ids...)
+}
+
+// AddEmailSequenceEnrollmentsMadeIDs adds the "email_sequence_enrollments_made" edge to the EmailSequenceEnrollment entity by IDs.
+func (_u *UserUpdate) AddEmailSequenceEnrollmentsMadeIDs(ids ...int) *UserUpdate {
+	_u.mutation.AddEmailSequenceEnrollmentsMadeIDs(ids...)
+	return _u
+}
+
+// AddEmailSequenceEnrollmentsMade adds the "email_sequence_enrollments_made" edges to the EmailSequenceEnrollment entity.
+func (_u *UserUpdate) AddEmailSequenceEnrollmentsMade(v ...*EmailSequenceEnrollment) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddEmailSequenceEnrollmentsMadeIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -906,6 +938,48 @@ func (_u *UserUpdate) RemoveLeadAssignmentsMade(v ...*LeadAssignment) *UserUpdat
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveLeadAssignmentsMadeIDs(ids...)
+}
+
+// ClearEmailSequencesCreated clears all "email_sequences_created" edges to the EmailSequence entity.
+func (_u *UserUpdate) ClearEmailSequencesCreated() *UserUpdate {
+	_u.mutation.ClearEmailSequencesCreated()
+	return _u
+}
+
+// RemoveEmailSequencesCreatedIDs removes the "email_sequences_created" edge to EmailSequence entities by IDs.
+func (_u *UserUpdate) RemoveEmailSequencesCreatedIDs(ids ...int) *UserUpdate {
+	_u.mutation.RemoveEmailSequencesCreatedIDs(ids...)
+	return _u
+}
+
+// RemoveEmailSequencesCreated removes "email_sequences_created" edges to EmailSequence entities.
+func (_u *UserUpdate) RemoveEmailSequencesCreated(v ...*EmailSequence) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveEmailSequencesCreatedIDs(ids...)
+}
+
+// ClearEmailSequenceEnrollmentsMade clears all "email_sequence_enrollments_made" edges to the EmailSequenceEnrollment entity.
+func (_u *UserUpdate) ClearEmailSequenceEnrollmentsMade() *UserUpdate {
+	_u.mutation.ClearEmailSequenceEnrollmentsMade()
+	return _u
+}
+
+// RemoveEmailSequenceEnrollmentsMadeIDs removes the "email_sequence_enrollments_made" edge to EmailSequenceEnrollment entities by IDs.
+func (_u *UserUpdate) RemoveEmailSequenceEnrollmentsMadeIDs(ids ...int) *UserUpdate {
+	_u.mutation.RemoveEmailSequenceEnrollmentsMadeIDs(ids...)
+	return _u
+}
+
+// RemoveEmailSequenceEnrollmentsMade removes "email_sequence_enrollments_made" edges to EmailSequenceEnrollment entities.
+func (_u *UserUpdate) RemoveEmailSequenceEnrollmentsMade(v ...*EmailSequenceEnrollment) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveEmailSequenceEnrollmentsMadeIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -1694,6 +1768,96 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.EmailSequencesCreatedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailSequencesCreatedTable,
+			Columns: []string{user.EmailSequencesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailsequence.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedEmailSequencesCreatedIDs(); len(nodes) > 0 && !_u.mutation.EmailSequencesCreatedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailSequencesCreatedTable,
+			Columns: []string{user.EmailSequencesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailsequence.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.EmailSequencesCreatedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailSequencesCreatedTable,
+			Columns: []string{user.EmailSequencesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailsequence.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.EmailSequenceEnrollmentsMadeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailSequenceEnrollmentsMadeTable,
+			Columns: []string{user.EmailSequenceEnrollmentsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailsequenceenrollment.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedEmailSequenceEnrollmentsMadeIDs(); len(nodes) > 0 && !_u.mutation.EmailSequenceEnrollmentsMadeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailSequenceEnrollmentsMadeTable,
+			Columns: []string{user.EmailSequenceEnrollmentsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailsequenceenrollment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.EmailSequenceEnrollmentsMadeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailSequenceEnrollmentsMadeTable,
+			Columns: []string{user.EmailSequenceEnrollmentsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailsequenceenrollment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -2304,6 +2468,36 @@ func (_u *UserUpdateOne) AddLeadAssignmentsMade(v ...*LeadAssignment) *UserUpdat
 	return _u.AddLeadAssignmentsMadeIDs(ids...)
 }
 
+// AddEmailSequencesCreatedIDs adds the "email_sequences_created" edge to the EmailSequence entity by IDs.
+func (_u *UserUpdateOne) AddEmailSequencesCreatedIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.AddEmailSequencesCreatedIDs(ids...)
+	return _u
+}
+
+// AddEmailSequencesCreated adds the "email_sequences_created" edges to the EmailSequence entity.
+func (_u *UserUpdateOne) AddEmailSequencesCreated(v ...*EmailSequence) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddEmailSequencesCreatedIDs(ids...)
+}
+
+// AddEmailSequenceEnrollmentsMadeIDs adds the "email_sequence_enrollments_made" edge to the EmailSequenceEnrollment entity by IDs.
+func (_u *UserUpdateOne) AddEmailSequenceEnrollmentsMadeIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.AddEmailSequenceEnrollmentsMadeIDs(ids...)
+	return _u
+}
+
+// AddEmailSequenceEnrollmentsMade adds the "email_sequence_enrollments_made" edges to the EmailSequenceEnrollment entity.
+func (_u *UserUpdateOne) AddEmailSequenceEnrollmentsMade(v ...*EmailSequenceEnrollment) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddEmailSequenceEnrollmentsMadeIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -2580,6 +2774,48 @@ func (_u *UserUpdateOne) RemoveLeadAssignmentsMade(v ...*LeadAssignment) *UserUp
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveLeadAssignmentsMadeIDs(ids...)
+}
+
+// ClearEmailSequencesCreated clears all "email_sequences_created" edges to the EmailSequence entity.
+func (_u *UserUpdateOne) ClearEmailSequencesCreated() *UserUpdateOne {
+	_u.mutation.ClearEmailSequencesCreated()
+	return _u
+}
+
+// RemoveEmailSequencesCreatedIDs removes the "email_sequences_created" edge to EmailSequence entities by IDs.
+func (_u *UserUpdateOne) RemoveEmailSequencesCreatedIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.RemoveEmailSequencesCreatedIDs(ids...)
+	return _u
+}
+
+// RemoveEmailSequencesCreated removes "email_sequences_created" edges to EmailSequence entities.
+func (_u *UserUpdateOne) RemoveEmailSequencesCreated(v ...*EmailSequence) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveEmailSequencesCreatedIDs(ids...)
+}
+
+// ClearEmailSequenceEnrollmentsMade clears all "email_sequence_enrollments_made" edges to the EmailSequenceEnrollment entity.
+func (_u *UserUpdateOne) ClearEmailSequenceEnrollmentsMade() *UserUpdateOne {
+	_u.mutation.ClearEmailSequenceEnrollmentsMade()
+	return _u
+}
+
+// RemoveEmailSequenceEnrollmentsMadeIDs removes the "email_sequence_enrollments_made" edge to EmailSequenceEnrollment entities by IDs.
+func (_u *UserUpdateOne) RemoveEmailSequenceEnrollmentsMadeIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.RemoveEmailSequenceEnrollmentsMadeIDs(ids...)
+	return _u
+}
+
+// RemoveEmailSequenceEnrollmentsMade removes "email_sequence_enrollments_made" edges to EmailSequenceEnrollment entities.
+func (_u *UserUpdateOne) RemoveEmailSequenceEnrollmentsMade(v ...*EmailSequenceEnrollment) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveEmailSequenceEnrollmentsMadeIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -3391,6 +3627,96 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.EmailSequencesCreatedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailSequencesCreatedTable,
+			Columns: []string{user.EmailSequencesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailsequence.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedEmailSequencesCreatedIDs(); len(nodes) > 0 && !_u.mutation.EmailSequencesCreatedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailSequencesCreatedTable,
+			Columns: []string{user.EmailSequencesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailsequence.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.EmailSequencesCreatedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailSequencesCreatedTable,
+			Columns: []string{user.EmailSequencesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailsequence.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.EmailSequenceEnrollmentsMadeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailSequenceEnrollmentsMadeTable,
+			Columns: []string{user.EmailSequenceEnrollmentsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailsequenceenrollment.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedEmailSequenceEnrollmentsMadeIDs(); len(nodes) > 0 && !_u.mutation.EmailSequenceEnrollmentsMadeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailSequenceEnrollmentsMadeTable,
+			Columns: []string{user.EmailSequenceEnrollmentsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailsequenceenrollment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.EmailSequenceEnrollmentsMadeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailSequenceEnrollmentsMadeTable,
+			Columns: []string{user.EmailSequenceEnrollmentsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailsequenceenrollment.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

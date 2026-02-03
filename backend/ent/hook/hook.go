@@ -33,6 +33,54 @@ func (f AuditLogFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AuditLogMutation", m)
 }
 
+// The EmailSequenceFunc type is an adapter to allow the use of ordinary
+// function as EmailSequence mutator.
+type EmailSequenceFunc func(context.Context, *ent.EmailSequenceMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f EmailSequenceFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.EmailSequenceMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EmailSequenceMutation", m)
+}
+
+// The EmailSequenceEnrollmentFunc type is an adapter to allow the use of ordinary
+// function as EmailSequenceEnrollment mutator.
+type EmailSequenceEnrollmentFunc func(context.Context, *ent.EmailSequenceEnrollmentMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f EmailSequenceEnrollmentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.EmailSequenceEnrollmentMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EmailSequenceEnrollmentMutation", m)
+}
+
+// The EmailSequenceSendFunc type is an adapter to allow the use of ordinary
+// function as EmailSequenceSend mutator.
+type EmailSequenceSendFunc func(context.Context, *ent.EmailSequenceSendMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f EmailSequenceSendFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.EmailSequenceSendMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EmailSequenceSendMutation", m)
+}
+
+// The EmailSequenceStepFunc type is an adapter to allow the use of ordinary
+// function as EmailSequenceStep mutator.
+type EmailSequenceStepFunc func(context.Context, *ent.EmailSequenceStepMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f EmailSequenceStepFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.EmailSequenceStepMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EmailSequenceStepMutation", m)
+}
+
 // The ExportFunc type is an adapter to allow the use of ordinary
 // function as Export mutator.
 type ExportFunc func(context.Context, *ent.ExportMutation) (ent.Value, error)

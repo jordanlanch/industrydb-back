@@ -13,6 +13,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
+	"github.com/jordanlanch/industrydb/ent/emailsequence"
+	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
+	"github.com/jordanlanch/industrydb/ent/emailsequencesend"
+	"github.com/jordanlanch/industrydb/ent/emailsequencestep"
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/industry"
 	"github.com/jordanlanch/industrydb/ent/lead"
@@ -38,21 +42,25 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeAPIKey             = "APIKey"
-	TypeAuditLog           = "AuditLog"
-	TypeExport             = "Export"
-	TypeIndustry           = "Industry"
-	TypeLead               = "Lead"
-	TypeLeadAssignment     = "LeadAssignment"
-	TypeLeadNote           = "LeadNote"
-	TypeLeadStatusHistory  = "LeadStatusHistory"
-	TypeOrganization       = "Organization"
-	TypeOrganizationMember = "OrganizationMember"
-	TypeSavedSearch        = "SavedSearch"
-	TypeSubscription       = "Subscription"
-	TypeUsageLog           = "UsageLog"
-	TypeUser               = "User"
-	TypeWebhook            = "Webhook"
+	TypeAPIKey                  = "APIKey"
+	TypeAuditLog                = "AuditLog"
+	TypeEmailSequence           = "EmailSequence"
+	TypeEmailSequenceEnrollment = "EmailSequenceEnrollment"
+	TypeEmailSequenceSend       = "EmailSequenceSend"
+	TypeEmailSequenceStep       = "EmailSequenceStep"
+	TypeExport                  = "Export"
+	TypeIndustry                = "Industry"
+	TypeLead                    = "Lead"
+	TypeLeadAssignment          = "LeadAssignment"
+	TypeLeadNote                = "LeadNote"
+	TypeLeadStatusHistory       = "LeadStatusHistory"
+	TypeOrganization            = "Organization"
+	TypeOrganizationMember      = "OrganizationMember"
+	TypeSavedSearch             = "SavedSearch"
+	TypeSubscription            = "Subscription"
+	TypeUsageLog                = "UsageLog"
+	TypeUser                    = "User"
+	TypeWebhook                 = "Webhook"
 )
 
 // APIKeyMutation represents an operation that mutates the APIKey nodes in the graph.
@@ -2074,6 +2082,3928 @@ func (m *AuditLogMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown AuditLog edge %s", name)
+}
+
+// EmailSequenceMutation represents an operation that mutates the EmailSequence nodes in the graph.
+type EmailSequenceMutation struct {
+	config
+	op                 Op
+	typ                string
+	id                 *int
+	name               *string
+	description        *string
+	status             *emailsequence.Status
+	trigger            *emailsequence.Trigger
+	created_at         *time.Time
+	updated_at         *time.Time
+	clearedFields      map[string]struct{}
+	created_by         *int
+	clearedcreated_by  bool
+	steps              map[int]struct{}
+	removedsteps       map[int]struct{}
+	clearedsteps       bool
+	enrollments        map[int]struct{}
+	removedenrollments map[int]struct{}
+	clearedenrollments bool
+	done               bool
+	oldValue           func(context.Context) (*EmailSequence, error)
+	predicates         []predicate.EmailSequence
+}
+
+var _ ent.Mutation = (*EmailSequenceMutation)(nil)
+
+// emailsequenceOption allows management of the mutation configuration using functional options.
+type emailsequenceOption func(*EmailSequenceMutation)
+
+// newEmailSequenceMutation creates new mutation for the EmailSequence entity.
+func newEmailSequenceMutation(c config, op Op, opts ...emailsequenceOption) *EmailSequenceMutation {
+	m := &EmailSequenceMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeEmailSequence,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withEmailSequenceID sets the ID field of the mutation.
+func withEmailSequenceID(id int) emailsequenceOption {
+	return func(m *EmailSequenceMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *EmailSequence
+		)
+		m.oldValue = func(ctx context.Context) (*EmailSequence, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().EmailSequence.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withEmailSequence sets the old EmailSequence of the mutation.
+func withEmailSequence(node *EmailSequence) emailsequenceOption {
+	return func(m *EmailSequenceMutation) {
+		m.oldValue = func(context.Context) (*EmailSequence, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m EmailSequenceMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m EmailSequenceMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *EmailSequenceMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *EmailSequenceMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().EmailSequence.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetName sets the "name" field.
+func (m *EmailSequenceMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *EmailSequenceMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the EmailSequence entity.
+// If the EmailSequence object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *EmailSequenceMutation) ResetName() {
+	m.name = nil
+}
+
+// SetDescription sets the "description" field.
+func (m *EmailSequenceMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *EmailSequenceMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the EmailSequence entity.
+// If the EmailSequence object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ClearDescription clears the value of the "description" field.
+func (m *EmailSequenceMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[emailsequence.FieldDescription] = struct{}{}
+}
+
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *EmailSequenceMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[emailsequence.FieldDescription]
+	return ok
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *EmailSequenceMutation) ResetDescription() {
+	m.description = nil
+	delete(m.clearedFields, emailsequence.FieldDescription)
+}
+
+// SetStatus sets the "status" field.
+func (m *EmailSequenceMutation) SetStatus(e emailsequence.Status) {
+	m.status = &e
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *EmailSequenceMutation) Status() (r emailsequence.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the EmailSequence entity.
+// If the EmailSequence object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceMutation) OldStatus(ctx context.Context) (v emailsequence.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *EmailSequenceMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetTrigger sets the "trigger" field.
+func (m *EmailSequenceMutation) SetTrigger(e emailsequence.Trigger) {
+	m.trigger = &e
+}
+
+// Trigger returns the value of the "trigger" field in the mutation.
+func (m *EmailSequenceMutation) Trigger() (r emailsequence.Trigger, exists bool) {
+	v := m.trigger
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTrigger returns the old "trigger" field's value of the EmailSequence entity.
+// If the EmailSequence object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceMutation) OldTrigger(ctx context.Context) (v emailsequence.Trigger, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTrigger is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTrigger requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTrigger: %w", err)
+	}
+	return oldValue.Trigger, nil
+}
+
+// ResetTrigger resets all changes to the "trigger" field.
+func (m *EmailSequenceMutation) ResetTrigger() {
+	m.trigger = nil
+}
+
+// SetCreatedByUserID sets the "created_by_user_id" field.
+func (m *EmailSequenceMutation) SetCreatedByUserID(i int) {
+	m.created_by = &i
+}
+
+// CreatedByUserID returns the value of the "created_by_user_id" field in the mutation.
+func (m *EmailSequenceMutation) CreatedByUserID() (r int, exists bool) {
+	v := m.created_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedByUserID returns the old "created_by_user_id" field's value of the EmailSequence entity.
+// If the EmailSequence object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceMutation) OldCreatedByUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedByUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedByUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedByUserID: %w", err)
+	}
+	return oldValue.CreatedByUserID, nil
+}
+
+// ResetCreatedByUserID resets all changes to the "created_by_user_id" field.
+func (m *EmailSequenceMutation) ResetCreatedByUserID() {
+	m.created_by = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *EmailSequenceMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *EmailSequenceMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the EmailSequence entity.
+// If the EmailSequence object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *EmailSequenceMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *EmailSequenceMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *EmailSequenceMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the EmailSequence entity.
+// If the EmailSequence object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *EmailSequenceMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetCreatedByID sets the "created_by" edge to the User entity by id.
+func (m *EmailSequenceMutation) SetCreatedByID(id int) {
+	m.created_by = &id
+}
+
+// ClearCreatedBy clears the "created_by" edge to the User entity.
+func (m *EmailSequenceMutation) ClearCreatedBy() {
+	m.clearedcreated_by = true
+	m.clearedFields[emailsequence.FieldCreatedByUserID] = struct{}{}
+}
+
+// CreatedByCleared reports if the "created_by" edge to the User entity was cleared.
+func (m *EmailSequenceMutation) CreatedByCleared() bool {
+	return m.clearedcreated_by
+}
+
+// CreatedByID returns the "created_by" edge ID in the mutation.
+func (m *EmailSequenceMutation) CreatedByID() (id int, exists bool) {
+	if m.created_by != nil {
+		return *m.created_by, true
+	}
+	return
+}
+
+// CreatedByIDs returns the "created_by" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// CreatedByID instead. It exists only for internal usage by the builders.
+func (m *EmailSequenceMutation) CreatedByIDs() (ids []int) {
+	if id := m.created_by; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetCreatedBy resets all changes to the "created_by" edge.
+func (m *EmailSequenceMutation) ResetCreatedBy() {
+	m.created_by = nil
+	m.clearedcreated_by = false
+}
+
+// AddStepIDs adds the "steps" edge to the EmailSequenceStep entity by ids.
+func (m *EmailSequenceMutation) AddStepIDs(ids ...int) {
+	if m.steps == nil {
+		m.steps = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.steps[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSteps clears the "steps" edge to the EmailSequenceStep entity.
+func (m *EmailSequenceMutation) ClearSteps() {
+	m.clearedsteps = true
+}
+
+// StepsCleared reports if the "steps" edge to the EmailSequenceStep entity was cleared.
+func (m *EmailSequenceMutation) StepsCleared() bool {
+	return m.clearedsteps
+}
+
+// RemoveStepIDs removes the "steps" edge to the EmailSequenceStep entity by IDs.
+func (m *EmailSequenceMutation) RemoveStepIDs(ids ...int) {
+	if m.removedsteps == nil {
+		m.removedsteps = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.steps, ids[i])
+		m.removedsteps[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSteps returns the removed IDs of the "steps" edge to the EmailSequenceStep entity.
+func (m *EmailSequenceMutation) RemovedStepsIDs() (ids []int) {
+	for id := range m.removedsteps {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// StepsIDs returns the "steps" edge IDs in the mutation.
+func (m *EmailSequenceMutation) StepsIDs() (ids []int) {
+	for id := range m.steps {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSteps resets all changes to the "steps" edge.
+func (m *EmailSequenceMutation) ResetSteps() {
+	m.steps = nil
+	m.clearedsteps = false
+	m.removedsteps = nil
+}
+
+// AddEnrollmentIDs adds the "enrollments" edge to the EmailSequenceEnrollment entity by ids.
+func (m *EmailSequenceMutation) AddEnrollmentIDs(ids ...int) {
+	if m.enrollments == nil {
+		m.enrollments = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.enrollments[ids[i]] = struct{}{}
+	}
+}
+
+// ClearEnrollments clears the "enrollments" edge to the EmailSequenceEnrollment entity.
+func (m *EmailSequenceMutation) ClearEnrollments() {
+	m.clearedenrollments = true
+}
+
+// EnrollmentsCleared reports if the "enrollments" edge to the EmailSequenceEnrollment entity was cleared.
+func (m *EmailSequenceMutation) EnrollmentsCleared() bool {
+	return m.clearedenrollments
+}
+
+// RemoveEnrollmentIDs removes the "enrollments" edge to the EmailSequenceEnrollment entity by IDs.
+func (m *EmailSequenceMutation) RemoveEnrollmentIDs(ids ...int) {
+	if m.removedenrollments == nil {
+		m.removedenrollments = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.enrollments, ids[i])
+		m.removedenrollments[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedEnrollments returns the removed IDs of the "enrollments" edge to the EmailSequenceEnrollment entity.
+func (m *EmailSequenceMutation) RemovedEnrollmentsIDs() (ids []int) {
+	for id := range m.removedenrollments {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// EnrollmentsIDs returns the "enrollments" edge IDs in the mutation.
+func (m *EmailSequenceMutation) EnrollmentsIDs() (ids []int) {
+	for id := range m.enrollments {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetEnrollments resets all changes to the "enrollments" edge.
+func (m *EmailSequenceMutation) ResetEnrollments() {
+	m.enrollments = nil
+	m.clearedenrollments = false
+	m.removedenrollments = nil
+}
+
+// Where appends a list predicates to the EmailSequenceMutation builder.
+func (m *EmailSequenceMutation) Where(ps ...predicate.EmailSequence) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the EmailSequenceMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *EmailSequenceMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.EmailSequence, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *EmailSequenceMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *EmailSequenceMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (EmailSequence).
+func (m *EmailSequenceMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *EmailSequenceMutation) Fields() []string {
+	fields := make([]string, 0, 7)
+	if m.name != nil {
+		fields = append(fields, emailsequence.FieldName)
+	}
+	if m.description != nil {
+		fields = append(fields, emailsequence.FieldDescription)
+	}
+	if m.status != nil {
+		fields = append(fields, emailsequence.FieldStatus)
+	}
+	if m.trigger != nil {
+		fields = append(fields, emailsequence.FieldTrigger)
+	}
+	if m.created_by != nil {
+		fields = append(fields, emailsequence.FieldCreatedByUserID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, emailsequence.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, emailsequence.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *EmailSequenceMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case emailsequence.FieldName:
+		return m.Name()
+	case emailsequence.FieldDescription:
+		return m.Description()
+	case emailsequence.FieldStatus:
+		return m.Status()
+	case emailsequence.FieldTrigger:
+		return m.Trigger()
+	case emailsequence.FieldCreatedByUserID:
+		return m.CreatedByUserID()
+	case emailsequence.FieldCreatedAt:
+		return m.CreatedAt()
+	case emailsequence.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *EmailSequenceMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case emailsequence.FieldName:
+		return m.OldName(ctx)
+	case emailsequence.FieldDescription:
+		return m.OldDescription(ctx)
+	case emailsequence.FieldStatus:
+		return m.OldStatus(ctx)
+	case emailsequence.FieldTrigger:
+		return m.OldTrigger(ctx)
+	case emailsequence.FieldCreatedByUserID:
+		return m.OldCreatedByUserID(ctx)
+	case emailsequence.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case emailsequence.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown EmailSequence field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EmailSequenceMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case emailsequence.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case emailsequence.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case emailsequence.FieldStatus:
+		v, ok := value.(emailsequence.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case emailsequence.FieldTrigger:
+		v, ok := value.(emailsequence.Trigger)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTrigger(v)
+		return nil
+	case emailsequence.FieldCreatedByUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedByUserID(v)
+		return nil
+	case emailsequence.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case emailsequence.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequence field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *EmailSequenceMutation) AddedFields() []string {
+	var fields []string
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *EmailSequenceMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EmailSequenceMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown EmailSequence numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *EmailSequenceMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(emailsequence.FieldDescription) {
+		fields = append(fields, emailsequence.FieldDescription)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *EmailSequenceMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *EmailSequenceMutation) ClearField(name string) error {
+	switch name {
+	case emailsequence.FieldDescription:
+		m.ClearDescription()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequence nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *EmailSequenceMutation) ResetField(name string) error {
+	switch name {
+	case emailsequence.FieldName:
+		m.ResetName()
+		return nil
+	case emailsequence.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case emailsequence.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case emailsequence.FieldTrigger:
+		m.ResetTrigger()
+		return nil
+	case emailsequence.FieldCreatedByUserID:
+		m.ResetCreatedByUserID()
+		return nil
+	case emailsequence.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case emailsequence.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequence field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *EmailSequenceMutation) AddedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.created_by != nil {
+		edges = append(edges, emailsequence.EdgeCreatedBy)
+	}
+	if m.steps != nil {
+		edges = append(edges, emailsequence.EdgeSteps)
+	}
+	if m.enrollments != nil {
+		edges = append(edges, emailsequence.EdgeEnrollments)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *EmailSequenceMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case emailsequence.EdgeCreatedBy:
+		if id := m.created_by; id != nil {
+			return []ent.Value{*id}
+		}
+	case emailsequence.EdgeSteps:
+		ids := make([]ent.Value, 0, len(m.steps))
+		for id := range m.steps {
+			ids = append(ids, id)
+		}
+		return ids
+	case emailsequence.EdgeEnrollments:
+		ids := make([]ent.Value, 0, len(m.enrollments))
+		for id := range m.enrollments {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *EmailSequenceMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.removedsteps != nil {
+		edges = append(edges, emailsequence.EdgeSteps)
+	}
+	if m.removedenrollments != nil {
+		edges = append(edges, emailsequence.EdgeEnrollments)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *EmailSequenceMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case emailsequence.EdgeSteps:
+		ids := make([]ent.Value, 0, len(m.removedsteps))
+		for id := range m.removedsteps {
+			ids = append(ids, id)
+		}
+		return ids
+	case emailsequence.EdgeEnrollments:
+		ids := make([]ent.Value, 0, len(m.removedenrollments))
+		for id := range m.removedenrollments {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *EmailSequenceMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.clearedcreated_by {
+		edges = append(edges, emailsequence.EdgeCreatedBy)
+	}
+	if m.clearedsteps {
+		edges = append(edges, emailsequence.EdgeSteps)
+	}
+	if m.clearedenrollments {
+		edges = append(edges, emailsequence.EdgeEnrollments)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *EmailSequenceMutation) EdgeCleared(name string) bool {
+	switch name {
+	case emailsequence.EdgeCreatedBy:
+		return m.clearedcreated_by
+	case emailsequence.EdgeSteps:
+		return m.clearedsteps
+	case emailsequence.EdgeEnrollments:
+		return m.clearedenrollments
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *EmailSequenceMutation) ClearEdge(name string) error {
+	switch name {
+	case emailsequence.EdgeCreatedBy:
+		m.ClearCreatedBy()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequence unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *EmailSequenceMutation) ResetEdge(name string) error {
+	switch name {
+	case emailsequence.EdgeCreatedBy:
+		m.ResetCreatedBy()
+		return nil
+	case emailsequence.EdgeSteps:
+		m.ResetSteps()
+		return nil
+	case emailsequence.EdgeEnrollments:
+		m.ResetEnrollments()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequence edge %s", name)
+}
+
+// EmailSequenceEnrollmentMutation represents an operation that mutates the EmailSequenceEnrollment nodes in the graph.
+type EmailSequenceEnrollmentMutation struct {
+	config
+	op                 Op
+	typ                string
+	id                 *int
+	status             *emailsequenceenrollment.Status
+	current_step       *int
+	addcurrent_step    *int
+	enrolled_at        *time.Time
+	completed_at       *time.Time
+	created_at         *time.Time
+	updated_at         *time.Time
+	clearedFields      map[string]struct{}
+	sequence           *int
+	clearedsequence    bool
+	lead               *int
+	clearedlead        bool
+	enrolled_by        *int
+	clearedenrolled_by bool
+	sends              map[int]struct{}
+	removedsends       map[int]struct{}
+	clearedsends       bool
+	done               bool
+	oldValue           func(context.Context) (*EmailSequenceEnrollment, error)
+	predicates         []predicate.EmailSequenceEnrollment
+}
+
+var _ ent.Mutation = (*EmailSequenceEnrollmentMutation)(nil)
+
+// emailsequenceenrollmentOption allows management of the mutation configuration using functional options.
+type emailsequenceenrollmentOption func(*EmailSequenceEnrollmentMutation)
+
+// newEmailSequenceEnrollmentMutation creates new mutation for the EmailSequenceEnrollment entity.
+func newEmailSequenceEnrollmentMutation(c config, op Op, opts ...emailsequenceenrollmentOption) *EmailSequenceEnrollmentMutation {
+	m := &EmailSequenceEnrollmentMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeEmailSequenceEnrollment,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withEmailSequenceEnrollmentID sets the ID field of the mutation.
+func withEmailSequenceEnrollmentID(id int) emailsequenceenrollmentOption {
+	return func(m *EmailSequenceEnrollmentMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *EmailSequenceEnrollment
+		)
+		m.oldValue = func(ctx context.Context) (*EmailSequenceEnrollment, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().EmailSequenceEnrollment.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withEmailSequenceEnrollment sets the old EmailSequenceEnrollment of the mutation.
+func withEmailSequenceEnrollment(node *EmailSequenceEnrollment) emailsequenceenrollmentOption {
+	return func(m *EmailSequenceEnrollmentMutation) {
+		m.oldValue = func(context.Context) (*EmailSequenceEnrollment, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m EmailSequenceEnrollmentMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m EmailSequenceEnrollmentMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *EmailSequenceEnrollmentMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *EmailSequenceEnrollmentMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().EmailSequenceEnrollment.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetSequenceID sets the "sequence_id" field.
+func (m *EmailSequenceEnrollmentMutation) SetSequenceID(i int) {
+	m.sequence = &i
+}
+
+// SequenceID returns the value of the "sequence_id" field in the mutation.
+func (m *EmailSequenceEnrollmentMutation) SequenceID() (r int, exists bool) {
+	v := m.sequence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSequenceID returns the old "sequence_id" field's value of the EmailSequenceEnrollment entity.
+// If the EmailSequenceEnrollment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceEnrollmentMutation) OldSequenceID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSequenceID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSequenceID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSequenceID: %w", err)
+	}
+	return oldValue.SequenceID, nil
+}
+
+// ResetSequenceID resets all changes to the "sequence_id" field.
+func (m *EmailSequenceEnrollmentMutation) ResetSequenceID() {
+	m.sequence = nil
+}
+
+// SetLeadID sets the "lead_id" field.
+func (m *EmailSequenceEnrollmentMutation) SetLeadID(i int) {
+	m.lead = &i
+}
+
+// LeadID returns the value of the "lead_id" field in the mutation.
+func (m *EmailSequenceEnrollmentMutation) LeadID() (r int, exists bool) {
+	v := m.lead
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLeadID returns the old "lead_id" field's value of the EmailSequenceEnrollment entity.
+// If the EmailSequenceEnrollment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceEnrollmentMutation) OldLeadID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLeadID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLeadID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLeadID: %w", err)
+	}
+	return oldValue.LeadID, nil
+}
+
+// ResetLeadID resets all changes to the "lead_id" field.
+func (m *EmailSequenceEnrollmentMutation) ResetLeadID() {
+	m.lead = nil
+}
+
+// SetEnrolledByUserID sets the "enrolled_by_user_id" field.
+func (m *EmailSequenceEnrollmentMutation) SetEnrolledByUserID(i int) {
+	m.enrolled_by = &i
+}
+
+// EnrolledByUserID returns the value of the "enrolled_by_user_id" field in the mutation.
+func (m *EmailSequenceEnrollmentMutation) EnrolledByUserID() (r int, exists bool) {
+	v := m.enrolled_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnrolledByUserID returns the old "enrolled_by_user_id" field's value of the EmailSequenceEnrollment entity.
+// If the EmailSequenceEnrollment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceEnrollmentMutation) OldEnrolledByUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnrolledByUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnrolledByUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnrolledByUserID: %w", err)
+	}
+	return oldValue.EnrolledByUserID, nil
+}
+
+// ResetEnrolledByUserID resets all changes to the "enrolled_by_user_id" field.
+func (m *EmailSequenceEnrollmentMutation) ResetEnrolledByUserID() {
+	m.enrolled_by = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *EmailSequenceEnrollmentMutation) SetStatus(e emailsequenceenrollment.Status) {
+	m.status = &e
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *EmailSequenceEnrollmentMutation) Status() (r emailsequenceenrollment.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the EmailSequenceEnrollment entity.
+// If the EmailSequenceEnrollment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceEnrollmentMutation) OldStatus(ctx context.Context) (v emailsequenceenrollment.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *EmailSequenceEnrollmentMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetCurrentStep sets the "current_step" field.
+func (m *EmailSequenceEnrollmentMutation) SetCurrentStep(i int) {
+	m.current_step = &i
+	m.addcurrent_step = nil
+}
+
+// CurrentStep returns the value of the "current_step" field in the mutation.
+func (m *EmailSequenceEnrollmentMutation) CurrentStep() (r int, exists bool) {
+	v := m.current_step
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCurrentStep returns the old "current_step" field's value of the EmailSequenceEnrollment entity.
+// If the EmailSequenceEnrollment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceEnrollmentMutation) OldCurrentStep(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCurrentStep is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCurrentStep requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCurrentStep: %w", err)
+	}
+	return oldValue.CurrentStep, nil
+}
+
+// AddCurrentStep adds i to the "current_step" field.
+func (m *EmailSequenceEnrollmentMutation) AddCurrentStep(i int) {
+	if m.addcurrent_step != nil {
+		*m.addcurrent_step += i
+	} else {
+		m.addcurrent_step = &i
+	}
+}
+
+// AddedCurrentStep returns the value that was added to the "current_step" field in this mutation.
+func (m *EmailSequenceEnrollmentMutation) AddedCurrentStep() (r int, exists bool) {
+	v := m.addcurrent_step
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetCurrentStep resets all changes to the "current_step" field.
+func (m *EmailSequenceEnrollmentMutation) ResetCurrentStep() {
+	m.current_step = nil
+	m.addcurrent_step = nil
+}
+
+// SetEnrolledAt sets the "enrolled_at" field.
+func (m *EmailSequenceEnrollmentMutation) SetEnrolledAt(t time.Time) {
+	m.enrolled_at = &t
+}
+
+// EnrolledAt returns the value of the "enrolled_at" field in the mutation.
+func (m *EmailSequenceEnrollmentMutation) EnrolledAt() (r time.Time, exists bool) {
+	v := m.enrolled_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnrolledAt returns the old "enrolled_at" field's value of the EmailSequenceEnrollment entity.
+// If the EmailSequenceEnrollment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceEnrollmentMutation) OldEnrolledAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnrolledAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnrolledAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnrolledAt: %w", err)
+	}
+	return oldValue.EnrolledAt, nil
+}
+
+// ResetEnrolledAt resets all changes to the "enrolled_at" field.
+func (m *EmailSequenceEnrollmentMutation) ResetEnrolledAt() {
+	m.enrolled_at = nil
+}
+
+// SetCompletedAt sets the "completed_at" field.
+func (m *EmailSequenceEnrollmentMutation) SetCompletedAt(t time.Time) {
+	m.completed_at = &t
+}
+
+// CompletedAt returns the value of the "completed_at" field in the mutation.
+func (m *EmailSequenceEnrollmentMutation) CompletedAt() (r time.Time, exists bool) {
+	v := m.completed_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCompletedAt returns the old "completed_at" field's value of the EmailSequenceEnrollment entity.
+// If the EmailSequenceEnrollment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceEnrollmentMutation) OldCompletedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCompletedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCompletedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCompletedAt: %w", err)
+	}
+	return oldValue.CompletedAt, nil
+}
+
+// ClearCompletedAt clears the value of the "completed_at" field.
+func (m *EmailSequenceEnrollmentMutation) ClearCompletedAt() {
+	m.completed_at = nil
+	m.clearedFields[emailsequenceenrollment.FieldCompletedAt] = struct{}{}
+}
+
+// CompletedAtCleared returns if the "completed_at" field was cleared in this mutation.
+func (m *EmailSequenceEnrollmentMutation) CompletedAtCleared() bool {
+	_, ok := m.clearedFields[emailsequenceenrollment.FieldCompletedAt]
+	return ok
+}
+
+// ResetCompletedAt resets all changes to the "completed_at" field.
+func (m *EmailSequenceEnrollmentMutation) ResetCompletedAt() {
+	m.completed_at = nil
+	delete(m.clearedFields, emailsequenceenrollment.FieldCompletedAt)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *EmailSequenceEnrollmentMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *EmailSequenceEnrollmentMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the EmailSequenceEnrollment entity.
+// If the EmailSequenceEnrollment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceEnrollmentMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *EmailSequenceEnrollmentMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *EmailSequenceEnrollmentMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *EmailSequenceEnrollmentMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the EmailSequenceEnrollment entity.
+// If the EmailSequenceEnrollment object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceEnrollmentMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *EmailSequenceEnrollmentMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearSequence clears the "sequence" edge to the EmailSequence entity.
+func (m *EmailSequenceEnrollmentMutation) ClearSequence() {
+	m.clearedsequence = true
+	m.clearedFields[emailsequenceenrollment.FieldSequenceID] = struct{}{}
+}
+
+// SequenceCleared reports if the "sequence" edge to the EmailSequence entity was cleared.
+func (m *EmailSequenceEnrollmentMutation) SequenceCleared() bool {
+	return m.clearedsequence
+}
+
+// SequenceIDs returns the "sequence" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// SequenceID instead. It exists only for internal usage by the builders.
+func (m *EmailSequenceEnrollmentMutation) SequenceIDs() (ids []int) {
+	if id := m.sequence; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetSequence resets all changes to the "sequence" edge.
+func (m *EmailSequenceEnrollmentMutation) ResetSequence() {
+	m.sequence = nil
+	m.clearedsequence = false
+}
+
+// ClearLead clears the "lead" edge to the Lead entity.
+func (m *EmailSequenceEnrollmentMutation) ClearLead() {
+	m.clearedlead = true
+	m.clearedFields[emailsequenceenrollment.FieldLeadID] = struct{}{}
+}
+
+// LeadCleared reports if the "lead" edge to the Lead entity was cleared.
+func (m *EmailSequenceEnrollmentMutation) LeadCleared() bool {
+	return m.clearedlead
+}
+
+// LeadIDs returns the "lead" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// LeadID instead. It exists only for internal usage by the builders.
+func (m *EmailSequenceEnrollmentMutation) LeadIDs() (ids []int) {
+	if id := m.lead; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetLead resets all changes to the "lead" edge.
+func (m *EmailSequenceEnrollmentMutation) ResetLead() {
+	m.lead = nil
+	m.clearedlead = false
+}
+
+// SetEnrolledByID sets the "enrolled_by" edge to the User entity by id.
+func (m *EmailSequenceEnrollmentMutation) SetEnrolledByID(id int) {
+	m.enrolled_by = &id
+}
+
+// ClearEnrolledBy clears the "enrolled_by" edge to the User entity.
+func (m *EmailSequenceEnrollmentMutation) ClearEnrolledBy() {
+	m.clearedenrolled_by = true
+	m.clearedFields[emailsequenceenrollment.FieldEnrolledByUserID] = struct{}{}
+}
+
+// EnrolledByCleared reports if the "enrolled_by" edge to the User entity was cleared.
+func (m *EmailSequenceEnrollmentMutation) EnrolledByCleared() bool {
+	return m.clearedenrolled_by
+}
+
+// EnrolledByID returns the "enrolled_by" edge ID in the mutation.
+func (m *EmailSequenceEnrollmentMutation) EnrolledByID() (id int, exists bool) {
+	if m.enrolled_by != nil {
+		return *m.enrolled_by, true
+	}
+	return
+}
+
+// EnrolledByIDs returns the "enrolled_by" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// EnrolledByID instead. It exists only for internal usage by the builders.
+func (m *EmailSequenceEnrollmentMutation) EnrolledByIDs() (ids []int) {
+	if id := m.enrolled_by; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetEnrolledBy resets all changes to the "enrolled_by" edge.
+func (m *EmailSequenceEnrollmentMutation) ResetEnrolledBy() {
+	m.enrolled_by = nil
+	m.clearedenrolled_by = false
+}
+
+// AddSendIDs adds the "sends" edge to the EmailSequenceSend entity by ids.
+func (m *EmailSequenceEnrollmentMutation) AddSendIDs(ids ...int) {
+	if m.sends == nil {
+		m.sends = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.sends[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSends clears the "sends" edge to the EmailSequenceSend entity.
+func (m *EmailSequenceEnrollmentMutation) ClearSends() {
+	m.clearedsends = true
+}
+
+// SendsCleared reports if the "sends" edge to the EmailSequenceSend entity was cleared.
+func (m *EmailSequenceEnrollmentMutation) SendsCleared() bool {
+	return m.clearedsends
+}
+
+// RemoveSendIDs removes the "sends" edge to the EmailSequenceSend entity by IDs.
+func (m *EmailSequenceEnrollmentMutation) RemoveSendIDs(ids ...int) {
+	if m.removedsends == nil {
+		m.removedsends = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.sends, ids[i])
+		m.removedsends[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSends returns the removed IDs of the "sends" edge to the EmailSequenceSend entity.
+func (m *EmailSequenceEnrollmentMutation) RemovedSendsIDs() (ids []int) {
+	for id := range m.removedsends {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SendsIDs returns the "sends" edge IDs in the mutation.
+func (m *EmailSequenceEnrollmentMutation) SendsIDs() (ids []int) {
+	for id := range m.sends {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSends resets all changes to the "sends" edge.
+func (m *EmailSequenceEnrollmentMutation) ResetSends() {
+	m.sends = nil
+	m.clearedsends = false
+	m.removedsends = nil
+}
+
+// Where appends a list predicates to the EmailSequenceEnrollmentMutation builder.
+func (m *EmailSequenceEnrollmentMutation) Where(ps ...predicate.EmailSequenceEnrollment) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the EmailSequenceEnrollmentMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *EmailSequenceEnrollmentMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.EmailSequenceEnrollment, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *EmailSequenceEnrollmentMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *EmailSequenceEnrollmentMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (EmailSequenceEnrollment).
+func (m *EmailSequenceEnrollmentMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *EmailSequenceEnrollmentMutation) Fields() []string {
+	fields := make([]string, 0, 9)
+	if m.sequence != nil {
+		fields = append(fields, emailsequenceenrollment.FieldSequenceID)
+	}
+	if m.lead != nil {
+		fields = append(fields, emailsequenceenrollment.FieldLeadID)
+	}
+	if m.enrolled_by != nil {
+		fields = append(fields, emailsequenceenrollment.FieldEnrolledByUserID)
+	}
+	if m.status != nil {
+		fields = append(fields, emailsequenceenrollment.FieldStatus)
+	}
+	if m.current_step != nil {
+		fields = append(fields, emailsequenceenrollment.FieldCurrentStep)
+	}
+	if m.enrolled_at != nil {
+		fields = append(fields, emailsequenceenrollment.FieldEnrolledAt)
+	}
+	if m.completed_at != nil {
+		fields = append(fields, emailsequenceenrollment.FieldCompletedAt)
+	}
+	if m.created_at != nil {
+		fields = append(fields, emailsequenceenrollment.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, emailsequenceenrollment.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *EmailSequenceEnrollmentMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case emailsequenceenrollment.FieldSequenceID:
+		return m.SequenceID()
+	case emailsequenceenrollment.FieldLeadID:
+		return m.LeadID()
+	case emailsequenceenrollment.FieldEnrolledByUserID:
+		return m.EnrolledByUserID()
+	case emailsequenceenrollment.FieldStatus:
+		return m.Status()
+	case emailsequenceenrollment.FieldCurrentStep:
+		return m.CurrentStep()
+	case emailsequenceenrollment.FieldEnrolledAt:
+		return m.EnrolledAt()
+	case emailsequenceenrollment.FieldCompletedAt:
+		return m.CompletedAt()
+	case emailsequenceenrollment.FieldCreatedAt:
+		return m.CreatedAt()
+	case emailsequenceenrollment.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *EmailSequenceEnrollmentMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case emailsequenceenrollment.FieldSequenceID:
+		return m.OldSequenceID(ctx)
+	case emailsequenceenrollment.FieldLeadID:
+		return m.OldLeadID(ctx)
+	case emailsequenceenrollment.FieldEnrolledByUserID:
+		return m.OldEnrolledByUserID(ctx)
+	case emailsequenceenrollment.FieldStatus:
+		return m.OldStatus(ctx)
+	case emailsequenceenrollment.FieldCurrentStep:
+		return m.OldCurrentStep(ctx)
+	case emailsequenceenrollment.FieldEnrolledAt:
+		return m.OldEnrolledAt(ctx)
+	case emailsequenceenrollment.FieldCompletedAt:
+		return m.OldCompletedAt(ctx)
+	case emailsequenceenrollment.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case emailsequenceenrollment.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown EmailSequenceEnrollment field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EmailSequenceEnrollmentMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case emailsequenceenrollment.FieldSequenceID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSequenceID(v)
+		return nil
+	case emailsequenceenrollment.FieldLeadID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLeadID(v)
+		return nil
+	case emailsequenceenrollment.FieldEnrolledByUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnrolledByUserID(v)
+		return nil
+	case emailsequenceenrollment.FieldStatus:
+		v, ok := value.(emailsequenceenrollment.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case emailsequenceenrollment.FieldCurrentStep:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCurrentStep(v)
+		return nil
+	case emailsequenceenrollment.FieldEnrolledAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnrolledAt(v)
+		return nil
+	case emailsequenceenrollment.FieldCompletedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCompletedAt(v)
+		return nil
+	case emailsequenceenrollment.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case emailsequenceenrollment.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequenceEnrollment field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *EmailSequenceEnrollmentMutation) AddedFields() []string {
+	var fields []string
+	if m.addcurrent_step != nil {
+		fields = append(fields, emailsequenceenrollment.FieldCurrentStep)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *EmailSequenceEnrollmentMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case emailsequenceenrollment.FieldCurrentStep:
+		return m.AddedCurrentStep()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EmailSequenceEnrollmentMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case emailsequenceenrollment.FieldCurrentStep:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddCurrentStep(v)
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequenceEnrollment numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *EmailSequenceEnrollmentMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(emailsequenceenrollment.FieldCompletedAt) {
+		fields = append(fields, emailsequenceenrollment.FieldCompletedAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *EmailSequenceEnrollmentMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *EmailSequenceEnrollmentMutation) ClearField(name string) error {
+	switch name {
+	case emailsequenceenrollment.FieldCompletedAt:
+		m.ClearCompletedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequenceEnrollment nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *EmailSequenceEnrollmentMutation) ResetField(name string) error {
+	switch name {
+	case emailsequenceenrollment.FieldSequenceID:
+		m.ResetSequenceID()
+		return nil
+	case emailsequenceenrollment.FieldLeadID:
+		m.ResetLeadID()
+		return nil
+	case emailsequenceenrollment.FieldEnrolledByUserID:
+		m.ResetEnrolledByUserID()
+		return nil
+	case emailsequenceenrollment.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case emailsequenceenrollment.FieldCurrentStep:
+		m.ResetCurrentStep()
+		return nil
+	case emailsequenceenrollment.FieldEnrolledAt:
+		m.ResetEnrolledAt()
+		return nil
+	case emailsequenceenrollment.FieldCompletedAt:
+		m.ResetCompletedAt()
+		return nil
+	case emailsequenceenrollment.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case emailsequenceenrollment.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequenceEnrollment field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *EmailSequenceEnrollmentMutation) AddedEdges() []string {
+	edges := make([]string, 0, 4)
+	if m.sequence != nil {
+		edges = append(edges, emailsequenceenrollment.EdgeSequence)
+	}
+	if m.lead != nil {
+		edges = append(edges, emailsequenceenrollment.EdgeLead)
+	}
+	if m.enrolled_by != nil {
+		edges = append(edges, emailsequenceenrollment.EdgeEnrolledBy)
+	}
+	if m.sends != nil {
+		edges = append(edges, emailsequenceenrollment.EdgeSends)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *EmailSequenceEnrollmentMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case emailsequenceenrollment.EdgeSequence:
+		if id := m.sequence; id != nil {
+			return []ent.Value{*id}
+		}
+	case emailsequenceenrollment.EdgeLead:
+		if id := m.lead; id != nil {
+			return []ent.Value{*id}
+		}
+	case emailsequenceenrollment.EdgeEnrolledBy:
+		if id := m.enrolled_by; id != nil {
+			return []ent.Value{*id}
+		}
+	case emailsequenceenrollment.EdgeSends:
+		ids := make([]ent.Value, 0, len(m.sends))
+		for id := range m.sends {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *EmailSequenceEnrollmentMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 4)
+	if m.removedsends != nil {
+		edges = append(edges, emailsequenceenrollment.EdgeSends)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *EmailSequenceEnrollmentMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case emailsequenceenrollment.EdgeSends:
+		ids := make([]ent.Value, 0, len(m.removedsends))
+		for id := range m.removedsends {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *EmailSequenceEnrollmentMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 4)
+	if m.clearedsequence {
+		edges = append(edges, emailsequenceenrollment.EdgeSequence)
+	}
+	if m.clearedlead {
+		edges = append(edges, emailsequenceenrollment.EdgeLead)
+	}
+	if m.clearedenrolled_by {
+		edges = append(edges, emailsequenceenrollment.EdgeEnrolledBy)
+	}
+	if m.clearedsends {
+		edges = append(edges, emailsequenceenrollment.EdgeSends)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *EmailSequenceEnrollmentMutation) EdgeCleared(name string) bool {
+	switch name {
+	case emailsequenceenrollment.EdgeSequence:
+		return m.clearedsequence
+	case emailsequenceenrollment.EdgeLead:
+		return m.clearedlead
+	case emailsequenceenrollment.EdgeEnrolledBy:
+		return m.clearedenrolled_by
+	case emailsequenceenrollment.EdgeSends:
+		return m.clearedsends
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *EmailSequenceEnrollmentMutation) ClearEdge(name string) error {
+	switch name {
+	case emailsequenceenrollment.EdgeSequence:
+		m.ClearSequence()
+		return nil
+	case emailsequenceenrollment.EdgeLead:
+		m.ClearLead()
+		return nil
+	case emailsequenceenrollment.EdgeEnrolledBy:
+		m.ClearEnrolledBy()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequenceEnrollment unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *EmailSequenceEnrollmentMutation) ResetEdge(name string) error {
+	switch name {
+	case emailsequenceenrollment.EdgeSequence:
+		m.ResetSequence()
+		return nil
+	case emailsequenceenrollment.EdgeLead:
+		m.ResetLead()
+		return nil
+	case emailsequenceenrollment.EdgeEnrolledBy:
+		m.ResetEnrolledBy()
+		return nil
+	case emailsequenceenrollment.EdgeSends:
+		m.ResetSends()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequenceEnrollment edge %s", name)
+}
+
+// EmailSequenceSendMutation represents an operation that mutates the EmailSequenceSend nodes in the graph.
+type EmailSequenceSendMutation struct {
+	config
+	op                Op
+	typ               string
+	id                *int
+	status            *emailsequencesend.Status
+	scheduled_for     *time.Time
+	sent_at           *time.Time
+	opened_at         *time.Time
+	clicked_at        *time.Time
+	bounced           *bool
+	error_message     *string
+	created_at        *time.Time
+	updated_at        *time.Time
+	clearedFields     map[string]struct{}
+	enrollment        *int
+	clearedenrollment bool
+	step              *int
+	clearedstep       bool
+	lead              *int
+	clearedlead       bool
+	done              bool
+	oldValue          func(context.Context) (*EmailSequenceSend, error)
+	predicates        []predicate.EmailSequenceSend
+}
+
+var _ ent.Mutation = (*EmailSequenceSendMutation)(nil)
+
+// emailsequencesendOption allows management of the mutation configuration using functional options.
+type emailsequencesendOption func(*EmailSequenceSendMutation)
+
+// newEmailSequenceSendMutation creates new mutation for the EmailSequenceSend entity.
+func newEmailSequenceSendMutation(c config, op Op, opts ...emailsequencesendOption) *EmailSequenceSendMutation {
+	m := &EmailSequenceSendMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeEmailSequenceSend,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withEmailSequenceSendID sets the ID field of the mutation.
+func withEmailSequenceSendID(id int) emailsequencesendOption {
+	return func(m *EmailSequenceSendMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *EmailSequenceSend
+		)
+		m.oldValue = func(ctx context.Context) (*EmailSequenceSend, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().EmailSequenceSend.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withEmailSequenceSend sets the old EmailSequenceSend of the mutation.
+func withEmailSequenceSend(node *EmailSequenceSend) emailsequencesendOption {
+	return func(m *EmailSequenceSendMutation) {
+		m.oldValue = func(context.Context) (*EmailSequenceSend, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m EmailSequenceSendMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m EmailSequenceSendMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *EmailSequenceSendMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *EmailSequenceSendMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().EmailSequenceSend.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetEnrollmentID sets the "enrollment_id" field.
+func (m *EmailSequenceSendMutation) SetEnrollmentID(i int) {
+	m.enrollment = &i
+}
+
+// EnrollmentID returns the value of the "enrollment_id" field in the mutation.
+func (m *EmailSequenceSendMutation) EnrollmentID() (r int, exists bool) {
+	v := m.enrollment
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnrollmentID returns the old "enrollment_id" field's value of the EmailSequenceSend entity.
+// If the EmailSequenceSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceSendMutation) OldEnrollmentID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnrollmentID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnrollmentID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnrollmentID: %w", err)
+	}
+	return oldValue.EnrollmentID, nil
+}
+
+// ResetEnrollmentID resets all changes to the "enrollment_id" field.
+func (m *EmailSequenceSendMutation) ResetEnrollmentID() {
+	m.enrollment = nil
+}
+
+// SetStepID sets the "step_id" field.
+func (m *EmailSequenceSendMutation) SetStepID(i int) {
+	m.step = &i
+}
+
+// StepID returns the value of the "step_id" field in the mutation.
+func (m *EmailSequenceSendMutation) StepID() (r int, exists bool) {
+	v := m.step
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStepID returns the old "step_id" field's value of the EmailSequenceSend entity.
+// If the EmailSequenceSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceSendMutation) OldStepID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStepID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStepID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStepID: %w", err)
+	}
+	return oldValue.StepID, nil
+}
+
+// ResetStepID resets all changes to the "step_id" field.
+func (m *EmailSequenceSendMutation) ResetStepID() {
+	m.step = nil
+}
+
+// SetLeadID sets the "lead_id" field.
+func (m *EmailSequenceSendMutation) SetLeadID(i int) {
+	m.lead = &i
+}
+
+// LeadID returns the value of the "lead_id" field in the mutation.
+func (m *EmailSequenceSendMutation) LeadID() (r int, exists bool) {
+	v := m.lead
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLeadID returns the old "lead_id" field's value of the EmailSequenceSend entity.
+// If the EmailSequenceSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceSendMutation) OldLeadID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLeadID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLeadID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLeadID: %w", err)
+	}
+	return oldValue.LeadID, nil
+}
+
+// ResetLeadID resets all changes to the "lead_id" field.
+func (m *EmailSequenceSendMutation) ResetLeadID() {
+	m.lead = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *EmailSequenceSendMutation) SetStatus(e emailsequencesend.Status) {
+	m.status = &e
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *EmailSequenceSendMutation) Status() (r emailsequencesend.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the EmailSequenceSend entity.
+// If the EmailSequenceSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceSendMutation) OldStatus(ctx context.Context) (v emailsequencesend.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *EmailSequenceSendMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetScheduledFor sets the "scheduled_for" field.
+func (m *EmailSequenceSendMutation) SetScheduledFor(t time.Time) {
+	m.scheduled_for = &t
+}
+
+// ScheduledFor returns the value of the "scheduled_for" field in the mutation.
+func (m *EmailSequenceSendMutation) ScheduledFor() (r time.Time, exists bool) {
+	v := m.scheduled_for
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldScheduledFor returns the old "scheduled_for" field's value of the EmailSequenceSend entity.
+// If the EmailSequenceSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceSendMutation) OldScheduledFor(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldScheduledFor is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldScheduledFor requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldScheduledFor: %w", err)
+	}
+	return oldValue.ScheduledFor, nil
+}
+
+// ResetScheduledFor resets all changes to the "scheduled_for" field.
+func (m *EmailSequenceSendMutation) ResetScheduledFor() {
+	m.scheduled_for = nil
+}
+
+// SetSentAt sets the "sent_at" field.
+func (m *EmailSequenceSendMutation) SetSentAt(t time.Time) {
+	m.sent_at = &t
+}
+
+// SentAt returns the value of the "sent_at" field in the mutation.
+func (m *EmailSequenceSendMutation) SentAt() (r time.Time, exists bool) {
+	v := m.sent_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSentAt returns the old "sent_at" field's value of the EmailSequenceSend entity.
+// If the EmailSequenceSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceSendMutation) OldSentAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSentAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSentAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSentAt: %w", err)
+	}
+	return oldValue.SentAt, nil
+}
+
+// ClearSentAt clears the value of the "sent_at" field.
+func (m *EmailSequenceSendMutation) ClearSentAt() {
+	m.sent_at = nil
+	m.clearedFields[emailsequencesend.FieldSentAt] = struct{}{}
+}
+
+// SentAtCleared returns if the "sent_at" field was cleared in this mutation.
+func (m *EmailSequenceSendMutation) SentAtCleared() bool {
+	_, ok := m.clearedFields[emailsequencesend.FieldSentAt]
+	return ok
+}
+
+// ResetSentAt resets all changes to the "sent_at" field.
+func (m *EmailSequenceSendMutation) ResetSentAt() {
+	m.sent_at = nil
+	delete(m.clearedFields, emailsequencesend.FieldSentAt)
+}
+
+// SetOpenedAt sets the "opened_at" field.
+func (m *EmailSequenceSendMutation) SetOpenedAt(t time.Time) {
+	m.opened_at = &t
+}
+
+// OpenedAt returns the value of the "opened_at" field in the mutation.
+func (m *EmailSequenceSendMutation) OpenedAt() (r time.Time, exists bool) {
+	v := m.opened_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOpenedAt returns the old "opened_at" field's value of the EmailSequenceSend entity.
+// If the EmailSequenceSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceSendMutation) OldOpenedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOpenedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOpenedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOpenedAt: %w", err)
+	}
+	return oldValue.OpenedAt, nil
+}
+
+// ClearOpenedAt clears the value of the "opened_at" field.
+func (m *EmailSequenceSendMutation) ClearOpenedAt() {
+	m.opened_at = nil
+	m.clearedFields[emailsequencesend.FieldOpenedAt] = struct{}{}
+}
+
+// OpenedAtCleared returns if the "opened_at" field was cleared in this mutation.
+func (m *EmailSequenceSendMutation) OpenedAtCleared() bool {
+	_, ok := m.clearedFields[emailsequencesend.FieldOpenedAt]
+	return ok
+}
+
+// ResetOpenedAt resets all changes to the "opened_at" field.
+func (m *EmailSequenceSendMutation) ResetOpenedAt() {
+	m.opened_at = nil
+	delete(m.clearedFields, emailsequencesend.FieldOpenedAt)
+}
+
+// SetClickedAt sets the "clicked_at" field.
+func (m *EmailSequenceSendMutation) SetClickedAt(t time.Time) {
+	m.clicked_at = &t
+}
+
+// ClickedAt returns the value of the "clicked_at" field in the mutation.
+func (m *EmailSequenceSendMutation) ClickedAt() (r time.Time, exists bool) {
+	v := m.clicked_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldClickedAt returns the old "clicked_at" field's value of the EmailSequenceSend entity.
+// If the EmailSequenceSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceSendMutation) OldClickedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldClickedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldClickedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldClickedAt: %w", err)
+	}
+	return oldValue.ClickedAt, nil
+}
+
+// ClearClickedAt clears the value of the "clicked_at" field.
+func (m *EmailSequenceSendMutation) ClearClickedAt() {
+	m.clicked_at = nil
+	m.clearedFields[emailsequencesend.FieldClickedAt] = struct{}{}
+}
+
+// ClickedAtCleared returns if the "clicked_at" field was cleared in this mutation.
+func (m *EmailSequenceSendMutation) ClickedAtCleared() bool {
+	_, ok := m.clearedFields[emailsequencesend.FieldClickedAt]
+	return ok
+}
+
+// ResetClickedAt resets all changes to the "clicked_at" field.
+func (m *EmailSequenceSendMutation) ResetClickedAt() {
+	m.clicked_at = nil
+	delete(m.clearedFields, emailsequencesend.FieldClickedAt)
+}
+
+// SetBounced sets the "bounced" field.
+func (m *EmailSequenceSendMutation) SetBounced(b bool) {
+	m.bounced = &b
+}
+
+// Bounced returns the value of the "bounced" field in the mutation.
+func (m *EmailSequenceSendMutation) Bounced() (r bool, exists bool) {
+	v := m.bounced
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBounced returns the old "bounced" field's value of the EmailSequenceSend entity.
+// If the EmailSequenceSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceSendMutation) OldBounced(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBounced is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBounced requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBounced: %w", err)
+	}
+	return oldValue.Bounced, nil
+}
+
+// ResetBounced resets all changes to the "bounced" field.
+func (m *EmailSequenceSendMutation) ResetBounced() {
+	m.bounced = nil
+}
+
+// SetErrorMessage sets the "error_message" field.
+func (m *EmailSequenceSendMutation) SetErrorMessage(s string) {
+	m.error_message = &s
+}
+
+// ErrorMessage returns the value of the "error_message" field in the mutation.
+func (m *EmailSequenceSendMutation) ErrorMessage() (r string, exists bool) {
+	v := m.error_message
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldErrorMessage returns the old "error_message" field's value of the EmailSequenceSend entity.
+// If the EmailSequenceSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceSendMutation) OldErrorMessage(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldErrorMessage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldErrorMessage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldErrorMessage: %w", err)
+	}
+	return oldValue.ErrorMessage, nil
+}
+
+// ClearErrorMessage clears the value of the "error_message" field.
+func (m *EmailSequenceSendMutation) ClearErrorMessage() {
+	m.error_message = nil
+	m.clearedFields[emailsequencesend.FieldErrorMessage] = struct{}{}
+}
+
+// ErrorMessageCleared returns if the "error_message" field was cleared in this mutation.
+func (m *EmailSequenceSendMutation) ErrorMessageCleared() bool {
+	_, ok := m.clearedFields[emailsequencesend.FieldErrorMessage]
+	return ok
+}
+
+// ResetErrorMessage resets all changes to the "error_message" field.
+func (m *EmailSequenceSendMutation) ResetErrorMessage() {
+	m.error_message = nil
+	delete(m.clearedFields, emailsequencesend.FieldErrorMessage)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *EmailSequenceSendMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *EmailSequenceSendMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the EmailSequenceSend entity.
+// If the EmailSequenceSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceSendMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *EmailSequenceSendMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *EmailSequenceSendMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *EmailSequenceSendMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the EmailSequenceSend entity.
+// If the EmailSequenceSend object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceSendMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *EmailSequenceSendMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearEnrollment clears the "enrollment" edge to the EmailSequenceEnrollment entity.
+func (m *EmailSequenceSendMutation) ClearEnrollment() {
+	m.clearedenrollment = true
+	m.clearedFields[emailsequencesend.FieldEnrollmentID] = struct{}{}
+}
+
+// EnrollmentCleared reports if the "enrollment" edge to the EmailSequenceEnrollment entity was cleared.
+func (m *EmailSequenceSendMutation) EnrollmentCleared() bool {
+	return m.clearedenrollment
+}
+
+// EnrollmentIDs returns the "enrollment" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// EnrollmentID instead. It exists only for internal usage by the builders.
+func (m *EmailSequenceSendMutation) EnrollmentIDs() (ids []int) {
+	if id := m.enrollment; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetEnrollment resets all changes to the "enrollment" edge.
+func (m *EmailSequenceSendMutation) ResetEnrollment() {
+	m.enrollment = nil
+	m.clearedenrollment = false
+}
+
+// ClearStep clears the "step" edge to the EmailSequenceStep entity.
+func (m *EmailSequenceSendMutation) ClearStep() {
+	m.clearedstep = true
+	m.clearedFields[emailsequencesend.FieldStepID] = struct{}{}
+}
+
+// StepCleared reports if the "step" edge to the EmailSequenceStep entity was cleared.
+func (m *EmailSequenceSendMutation) StepCleared() bool {
+	return m.clearedstep
+}
+
+// StepIDs returns the "step" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// StepID instead. It exists only for internal usage by the builders.
+func (m *EmailSequenceSendMutation) StepIDs() (ids []int) {
+	if id := m.step; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetStep resets all changes to the "step" edge.
+func (m *EmailSequenceSendMutation) ResetStep() {
+	m.step = nil
+	m.clearedstep = false
+}
+
+// ClearLead clears the "lead" edge to the Lead entity.
+func (m *EmailSequenceSendMutation) ClearLead() {
+	m.clearedlead = true
+	m.clearedFields[emailsequencesend.FieldLeadID] = struct{}{}
+}
+
+// LeadCleared reports if the "lead" edge to the Lead entity was cleared.
+func (m *EmailSequenceSendMutation) LeadCleared() bool {
+	return m.clearedlead
+}
+
+// LeadIDs returns the "lead" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// LeadID instead. It exists only for internal usage by the builders.
+func (m *EmailSequenceSendMutation) LeadIDs() (ids []int) {
+	if id := m.lead; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetLead resets all changes to the "lead" edge.
+func (m *EmailSequenceSendMutation) ResetLead() {
+	m.lead = nil
+	m.clearedlead = false
+}
+
+// Where appends a list predicates to the EmailSequenceSendMutation builder.
+func (m *EmailSequenceSendMutation) Where(ps ...predicate.EmailSequenceSend) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the EmailSequenceSendMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *EmailSequenceSendMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.EmailSequenceSend, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *EmailSequenceSendMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *EmailSequenceSendMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (EmailSequenceSend).
+func (m *EmailSequenceSendMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *EmailSequenceSendMutation) Fields() []string {
+	fields := make([]string, 0, 12)
+	if m.enrollment != nil {
+		fields = append(fields, emailsequencesend.FieldEnrollmentID)
+	}
+	if m.step != nil {
+		fields = append(fields, emailsequencesend.FieldStepID)
+	}
+	if m.lead != nil {
+		fields = append(fields, emailsequencesend.FieldLeadID)
+	}
+	if m.status != nil {
+		fields = append(fields, emailsequencesend.FieldStatus)
+	}
+	if m.scheduled_for != nil {
+		fields = append(fields, emailsequencesend.FieldScheduledFor)
+	}
+	if m.sent_at != nil {
+		fields = append(fields, emailsequencesend.FieldSentAt)
+	}
+	if m.opened_at != nil {
+		fields = append(fields, emailsequencesend.FieldOpenedAt)
+	}
+	if m.clicked_at != nil {
+		fields = append(fields, emailsequencesend.FieldClickedAt)
+	}
+	if m.bounced != nil {
+		fields = append(fields, emailsequencesend.FieldBounced)
+	}
+	if m.error_message != nil {
+		fields = append(fields, emailsequencesend.FieldErrorMessage)
+	}
+	if m.created_at != nil {
+		fields = append(fields, emailsequencesend.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, emailsequencesend.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *EmailSequenceSendMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case emailsequencesend.FieldEnrollmentID:
+		return m.EnrollmentID()
+	case emailsequencesend.FieldStepID:
+		return m.StepID()
+	case emailsequencesend.FieldLeadID:
+		return m.LeadID()
+	case emailsequencesend.FieldStatus:
+		return m.Status()
+	case emailsequencesend.FieldScheduledFor:
+		return m.ScheduledFor()
+	case emailsequencesend.FieldSentAt:
+		return m.SentAt()
+	case emailsequencesend.FieldOpenedAt:
+		return m.OpenedAt()
+	case emailsequencesend.FieldClickedAt:
+		return m.ClickedAt()
+	case emailsequencesend.FieldBounced:
+		return m.Bounced()
+	case emailsequencesend.FieldErrorMessage:
+		return m.ErrorMessage()
+	case emailsequencesend.FieldCreatedAt:
+		return m.CreatedAt()
+	case emailsequencesend.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *EmailSequenceSendMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case emailsequencesend.FieldEnrollmentID:
+		return m.OldEnrollmentID(ctx)
+	case emailsequencesend.FieldStepID:
+		return m.OldStepID(ctx)
+	case emailsequencesend.FieldLeadID:
+		return m.OldLeadID(ctx)
+	case emailsequencesend.FieldStatus:
+		return m.OldStatus(ctx)
+	case emailsequencesend.FieldScheduledFor:
+		return m.OldScheduledFor(ctx)
+	case emailsequencesend.FieldSentAt:
+		return m.OldSentAt(ctx)
+	case emailsequencesend.FieldOpenedAt:
+		return m.OldOpenedAt(ctx)
+	case emailsequencesend.FieldClickedAt:
+		return m.OldClickedAt(ctx)
+	case emailsequencesend.FieldBounced:
+		return m.OldBounced(ctx)
+	case emailsequencesend.FieldErrorMessage:
+		return m.OldErrorMessage(ctx)
+	case emailsequencesend.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case emailsequencesend.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown EmailSequenceSend field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EmailSequenceSendMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case emailsequencesend.FieldEnrollmentID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnrollmentID(v)
+		return nil
+	case emailsequencesend.FieldStepID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStepID(v)
+		return nil
+	case emailsequencesend.FieldLeadID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLeadID(v)
+		return nil
+	case emailsequencesend.FieldStatus:
+		v, ok := value.(emailsequencesend.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case emailsequencesend.FieldScheduledFor:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetScheduledFor(v)
+		return nil
+	case emailsequencesend.FieldSentAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSentAt(v)
+		return nil
+	case emailsequencesend.FieldOpenedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOpenedAt(v)
+		return nil
+	case emailsequencesend.FieldClickedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetClickedAt(v)
+		return nil
+	case emailsequencesend.FieldBounced:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBounced(v)
+		return nil
+	case emailsequencesend.FieldErrorMessage:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetErrorMessage(v)
+		return nil
+	case emailsequencesend.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case emailsequencesend.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequenceSend field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *EmailSequenceSendMutation) AddedFields() []string {
+	var fields []string
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *EmailSequenceSendMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EmailSequenceSendMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown EmailSequenceSend numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *EmailSequenceSendMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(emailsequencesend.FieldSentAt) {
+		fields = append(fields, emailsequencesend.FieldSentAt)
+	}
+	if m.FieldCleared(emailsequencesend.FieldOpenedAt) {
+		fields = append(fields, emailsequencesend.FieldOpenedAt)
+	}
+	if m.FieldCleared(emailsequencesend.FieldClickedAt) {
+		fields = append(fields, emailsequencesend.FieldClickedAt)
+	}
+	if m.FieldCleared(emailsequencesend.FieldErrorMessage) {
+		fields = append(fields, emailsequencesend.FieldErrorMessage)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *EmailSequenceSendMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *EmailSequenceSendMutation) ClearField(name string) error {
+	switch name {
+	case emailsequencesend.FieldSentAt:
+		m.ClearSentAt()
+		return nil
+	case emailsequencesend.FieldOpenedAt:
+		m.ClearOpenedAt()
+		return nil
+	case emailsequencesend.FieldClickedAt:
+		m.ClearClickedAt()
+		return nil
+	case emailsequencesend.FieldErrorMessage:
+		m.ClearErrorMessage()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequenceSend nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *EmailSequenceSendMutation) ResetField(name string) error {
+	switch name {
+	case emailsequencesend.FieldEnrollmentID:
+		m.ResetEnrollmentID()
+		return nil
+	case emailsequencesend.FieldStepID:
+		m.ResetStepID()
+		return nil
+	case emailsequencesend.FieldLeadID:
+		m.ResetLeadID()
+		return nil
+	case emailsequencesend.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case emailsequencesend.FieldScheduledFor:
+		m.ResetScheduledFor()
+		return nil
+	case emailsequencesend.FieldSentAt:
+		m.ResetSentAt()
+		return nil
+	case emailsequencesend.FieldOpenedAt:
+		m.ResetOpenedAt()
+		return nil
+	case emailsequencesend.FieldClickedAt:
+		m.ResetClickedAt()
+		return nil
+	case emailsequencesend.FieldBounced:
+		m.ResetBounced()
+		return nil
+	case emailsequencesend.FieldErrorMessage:
+		m.ResetErrorMessage()
+		return nil
+	case emailsequencesend.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case emailsequencesend.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequenceSend field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *EmailSequenceSendMutation) AddedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.enrollment != nil {
+		edges = append(edges, emailsequencesend.EdgeEnrollment)
+	}
+	if m.step != nil {
+		edges = append(edges, emailsequencesend.EdgeStep)
+	}
+	if m.lead != nil {
+		edges = append(edges, emailsequencesend.EdgeLead)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *EmailSequenceSendMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case emailsequencesend.EdgeEnrollment:
+		if id := m.enrollment; id != nil {
+			return []ent.Value{*id}
+		}
+	case emailsequencesend.EdgeStep:
+		if id := m.step; id != nil {
+			return []ent.Value{*id}
+		}
+	case emailsequencesend.EdgeLead:
+		if id := m.lead; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *EmailSequenceSendMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 3)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *EmailSequenceSendMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *EmailSequenceSendMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.clearedenrollment {
+		edges = append(edges, emailsequencesend.EdgeEnrollment)
+	}
+	if m.clearedstep {
+		edges = append(edges, emailsequencesend.EdgeStep)
+	}
+	if m.clearedlead {
+		edges = append(edges, emailsequencesend.EdgeLead)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *EmailSequenceSendMutation) EdgeCleared(name string) bool {
+	switch name {
+	case emailsequencesend.EdgeEnrollment:
+		return m.clearedenrollment
+	case emailsequencesend.EdgeStep:
+		return m.clearedstep
+	case emailsequencesend.EdgeLead:
+		return m.clearedlead
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *EmailSequenceSendMutation) ClearEdge(name string) error {
+	switch name {
+	case emailsequencesend.EdgeEnrollment:
+		m.ClearEnrollment()
+		return nil
+	case emailsequencesend.EdgeStep:
+		m.ClearStep()
+		return nil
+	case emailsequencesend.EdgeLead:
+		m.ClearLead()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequenceSend unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *EmailSequenceSendMutation) ResetEdge(name string) error {
+	switch name {
+	case emailsequencesend.EdgeEnrollment:
+		m.ResetEnrollment()
+		return nil
+	case emailsequencesend.EdgeStep:
+		m.ResetStep()
+		return nil
+	case emailsequencesend.EdgeLead:
+		m.ResetLead()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequenceSend edge %s", name)
+}
+
+// EmailSequenceStepMutation represents an operation that mutates the EmailSequenceStep nodes in the graph.
+type EmailSequenceStepMutation struct {
+	config
+	op              Op
+	typ             string
+	id              *int
+	step_order      *int
+	addstep_order   *int
+	delay_days      *int
+	adddelay_days   *int
+	subject         *string
+	body            *string
+	created_at      *time.Time
+	clearedFields   map[string]struct{}
+	sequence        *int
+	clearedsequence bool
+	sends           map[int]struct{}
+	removedsends    map[int]struct{}
+	clearedsends    bool
+	done            bool
+	oldValue        func(context.Context) (*EmailSequenceStep, error)
+	predicates      []predicate.EmailSequenceStep
+}
+
+var _ ent.Mutation = (*EmailSequenceStepMutation)(nil)
+
+// emailsequencestepOption allows management of the mutation configuration using functional options.
+type emailsequencestepOption func(*EmailSequenceStepMutation)
+
+// newEmailSequenceStepMutation creates new mutation for the EmailSequenceStep entity.
+func newEmailSequenceStepMutation(c config, op Op, opts ...emailsequencestepOption) *EmailSequenceStepMutation {
+	m := &EmailSequenceStepMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeEmailSequenceStep,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withEmailSequenceStepID sets the ID field of the mutation.
+func withEmailSequenceStepID(id int) emailsequencestepOption {
+	return func(m *EmailSequenceStepMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *EmailSequenceStep
+		)
+		m.oldValue = func(ctx context.Context) (*EmailSequenceStep, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().EmailSequenceStep.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withEmailSequenceStep sets the old EmailSequenceStep of the mutation.
+func withEmailSequenceStep(node *EmailSequenceStep) emailsequencestepOption {
+	return func(m *EmailSequenceStepMutation) {
+		m.oldValue = func(context.Context) (*EmailSequenceStep, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m EmailSequenceStepMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m EmailSequenceStepMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *EmailSequenceStepMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *EmailSequenceStepMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().EmailSequenceStep.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetSequenceID sets the "sequence_id" field.
+func (m *EmailSequenceStepMutation) SetSequenceID(i int) {
+	m.sequence = &i
+}
+
+// SequenceID returns the value of the "sequence_id" field in the mutation.
+func (m *EmailSequenceStepMutation) SequenceID() (r int, exists bool) {
+	v := m.sequence
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSequenceID returns the old "sequence_id" field's value of the EmailSequenceStep entity.
+// If the EmailSequenceStep object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceStepMutation) OldSequenceID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSequenceID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSequenceID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSequenceID: %w", err)
+	}
+	return oldValue.SequenceID, nil
+}
+
+// ResetSequenceID resets all changes to the "sequence_id" field.
+func (m *EmailSequenceStepMutation) ResetSequenceID() {
+	m.sequence = nil
+}
+
+// SetStepOrder sets the "step_order" field.
+func (m *EmailSequenceStepMutation) SetStepOrder(i int) {
+	m.step_order = &i
+	m.addstep_order = nil
+}
+
+// StepOrder returns the value of the "step_order" field in the mutation.
+func (m *EmailSequenceStepMutation) StepOrder() (r int, exists bool) {
+	v := m.step_order
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStepOrder returns the old "step_order" field's value of the EmailSequenceStep entity.
+// If the EmailSequenceStep object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceStepMutation) OldStepOrder(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStepOrder is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStepOrder requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStepOrder: %w", err)
+	}
+	return oldValue.StepOrder, nil
+}
+
+// AddStepOrder adds i to the "step_order" field.
+func (m *EmailSequenceStepMutation) AddStepOrder(i int) {
+	if m.addstep_order != nil {
+		*m.addstep_order += i
+	} else {
+		m.addstep_order = &i
+	}
+}
+
+// AddedStepOrder returns the value that was added to the "step_order" field in this mutation.
+func (m *EmailSequenceStepMutation) AddedStepOrder() (r int, exists bool) {
+	v := m.addstep_order
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetStepOrder resets all changes to the "step_order" field.
+func (m *EmailSequenceStepMutation) ResetStepOrder() {
+	m.step_order = nil
+	m.addstep_order = nil
+}
+
+// SetDelayDays sets the "delay_days" field.
+func (m *EmailSequenceStepMutation) SetDelayDays(i int) {
+	m.delay_days = &i
+	m.adddelay_days = nil
+}
+
+// DelayDays returns the value of the "delay_days" field in the mutation.
+func (m *EmailSequenceStepMutation) DelayDays() (r int, exists bool) {
+	v := m.delay_days
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDelayDays returns the old "delay_days" field's value of the EmailSequenceStep entity.
+// If the EmailSequenceStep object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceStepMutation) OldDelayDays(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDelayDays is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDelayDays requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDelayDays: %w", err)
+	}
+	return oldValue.DelayDays, nil
+}
+
+// AddDelayDays adds i to the "delay_days" field.
+func (m *EmailSequenceStepMutation) AddDelayDays(i int) {
+	if m.adddelay_days != nil {
+		*m.adddelay_days += i
+	} else {
+		m.adddelay_days = &i
+	}
+}
+
+// AddedDelayDays returns the value that was added to the "delay_days" field in this mutation.
+func (m *EmailSequenceStepMutation) AddedDelayDays() (r int, exists bool) {
+	v := m.adddelay_days
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetDelayDays resets all changes to the "delay_days" field.
+func (m *EmailSequenceStepMutation) ResetDelayDays() {
+	m.delay_days = nil
+	m.adddelay_days = nil
+}
+
+// SetSubject sets the "subject" field.
+func (m *EmailSequenceStepMutation) SetSubject(s string) {
+	m.subject = &s
+}
+
+// Subject returns the value of the "subject" field in the mutation.
+func (m *EmailSequenceStepMutation) Subject() (r string, exists bool) {
+	v := m.subject
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSubject returns the old "subject" field's value of the EmailSequenceStep entity.
+// If the EmailSequenceStep object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceStepMutation) OldSubject(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSubject is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSubject requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSubject: %w", err)
+	}
+	return oldValue.Subject, nil
+}
+
+// ResetSubject resets all changes to the "subject" field.
+func (m *EmailSequenceStepMutation) ResetSubject() {
+	m.subject = nil
+}
+
+// SetBody sets the "body" field.
+func (m *EmailSequenceStepMutation) SetBody(s string) {
+	m.body = &s
+}
+
+// Body returns the value of the "body" field in the mutation.
+func (m *EmailSequenceStepMutation) Body() (r string, exists bool) {
+	v := m.body
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBody returns the old "body" field's value of the EmailSequenceStep entity.
+// If the EmailSequenceStep object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceStepMutation) OldBody(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBody is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBody requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBody: %w", err)
+	}
+	return oldValue.Body, nil
+}
+
+// ResetBody resets all changes to the "body" field.
+func (m *EmailSequenceStepMutation) ResetBody() {
+	m.body = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *EmailSequenceStepMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *EmailSequenceStepMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the EmailSequenceStep entity.
+// If the EmailSequenceStep object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailSequenceStepMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *EmailSequenceStepMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// ClearSequence clears the "sequence" edge to the EmailSequence entity.
+func (m *EmailSequenceStepMutation) ClearSequence() {
+	m.clearedsequence = true
+	m.clearedFields[emailsequencestep.FieldSequenceID] = struct{}{}
+}
+
+// SequenceCleared reports if the "sequence" edge to the EmailSequence entity was cleared.
+func (m *EmailSequenceStepMutation) SequenceCleared() bool {
+	return m.clearedsequence
+}
+
+// SequenceIDs returns the "sequence" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// SequenceID instead. It exists only for internal usage by the builders.
+func (m *EmailSequenceStepMutation) SequenceIDs() (ids []int) {
+	if id := m.sequence; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetSequence resets all changes to the "sequence" edge.
+func (m *EmailSequenceStepMutation) ResetSequence() {
+	m.sequence = nil
+	m.clearedsequence = false
+}
+
+// AddSendIDs adds the "sends" edge to the EmailSequenceSend entity by ids.
+func (m *EmailSequenceStepMutation) AddSendIDs(ids ...int) {
+	if m.sends == nil {
+		m.sends = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.sends[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSends clears the "sends" edge to the EmailSequenceSend entity.
+func (m *EmailSequenceStepMutation) ClearSends() {
+	m.clearedsends = true
+}
+
+// SendsCleared reports if the "sends" edge to the EmailSequenceSend entity was cleared.
+func (m *EmailSequenceStepMutation) SendsCleared() bool {
+	return m.clearedsends
+}
+
+// RemoveSendIDs removes the "sends" edge to the EmailSequenceSend entity by IDs.
+func (m *EmailSequenceStepMutation) RemoveSendIDs(ids ...int) {
+	if m.removedsends == nil {
+		m.removedsends = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.sends, ids[i])
+		m.removedsends[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSends returns the removed IDs of the "sends" edge to the EmailSequenceSend entity.
+func (m *EmailSequenceStepMutation) RemovedSendsIDs() (ids []int) {
+	for id := range m.removedsends {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SendsIDs returns the "sends" edge IDs in the mutation.
+func (m *EmailSequenceStepMutation) SendsIDs() (ids []int) {
+	for id := range m.sends {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSends resets all changes to the "sends" edge.
+func (m *EmailSequenceStepMutation) ResetSends() {
+	m.sends = nil
+	m.clearedsends = false
+	m.removedsends = nil
+}
+
+// Where appends a list predicates to the EmailSequenceStepMutation builder.
+func (m *EmailSequenceStepMutation) Where(ps ...predicate.EmailSequenceStep) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the EmailSequenceStepMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *EmailSequenceStepMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.EmailSequenceStep, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *EmailSequenceStepMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *EmailSequenceStepMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (EmailSequenceStep).
+func (m *EmailSequenceStepMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *EmailSequenceStepMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.sequence != nil {
+		fields = append(fields, emailsequencestep.FieldSequenceID)
+	}
+	if m.step_order != nil {
+		fields = append(fields, emailsequencestep.FieldStepOrder)
+	}
+	if m.delay_days != nil {
+		fields = append(fields, emailsequencestep.FieldDelayDays)
+	}
+	if m.subject != nil {
+		fields = append(fields, emailsequencestep.FieldSubject)
+	}
+	if m.body != nil {
+		fields = append(fields, emailsequencestep.FieldBody)
+	}
+	if m.created_at != nil {
+		fields = append(fields, emailsequencestep.FieldCreatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *EmailSequenceStepMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case emailsequencestep.FieldSequenceID:
+		return m.SequenceID()
+	case emailsequencestep.FieldStepOrder:
+		return m.StepOrder()
+	case emailsequencestep.FieldDelayDays:
+		return m.DelayDays()
+	case emailsequencestep.FieldSubject:
+		return m.Subject()
+	case emailsequencestep.FieldBody:
+		return m.Body()
+	case emailsequencestep.FieldCreatedAt:
+		return m.CreatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *EmailSequenceStepMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case emailsequencestep.FieldSequenceID:
+		return m.OldSequenceID(ctx)
+	case emailsequencestep.FieldStepOrder:
+		return m.OldStepOrder(ctx)
+	case emailsequencestep.FieldDelayDays:
+		return m.OldDelayDays(ctx)
+	case emailsequencestep.FieldSubject:
+		return m.OldSubject(ctx)
+	case emailsequencestep.FieldBody:
+		return m.OldBody(ctx)
+	case emailsequencestep.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown EmailSequenceStep field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EmailSequenceStepMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case emailsequencestep.FieldSequenceID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSequenceID(v)
+		return nil
+	case emailsequencestep.FieldStepOrder:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStepOrder(v)
+		return nil
+	case emailsequencestep.FieldDelayDays:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDelayDays(v)
+		return nil
+	case emailsequencestep.FieldSubject:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSubject(v)
+		return nil
+	case emailsequencestep.FieldBody:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBody(v)
+		return nil
+	case emailsequencestep.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequenceStep field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *EmailSequenceStepMutation) AddedFields() []string {
+	var fields []string
+	if m.addstep_order != nil {
+		fields = append(fields, emailsequencestep.FieldStepOrder)
+	}
+	if m.adddelay_days != nil {
+		fields = append(fields, emailsequencestep.FieldDelayDays)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *EmailSequenceStepMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case emailsequencestep.FieldStepOrder:
+		return m.AddedStepOrder()
+	case emailsequencestep.FieldDelayDays:
+		return m.AddedDelayDays()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EmailSequenceStepMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case emailsequencestep.FieldStepOrder:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddStepOrder(v)
+		return nil
+	case emailsequencestep.FieldDelayDays:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddDelayDays(v)
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequenceStep numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *EmailSequenceStepMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *EmailSequenceStepMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *EmailSequenceStepMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown EmailSequenceStep nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *EmailSequenceStepMutation) ResetField(name string) error {
+	switch name {
+	case emailsequencestep.FieldSequenceID:
+		m.ResetSequenceID()
+		return nil
+	case emailsequencestep.FieldStepOrder:
+		m.ResetStepOrder()
+		return nil
+	case emailsequencestep.FieldDelayDays:
+		m.ResetDelayDays()
+		return nil
+	case emailsequencestep.FieldSubject:
+		m.ResetSubject()
+		return nil
+	case emailsequencestep.FieldBody:
+		m.ResetBody()
+		return nil
+	case emailsequencestep.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequenceStep field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *EmailSequenceStepMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.sequence != nil {
+		edges = append(edges, emailsequencestep.EdgeSequence)
+	}
+	if m.sends != nil {
+		edges = append(edges, emailsequencestep.EdgeSends)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *EmailSequenceStepMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case emailsequencestep.EdgeSequence:
+		if id := m.sequence; id != nil {
+			return []ent.Value{*id}
+		}
+	case emailsequencestep.EdgeSends:
+		ids := make([]ent.Value, 0, len(m.sends))
+		for id := range m.sends {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *EmailSequenceStepMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.removedsends != nil {
+		edges = append(edges, emailsequencestep.EdgeSends)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *EmailSequenceStepMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case emailsequencestep.EdgeSends:
+		ids := make([]ent.Value, 0, len(m.removedsends))
+		for id := range m.removedsends {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *EmailSequenceStepMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedsequence {
+		edges = append(edges, emailsequencestep.EdgeSequence)
+	}
+	if m.clearedsends {
+		edges = append(edges, emailsequencestep.EdgeSends)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *EmailSequenceStepMutation) EdgeCleared(name string) bool {
+	switch name {
+	case emailsequencestep.EdgeSequence:
+		return m.clearedsequence
+	case emailsequencestep.EdgeSends:
+		return m.clearedsends
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *EmailSequenceStepMutation) ClearEdge(name string) error {
+	switch name {
+	case emailsequencestep.EdgeSequence:
+		m.ClearSequence()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequenceStep unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *EmailSequenceStepMutation) ResetEdge(name string) error {
+	switch name {
+	case emailsequencestep.EdgeSequence:
+		m.ResetSequence()
+		return nil
+	case emailsequencestep.EdgeSends:
+		m.ResetSends()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailSequenceStep edge %s", name)
 }
 
 // ExportMutation represents an operation that mutates the Export nodes in the graph.
@@ -4183,52 +8113,58 @@ func (m *IndustryMutation) ResetEdge(name string) error {
 // LeadMutation represents an operation that mutates the Lead nodes in the graph.
 type LeadMutation struct {
 	config
-	op                    Op
-	typ                   string
-	id                    *int
-	name                  *string
-	industry              *lead.Industry
-	country               *string
-	city                  *string
-	address               *string
-	postal_code           *string
-	phone                 *string
-	email                 *string
-	website               *string
-	social_media          *map[string]string
-	latitude              *float64
-	addlatitude           *float64
-	longitude             *float64
-	addlongitude          *float64
-	verified              *bool
-	quality_score         *int
-	addquality_score      *int
-	status                *lead.Status
-	status_changed_at     *time.Time
-	custom_fields         *map[string]interface{}
-	osm_id                *string
-	metadata              *map[string]interface{}
-	sub_niche             *string
-	specialties           *[]string
-	appendspecialties     []string
-	cuisine_type          *string
-	sport_type            *string
-	tattoo_style          *string
-	created_at            *time.Time
-	updated_at            *time.Time
-	clearedFields         map[string]struct{}
-	notes                 map[int]struct{}
-	removednotes          map[int]struct{}
-	clearednotes          bool
-	status_history        map[int]struct{}
-	removedstatus_history map[int]struct{}
-	clearedstatus_history bool
-	assignments           map[int]struct{}
-	removedassignments    map[int]struct{}
-	clearedassignments    bool
-	done                  bool
-	oldValue              func(context.Context) (*Lead, error)
-	predicates            []predicate.Lead
+	op                                Op
+	typ                               string
+	id                                *int
+	name                              *string
+	industry                          *lead.Industry
+	country                           *string
+	city                              *string
+	address                           *string
+	postal_code                       *string
+	phone                             *string
+	email                             *string
+	website                           *string
+	social_media                      *map[string]string
+	latitude                          *float64
+	addlatitude                       *float64
+	longitude                         *float64
+	addlongitude                      *float64
+	verified                          *bool
+	quality_score                     *int
+	addquality_score                  *int
+	status                            *lead.Status
+	status_changed_at                 *time.Time
+	custom_fields                     *map[string]interface{}
+	osm_id                            *string
+	metadata                          *map[string]interface{}
+	sub_niche                         *string
+	specialties                       *[]string
+	appendspecialties                 []string
+	cuisine_type                      *string
+	sport_type                        *string
+	tattoo_style                      *string
+	created_at                        *time.Time
+	updated_at                        *time.Time
+	clearedFields                     map[string]struct{}
+	notes                             map[int]struct{}
+	removednotes                      map[int]struct{}
+	clearednotes                      bool
+	status_history                    map[int]struct{}
+	removedstatus_history             map[int]struct{}
+	clearedstatus_history             bool
+	assignments                       map[int]struct{}
+	removedassignments                map[int]struct{}
+	clearedassignments                bool
+	email_sequence_enrollments        map[int]struct{}
+	removedemail_sequence_enrollments map[int]struct{}
+	clearedemail_sequence_enrollments bool
+	email_sequence_sends              map[int]struct{}
+	removedemail_sequence_sends       map[int]struct{}
+	clearedemail_sequence_sends       bool
+	done                              bool
+	oldValue                          func(context.Context) (*Lead, error)
+	predicates                        []predicate.Lead
 }
 
 var _ ent.Mutation = (*LeadMutation)(nil)
@@ -5713,6 +9649,114 @@ func (m *LeadMutation) ResetAssignments() {
 	m.removedassignments = nil
 }
 
+// AddEmailSequenceEnrollmentIDs adds the "email_sequence_enrollments" edge to the EmailSequenceEnrollment entity by ids.
+func (m *LeadMutation) AddEmailSequenceEnrollmentIDs(ids ...int) {
+	if m.email_sequence_enrollments == nil {
+		m.email_sequence_enrollments = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.email_sequence_enrollments[ids[i]] = struct{}{}
+	}
+}
+
+// ClearEmailSequenceEnrollments clears the "email_sequence_enrollments" edge to the EmailSequenceEnrollment entity.
+func (m *LeadMutation) ClearEmailSequenceEnrollments() {
+	m.clearedemail_sequence_enrollments = true
+}
+
+// EmailSequenceEnrollmentsCleared reports if the "email_sequence_enrollments" edge to the EmailSequenceEnrollment entity was cleared.
+func (m *LeadMutation) EmailSequenceEnrollmentsCleared() bool {
+	return m.clearedemail_sequence_enrollments
+}
+
+// RemoveEmailSequenceEnrollmentIDs removes the "email_sequence_enrollments" edge to the EmailSequenceEnrollment entity by IDs.
+func (m *LeadMutation) RemoveEmailSequenceEnrollmentIDs(ids ...int) {
+	if m.removedemail_sequence_enrollments == nil {
+		m.removedemail_sequence_enrollments = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.email_sequence_enrollments, ids[i])
+		m.removedemail_sequence_enrollments[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedEmailSequenceEnrollments returns the removed IDs of the "email_sequence_enrollments" edge to the EmailSequenceEnrollment entity.
+func (m *LeadMutation) RemovedEmailSequenceEnrollmentsIDs() (ids []int) {
+	for id := range m.removedemail_sequence_enrollments {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// EmailSequenceEnrollmentsIDs returns the "email_sequence_enrollments" edge IDs in the mutation.
+func (m *LeadMutation) EmailSequenceEnrollmentsIDs() (ids []int) {
+	for id := range m.email_sequence_enrollments {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetEmailSequenceEnrollments resets all changes to the "email_sequence_enrollments" edge.
+func (m *LeadMutation) ResetEmailSequenceEnrollments() {
+	m.email_sequence_enrollments = nil
+	m.clearedemail_sequence_enrollments = false
+	m.removedemail_sequence_enrollments = nil
+}
+
+// AddEmailSequenceSendIDs adds the "email_sequence_sends" edge to the EmailSequenceSend entity by ids.
+func (m *LeadMutation) AddEmailSequenceSendIDs(ids ...int) {
+	if m.email_sequence_sends == nil {
+		m.email_sequence_sends = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.email_sequence_sends[ids[i]] = struct{}{}
+	}
+}
+
+// ClearEmailSequenceSends clears the "email_sequence_sends" edge to the EmailSequenceSend entity.
+func (m *LeadMutation) ClearEmailSequenceSends() {
+	m.clearedemail_sequence_sends = true
+}
+
+// EmailSequenceSendsCleared reports if the "email_sequence_sends" edge to the EmailSequenceSend entity was cleared.
+func (m *LeadMutation) EmailSequenceSendsCleared() bool {
+	return m.clearedemail_sequence_sends
+}
+
+// RemoveEmailSequenceSendIDs removes the "email_sequence_sends" edge to the EmailSequenceSend entity by IDs.
+func (m *LeadMutation) RemoveEmailSequenceSendIDs(ids ...int) {
+	if m.removedemail_sequence_sends == nil {
+		m.removedemail_sequence_sends = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.email_sequence_sends, ids[i])
+		m.removedemail_sequence_sends[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedEmailSequenceSends returns the removed IDs of the "email_sequence_sends" edge to the EmailSequenceSend entity.
+func (m *LeadMutation) RemovedEmailSequenceSendsIDs() (ids []int) {
+	for id := range m.removedemail_sequence_sends {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// EmailSequenceSendsIDs returns the "email_sequence_sends" edge IDs in the mutation.
+func (m *LeadMutation) EmailSequenceSendsIDs() (ids []int) {
+	for id := range m.email_sequence_sends {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetEmailSequenceSends resets all changes to the "email_sequence_sends" edge.
+func (m *LeadMutation) ResetEmailSequenceSends() {
+	m.email_sequence_sends = nil
+	m.clearedemail_sequence_sends = false
+	m.removedemail_sequence_sends = nil
+}
+
 // Where appends a list predicates to the LeadMutation builder.
 func (m *LeadMutation) Where(ps ...predicate.Lead) {
 	m.predicates = append(m.predicates, ps...)
@@ -6409,7 +10453,7 @@ func (m *LeadMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *LeadMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 5)
 	if m.notes != nil {
 		edges = append(edges, lead.EdgeNotes)
 	}
@@ -6418,6 +10462,12 @@ func (m *LeadMutation) AddedEdges() []string {
 	}
 	if m.assignments != nil {
 		edges = append(edges, lead.EdgeAssignments)
+	}
+	if m.email_sequence_enrollments != nil {
+		edges = append(edges, lead.EdgeEmailSequenceEnrollments)
+	}
+	if m.email_sequence_sends != nil {
+		edges = append(edges, lead.EdgeEmailSequenceSends)
 	}
 	return edges
 }
@@ -6444,13 +10494,25 @@ func (m *LeadMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case lead.EdgeEmailSequenceEnrollments:
+		ids := make([]ent.Value, 0, len(m.email_sequence_enrollments))
+		for id := range m.email_sequence_enrollments {
+			ids = append(ids, id)
+		}
+		return ids
+	case lead.EdgeEmailSequenceSends:
+		ids := make([]ent.Value, 0, len(m.email_sequence_sends))
+		for id := range m.email_sequence_sends {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *LeadMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 5)
 	if m.removednotes != nil {
 		edges = append(edges, lead.EdgeNotes)
 	}
@@ -6459,6 +10521,12 @@ func (m *LeadMutation) RemovedEdges() []string {
 	}
 	if m.removedassignments != nil {
 		edges = append(edges, lead.EdgeAssignments)
+	}
+	if m.removedemail_sequence_enrollments != nil {
+		edges = append(edges, lead.EdgeEmailSequenceEnrollments)
+	}
+	if m.removedemail_sequence_sends != nil {
+		edges = append(edges, lead.EdgeEmailSequenceSends)
 	}
 	return edges
 }
@@ -6485,13 +10553,25 @@ func (m *LeadMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case lead.EdgeEmailSequenceEnrollments:
+		ids := make([]ent.Value, 0, len(m.removedemail_sequence_enrollments))
+		for id := range m.removedemail_sequence_enrollments {
+			ids = append(ids, id)
+		}
+		return ids
+	case lead.EdgeEmailSequenceSends:
+		ids := make([]ent.Value, 0, len(m.removedemail_sequence_sends))
+		for id := range m.removedemail_sequence_sends {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *LeadMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 5)
 	if m.clearednotes {
 		edges = append(edges, lead.EdgeNotes)
 	}
@@ -6500,6 +10580,12 @@ func (m *LeadMutation) ClearedEdges() []string {
 	}
 	if m.clearedassignments {
 		edges = append(edges, lead.EdgeAssignments)
+	}
+	if m.clearedemail_sequence_enrollments {
+		edges = append(edges, lead.EdgeEmailSequenceEnrollments)
+	}
+	if m.clearedemail_sequence_sends {
+		edges = append(edges, lead.EdgeEmailSequenceSends)
 	}
 	return edges
 }
@@ -6514,6 +10600,10 @@ func (m *LeadMutation) EdgeCleared(name string) bool {
 		return m.clearedstatus_history
 	case lead.EdgeAssignments:
 		return m.clearedassignments
+	case lead.EdgeEmailSequenceEnrollments:
+		return m.clearedemail_sequence_enrollments
+	case lead.EdgeEmailSequenceSends:
+		return m.clearedemail_sequence_sends
 	}
 	return false
 }
@@ -6538,6 +10628,12 @@ func (m *LeadMutation) ResetEdge(name string) error {
 		return nil
 	case lead.EdgeAssignments:
 		m.ResetAssignments()
+		return nil
+	case lead.EdgeEmailSequenceEnrollments:
+		m.ResetEmailSequenceEnrollments()
+		return nil
+	case lead.EdgeEmailSequenceSends:
+		m.ResetEmailSequenceSends()
 		return nil
 	}
 	return fmt.Errorf("unknown Lead edge %s", name)
@@ -13320,79 +17416,85 @@ func (m *UsageLogMutation) ResetEdge(name string) error {
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
 	config
-	op                                  Op
-	typ                                 string
-	id                                  *int
-	email                               *string
-	password_hash                       *string
-	name                                *string
-	subscription_tier                   *user.SubscriptionTier
-	role                                *user.Role
-	usage_count                         *int
-	addusage_count                      *int
-	usage_limit                         *int
-	addusage_limit                      *int
-	last_reset_at                       *time.Time
-	last_login_at                       *time.Time
-	email_verified                      *bool
-	email_verification_token            *string
-	email_verification_token_expires_at *time.Time
-	email_verified_at                   *time.Time
-	accepted_terms_at                   *time.Time
-	onboarding_completed                *bool
-	totp_enabled                        *bool
-	totp_secret                         *string
-	oauth_provider                      *string
-	oauth_id                            *string
-	stripe_customer_id                  *string
-	created_at                          *time.Time
-	updated_at                          *time.Time
-	deleted_at                          *time.Time
-	onboarding_step                     *int
-	addonboarding_step                  *int
-	clearedFields                       map[string]struct{}
-	subscriptions                       map[int]struct{}
-	removedsubscriptions                map[int]struct{}
-	clearedsubscriptions                bool
-	exports                             map[int]struct{}
-	removedexports                      map[int]struct{}
-	clearedexports                      bool
-	api_keys                            map[int]struct{}
-	removedapi_keys                     map[int]struct{}
-	clearedapi_keys                     bool
-	audit_logs                          map[int]struct{}
-	removedaudit_logs                   map[int]struct{}
-	clearedaudit_logs                   bool
-	usage_logs                          map[int]struct{}
-	removedusage_logs                   map[int]struct{}
-	clearedusage_logs                   bool
-	owned_organizations                 map[int]struct{}
-	removedowned_organizations          map[int]struct{}
-	clearedowned_organizations          bool
-	organization_memberships            map[int]struct{}
-	removedorganization_memberships     map[int]struct{}
-	clearedorganization_memberships     bool
-	saved_searches                      map[int]struct{}
-	removedsaved_searches               map[int]struct{}
-	clearedsaved_searches               bool
-	webhooks                            map[int]struct{}
-	removedwebhooks                     map[int]struct{}
-	clearedwebhooks                     bool
-	lead_notes                          map[int]struct{}
-	removedlead_notes                   map[int]struct{}
-	clearedlead_notes                   bool
-	lead_status_changes                 map[int]struct{}
-	removedlead_status_changes          map[int]struct{}
-	clearedlead_status_changes          bool
-	assigned_leads                      map[int]struct{}
-	removedassigned_leads               map[int]struct{}
-	clearedassigned_leads               bool
-	lead_assignments_made               map[int]struct{}
-	removedlead_assignments_made        map[int]struct{}
-	clearedlead_assignments_made        bool
-	done                                bool
-	oldValue                            func(context.Context) (*User, error)
-	predicates                          []predicate.User
+	op                                     Op
+	typ                                    string
+	id                                     *int
+	email                                  *string
+	password_hash                          *string
+	name                                   *string
+	subscription_tier                      *user.SubscriptionTier
+	role                                   *user.Role
+	usage_count                            *int
+	addusage_count                         *int
+	usage_limit                            *int
+	addusage_limit                         *int
+	last_reset_at                          *time.Time
+	last_login_at                          *time.Time
+	email_verified                         *bool
+	email_verification_token               *string
+	email_verification_token_expires_at    *time.Time
+	email_verified_at                      *time.Time
+	accepted_terms_at                      *time.Time
+	onboarding_completed                   *bool
+	totp_enabled                           *bool
+	totp_secret                            *string
+	oauth_provider                         *string
+	oauth_id                               *string
+	stripe_customer_id                     *string
+	created_at                             *time.Time
+	updated_at                             *time.Time
+	deleted_at                             *time.Time
+	onboarding_step                        *int
+	addonboarding_step                     *int
+	clearedFields                          map[string]struct{}
+	subscriptions                          map[int]struct{}
+	removedsubscriptions                   map[int]struct{}
+	clearedsubscriptions                   bool
+	exports                                map[int]struct{}
+	removedexports                         map[int]struct{}
+	clearedexports                         bool
+	api_keys                               map[int]struct{}
+	removedapi_keys                        map[int]struct{}
+	clearedapi_keys                        bool
+	audit_logs                             map[int]struct{}
+	removedaudit_logs                      map[int]struct{}
+	clearedaudit_logs                      bool
+	usage_logs                             map[int]struct{}
+	removedusage_logs                      map[int]struct{}
+	clearedusage_logs                      bool
+	owned_organizations                    map[int]struct{}
+	removedowned_organizations             map[int]struct{}
+	clearedowned_organizations             bool
+	organization_memberships               map[int]struct{}
+	removedorganization_memberships        map[int]struct{}
+	clearedorganization_memberships        bool
+	saved_searches                         map[int]struct{}
+	removedsaved_searches                  map[int]struct{}
+	clearedsaved_searches                  bool
+	webhooks                               map[int]struct{}
+	removedwebhooks                        map[int]struct{}
+	clearedwebhooks                        bool
+	lead_notes                             map[int]struct{}
+	removedlead_notes                      map[int]struct{}
+	clearedlead_notes                      bool
+	lead_status_changes                    map[int]struct{}
+	removedlead_status_changes             map[int]struct{}
+	clearedlead_status_changes             bool
+	assigned_leads                         map[int]struct{}
+	removedassigned_leads                  map[int]struct{}
+	clearedassigned_leads                  bool
+	lead_assignments_made                  map[int]struct{}
+	removedlead_assignments_made           map[int]struct{}
+	clearedlead_assignments_made           bool
+	email_sequences_created                map[int]struct{}
+	removedemail_sequences_created         map[int]struct{}
+	clearedemail_sequences_created         bool
+	email_sequence_enrollments_made        map[int]struct{}
+	removedemail_sequence_enrollments_made map[int]struct{}
+	clearedemail_sequence_enrollments_made bool
+	done                                   bool
+	oldValue                               func(context.Context) (*User, error)
+	predicates                             []predicate.User
 }
 
 var _ ent.Mutation = (*UserMutation)(nil)
@@ -15249,6 +19351,114 @@ func (m *UserMutation) ResetLeadAssignmentsMade() {
 	m.removedlead_assignments_made = nil
 }
 
+// AddEmailSequencesCreatedIDs adds the "email_sequences_created" edge to the EmailSequence entity by ids.
+func (m *UserMutation) AddEmailSequencesCreatedIDs(ids ...int) {
+	if m.email_sequences_created == nil {
+		m.email_sequences_created = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.email_sequences_created[ids[i]] = struct{}{}
+	}
+}
+
+// ClearEmailSequencesCreated clears the "email_sequences_created" edge to the EmailSequence entity.
+func (m *UserMutation) ClearEmailSequencesCreated() {
+	m.clearedemail_sequences_created = true
+}
+
+// EmailSequencesCreatedCleared reports if the "email_sequences_created" edge to the EmailSequence entity was cleared.
+func (m *UserMutation) EmailSequencesCreatedCleared() bool {
+	return m.clearedemail_sequences_created
+}
+
+// RemoveEmailSequencesCreatedIDs removes the "email_sequences_created" edge to the EmailSequence entity by IDs.
+func (m *UserMutation) RemoveEmailSequencesCreatedIDs(ids ...int) {
+	if m.removedemail_sequences_created == nil {
+		m.removedemail_sequences_created = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.email_sequences_created, ids[i])
+		m.removedemail_sequences_created[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedEmailSequencesCreated returns the removed IDs of the "email_sequences_created" edge to the EmailSequence entity.
+func (m *UserMutation) RemovedEmailSequencesCreatedIDs() (ids []int) {
+	for id := range m.removedemail_sequences_created {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// EmailSequencesCreatedIDs returns the "email_sequences_created" edge IDs in the mutation.
+func (m *UserMutation) EmailSequencesCreatedIDs() (ids []int) {
+	for id := range m.email_sequences_created {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetEmailSequencesCreated resets all changes to the "email_sequences_created" edge.
+func (m *UserMutation) ResetEmailSequencesCreated() {
+	m.email_sequences_created = nil
+	m.clearedemail_sequences_created = false
+	m.removedemail_sequences_created = nil
+}
+
+// AddEmailSequenceEnrollmentsMadeIDs adds the "email_sequence_enrollments_made" edge to the EmailSequenceEnrollment entity by ids.
+func (m *UserMutation) AddEmailSequenceEnrollmentsMadeIDs(ids ...int) {
+	if m.email_sequence_enrollments_made == nil {
+		m.email_sequence_enrollments_made = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.email_sequence_enrollments_made[ids[i]] = struct{}{}
+	}
+}
+
+// ClearEmailSequenceEnrollmentsMade clears the "email_sequence_enrollments_made" edge to the EmailSequenceEnrollment entity.
+func (m *UserMutation) ClearEmailSequenceEnrollmentsMade() {
+	m.clearedemail_sequence_enrollments_made = true
+}
+
+// EmailSequenceEnrollmentsMadeCleared reports if the "email_sequence_enrollments_made" edge to the EmailSequenceEnrollment entity was cleared.
+func (m *UserMutation) EmailSequenceEnrollmentsMadeCleared() bool {
+	return m.clearedemail_sequence_enrollments_made
+}
+
+// RemoveEmailSequenceEnrollmentsMadeIDs removes the "email_sequence_enrollments_made" edge to the EmailSequenceEnrollment entity by IDs.
+func (m *UserMutation) RemoveEmailSequenceEnrollmentsMadeIDs(ids ...int) {
+	if m.removedemail_sequence_enrollments_made == nil {
+		m.removedemail_sequence_enrollments_made = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.email_sequence_enrollments_made, ids[i])
+		m.removedemail_sequence_enrollments_made[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedEmailSequenceEnrollmentsMade returns the removed IDs of the "email_sequence_enrollments_made" edge to the EmailSequenceEnrollment entity.
+func (m *UserMutation) RemovedEmailSequenceEnrollmentsMadeIDs() (ids []int) {
+	for id := range m.removedemail_sequence_enrollments_made {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// EmailSequenceEnrollmentsMadeIDs returns the "email_sequence_enrollments_made" edge IDs in the mutation.
+func (m *UserMutation) EmailSequenceEnrollmentsMadeIDs() (ids []int) {
+	for id := range m.email_sequence_enrollments_made {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetEmailSequenceEnrollmentsMade resets all changes to the "email_sequence_enrollments_made" edge.
+func (m *UserMutation) ResetEmailSequenceEnrollmentsMade() {
+	m.email_sequence_enrollments_made = nil
+	m.clearedemail_sequence_enrollments_made = false
+	m.removedemail_sequence_enrollments_made = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -15875,7 +20085,7 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 13)
+	edges := make([]string, 0, 15)
 	if m.subscriptions != nil {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -15914,6 +20124,12 @@ func (m *UserMutation) AddedEdges() []string {
 	}
 	if m.lead_assignments_made != nil {
 		edges = append(edges, user.EdgeLeadAssignmentsMade)
+	}
+	if m.email_sequences_created != nil {
+		edges = append(edges, user.EdgeEmailSequencesCreated)
+	}
+	if m.email_sequence_enrollments_made != nil {
+		edges = append(edges, user.EdgeEmailSequenceEnrollmentsMade)
 	}
 	return edges
 }
@@ -16000,13 +20216,25 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeEmailSequencesCreated:
+		ids := make([]ent.Value, 0, len(m.email_sequences_created))
+		for id := range m.email_sequences_created {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgeEmailSequenceEnrollmentsMade:
+		ids := make([]ent.Value, 0, len(m.email_sequence_enrollments_made))
+		for id := range m.email_sequence_enrollments_made {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 13)
+	edges := make([]string, 0, 15)
 	if m.removedsubscriptions != nil {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -16045,6 +20273,12 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedlead_assignments_made != nil {
 		edges = append(edges, user.EdgeLeadAssignmentsMade)
+	}
+	if m.removedemail_sequences_created != nil {
+		edges = append(edges, user.EdgeEmailSequencesCreated)
+	}
+	if m.removedemail_sequence_enrollments_made != nil {
+		edges = append(edges, user.EdgeEmailSequenceEnrollmentsMade)
 	}
 	return edges
 }
@@ -16131,13 +20365,25 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeEmailSequencesCreated:
+		ids := make([]ent.Value, 0, len(m.removedemail_sequences_created))
+		for id := range m.removedemail_sequences_created {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgeEmailSequenceEnrollmentsMade:
+		ids := make([]ent.Value, 0, len(m.removedemail_sequence_enrollments_made))
+		for id := range m.removedemail_sequence_enrollments_made {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 13)
+	edges := make([]string, 0, 15)
 	if m.clearedsubscriptions {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -16177,6 +20423,12 @@ func (m *UserMutation) ClearedEdges() []string {
 	if m.clearedlead_assignments_made {
 		edges = append(edges, user.EdgeLeadAssignmentsMade)
 	}
+	if m.clearedemail_sequences_created {
+		edges = append(edges, user.EdgeEmailSequencesCreated)
+	}
+	if m.clearedemail_sequence_enrollments_made {
+		edges = append(edges, user.EdgeEmailSequenceEnrollmentsMade)
+	}
 	return edges
 }
 
@@ -16210,6 +20462,10 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedassigned_leads
 	case user.EdgeLeadAssignmentsMade:
 		return m.clearedlead_assignments_made
+	case user.EdgeEmailSequencesCreated:
+		return m.clearedemail_sequences_created
+	case user.EdgeEmailSequenceEnrollmentsMade:
+		return m.clearedemail_sequence_enrollments_made
 	}
 	return false
 }
@@ -16264,6 +20520,12 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgeLeadAssignmentsMade:
 		m.ResetLeadAssignmentsMade()
+		return nil
+	case user.EdgeEmailSequencesCreated:
+		m.ResetEmailSequencesCreated()
+		return nil
+	case user.EdgeEmailSequenceEnrollmentsMade:
+		m.ResetEmailSequenceEnrollmentsMade()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

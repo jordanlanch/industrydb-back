@@ -7,6 +7,10 @@ import (
 
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
+	"github.com/jordanlanch/industrydb/ent/emailsequence"
+	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
+	"github.com/jordanlanch/industrydb/ent/emailsequencesend"
+	"github.com/jordanlanch/industrydb/ent/emailsequencestep"
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/industry"
 	"github.com/jordanlanch/industrydb/ent/lead"
@@ -71,6 +75,144 @@ func init() {
 	auditlogDescCreatedAt := auditlogFields[9].Descriptor()
 	// auditlog.DefaultCreatedAt holds the default value on creation for the created_at field.
 	auditlog.DefaultCreatedAt = auditlogDescCreatedAt.Default.(func() time.Time)
+	emailsequenceFields := schema.EmailSequence{}.Fields()
+	_ = emailsequenceFields
+	// emailsequenceDescName is the schema descriptor for name field.
+	emailsequenceDescName := emailsequenceFields[0].Descriptor()
+	// emailsequence.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	emailsequence.NameValidator = func() func(string) error {
+		validators := emailsequenceDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// emailsequenceDescCreatedByUserID is the schema descriptor for created_by_user_id field.
+	emailsequenceDescCreatedByUserID := emailsequenceFields[4].Descriptor()
+	// emailsequence.CreatedByUserIDValidator is a validator for the "created_by_user_id" field. It is called by the builders before save.
+	emailsequence.CreatedByUserIDValidator = emailsequenceDescCreatedByUserID.Validators[0].(func(int) error)
+	// emailsequenceDescCreatedAt is the schema descriptor for created_at field.
+	emailsequenceDescCreatedAt := emailsequenceFields[5].Descriptor()
+	// emailsequence.DefaultCreatedAt holds the default value on creation for the created_at field.
+	emailsequence.DefaultCreatedAt = emailsequenceDescCreatedAt.Default.(func() time.Time)
+	// emailsequenceDescUpdatedAt is the schema descriptor for updated_at field.
+	emailsequenceDescUpdatedAt := emailsequenceFields[6].Descriptor()
+	// emailsequence.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	emailsequence.DefaultUpdatedAt = emailsequenceDescUpdatedAt.Default.(func() time.Time)
+	// emailsequence.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	emailsequence.UpdateDefaultUpdatedAt = emailsequenceDescUpdatedAt.UpdateDefault.(func() time.Time)
+	emailsequenceenrollmentFields := schema.EmailSequenceEnrollment{}.Fields()
+	_ = emailsequenceenrollmentFields
+	// emailsequenceenrollmentDescSequenceID is the schema descriptor for sequence_id field.
+	emailsequenceenrollmentDescSequenceID := emailsequenceenrollmentFields[0].Descriptor()
+	// emailsequenceenrollment.SequenceIDValidator is a validator for the "sequence_id" field. It is called by the builders before save.
+	emailsequenceenrollment.SequenceIDValidator = emailsequenceenrollmentDescSequenceID.Validators[0].(func(int) error)
+	// emailsequenceenrollmentDescLeadID is the schema descriptor for lead_id field.
+	emailsequenceenrollmentDescLeadID := emailsequenceenrollmentFields[1].Descriptor()
+	// emailsequenceenrollment.LeadIDValidator is a validator for the "lead_id" field. It is called by the builders before save.
+	emailsequenceenrollment.LeadIDValidator = emailsequenceenrollmentDescLeadID.Validators[0].(func(int) error)
+	// emailsequenceenrollmentDescEnrolledByUserID is the schema descriptor for enrolled_by_user_id field.
+	emailsequenceenrollmentDescEnrolledByUserID := emailsequenceenrollmentFields[2].Descriptor()
+	// emailsequenceenrollment.EnrolledByUserIDValidator is a validator for the "enrolled_by_user_id" field. It is called by the builders before save.
+	emailsequenceenrollment.EnrolledByUserIDValidator = emailsequenceenrollmentDescEnrolledByUserID.Validators[0].(func(int) error)
+	// emailsequenceenrollmentDescCurrentStep is the schema descriptor for current_step field.
+	emailsequenceenrollmentDescCurrentStep := emailsequenceenrollmentFields[4].Descriptor()
+	// emailsequenceenrollment.DefaultCurrentStep holds the default value on creation for the current_step field.
+	emailsequenceenrollment.DefaultCurrentStep = emailsequenceenrollmentDescCurrentStep.Default.(int)
+	// emailsequenceenrollment.CurrentStepValidator is a validator for the "current_step" field. It is called by the builders before save.
+	emailsequenceenrollment.CurrentStepValidator = emailsequenceenrollmentDescCurrentStep.Validators[0].(func(int) error)
+	// emailsequenceenrollmentDescEnrolledAt is the schema descriptor for enrolled_at field.
+	emailsequenceenrollmentDescEnrolledAt := emailsequenceenrollmentFields[5].Descriptor()
+	// emailsequenceenrollment.DefaultEnrolledAt holds the default value on creation for the enrolled_at field.
+	emailsequenceenrollment.DefaultEnrolledAt = emailsequenceenrollmentDescEnrolledAt.Default.(func() time.Time)
+	// emailsequenceenrollmentDescCreatedAt is the schema descriptor for created_at field.
+	emailsequenceenrollmentDescCreatedAt := emailsequenceenrollmentFields[7].Descriptor()
+	// emailsequenceenrollment.DefaultCreatedAt holds the default value on creation for the created_at field.
+	emailsequenceenrollment.DefaultCreatedAt = emailsequenceenrollmentDescCreatedAt.Default.(func() time.Time)
+	// emailsequenceenrollmentDescUpdatedAt is the schema descriptor for updated_at field.
+	emailsequenceenrollmentDescUpdatedAt := emailsequenceenrollmentFields[8].Descriptor()
+	// emailsequenceenrollment.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	emailsequenceenrollment.DefaultUpdatedAt = emailsequenceenrollmentDescUpdatedAt.Default.(func() time.Time)
+	// emailsequenceenrollment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	emailsequenceenrollment.UpdateDefaultUpdatedAt = emailsequenceenrollmentDescUpdatedAt.UpdateDefault.(func() time.Time)
+	emailsequencesendFields := schema.EmailSequenceSend{}.Fields()
+	_ = emailsequencesendFields
+	// emailsequencesendDescEnrollmentID is the schema descriptor for enrollment_id field.
+	emailsequencesendDescEnrollmentID := emailsequencesendFields[0].Descriptor()
+	// emailsequencesend.EnrollmentIDValidator is a validator for the "enrollment_id" field. It is called by the builders before save.
+	emailsequencesend.EnrollmentIDValidator = emailsequencesendDescEnrollmentID.Validators[0].(func(int) error)
+	// emailsequencesendDescStepID is the schema descriptor for step_id field.
+	emailsequencesendDescStepID := emailsequencesendFields[1].Descriptor()
+	// emailsequencesend.StepIDValidator is a validator for the "step_id" field. It is called by the builders before save.
+	emailsequencesend.StepIDValidator = emailsequencesendDescStepID.Validators[0].(func(int) error)
+	// emailsequencesendDescLeadID is the schema descriptor for lead_id field.
+	emailsequencesendDescLeadID := emailsequencesendFields[2].Descriptor()
+	// emailsequencesend.LeadIDValidator is a validator for the "lead_id" field. It is called by the builders before save.
+	emailsequencesend.LeadIDValidator = emailsequencesendDescLeadID.Validators[0].(func(int) error)
+	// emailsequencesendDescBounced is the schema descriptor for bounced field.
+	emailsequencesendDescBounced := emailsequencesendFields[8].Descriptor()
+	// emailsequencesend.DefaultBounced holds the default value on creation for the bounced field.
+	emailsequencesend.DefaultBounced = emailsequencesendDescBounced.Default.(bool)
+	// emailsequencesendDescCreatedAt is the schema descriptor for created_at field.
+	emailsequencesendDescCreatedAt := emailsequencesendFields[10].Descriptor()
+	// emailsequencesend.DefaultCreatedAt holds the default value on creation for the created_at field.
+	emailsequencesend.DefaultCreatedAt = emailsequencesendDescCreatedAt.Default.(func() time.Time)
+	// emailsequencesendDescUpdatedAt is the schema descriptor for updated_at field.
+	emailsequencesendDescUpdatedAt := emailsequencesendFields[11].Descriptor()
+	// emailsequencesend.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	emailsequencesend.DefaultUpdatedAt = emailsequencesendDescUpdatedAt.Default.(func() time.Time)
+	// emailsequencesend.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	emailsequencesend.UpdateDefaultUpdatedAt = emailsequencesendDescUpdatedAt.UpdateDefault.(func() time.Time)
+	emailsequencestepFields := schema.EmailSequenceStep{}.Fields()
+	_ = emailsequencestepFields
+	// emailsequencestepDescSequenceID is the schema descriptor for sequence_id field.
+	emailsequencestepDescSequenceID := emailsequencestepFields[0].Descriptor()
+	// emailsequencestep.SequenceIDValidator is a validator for the "sequence_id" field. It is called by the builders before save.
+	emailsequencestep.SequenceIDValidator = emailsequencestepDescSequenceID.Validators[0].(func(int) error)
+	// emailsequencestepDescStepOrder is the schema descriptor for step_order field.
+	emailsequencestepDescStepOrder := emailsequencestepFields[1].Descriptor()
+	// emailsequencestep.StepOrderValidator is a validator for the "step_order" field. It is called by the builders before save.
+	emailsequencestep.StepOrderValidator = emailsequencestepDescStepOrder.Validators[0].(func(int) error)
+	// emailsequencestepDescDelayDays is the schema descriptor for delay_days field.
+	emailsequencestepDescDelayDays := emailsequencestepFields[2].Descriptor()
+	// emailsequencestep.DefaultDelayDays holds the default value on creation for the delay_days field.
+	emailsequencestep.DefaultDelayDays = emailsequencestepDescDelayDays.Default.(int)
+	// emailsequencestep.DelayDaysValidator is a validator for the "delay_days" field. It is called by the builders before save.
+	emailsequencestep.DelayDaysValidator = emailsequencestepDescDelayDays.Validators[0].(func(int) error)
+	// emailsequencestepDescSubject is the schema descriptor for subject field.
+	emailsequencestepDescSubject := emailsequencestepFields[3].Descriptor()
+	// emailsequencestep.SubjectValidator is a validator for the "subject" field. It is called by the builders before save.
+	emailsequencestep.SubjectValidator = func() func(string) error {
+		validators := emailsequencestepDescSubject.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(subject string) error {
+			for _, fn := range fns {
+				if err := fn(subject); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// emailsequencestepDescBody is the schema descriptor for body field.
+	emailsequencestepDescBody := emailsequencestepFields[4].Descriptor()
+	// emailsequencestep.BodyValidator is a validator for the "body" field. It is called by the builders before save.
+	emailsequencestep.BodyValidator = emailsequencestepDescBody.Validators[0].(func(string) error)
+	// emailsequencestepDescCreatedAt is the schema descriptor for created_at field.
+	emailsequencestepDescCreatedAt := emailsequencestepFields[5].Descriptor()
+	// emailsequencestep.DefaultCreatedAt holds the default value on creation for the created_at field.
+	emailsequencestep.DefaultCreatedAt = emailsequencestepDescCreatedAt.Default.(func() time.Time)
 	exportFields := schema.Export{}.Fields()
 	_ = exportFields
 	// exportDescUserID is the schema descriptor for user_id field.

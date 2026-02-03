@@ -73,6 +73,10 @@ const (
 	EdgeStatusHistory = "status_history"
 	// EdgeAssignments holds the string denoting the assignments edge name in mutations.
 	EdgeAssignments = "assignments"
+	// EdgeEmailSequenceEnrollments holds the string denoting the email_sequence_enrollments edge name in mutations.
+	EdgeEmailSequenceEnrollments = "email_sequence_enrollments"
+	// EdgeEmailSequenceSends holds the string denoting the email_sequence_sends edge name in mutations.
+	EdgeEmailSequenceSends = "email_sequence_sends"
 	// Table holds the table name of the lead in the database.
 	Table = "leads"
 	// NotesTable is the table that holds the notes relation/edge.
@@ -96,6 +100,20 @@ const (
 	AssignmentsInverseTable = "lead_assignments"
 	// AssignmentsColumn is the table column denoting the assignments relation/edge.
 	AssignmentsColumn = "lead_id"
+	// EmailSequenceEnrollmentsTable is the table that holds the email_sequence_enrollments relation/edge.
+	EmailSequenceEnrollmentsTable = "email_sequence_enrollments"
+	// EmailSequenceEnrollmentsInverseTable is the table name for the EmailSequenceEnrollment entity.
+	// It exists in this package in order to avoid circular dependency with the "emailsequenceenrollment" package.
+	EmailSequenceEnrollmentsInverseTable = "email_sequence_enrollments"
+	// EmailSequenceEnrollmentsColumn is the table column denoting the email_sequence_enrollments relation/edge.
+	EmailSequenceEnrollmentsColumn = "lead_id"
+	// EmailSequenceSendsTable is the table that holds the email_sequence_sends relation/edge.
+	EmailSequenceSendsTable = "email_sequence_sends"
+	// EmailSequenceSendsInverseTable is the table name for the EmailSequenceSend entity.
+	// It exists in this package in order to avoid circular dependency with the "emailsequencesend" package.
+	EmailSequenceSendsInverseTable = "email_sequence_sends"
+	// EmailSequenceSendsColumn is the table column denoting the email_sequence_sends relation/edge.
+	EmailSequenceSendsColumn = "lead_id"
 )
 
 // Columns holds all SQL columns for lead fields.
@@ -463,6 +481,34 @@ func ByAssignments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newAssignmentsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByEmailSequenceEnrollmentsCount orders the results by email_sequence_enrollments count.
+func ByEmailSequenceEnrollmentsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newEmailSequenceEnrollmentsStep(), opts...)
+	}
+}
+
+// ByEmailSequenceEnrollments orders the results by email_sequence_enrollments terms.
+func ByEmailSequenceEnrollments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newEmailSequenceEnrollmentsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByEmailSequenceSendsCount orders the results by email_sequence_sends count.
+func ByEmailSequenceSendsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newEmailSequenceSendsStep(), opts...)
+	}
+}
+
+// ByEmailSequenceSends orders the results by email_sequence_sends terms.
+func ByEmailSequenceSends(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newEmailSequenceSendsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newNotesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -482,5 +528,19 @@ func newAssignmentsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(AssignmentsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, AssignmentsTable, AssignmentsColumn),
+	)
+}
+func newEmailSequenceEnrollmentsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(EmailSequenceEnrollmentsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, EmailSequenceEnrollmentsTable, EmailSequenceEnrollmentsColumn),
+	)
+}
+func newEmailSequenceSendsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(EmailSequenceSendsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, EmailSequenceSendsTable, EmailSequenceSendsColumn),
 	)
 }

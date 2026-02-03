@@ -14,6 +14,10 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
+	"github.com/jordanlanch/industrydb/ent/emailsequence"
+	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
+	"github.com/jordanlanch/industrydb/ent/emailsequencesend"
+	"github.com/jordanlanch/industrydb/ent/emailsequencestep"
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/industry"
 	"github.com/jordanlanch/industrydb/ent/lead"
@@ -87,21 +91,25 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			apikey.Table:             apikey.ValidColumn,
-			auditlog.Table:           auditlog.ValidColumn,
-			export.Table:             export.ValidColumn,
-			industry.Table:           industry.ValidColumn,
-			lead.Table:               lead.ValidColumn,
-			leadassignment.Table:     leadassignment.ValidColumn,
-			leadnote.Table:           leadnote.ValidColumn,
-			leadstatushistory.Table:  leadstatushistory.ValidColumn,
-			organization.Table:       organization.ValidColumn,
-			organizationmember.Table: organizationmember.ValidColumn,
-			savedsearch.Table:        savedsearch.ValidColumn,
-			subscription.Table:       subscription.ValidColumn,
-			usagelog.Table:           usagelog.ValidColumn,
-			user.Table:               user.ValidColumn,
-			webhook.Table:            webhook.ValidColumn,
+			apikey.Table:                  apikey.ValidColumn,
+			auditlog.Table:                auditlog.ValidColumn,
+			emailsequence.Table:           emailsequence.ValidColumn,
+			emailsequenceenrollment.Table: emailsequenceenrollment.ValidColumn,
+			emailsequencesend.Table:       emailsequencesend.ValidColumn,
+			emailsequencestep.Table:       emailsequencestep.ValidColumn,
+			export.Table:                  export.ValidColumn,
+			industry.Table:                industry.ValidColumn,
+			lead.Table:                    lead.ValidColumn,
+			leadassignment.Table:          leadassignment.ValidColumn,
+			leadnote.Table:                leadnote.ValidColumn,
+			leadstatushistory.Table:       leadstatushistory.ValidColumn,
+			organization.Table:            organization.ValidColumn,
+			organizationmember.Table:      organizationmember.ValidColumn,
+			savedsearch.Table:             savedsearch.ValidColumn,
+			subscription.Table:            subscription.ValidColumn,
+			usagelog.Table:                usagelog.ValidColumn,
+			user.Table:                    user.ValidColumn,
+			webhook.Table:                 webhook.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

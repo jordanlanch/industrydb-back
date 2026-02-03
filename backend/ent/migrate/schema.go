@@ -114,6 +114,214 @@ var (
 			},
 		},
 	}
+	// EmailSequencesColumns holds the columns for the "email_sequences" table.
+	EmailSequencesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString, Size: 200},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"draft", "active", "paused", "archived"}, Default: "draft"},
+		{Name: "trigger", Type: field.TypeEnum, Enums: []string{"lead_created", "lead_assigned", "lead_status_changed", "manual"}, Default: "manual"},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "created_by_user_id", Type: field.TypeInt},
+	}
+	// EmailSequencesTable holds the schema information for the "email_sequences" table.
+	EmailSequencesTable = &schema.Table{
+		Name:       "email_sequences",
+		Columns:    EmailSequencesColumns,
+		PrimaryKey: []*schema.Column{EmailSequencesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "email_sequences_users_email_sequences_created",
+				Columns:    []*schema.Column{EmailSequencesColumns[7]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "emailsequence_status",
+				Unique:  false,
+				Columns: []*schema.Column{EmailSequencesColumns[3]},
+			},
+			{
+				Name:    "emailsequence_trigger",
+				Unique:  false,
+				Columns: []*schema.Column{EmailSequencesColumns[4]},
+			},
+			{
+				Name:    "emailsequence_created_by_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{EmailSequencesColumns[7]},
+			},
+			{
+				Name:    "emailsequence_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{EmailSequencesColumns[5]},
+			},
+		},
+	}
+	// EmailSequenceEnrollmentsColumns holds the columns for the "email_sequence_enrollments" table.
+	EmailSequenceEnrollmentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"active", "paused", "completed", "stopped"}, Default: "active"},
+		{Name: "current_step", Type: field.TypeInt, Default: 0},
+		{Name: "enrolled_at", Type: field.TypeTime},
+		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "sequence_id", Type: field.TypeInt},
+		{Name: "lead_id", Type: field.TypeInt},
+		{Name: "enrolled_by_user_id", Type: field.TypeInt},
+	}
+	// EmailSequenceEnrollmentsTable holds the schema information for the "email_sequence_enrollments" table.
+	EmailSequenceEnrollmentsTable = &schema.Table{
+		Name:       "email_sequence_enrollments",
+		Columns:    EmailSequenceEnrollmentsColumns,
+		PrimaryKey: []*schema.Column{EmailSequenceEnrollmentsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "email_sequence_enrollments_email_sequences_enrollments",
+				Columns:    []*schema.Column{EmailSequenceEnrollmentsColumns[7]},
+				RefColumns: []*schema.Column{EmailSequencesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "email_sequence_enrollments_leads_email_sequence_enrollments",
+				Columns:    []*schema.Column{EmailSequenceEnrollmentsColumns[8]},
+				RefColumns: []*schema.Column{LeadsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "email_sequence_enrollments_users_email_sequence_enrollments_made",
+				Columns:    []*schema.Column{EmailSequenceEnrollmentsColumns[9]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "idx_enrollment_lead_status",
+				Unique:  false,
+				Columns: []*schema.Column{EmailSequenceEnrollmentsColumns[8], EmailSequenceEnrollmentsColumns[1]},
+			},
+			{
+				Name:    "idx_enrollment_sequence_status",
+				Unique:  false,
+				Columns: []*schema.Column{EmailSequenceEnrollmentsColumns[7], EmailSequenceEnrollmentsColumns[1]},
+			},
+			{
+				Name:    "idx_enrollment_unique",
+				Unique:  true,
+				Columns: []*schema.Column{EmailSequenceEnrollmentsColumns[7], EmailSequenceEnrollmentsColumns[8]},
+			},
+			{
+				Name:    "idx_enrollment_time",
+				Unique:  false,
+				Columns: []*schema.Column{EmailSequenceEnrollmentsColumns[3]},
+			},
+		},
+	}
+	// EmailSequenceSendsColumns holds the columns for the "email_sequence_sends" table.
+	EmailSequenceSendsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"scheduled", "sent", "opened", "clicked", "bounced", "failed"}, Default: "scheduled"},
+		{Name: "scheduled_for", Type: field.TypeTime},
+		{Name: "sent_at", Type: field.TypeTime, Nullable: true},
+		{Name: "opened_at", Type: field.TypeTime, Nullable: true},
+		{Name: "clicked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "bounced", Type: field.TypeBool, Default: false},
+		{Name: "error_message", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "enrollment_id", Type: field.TypeInt},
+		{Name: "step_id", Type: field.TypeInt},
+		{Name: "lead_id", Type: field.TypeInt},
+	}
+	// EmailSequenceSendsTable holds the schema information for the "email_sequence_sends" table.
+	EmailSequenceSendsTable = &schema.Table{
+		Name:       "email_sequence_sends",
+		Columns:    EmailSequenceSendsColumns,
+		PrimaryKey: []*schema.Column{EmailSequenceSendsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "email_sequence_sends_email_sequence_enrollments_sends",
+				Columns:    []*schema.Column{EmailSequenceSendsColumns[10]},
+				RefColumns: []*schema.Column{EmailSequenceEnrollmentsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "email_sequence_sends_email_sequence_steps_sends",
+				Columns:    []*schema.Column{EmailSequenceSendsColumns[11]},
+				RefColumns: []*schema.Column{EmailSequenceStepsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "email_sequence_sends_leads_email_sequence_sends",
+				Columns:    []*schema.Column{EmailSequenceSendsColumns[12]},
+				RefColumns: []*schema.Column{LeadsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "idx_send_enrollment_status",
+				Unique:  false,
+				Columns: []*schema.Column{EmailSequenceSendsColumns[10], EmailSequenceSendsColumns[1]},
+			},
+			{
+				Name:    "idx_send_scheduled",
+				Unique:  false,
+				Columns: []*schema.Column{EmailSequenceSendsColumns[1], EmailSequenceSendsColumns[2]},
+			},
+			{
+				Name:    "idx_send_lead_status",
+				Unique:  false,
+				Columns: []*schema.Column{EmailSequenceSendsColumns[12], EmailSequenceSendsColumns[1]},
+			},
+			{
+				Name:    "idx_send_time",
+				Unique:  false,
+				Columns: []*schema.Column{EmailSequenceSendsColumns[3]},
+			},
+			{
+				Name:    "idx_send_opened",
+				Unique:  false,
+				Columns: []*schema.Column{EmailSequenceSendsColumns[4]},
+			},
+		},
+	}
+	// EmailSequenceStepsColumns holds the columns for the "email_sequence_steps" table.
+	EmailSequenceStepsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "step_order", Type: field.TypeInt},
+		{Name: "delay_days", Type: field.TypeInt, Default: 0},
+		{Name: "subject", Type: field.TypeString, Size: 500},
+		{Name: "body", Type: field.TypeString, Size: 2147483647},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "sequence_id", Type: field.TypeInt},
+	}
+	// EmailSequenceStepsTable holds the schema information for the "email_sequence_steps" table.
+	EmailSequenceStepsTable = &schema.Table{
+		Name:       "email_sequence_steps",
+		Columns:    EmailSequenceStepsColumns,
+		PrimaryKey: []*schema.Column{EmailSequenceStepsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "email_sequence_steps_email_sequences_steps",
+				Columns:    []*schema.Column{EmailSequenceStepsColumns[6]},
+				RefColumns: []*schema.Column{EmailSequencesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "idx_email_sequence_step_order",
+				Unique:  true,
+				Columns: []*schema.Column{EmailSequenceStepsColumns[6], EmailSequenceStepsColumns[1]},
+			},
+		},
+	}
 	// ExportsColumns holds the columns for the "exports" table.
 	ExportsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -836,6 +1044,10 @@ var (
 	Tables = []*schema.Table{
 		APIKeysTable,
 		AuditLogsTable,
+		EmailSequencesTable,
+		EmailSequenceEnrollmentsTable,
+		EmailSequenceSendsTable,
+		EmailSequenceStepsTable,
 		ExportsTable,
 		IndustriesTable,
 		LeadsTable,
@@ -855,6 +1067,14 @@ var (
 func init() {
 	APIKeysTable.ForeignKeys[0].RefTable = UsersTable
 	AuditLogsTable.ForeignKeys[0].RefTable = UsersTable
+	EmailSequencesTable.ForeignKeys[0].RefTable = UsersTable
+	EmailSequenceEnrollmentsTable.ForeignKeys[0].RefTable = EmailSequencesTable
+	EmailSequenceEnrollmentsTable.ForeignKeys[1].RefTable = LeadsTable
+	EmailSequenceEnrollmentsTable.ForeignKeys[2].RefTable = UsersTable
+	EmailSequenceSendsTable.ForeignKeys[0].RefTable = EmailSequenceEnrollmentsTable
+	EmailSequenceSendsTable.ForeignKeys[1].RefTable = EmailSequenceStepsTable
+	EmailSequenceSendsTable.ForeignKeys[2].RefTable = LeadsTable
+	EmailSequenceStepsTable.ForeignKeys[0].RefTable = EmailSequencesTable
 	ExportsTable.ForeignKeys[0].RefTable = OrganizationsTable
 	ExportsTable.ForeignKeys[1].RefTable = UsersTable
 	LeadAssignmentsTable.ForeignKeys[0].RefTable = LeadsTable

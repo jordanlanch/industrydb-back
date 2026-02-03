@@ -12,6 +12,8 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
+	"github.com/jordanlanch/industrydb/ent/emailsequence"
+	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
@@ -539,6 +541,36 @@ func (_c *UserCreate) AddLeadAssignmentsMade(v ...*LeadAssignment) *UserCreate {
 	return _c.AddLeadAssignmentsMadeIDs(ids...)
 }
 
+// AddEmailSequencesCreatedIDs adds the "email_sequences_created" edge to the EmailSequence entity by IDs.
+func (_c *UserCreate) AddEmailSequencesCreatedIDs(ids ...int) *UserCreate {
+	_c.mutation.AddEmailSequencesCreatedIDs(ids...)
+	return _c
+}
+
+// AddEmailSequencesCreated adds the "email_sequences_created" edges to the EmailSequence entity.
+func (_c *UserCreate) AddEmailSequencesCreated(v ...*EmailSequence) *UserCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddEmailSequencesCreatedIDs(ids...)
+}
+
+// AddEmailSequenceEnrollmentsMadeIDs adds the "email_sequence_enrollments_made" edge to the EmailSequenceEnrollment entity by IDs.
+func (_c *UserCreate) AddEmailSequenceEnrollmentsMadeIDs(ids ...int) *UserCreate {
+	_c.mutation.AddEmailSequenceEnrollmentsMadeIDs(ids...)
+	return _c
+}
+
+// AddEmailSequenceEnrollmentsMade adds the "email_sequence_enrollments_made" edges to the EmailSequenceEnrollment entity.
+func (_c *UserCreate) AddEmailSequenceEnrollmentsMade(v ...*EmailSequenceEnrollment) *UserCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddEmailSequenceEnrollmentsMadeIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_c *UserCreate) Mutation() *UserMutation {
 	return _c.mutation
@@ -1027,6 +1059,38 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(leadassignment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.EmailSequencesCreatedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailSequencesCreatedTable,
+			Columns: []string{user.EmailSequencesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailsequence.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.EmailSequenceEnrollmentsMadeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailSequenceEnrollmentsMadeTable,
+			Columns: []string{user.EmailSequenceEnrollmentsMadeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailsequenceenrollment.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

@@ -17,6 +17,10 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
+	"github.com/jordanlanch/industrydb/ent/emailsequence"
+	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
+	"github.com/jordanlanch/industrydb/ent/emailsequencesend"
+	"github.com/jordanlanch/industrydb/ent/emailsequencestep"
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/industry"
 	"github.com/jordanlanch/industrydb/ent/lead"
@@ -41,6 +45,14 @@ type Client struct {
 	APIKey *APIKeyClient
 	// AuditLog is the client for interacting with the AuditLog builders.
 	AuditLog *AuditLogClient
+	// EmailSequence is the client for interacting with the EmailSequence builders.
+	EmailSequence *EmailSequenceClient
+	// EmailSequenceEnrollment is the client for interacting with the EmailSequenceEnrollment builders.
+	EmailSequenceEnrollment *EmailSequenceEnrollmentClient
+	// EmailSequenceSend is the client for interacting with the EmailSequenceSend builders.
+	EmailSequenceSend *EmailSequenceSendClient
+	// EmailSequenceStep is the client for interacting with the EmailSequenceStep builders.
+	EmailSequenceStep *EmailSequenceStepClient
 	// Export is the client for interacting with the Export builders.
 	Export *ExportClient
 	// Industry is the client for interacting with the Industry builders.
@@ -80,6 +92,10 @@ func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.APIKey = NewAPIKeyClient(c.config)
 	c.AuditLog = NewAuditLogClient(c.config)
+	c.EmailSequence = NewEmailSequenceClient(c.config)
+	c.EmailSequenceEnrollment = NewEmailSequenceEnrollmentClient(c.config)
+	c.EmailSequenceSend = NewEmailSequenceSendClient(c.config)
+	c.EmailSequenceStep = NewEmailSequenceStepClient(c.config)
 	c.Export = NewExportClient(c.config)
 	c.Industry = NewIndustryClient(c.config)
 	c.Lead = NewLeadClient(c.config)
@@ -183,23 +199,27 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:                ctx,
-		config:             cfg,
-		APIKey:             NewAPIKeyClient(cfg),
-		AuditLog:           NewAuditLogClient(cfg),
-		Export:             NewExportClient(cfg),
-		Industry:           NewIndustryClient(cfg),
-		Lead:               NewLeadClient(cfg),
-		LeadAssignment:     NewLeadAssignmentClient(cfg),
-		LeadNote:           NewLeadNoteClient(cfg),
-		LeadStatusHistory:  NewLeadStatusHistoryClient(cfg),
-		Organization:       NewOrganizationClient(cfg),
-		OrganizationMember: NewOrganizationMemberClient(cfg),
-		SavedSearch:        NewSavedSearchClient(cfg),
-		Subscription:       NewSubscriptionClient(cfg),
-		UsageLog:           NewUsageLogClient(cfg),
-		User:               NewUserClient(cfg),
-		Webhook:            NewWebhookClient(cfg),
+		ctx:                     ctx,
+		config:                  cfg,
+		APIKey:                  NewAPIKeyClient(cfg),
+		AuditLog:                NewAuditLogClient(cfg),
+		EmailSequence:           NewEmailSequenceClient(cfg),
+		EmailSequenceEnrollment: NewEmailSequenceEnrollmentClient(cfg),
+		EmailSequenceSend:       NewEmailSequenceSendClient(cfg),
+		EmailSequenceStep:       NewEmailSequenceStepClient(cfg),
+		Export:                  NewExportClient(cfg),
+		Industry:                NewIndustryClient(cfg),
+		Lead:                    NewLeadClient(cfg),
+		LeadAssignment:          NewLeadAssignmentClient(cfg),
+		LeadNote:                NewLeadNoteClient(cfg),
+		LeadStatusHistory:       NewLeadStatusHistoryClient(cfg),
+		Organization:            NewOrganizationClient(cfg),
+		OrganizationMember:      NewOrganizationMemberClient(cfg),
+		SavedSearch:             NewSavedSearchClient(cfg),
+		Subscription:            NewSubscriptionClient(cfg),
+		UsageLog:                NewUsageLogClient(cfg),
+		User:                    NewUserClient(cfg),
+		Webhook:                 NewWebhookClient(cfg),
 	}, nil
 }
 
@@ -217,23 +237,27 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:                ctx,
-		config:             cfg,
-		APIKey:             NewAPIKeyClient(cfg),
-		AuditLog:           NewAuditLogClient(cfg),
-		Export:             NewExportClient(cfg),
-		Industry:           NewIndustryClient(cfg),
-		Lead:               NewLeadClient(cfg),
-		LeadAssignment:     NewLeadAssignmentClient(cfg),
-		LeadNote:           NewLeadNoteClient(cfg),
-		LeadStatusHistory:  NewLeadStatusHistoryClient(cfg),
-		Organization:       NewOrganizationClient(cfg),
-		OrganizationMember: NewOrganizationMemberClient(cfg),
-		SavedSearch:        NewSavedSearchClient(cfg),
-		Subscription:       NewSubscriptionClient(cfg),
-		UsageLog:           NewUsageLogClient(cfg),
-		User:               NewUserClient(cfg),
-		Webhook:            NewWebhookClient(cfg),
+		ctx:                     ctx,
+		config:                  cfg,
+		APIKey:                  NewAPIKeyClient(cfg),
+		AuditLog:                NewAuditLogClient(cfg),
+		EmailSequence:           NewEmailSequenceClient(cfg),
+		EmailSequenceEnrollment: NewEmailSequenceEnrollmentClient(cfg),
+		EmailSequenceSend:       NewEmailSequenceSendClient(cfg),
+		EmailSequenceStep:       NewEmailSequenceStepClient(cfg),
+		Export:                  NewExportClient(cfg),
+		Industry:                NewIndustryClient(cfg),
+		Lead:                    NewLeadClient(cfg),
+		LeadAssignment:          NewLeadAssignmentClient(cfg),
+		LeadNote:                NewLeadNoteClient(cfg),
+		LeadStatusHistory:       NewLeadStatusHistoryClient(cfg),
+		Organization:            NewOrganizationClient(cfg),
+		OrganizationMember:      NewOrganizationMemberClient(cfg),
+		SavedSearch:             NewSavedSearchClient(cfg),
+		Subscription:            NewSubscriptionClient(cfg),
+		UsageLog:                NewUsageLogClient(cfg),
+		User:                    NewUserClient(cfg),
+		Webhook:                 NewWebhookClient(cfg),
 	}, nil
 }
 
@@ -263,9 +287,11 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.APIKey, c.AuditLog, c.Export, c.Industry, c.Lead, c.LeadAssignment,
-		c.LeadNote, c.LeadStatusHistory, c.Organization, c.OrganizationMember,
-		c.SavedSearch, c.Subscription, c.UsageLog, c.User, c.Webhook,
+		c.APIKey, c.AuditLog, c.EmailSequence, c.EmailSequenceEnrollment,
+		c.EmailSequenceSend, c.EmailSequenceStep, c.Export, c.Industry, c.Lead,
+		c.LeadAssignment, c.LeadNote, c.LeadStatusHistory, c.Organization,
+		c.OrganizationMember, c.SavedSearch, c.Subscription, c.UsageLog, c.User,
+		c.Webhook,
 	} {
 		n.Use(hooks...)
 	}
@@ -275,9 +301,11 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.APIKey, c.AuditLog, c.Export, c.Industry, c.Lead, c.LeadAssignment,
-		c.LeadNote, c.LeadStatusHistory, c.Organization, c.OrganizationMember,
-		c.SavedSearch, c.Subscription, c.UsageLog, c.User, c.Webhook,
+		c.APIKey, c.AuditLog, c.EmailSequence, c.EmailSequenceEnrollment,
+		c.EmailSequenceSend, c.EmailSequenceStep, c.Export, c.Industry, c.Lead,
+		c.LeadAssignment, c.LeadNote, c.LeadStatusHistory, c.Organization,
+		c.OrganizationMember, c.SavedSearch, c.Subscription, c.UsageLog, c.User,
+		c.Webhook,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -290,6 +318,14 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.APIKey.mutate(ctx, m)
 	case *AuditLogMutation:
 		return c.AuditLog.mutate(ctx, m)
+	case *EmailSequenceMutation:
+		return c.EmailSequence.mutate(ctx, m)
+	case *EmailSequenceEnrollmentMutation:
+		return c.EmailSequenceEnrollment.mutate(ctx, m)
+	case *EmailSequenceSendMutation:
+		return c.EmailSequenceSend.mutate(ctx, m)
+	case *EmailSequenceStepMutation:
+		return c.EmailSequenceStep.mutate(ctx, m)
 	case *ExportMutation:
 		return c.Export.mutate(ctx, m)
 	case *IndustryMutation:
@@ -616,6 +652,730 @@ func (c *AuditLogClient) mutate(ctx context.Context, m *AuditLogMutation) (Value
 		return (&AuditLogDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown AuditLog mutation op: %q", m.Op())
+	}
+}
+
+// EmailSequenceClient is a client for the EmailSequence schema.
+type EmailSequenceClient struct {
+	config
+}
+
+// NewEmailSequenceClient returns a client for the EmailSequence from the given config.
+func NewEmailSequenceClient(c config) *EmailSequenceClient {
+	return &EmailSequenceClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `emailsequence.Hooks(f(g(h())))`.
+func (c *EmailSequenceClient) Use(hooks ...Hook) {
+	c.hooks.EmailSequence = append(c.hooks.EmailSequence, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `emailsequence.Intercept(f(g(h())))`.
+func (c *EmailSequenceClient) Intercept(interceptors ...Interceptor) {
+	c.inters.EmailSequence = append(c.inters.EmailSequence, interceptors...)
+}
+
+// Create returns a builder for creating a EmailSequence entity.
+func (c *EmailSequenceClient) Create() *EmailSequenceCreate {
+	mutation := newEmailSequenceMutation(c.config, OpCreate)
+	return &EmailSequenceCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of EmailSequence entities.
+func (c *EmailSequenceClient) CreateBulk(builders ...*EmailSequenceCreate) *EmailSequenceCreateBulk {
+	return &EmailSequenceCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *EmailSequenceClient) MapCreateBulk(slice any, setFunc func(*EmailSequenceCreate, int)) *EmailSequenceCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &EmailSequenceCreateBulk{err: fmt.Errorf("calling to EmailSequenceClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*EmailSequenceCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &EmailSequenceCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for EmailSequence.
+func (c *EmailSequenceClient) Update() *EmailSequenceUpdate {
+	mutation := newEmailSequenceMutation(c.config, OpUpdate)
+	return &EmailSequenceUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *EmailSequenceClient) UpdateOne(_m *EmailSequence) *EmailSequenceUpdateOne {
+	mutation := newEmailSequenceMutation(c.config, OpUpdateOne, withEmailSequence(_m))
+	return &EmailSequenceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *EmailSequenceClient) UpdateOneID(id int) *EmailSequenceUpdateOne {
+	mutation := newEmailSequenceMutation(c.config, OpUpdateOne, withEmailSequenceID(id))
+	return &EmailSequenceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for EmailSequence.
+func (c *EmailSequenceClient) Delete() *EmailSequenceDelete {
+	mutation := newEmailSequenceMutation(c.config, OpDelete)
+	return &EmailSequenceDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *EmailSequenceClient) DeleteOne(_m *EmailSequence) *EmailSequenceDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *EmailSequenceClient) DeleteOneID(id int) *EmailSequenceDeleteOne {
+	builder := c.Delete().Where(emailsequence.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &EmailSequenceDeleteOne{builder}
+}
+
+// Query returns a query builder for EmailSequence.
+func (c *EmailSequenceClient) Query() *EmailSequenceQuery {
+	return &EmailSequenceQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeEmailSequence},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a EmailSequence entity by its id.
+func (c *EmailSequenceClient) Get(ctx context.Context, id int) (*EmailSequence, error) {
+	return c.Query().Where(emailsequence.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *EmailSequenceClient) GetX(ctx context.Context, id int) *EmailSequence {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryCreatedBy queries the created_by edge of a EmailSequence.
+func (c *EmailSequenceClient) QueryCreatedBy(_m *EmailSequence) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(emailsequence.Table, emailsequence.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, emailsequence.CreatedByTable, emailsequence.CreatedByColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySteps queries the steps edge of a EmailSequence.
+func (c *EmailSequenceClient) QuerySteps(_m *EmailSequence) *EmailSequenceStepQuery {
+	query := (&EmailSequenceStepClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(emailsequence.Table, emailsequence.FieldID, id),
+			sqlgraph.To(emailsequencestep.Table, emailsequencestep.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, emailsequence.StepsTable, emailsequence.StepsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEnrollments queries the enrollments edge of a EmailSequence.
+func (c *EmailSequenceClient) QueryEnrollments(_m *EmailSequence) *EmailSequenceEnrollmentQuery {
+	query := (&EmailSequenceEnrollmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(emailsequence.Table, emailsequence.FieldID, id),
+			sqlgraph.To(emailsequenceenrollment.Table, emailsequenceenrollment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, emailsequence.EnrollmentsTable, emailsequence.EnrollmentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *EmailSequenceClient) Hooks() []Hook {
+	return c.hooks.EmailSequence
+}
+
+// Interceptors returns the client interceptors.
+func (c *EmailSequenceClient) Interceptors() []Interceptor {
+	return c.inters.EmailSequence
+}
+
+func (c *EmailSequenceClient) mutate(ctx context.Context, m *EmailSequenceMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&EmailSequenceCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&EmailSequenceUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&EmailSequenceUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&EmailSequenceDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown EmailSequence mutation op: %q", m.Op())
+	}
+}
+
+// EmailSequenceEnrollmentClient is a client for the EmailSequenceEnrollment schema.
+type EmailSequenceEnrollmentClient struct {
+	config
+}
+
+// NewEmailSequenceEnrollmentClient returns a client for the EmailSequenceEnrollment from the given config.
+func NewEmailSequenceEnrollmentClient(c config) *EmailSequenceEnrollmentClient {
+	return &EmailSequenceEnrollmentClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `emailsequenceenrollment.Hooks(f(g(h())))`.
+func (c *EmailSequenceEnrollmentClient) Use(hooks ...Hook) {
+	c.hooks.EmailSequenceEnrollment = append(c.hooks.EmailSequenceEnrollment, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `emailsequenceenrollment.Intercept(f(g(h())))`.
+func (c *EmailSequenceEnrollmentClient) Intercept(interceptors ...Interceptor) {
+	c.inters.EmailSequenceEnrollment = append(c.inters.EmailSequenceEnrollment, interceptors...)
+}
+
+// Create returns a builder for creating a EmailSequenceEnrollment entity.
+func (c *EmailSequenceEnrollmentClient) Create() *EmailSequenceEnrollmentCreate {
+	mutation := newEmailSequenceEnrollmentMutation(c.config, OpCreate)
+	return &EmailSequenceEnrollmentCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of EmailSequenceEnrollment entities.
+func (c *EmailSequenceEnrollmentClient) CreateBulk(builders ...*EmailSequenceEnrollmentCreate) *EmailSequenceEnrollmentCreateBulk {
+	return &EmailSequenceEnrollmentCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *EmailSequenceEnrollmentClient) MapCreateBulk(slice any, setFunc func(*EmailSequenceEnrollmentCreate, int)) *EmailSequenceEnrollmentCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &EmailSequenceEnrollmentCreateBulk{err: fmt.Errorf("calling to EmailSequenceEnrollmentClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*EmailSequenceEnrollmentCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &EmailSequenceEnrollmentCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for EmailSequenceEnrollment.
+func (c *EmailSequenceEnrollmentClient) Update() *EmailSequenceEnrollmentUpdate {
+	mutation := newEmailSequenceEnrollmentMutation(c.config, OpUpdate)
+	return &EmailSequenceEnrollmentUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *EmailSequenceEnrollmentClient) UpdateOne(_m *EmailSequenceEnrollment) *EmailSequenceEnrollmentUpdateOne {
+	mutation := newEmailSequenceEnrollmentMutation(c.config, OpUpdateOne, withEmailSequenceEnrollment(_m))
+	return &EmailSequenceEnrollmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *EmailSequenceEnrollmentClient) UpdateOneID(id int) *EmailSequenceEnrollmentUpdateOne {
+	mutation := newEmailSequenceEnrollmentMutation(c.config, OpUpdateOne, withEmailSequenceEnrollmentID(id))
+	return &EmailSequenceEnrollmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for EmailSequenceEnrollment.
+func (c *EmailSequenceEnrollmentClient) Delete() *EmailSequenceEnrollmentDelete {
+	mutation := newEmailSequenceEnrollmentMutation(c.config, OpDelete)
+	return &EmailSequenceEnrollmentDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *EmailSequenceEnrollmentClient) DeleteOne(_m *EmailSequenceEnrollment) *EmailSequenceEnrollmentDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *EmailSequenceEnrollmentClient) DeleteOneID(id int) *EmailSequenceEnrollmentDeleteOne {
+	builder := c.Delete().Where(emailsequenceenrollment.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &EmailSequenceEnrollmentDeleteOne{builder}
+}
+
+// Query returns a query builder for EmailSequenceEnrollment.
+func (c *EmailSequenceEnrollmentClient) Query() *EmailSequenceEnrollmentQuery {
+	return &EmailSequenceEnrollmentQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeEmailSequenceEnrollment},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a EmailSequenceEnrollment entity by its id.
+func (c *EmailSequenceEnrollmentClient) Get(ctx context.Context, id int) (*EmailSequenceEnrollment, error) {
+	return c.Query().Where(emailsequenceenrollment.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *EmailSequenceEnrollmentClient) GetX(ctx context.Context, id int) *EmailSequenceEnrollment {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QuerySequence queries the sequence edge of a EmailSequenceEnrollment.
+func (c *EmailSequenceEnrollmentClient) QuerySequence(_m *EmailSequenceEnrollment) *EmailSequenceQuery {
+	query := (&EmailSequenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(emailsequenceenrollment.Table, emailsequenceenrollment.FieldID, id),
+			sqlgraph.To(emailsequence.Table, emailsequence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, emailsequenceenrollment.SequenceTable, emailsequenceenrollment.SequenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLead queries the lead edge of a EmailSequenceEnrollment.
+func (c *EmailSequenceEnrollmentClient) QueryLead(_m *EmailSequenceEnrollment) *LeadQuery {
+	query := (&LeadClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(emailsequenceenrollment.Table, emailsequenceenrollment.FieldID, id),
+			sqlgraph.To(lead.Table, lead.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, emailsequenceenrollment.LeadTable, emailsequenceenrollment.LeadColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEnrolledBy queries the enrolled_by edge of a EmailSequenceEnrollment.
+func (c *EmailSequenceEnrollmentClient) QueryEnrolledBy(_m *EmailSequenceEnrollment) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(emailsequenceenrollment.Table, emailsequenceenrollment.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, emailsequenceenrollment.EnrolledByTable, emailsequenceenrollment.EnrolledByColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySends queries the sends edge of a EmailSequenceEnrollment.
+func (c *EmailSequenceEnrollmentClient) QuerySends(_m *EmailSequenceEnrollment) *EmailSequenceSendQuery {
+	query := (&EmailSequenceSendClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(emailsequenceenrollment.Table, emailsequenceenrollment.FieldID, id),
+			sqlgraph.To(emailsequencesend.Table, emailsequencesend.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, emailsequenceenrollment.SendsTable, emailsequenceenrollment.SendsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *EmailSequenceEnrollmentClient) Hooks() []Hook {
+	return c.hooks.EmailSequenceEnrollment
+}
+
+// Interceptors returns the client interceptors.
+func (c *EmailSequenceEnrollmentClient) Interceptors() []Interceptor {
+	return c.inters.EmailSequenceEnrollment
+}
+
+func (c *EmailSequenceEnrollmentClient) mutate(ctx context.Context, m *EmailSequenceEnrollmentMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&EmailSequenceEnrollmentCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&EmailSequenceEnrollmentUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&EmailSequenceEnrollmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&EmailSequenceEnrollmentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown EmailSequenceEnrollment mutation op: %q", m.Op())
+	}
+}
+
+// EmailSequenceSendClient is a client for the EmailSequenceSend schema.
+type EmailSequenceSendClient struct {
+	config
+}
+
+// NewEmailSequenceSendClient returns a client for the EmailSequenceSend from the given config.
+func NewEmailSequenceSendClient(c config) *EmailSequenceSendClient {
+	return &EmailSequenceSendClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `emailsequencesend.Hooks(f(g(h())))`.
+func (c *EmailSequenceSendClient) Use(hooks ...Hook) {
+	c.hooks.EmailSequenceSend = append(c.hooks.EmailSequenceSend, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `emailsequencesend.Intercept(f(g(h())))`.
+func (c *EmailSequenceSendClient) Intercept(interceptors ...Interceptor) {
+	c.inters.EmailSequenceSend = append(c.inters.EmailSequenceSend, interceptors...)
+}
+
+// Create returns a builder for creating a EmailSequenceSend entity.
+func (c *EmailSequenceSendClient) Create() *EmailSequenceSendCreate {
+	mutation := newEmailSequenceSendMutation(c.config, OpCreate)
+	return &EmailSequenceSendCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of EmailSequenceSend entities.
+func (c *EmailSequenceSendClient) CreateBulk(builders ...*EmailSequenceSendCreate) *EmailSequenceSendCreateBulk {
+	return &EmailSequenceSendCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *EmailSequenceSendClient) MapCreateBulk(slice any, setFunc func(*EmailSequenceSendCreate, int)) *EmailSequenceSendCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &EmailSequenceSendCreateBulk{err: fmt.Errorf("calling to EmailSequenceSendClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*EmailSequenceSendCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &EmailSequenceSendCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for EmailSequenceSend.
+func (c *EmailSequenceSendClient) Update() *EmailSequenceSendUpdate {
+	mutation := newEmailSequenceSendMutation(c.config, OpUpdate)
+	return &EmailSequenceSendUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *EmailSequenceSendClient) UpdateOne(_m *EmailSequenceSend) *EmailSequenceSendUpdateOne {
+	mutation := newEmailSequenceSendMutation(c.config, OpUpdateOne, withEmailSequenceSend(_m))
+	return &EmailSequenceSendUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *EmailSequenceSendClient) UpdateOneID(id int) *EmailSequenceSendUpdateOne {
+	mutation := newEmailSequenceSendMutation(c.config, OpUpdateOne, withEmailSequenceSendID(id))
+	return &EmailSequenceSendUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for EmailSequenceSend.
+func (c *EmailSequenceSendClient) Delete() *EmailSequenceSendDelete {
+	mutation := newEmailSequenceSendMutation(c.config, OpDelete)
+	return &EmailSequenceSendDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *EmailSequenceSendClient) DeleteOne(_m *EmailSequenceSend) *EmailSequenceSendDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *EmailSequenceSendClient) DeleteOneID(id int) *EmailSequenceSendDeleteOne {
+	builder := c.Delete().Where(emailsequencesend.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &EmailSequenceSendDeleteOne{builder}
+}
+
+// Query returns a query builder for EmailSequenceSend.
+func (c *EmailSequenceSendClient) Query() *EmailSequenceSendQuery {
+	return &EmailSequenceSendQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeEmailSequenceSend},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a EmailSequenceSend entity by its id.
+func (c *EmailSequenceSendClient) Get(ctx context.Context, id int) (*EmailSequenceSend, error) {
+	return c.Query().Where(emailsequencesend.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *EmailSequenceSendClient) GetX(ctx context.Context, id int) *EmailSequenceSend {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryEnrollment queries the enrollment edge of a EmailSequenceSend.
+func (c *EmailSequenceSendClient) QueryEnrollment(_m *EmailSequenceSend) *EmailSequenceEnrollmentQuery {
+	query := (&EmailSequenceEnrollmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(emailsequencesend.Table, emailsequencesend.FieldID, id),
+			sqlgraph.To(emailsequenceenrollment.Table, emailsequenceenrollment.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, emailsequencesend.EnrollmentTable, emailsequencesend.EnrollmentColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryStep queries the step edge of a EmailSequenceSend.
+func (c *EmailSequenceSendClient) QueryStep(_m *EmailSequenceSend) *EmailSequenceStepQuery {
+	query := (&EmailSequenceStepClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(emailsequencesend.Table, emailsequencesend.FieldID, id),
+			sqlgraph.To(emailsequencestep.Table, emailsequencestep.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, emailsequencesend.StepTable, emailsequencesend.StepColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLead queries the lead edge of a EmailSequenceSend.
+func (c *EmailSequenceSendClient) QueryLead(_m *EmailSequenceSend) *LeadQuery {
+	query := (&LeadClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(emailsequencesend.Table, emailsequencesend.FieldID, id),
+			sqlgraph.To(lead.Table, lead.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, emailsequencesend.LeadTable, emailsequencesend.LeadColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *EmailSequenceSendClient) Hooks() []Hook {
+	return c.hooks.EmailSequenceSend
+}
+
+// Interceptors returns the client interceptors.
+func (c *EmailSequenceSendClient) Interceptors() []Interceptor {
+	return c.inters.EmailSequenceSend
+}
+
+func (c *EmailSequenceSendClient) mutate(ctx context.Context, m *EmailSequenceSendMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&EmailSequenceSendCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&EmailSequenceSendUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&EmailSequenceSendUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&EmailSequenceSendDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown EmailSequenceSend mutation op: %q", m.Op())
+	}
+}
+
+// EmailSequenceStepClient is a client for the EmailSequenceStep schema.
+type EmailSequenceStepClient struct {
+	config
+}
+
+// NewEmailSequenceStepClient returns a client for the EmailSequenceStep from the given config.
+func NewEmailSequenceStepClient(c config) *EmailSequenceStepClient {
+	return &EmailSequenceStepClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `emailsequencestep.Hooks(f(g(h())))`.
+func (c *EmailSequenceStepClient) Use(hooks ...Hook) {
+	c.hooks.EmailSequenceStep = append(c.hooks.EmailSequenceStep, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `emailsequencestep.Intercept(f(g(h())))`.
+func (c *EmailSequenceStepClient) Intercept(interceptors ...Interceptor) {
+	c.inters.EmailSequenceStep = append(c.inters.EmailSequenceStep, interceptors...)
+}
+
+// Create returns a builder for creating a EmailSequenceStep entity.
+func (c *EmailSequenceStepClient) Create() *EmailSequenceStepCreate {
+	mutation := newEmailSequenceStepMutation(c.config, OpCreate)
+	return &EmailSequenceStepCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of EmailSequenceStep entities.
+func (c *EmailSequenceStepClient) CreateBulk(builders ...*EmailSequenceStepCreate) *EmailSequenceStepCreateBulk {
+	return &EmailSequenceStepCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *EmailSequenceStepClient) MapCreateBulk(slice any, setFunc func(*EmailSequenceStepCreate, int)) *EmailSequenceStepCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &EmailSequenceStepCreateBulk{err: fmt.Errorf("calling to EmailSequenceStepClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*EmailSequenceStepCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &EmailSequenceStepCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for EmailSequenceStep.
+func (c *EmailSequenceStepClient) Update() *EmailSequenceStepUpdate {
+	mutation := newEmailSequenceStepMutation(c.config, OpUpdate)
+	return &EmailSequenceStepUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *EmailSequenceStepClient) UpdateOne(_m *EmailSequenceStep) *EmailSequenceStepUpdateOne {
+	mutation := newEmailSequenceStepMutation(c.config, OpUpdateOne, withEmailSequenceStep(_m))
+	return &EmailSequenceStepUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *EmailSequenceStepClient) UpdateOneID(id int) *EmailSequenceStepUpdateOne {
+	mutation := newEmailSequenceStepMutation(c.config, OpUpdateOne, withEmailSequenceStepID(id))
+	return &EmailSequenceStepUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for EmailSequenceStep.
+func (c *EmailSequenceStepClient) Delete() *EmailSequenceStepDelete {
+	mutation := newEmailSequenceStepMutation(c.config, OpDelete)
+	return &EmailSequenceStepDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *EmailSequenceStepClient) DeleteOne(_m *EmailSequenceStep) *EmailSequenceStepDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *EmailSequenceStepClient) DeleteOneID(id int) *EmailSequenceStepDeleteOne {
+	builder := c.Delete().Where(emailsequencestep.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &EmailSequenceStepDeleteOne{builder}
+}
+
+// Query returns a query builder for EmailSequenceStep.
+func (c *EmailSequenceStepClient) Query() *EmailSequenceStepQuery {
+	return &EmailSequenceStepQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeEmailSequenceStep},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a EmailSequenceStep entity by its id.
+func (c *EmailSequenceStepClient) Get(ctx context.Context, id int) (*EmailSequenceStep, error) {
+	return c.Query().Where(emailsequencestep.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *EmailSequenceStepClient) GetX(ctx context.Context, id int) *EmailSequenceStep {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QuerySequence queries the sequence edge of a EmailSequenceStep.
+func (c *EmailSequenceStepClient) QuerySequence(_m *EmailSequenceStep) *EmailSequenceQuery {
+	query := (&EmailSequenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(emailsequencestep.Table, emailsequencestep.FieldID, id),
+			sqlgraph.To(emailsequence.Table, emailsequence.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, emailsequencestep.SequenceTable, emailsequencestep.SequenceColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySends queries the sends edge of a EmailSequenceStep.
+func (c *EmailSequenceStepClient) QuerySends(_m *EmailSequenceStep) *EmailSequenceSendQuery {
+	query := (&EmailSequenceSendClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(emailsequencestep.Table, emailsequencestep.FieldID, id),
+			sqlgraph.To(emailsequencesend.Table, emailsequencesend.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, emailsequencestep.SendsTable, emailsequencestep.SendsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *EmailSequenceStepClient) Hooks() []Hook {
+	return c.hooks.EmailSequenceStep
+}
+
+// Interceptors returns the client interceptors.
+func (c *EmailSequenceStepClient) Interceptors() []Interceptor {
+	return c.inters.EmailSequenceStep
+}
+
+func (c *EmailSequenceStepClient) mutate(ctx context.Context, m *EmailSequenceStepMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&EmailSequenceStepCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&EmailSequenceStepUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&EmailSequenceStepUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&EmailSequenceStepDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown EmailSequenceStep mutation op: %q", m.Op())
 	}
 }
 
@@ -1066,6 +1826,38 @@ func (c *LeadClient) QueryAssignments(_m *Lead) *LeadAssignmentQuery {
 			sqlgraph.From(lead.Table, lead.FieldID, id),
 			sqlgraph.To(leadassignment.Table, leadassignment.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, lead.AssignmentsTable, lead.AssignmentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEmailSequenceEnrollments queries the email_sequence_enrollments edge of a Lead.
+func (c *LeadClient) QueryEmailSequenceEnrollments(_m *Lead) *EmailSequenceEnrollmentQuery {
+	query := (&EmailSequenceEnrollmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(lead.Table, lead.FieldID, id),
+			sqlgraph.To(emailsequenceenrollment.Table, emailsequenceenrollment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, lead.EmailSequenceEnrollmentsTable, lead.EmailSequenceEnrollmentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEmailSequenceSends queries the email_sequence_sends edge of a Lead.
+func (c *LeadClient) QueryEmailSequenceSends(_m *Lead) *EmailSequenceSendQuery {
+	query := (&EmailSequenceSendClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(lead.Table, lead.FieldID, id),
+			sqlgraph.To(emailsequencesend.Table, emailsequencesend.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, lead.EmailSequenceSendsTable, lead.EmailSequenceSendsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -2718,6 +3510,38 @@ func (c *UserClient) QueryLeadAssignmentsMade(_m *User) *LeadAssignmentQuery {
 	return query
 }
 
+// QueryEmailSequencesCreated queries the email_sequences_created edge of a User.
+func (c *UserClient) QueryEmailSequencesCreated(_m *User) *EmailSequenceQuery {
+	query := (&EmailSequenceClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(emailsequence.Table, emailsequence.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.EmailSequencesCreatedTable, user.EmailSequencesCreatedColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEmailSequenceEnrollmentsMade queries the email_sequence_enrollments_made edge of a User.
+func (c *UserClient) QueryEmailSequenceEnrollmentsMade(_m *User) *EmailSequenceEnrollmentQuery {
+	query := (&EmailSequenceEnrollmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(emailsequenceenrollment.Table, emailsequenceenrollment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.EmailSequenceEnrollmentsMadeTable, user.EmailSequenceEnrollmentsMadeColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -2895,12 +3719,14 @@ func (c *WebhookClient) mutate(ctx context.Context, m *WebhookMutation) (Value, 
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		APIKey, AuditLog, Export, Industry, Lead, LeadAssignment, LeadNote,
+		APIKey, AuditLog, EmailSequence, EmailSequenceEnrollment, EmailSequenceSend,
+		EmailSequenceStep, Export, Industry, Lead, LeadAssignment, LeadNote,
 		LeadStatusHistory, Organization, OrganizationMember, SavedSearch, Subscription,
 		UsageLog, User, Webhook []ent.Hook
 	}
 	inters struct {
-		APIKey, AuditLog, Export, Industry, Lead, LeadAssignment, LeadNote,
+		APIKey, AuditLog, EmailSequence, EmailSequenceEnrollment, EmailSequenceSend,
+		EmailSequenceStep, Export, Industry, Lead, LeadAssignment, LeadNote,
 		LeadStatusHistory, Organization, OrganizationMember, SavedSearch, Subscription,
 		UsageLog, User, Webhook []ent.Interceptor
 	}

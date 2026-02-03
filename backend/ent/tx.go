@@ -16,6 +16,14 @@ type Tx struct {
 	APIKey *APIKeyClient
 	// AuditLog is the client for interacting with the AuditLog builders.
 	AuditLog *AuditLogClient
+	// EmailSequence is the client for interacting with the EmailSequence builders.
+	EmailSequence *EmailSequenceClient
+	// EmailSequenceEnrollment is the client for interacting with the EmailSequenceEnrollment builders.
+	EmailSequenceEnrollment *EmailSequenceEnrollmentClient
+	// EmailSequenceSend is the client for interacting with the EmailSequenceSend builders.
+	EmailSequenceSend *EmailSequenceSendClient
+	// EmailSequenceStep is the client for interacting with the EmailSequenceStep builders.
+	EmailSequenceStep *EmailSequenceStepClient
 	// Export is the client for interacting with the Export builders.
 	Export *ExportClient
 	// Industry is the client for interacting with the Industry builders.
@@ -175,6 +183,10 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.APIKey = NewAPIKeyClient(tx.config)
 	tx.AuditLog = NewAuditLogClient(tx.config)
+	tx.EmailSequence = NewEmailSequenceClient(tx.config)
+	tx.EmailSequenceEnrollment = NewEmailSequenceEnrollmentClient(tx.config)
+	tx.EmailSequenceSend = NewEmailSequenceSendClient(tx.config)
+	tx.EmailSequenceStep = NewEmailSequenceStepClient(tx.config)
 	tx.Export = NewExportClient(tx.config)
 	tx.Industry = NewIndustryClient(tx.config)
 	tx.Lead = NewLeadClient(tx.config)

@@ -84,9 +84,13 @@ type LeadEdges struct {
 	StatusHistory []*LeadStatusHistory `json:"status_history,omitempty"`
 	// Assignment history for this lead
 	Assignments []*LeadAssignment `json:"assignments,omitempty"`
+	// Email sequences this lead is enrolled in
+	EmailSequenceEnrollments []*EmailSequenceEnrollment `json:"email_sequence_enrollments,omitempty"`
+	// Emails sent to this lead
+	EmailSequenceSends []*EmailSequenceSend `json:"email_sequence_sends,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [5]bool
 }
 
 // NotesOrErr returns the Notes value or an error if the edge
@@ -114,6 +118,24 @@ func (e LeadEdges) AssignmentsOrErr() ([]*LeadAssignment, error) {
 		return e.Assignments, nil
 	}
 	return nil, &NotLoadedError{edge: "assignments"}
+}
+
+// EmailSequenceEnrollmentsOrErr returns the EmailSequenceEnrollments value or an error if the edge
+// was not loaded in eager-loading.
+func (e LeadEdges) EmailSequenceEnrollmentsOrErr() ([]*EmailSequenceEnrollment, error) {
+	if e.loadedTypes[3] {
+		return e.EmailSequenceEnrollments, nil
+	}
+	return nil, &NotLoadedError{edge: "email_sequence_enrollments"}
+}
+
+// EmailSequenceSendsOrErr returns the EmailSequenceSends value or an error if the edge
+// was not loaded in eager-loading.
+func (e LeadEdges) EmailSequenceSendsOrErr() ([]*EmailSequenceSend, error) {
+	if e.loadedTypes[4] {
+		return e.EmailSequenceSends, nil
+	}
+	return nil, &NotLoadedError{edge: "email_sequence_sends"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -344,6 +366,16 @@ func (_m *Lead) QueryStatusHistory() *LeadStatusHistoryQuery {
 // QueryAssignments queries the "assignments" edge of the Lead entity.
 func (_m *Lead) QueryAssignments() *LeadAssignmentQuery {
 	return NewLeadClient(_m.config).QueryAssignments(_m)
+}
+
+// QueryEmailSequenceEnrollments queries the "email_sequence_enrollments" edge of the Lead entity.
+func (_m *Lead) QueryEmailSequenceEnrollments() *EmailSequenceEnrollmentQuery {
+	return NewLeadClient(_m.config).QueryEmailSequenceEnrollments(_m)
+}
+
+// QueryEmailSequenceSends queries the "email_sequence_sends" edge of the Lead entity.
+func (_m *Lead) QueryEmailSequenceSends() *EmailSequenceSendQuery {
+	return NewLeadClient(_m.config).QueryEmailSequenceSends(_m)
 }
 
 // Update returns a builder for updating this Lead.

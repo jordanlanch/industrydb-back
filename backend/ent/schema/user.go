@@ -142,6 +142,10 @@ func (User) Edges() []ent.Edge {
 			Comment("Leads assigned to this user"),
 		edge.To("lead_assignments_made", LeadAssignment.Type).
 			Comment("Lead assignments made by this user"),
+		edge.To("email_sequences_created", EmailSequence.Type).
+			Comment("Email sequences created by this user"),
+		edge.To("email_sequence_enrollments_made", EmailSequenceEnrollment.Type).
+			Comment("Email sequence enrollments made by this user"),
 	}
 }
 

@@ -159,6 +159,12 @@ func (Lead) Edges() []ent.Edge {
 
 		edge.To("assignments", LeadAssignment.Type).
 			Comment("Assignment history for this lead"),
+
+		edge.To("email_sequence_enrollments", EmailSequenceEnrollment.Type).
+			Comment("Email sequences this lead is enrolled in"),
+
+		edge.To("email_sequence_sends", EmailSequenceSend.Type).
+			Comment("Emails sent to this lead"),
 	}
 }
 
