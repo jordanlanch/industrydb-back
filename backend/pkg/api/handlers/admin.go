@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -12,6 +14,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/user"
 	"github.com/jordanlanch/industrydb/pkg/api/errors"
 	"github.com/jordanlanch/industrydb/pkg/audit"
+	importpkg "github.com/jordanlanch/industrydb/pkg/import"
 	"github.com/jordanlanch/industrydb/pkg/models"
 	"github.com/labstack/echo/v4"
 )
@@ -414,4 +417,103 @@ func (h *AdminHandler) SuspendUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{
 		"message": "User suspended successfully",
 	})
+}
+
+// ImportLeadsCSV imports leads from uploaded CSV file
+// @Summary Import leads from CSV
+// @Description Bulk import leads from CSV file (admin only) - max 10k rows per upload
+// @Tags Admin
+// @Accept multipart/form-data
+// @Produce json
+// @Security BearerAuth
+// @Param file formData file true "CSV file to import"
+// @Param validate_only formData boolean false "Only validate, don't import"
+// @Success 200 {object} importpkg.ImportResult "Import results"
+// @Failure 400 {object} models.ErrorResponse "Invalid file or format"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 403 {object} models.ErrorResponse "Forbidden - Admin access required"
+// @Failure 413 {object} models.ErrorResponse "File too large"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /admin/import/csv [post]
+func (h *AdminHandler) ImportLeadsCSV(c echo.Context) error {
+	ctx, cancel := context.WithTimeout(c.Request().Context(), 5*time.Minute) // 5 min timeout for large imports
+	defer cancel()
+
+	// Get uploaded file
+	file, err := c.FormFile("file")
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Error:   "invalid_file",
+			Message: "No file uploaded or invalid file",
+		})
+	}
+
+	// Validate file size (max 50MB)
+	const maxFileSize = 50 * 1024 * 1024 // 50MB
+	if file.Size > maxFileSize {
+		return c.JSON(http.StatusRequestEntityTooLarge, models.ErrorResponse{
+			Error:   "file_too_large",
+			Message: "File size exceeds 50MB limit",
+		})
+	}
+
+	// Validate file extension
+	if !strings.HasSuffix(strings.ToLower(file.Filename), ".csv") {
+		return c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Error:   "invalid_format",
+			Message: "File must be a CSV file",
+		})
+	}
+
+	// Open uploaded file
+	src, err := file.Open()
+	if err != nil {
+		return errors.InternalError(c, err)
+	}
+	defer src.Close()
+
+	// Get validate_only flag
+	validateOnly := c.FormValue("validate_only") == "true"
+
+	// Create import service
+	importService := importpkg.NewCSVImportService(h.db)
+
+	// Configure import
+	config := importpkg.DefaultCSVConfig()
+	config.ValidateOnly = validateOnly
+
+	// Perform import
+	result, err := importService.ImportFromCSV(ctx, src, config)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Error:   "import_failed",
+			Message: fmt.Sprintf("Import failed: %v", err),
+		})
+	}
+
+	// Log import
+	adminID := c.Get("user_id").(int)
+	ipAddress, userAgent := audit.GetRequestContext(c)
+
+	resourceType := "lead"
+	description := fmt.Sprintf("CSV import: %d success, %d failures", result.SuccessCount, result.FailureCount)
+
+	go h.auditLogger.Log(context.Background(), audit.LogEntry{
+		UserID:       &adminID,
+		Action:       "csv_import",
+		ResourceType: &resourceType,
+		IPAddress:    &ipAddress,
+		UserAgent:    &userAgent,
+		Metadata: map[string]interface{}{
+			"filename":       file.Filename,
+			"total_rows":     result.TotalRows,
+			"success_count":  result.SuccessCount,
+			"failure_count":  result.FailureCount,
+			"validate_only":  validateOnly,
+		},
+		Severity:    "info",
+		Description: &description,
+	})
+
+	return c.JSON(http.StatusOK, result)
 }

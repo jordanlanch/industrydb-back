@@ -496,6 +496,12 @@ func main() {
 			adminGroup.PATCH("/users/:id", adminHandler.UpdateUser)
 			adminGroup.DELETE("/users/:id", adminHandler.SuspendUser)
 
+			// CSV bulk import routes
+			importGroup := adminGroup.Group("/import")
+			{
+				importGroup.POST("/csv", adminHandler.ImportLeadsCSV)
+			}
+
 			// Data acquisition job routes
 			jobsGroup := adminGroup.Group("/jobs")
 			{
