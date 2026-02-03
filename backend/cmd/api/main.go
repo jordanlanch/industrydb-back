@@ -269,11 +269,12 @@ func main() {
 
 	// Initialize email service
 	emailService := email.NewService(
-		"noreply@industrydb.io",
-		"IndustryDB",
+		cfg.EmailFrom,
+		cfg.EmailFromName,
 		cfg.FrontendURL,
+		cfg.SendGridAPIKey,
 	)
-	log.Printf("✅ Email service initialized")
+	// Service logs its own initialization status
 
 	// Initialize backup service (if enabled)
 	var backupService *backup.Service

@@ -53,8 +53,8 @@ func setupPasswordTestHandler(t *testing.T) (*AuthHandler, *ent.Client, *cache.C
 		t.Fatalf("Failed to create Redis client: %v", err)
 	}
 
-	// Create email service
-	emailService := email.NewService("noreply@test.com", "IndustryDB Test", "http://localhost:5678")
+	// Create email service (test mode - no SendGrid key)
+	emailService := email.NewService("noreply@test.com", "IndustryDB Test", "http://localhost:5678", "")
 
 	// Create audit logger
 	auditLogger := audit.NewService(dbClient)

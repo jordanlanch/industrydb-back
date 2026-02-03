@@ -69,11 +69,13 @@ type Config struct {
 	BackupLocalDir      string
 
 	// Email
-	SMTPHost     string
-	SMTPPort     string
-	SMTPUser     string
-	SMTPPassword string
-	EmailFrom    string
+	SendGridAPIKey string
+	SMTPHost       string
+	SMTPPort       string
+	SMTPUser       string
+	SMTPPassword   string
+	EmailFrom      string
+	EmailFromName  string
 
 	// Features
 	FeatureEmailExports bool
@@ -147,11 +149,13 @@ func Load() *Config {
 		BackupLocalDir:      getEnv("BACKUP_LOCAL_DIR", "./data/backups"),
 
 		// Email
-		SMTPHost:     getEnv("SMTP_HOST", ""),
-		SMTPPort:     getEnv("SMTP_PORT", "587"),
-		SMTPUser:     getEnv("SMTP_USER", ""),
-		SMTPPassword: getEnv("SMTP_PASSWORD", ""),
-		EmailFrom:    getEnv("EMAIL_FROM", "noreply@industrydb.io"),
+		SendGridAPIKey: getEnv("SENDGRID_API_KEY", ""),
+		SMTPHost:       getEnv("SMTP_HOST", ""),
+		SMTPPort:       getEnv("SMTP_PORT", "587"),
+		SMTPUser:       getEnv("SMTP_USER", ""),
+		SMTPPassword:   getEnv("SMTP_PASSWORD", ""),
+		EmailFrom:      getEnv("EMAIL_FROM", "noreply@industrydb.io"),
+		EmailFromName:  getEnv("EMAIL_FROM_NAME", "IndustryDB"),
 
 		// Features
 		FeatureEmailExports: getEnvAsBool("FEATURE_EMAIL_EXPORTS", true),

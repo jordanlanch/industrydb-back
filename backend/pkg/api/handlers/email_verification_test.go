@@ -29,8 +29,8 @@ func setupAuthTestHandler(t *testing.T) (*AuthHandler, *ent.Client, func()) {
 	// Create in-memory SQLite database for testing
 	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 
-	// Create email service (will log emails during tests)
-	emailService := email.NewService("noreply@test.com", "IndustryDB Test", "http://localhost:5678")
+	// Create email service (test mode - no SendGrid key)
+	emailService := email.NewService("noreply@test.com", "IndustryDB Test", "http://localhost:5678", "")
 
 	// Create test config
 	testConfig := &config.Config{

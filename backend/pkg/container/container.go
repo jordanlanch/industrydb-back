@@ -129,8 +129,9 @@ func (c *Container) initServices() {
 	c.AuditLogger = audit.NewService(c.DB.Ent)
 	c.EmailService = email.NewService(
 		c.Config.EmailFrom,
-		"IndustryDB",
+		c.Config.EmailFromName,
 		c.Config.FrontendURL,
+		c.Config.SendGridAPIKey,
 	)
 	c.LeadService = leads.NewService(c.DB.Ent, cacheClient)
 	c.AnalyticsService = analytics.NewService(c.DB.Ent)
