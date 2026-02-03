@@ -183,11 +183,11 @@ func init() {
 	// lead.DefaultStatusChangedAt holds the default value on creation for the status_changed_at field.
 	lead.DefaultStatusChangedAt = leadDescStatusChangedAt.Default.(func() time.Time)
 	// leadDescCreatedAt is the schema descriptor for created_at field.
-	leadDescCreatedAt := leadFields[23].Descriptor()
+	leadDescCreatedAt := leadFields[24].Descriptor()
 	// lead.DefaultCreatedAt holds the default value on creation for the created_at field.
 	lead.DefaultCreatedAt = leadDescCreatedAt.Default.(func() time.Time)
 	// leadDescUpdatedAt is the schema descriptor for updated_at field.
-	leadDescUpdatedAt := leadFields[24].Descriptor()
+	leadDescUpdatedAt := leadFields[25].Descriptor()
 	// lead.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	lead.DefaultUpdatedAt = leadDescUpdatedAt.Default.(func() time.Time)
 	// lead.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

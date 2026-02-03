@@ -233,6 +233,7 @@ var (
 		{Name: "quality_score", Type: field.TypeInt, Default: 50},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"new", "contacted", "qualified", "negotiating", "won", "lost", "archived"}, Default: "new"},
 		{Name: "status_changed_at", Type: field.TypeTime},
+		{Name: "custom_fields", Type: field.TypeJSON, Nullable: true},
 		{Name: "osm_id", Type: field.TypeString, Nullable: true},
 		{Name: "metadata", Type: field.TypeJSON, Nullable: true},
 		{Name: "sub_niche", Type: field.TypeString, Nullable: true},
@@ -292,42 +293,42 @@ var (
 			{
 				Name:    "lead_osm_id",
 				Unique:  true,
-				Columns: []*schema.Column{LeadsColumns[17]},
+				Columns: []*schema.Column{LeadsColumns[18]},
 			},
 			{
 				Name:    "lead_industry_sub_niche",
 				Unique:  false,
-				Columns: []*schema.Column{LeadsColumns[2], LeadsColumns[19]},
+				Columns: []*schema.Column{LeadsColumns[2], LeadsColumns[20]},
 			},
 			{
 				Name:    "lead_industry_country_sub_niche",
 				Unique:  false,
-				Columns: []*schema.Column{LeadsColumns[2], LeadsColumns[3], LeadsColumns[19]},
+				Columns: []*schema.Column{LeadsColumns[2], LeadsColumns[3], LeadsColumns[20]},
 			},
 			{
 				Name:    "lead_sub_niche",
 				Unique:  false,
-				Columns: []*schema.Column{LeadsColumns[19]},
+				Columns: []*schema.Column{LeadsColumns[20]},
 			},
 			{
 				Name:    "lead_cuisine_type",
 				Unique:  false,
-				Columns: []*schema.Column{LeadsColumns[21]},
+				Columns: []*schema.Column{LeadsColumns[22]},
 			},
 			{
 				Name:    "lead_sport_type",
 				Unique:  false,
-				Columns: []*schema.Column{LeadsColumns[22]},
+				Columns: []*schema.Column{LeadsColumns[23]},
 			},
 			{
 				Name:    "lead_tattoo_style",
 				Unique:  false,
-				Columns: []*schema.Column{LeadsColumns[23]},
+				Columns: []*schema.Column{LeadsColumns[24]},
 			},
 			{
 				Name:    "lead_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{LeadsColumns[24]},
+				Columns: []*schema.Column{LeadsColumns[25]},
 			},
 		},
 	}

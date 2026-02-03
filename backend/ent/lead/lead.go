@@ -47,6 +47,8 @@ const (
 	FieldStatus = "status"
 	// FieldStatusChangedAt holds the string denoting the status_changed_at field in the database.
 	FieldStatusChangedAt = "status_changed_at"
+	// FieldCustomFields holds the string denoting the custom_fields field in the database.
+	FieldCustomFields = "custom_fields"
 	// FieldOsmID holds the string denoting the osm_id field in the database.
 	FieldOsmID = "osm_id"
 	// FieldMetadata holds the string denoting the metadata field in the database.
@@ -106,6 +108,7 @@ var Columns = []string{
 	FieldQualityScore,
 	FieldStatus,
 	FieldStatusChangedAt,
+	FieldCustomFields,
 	FieldOsmID,
 	FieldMetadata,
 	FieldSubNiche,

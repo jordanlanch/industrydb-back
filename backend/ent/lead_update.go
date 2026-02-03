@@ -316,6 +316,18 @@ func (_u *LeadUpdate) SetNillableStatusChangedAt(v *time.Time) *LeadUpdate {
 	return _u
 }
 
+// SetCustomFields sets the "custom_fields" field.
+func (_u *LeadUpdate) SetCustomFields(v map[string]interface{}) *LeadUpdate {
+	_u.mutation.SetCustomFields(v)
+	return _u
+}
+
+// ClearCustomFields clears the value of the "custom_fields" field.
+func (_u *LeadUpdate) ClearCustomFields() *LeadUpdate {
+	_u.mutation.ClearCustomFields()
+	return _u
+}
+
 // SetOsmID sets the "osm_id" field.
 func (_u *LeadUpdate) SetOsmID(v string) *LeadUpdate {
 	_u.mutation.SetOsmID(v)
@@ -692,6 +704,12 @@ func (_u *LeadUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.StatusChangedAt(); ok {
 		_spec.SetField(lead.FieldStatusChangedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.CustomFields(); ok {
+		_spec.SetField(lead.FieldCustomFields, field.TypeJSON, value)
+	}
+	if _u.mutation.CustomFieldsCleared() {
+		_spec.ClearField(lead.FieldCustomFields, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.OsmID(); ok {
 		_spec.SetField(lead.FieldOsmID, field.TypeString, value)
@@ -1138,6 +1156,18 @@ func (_u *LeadUpdateOne) SetNillableStatusChangedAt(v *time.Time) *LeadUpdateOne
 	return _u
 }
 
+// SetCustomFields sets the "custom_fields" field.
+func (_u *LeadUpdateOne) SetCustomFields(v map[string]interface{}) *LeadUpdateOne {
+	_u.mutation.SetCustomFields(v)
+	return _u
+}
+
+// ClearCustomFields clears the value of the "custom_fields" field.
+func (_u *LeadUpdateOne) ClearCustomFields() *LeadUpdateOne {
+	_u.mutation.ClearCustomFields()
+	return _u
+}
+
 // SetOsmID sets the "osm_id" field.
 func (_u *LeadUpdateOne) SetOsmID(v string) *LeadUpdateOne {
 	_u.mutation.SetOsmID(v)
@@ -1544,6 +1574,12 @@ func (_u *LeadUpdateOne) sqlSave(ctx context.Context) (_node *Lead, err error) {
 	}
 	if value, ok := _u.mutation.StatusChangedAt(); ok {
 		_spec.SetField(lead.FieldStatusChangedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.CustomFields(); ok {
+		_spec.SetField(lead.FieldCustomFields, field.TypeJSON, value)
+	}
+	if _u.mutation.CustomFieldsCleared() {
+		_spec.ClearField(lead.FieldCustomFields, field.TypeJSON)
 	}
 	if value, ok := _u.mutation.OsmID(); ok {
 		_spec.SetField(lead.FieldOsmID, field.TypeString, value)

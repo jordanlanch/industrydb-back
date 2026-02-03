@@ -50,6 +50,8 @@ type Lead struct {
 	Status lead.Status `json:"status,omitempty"`
 	// When the status was last changed
 	StatusChangedAt time.Time `json:"status_changed_at,omitempty"`
+	// User-defined custom fields (flexible metadata storage)
+	CustomFields map[string]interface{} `json:"custom_fields,omitempty"`
 	// OpenStreetMap ID
 	OsmID string `json:"osm_id,omitempty"`
 	// Additional metadata from OSM
@@ -108,7 +110,7 @@ func (*Lead) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case lead.FieldSocialMedia, lead.FieldMetadata, lead.FieldSpecialties:
+		case lead.FieldSocialMedia, lead.FieldCustomFields, lead.FieldMetadata, lead.FieldSpecialties:
 			values[i] = new([]byte)
 		case lead.FieldVerified:
 			values[i] = new(sql.NullBool)
@@ -238,6 +240,14 @@ func (_m *Lead) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field status_changed_at", values[i])
 			} else if value.Valid {
 				_m.StatusChangedAt = value.Time
+			}
+		case lead.FieldCustomFields:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field custom_fields", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.CustomFields); err != nil {
+					return fmt.Errorf("unmarshal field custom_fields: %w", err)
+				}
 			}
 		case lead.FieldOsmID:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -390,6 +400,9 @@ func (_m *Lead) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("status_changed_at=")
 	builder.WriteString(_m.StatusChangedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("custom_fields=")
+	builder.WriteString(fmt.Sprintf("%v", _m.CustomFields))
 	builder.WriteString(", ")
 	builder.WriteString("osm_id=")
 	builder.WriteString(_m.OsmID)

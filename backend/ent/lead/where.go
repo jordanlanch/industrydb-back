@@ -965,6 +965,16 @@ func StatusChangedAtLTE(v time.Time) predicate.Lead {
 	return predicate.Lead(sql.FieldLTE(FieldStatusChangedAt, v))
 }
 
+// CustomFieldsIsNil applies the IsNil predicate on the "custom_fields" field.
+func CustomFieldsIsNil() predicate.Lead {
+	return predicate.Lead(sql.FieldIsNull(FieldCustomFields))
+}
+
+// CustomFieldsNotNil applies the NotNil predicate on the "custom_fields" field.
+func CustomFieldsNotNil() predicate.Lead {
+	return predicate.Lead(sql.FieldNotNull(FieldCustomFields))
+}
+
 // OsmIDEQ applies the EQ predicate on the "osm_id" field.
 func OsmIDEQ(v string) predicate.Lead {
 	return predicate.Lead(sql.FieldEQ(FieldOsmID, v))

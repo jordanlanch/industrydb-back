@@ -108,6 +108,9 @@ func (Lead) Fields() []ent.Field {
 		field.Time("status_changed_at").
 			Default(time.Now).
 			Comment("When the status was last changed"),
+		field.JSON("custom_fields", map[string]interface{}{}).
+			Optional().
+			Comment("User-defined custom fields (flexible metadata storage)"),
 		field.String("osm_id").
 			Optional().
 			Comment("OpenStreetMap ID"),

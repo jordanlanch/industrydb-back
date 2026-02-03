@@ -206,6 +206,12 @@ func (_c *LeadCreate) SetNillableStatusChangedAt(v *time.Time) *LeadCreate {
 	return _c
 }
 
+// SetCustomFields sets the "custom_fields" field.
+func (_c *LeadCreate) SetCustomFields(v map[string]interface{}) *LeadCreate {
+	_c.mutation.SetCustomFields(v)
+	return _c
+}
+
 // SetOsmID sets the "osm_id" field.
 func (_c *LeadCreate) SetOsmID(v string) *LeadCreate {
 	_c.mutation.SetOsmID(v)
@@ -558,6 +564,10 @@ func (_c *LeadCreate) createSpec() (*Lead, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.StatusChangedAt(); ok {
 		_spec.SetField(lead.FieldStatusChangedAt, field.TypeTime, value)
 		_node.StatusChangedAt = value
+	}
+	if value, ok := _c.mutation.CustomFields(); ok {
+		_spec.SetField(lead.FieldCustomFields, field.TypeJSON, value)
+		_node.CustomFields = value
 	}
 	if value, ok := _c.mutation.OsmID(); ok {
 		_spec.SetField(lead.FieldOsmID, field.TypeString, value)

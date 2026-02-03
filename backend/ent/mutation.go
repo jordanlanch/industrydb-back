@@ -4203,6 +4203,7 @@ type LeadMutation struct {
 	addquality_score      *int
 	status                *lead.Status
 	status_changed_at     *time.Time
+	custom_fields         *map[string]interface{}
 	osm_id                *string
 	metadata              *map[string]interface{}
 	sub_niche             *string
@@ -5065,6 +5066,55 @@ func (m *LeadMutation) ResetStatusChangedAt() {
 	m.status_changed_at = nil
 }
 
+// SetCustomFields sets the "custom_fields" field.
+func (m *LeadMutation) SetCustomFields(value map[string]interface{}) {
+	m.custom_fields = &value
+}
+
+// CustomFields returns the value of the "custom_fields" field in the mutation.
+func (m *LeadMutation) CustomFields() (r map[string]interface{}, exists bool) {
+	v := m.custom_fields
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCustomFields returns the old "custom_fields" field's value of the Lead entity.
+// If the Lead object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadMutation) OldCustomFields(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCustomFields is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCustomFields requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCustomFields: %w", err)
+	}
+	return oldValue.CustomFields, nil
+}
+
+// ClearCustomFields clears the value of the "custom_fields" field.
+func (m *LeadMutation) ClearCustomFields() {
+	m.custom_fields = nil
+	m.clearedFields[lead.FieldCustomFields] = struct{}{}
+}
+
+// CustomFieldsCleared returns if the "custom_fields" field was cleared in this mutation.
+func (m *LeadMutation) CustomFieldsCleared() bool {
+	_, ok := m.clearedFields[lead.FieldCustomFields]
+	return ok
+}
+
+// ResetCustomFields resets all changes to the "custom_fields" field.
+func (m *LeadMutation) ResetCustomFields() {
+	m.custom_fields = nil
+	delete(m.clearedFields, lead.FieldCustomFields)
+}
+
 // SetOsmID sets the "osm_id" field.
 func (m *LeadMutation) SetOsmID(s string) {
 	m.osm_id = &s
@@ -5638,7 +5688,7 @@ func (m *LeadMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *LeadMutation) Fields() []string {
-	fields := make([]string, 0, 25)
+	fields := make([]string, 0, 26)
 	if m.name != nil {
 		fields = append(fields, lead.FieldName)
 	}
@@ -5686,6 +5736,9 @@ func (m *LeadMutation) Fields() []string {
 	}
 	if m.status_changed_at != nil {
 		fields = append(fields, lead.FieldStatusChangedAt)
+	}
+	if m.custom_fields != nil {
+		fields = append(fields, lead.FieldCustomFields)
 	}
 	if m.osm_id != nil {
 		fields = append(fields, lead.FieldOsmID)
@@ -5754,6 +5807,8 @@ func (m *LeadMutation) Field(name string) (ent.Value, bool) {
 		return m.Status()
 	case lead.FieldStatusChangedAt:
 		return m.StatusChangedAt()
+	case lead.FieldCustomFields:
+		return m.CustomFields()
 	case lead.FieldOsmID:
 		return m.OsmID()
 	case lead.FieldMetadata:
@@ -5813,6 +5868,8 @@ func (m *LeadMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldStatus(ctx)
 	case lead.FieldStatusChangedAt:
 		return m.OldStatusChangedAt(ctx)
+	case lead.FieldCustomFields:
+		return m.OldCustomFields(ctx)
 	case lead.FieldOsmID:
 		return m.OldOsmID(ctx)
 	case lead.FieldMetadata:
@@ -5951,6 +6008,13 @@ func (m *LeadMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetStatusChangedAt(v)
+		return nil
+	case lead.FieldCustomFields:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCustomFields(v)
 		return nil
 	case lead.FieldOsmID:
 		v, ok := value.(string)
@@ -6108,6 +6172,9 @@ func (m *LeadMutation) ClearedFields() []string {
 	if m.FieldCleared(lead.FieldLongitude) {
 		fields = append(fields, lead.FieldLongitude)
 	}
+	if m.FieldCleared(lead.FieldCustomFields) {
+		fields = append(fields, lead.FieldCustomFields)
+	}
 	if m.FieldCleared(lead.FieldOsmID) {
 		fields = append(fields, lead.FieldOsmID)
 	}
@@ -6166,6 +6233,9 @@ func (m *LeadMutation) ClearField(name string) error {
 		return nil
 	case lead.FieldLongitude:
 		m.ClearLongitude()
+		return nil
+	case lead.FieldCustomFields:
+		m.ClearCustomFields()
 		return nil
 	case lead.FieldOsmID:
 		m.ClearOsmID()
@@ -6243,6 +6313,9 @@ func (m *LeadMutation) ResetField(name string) error {
 		return nil
 	case lead.FieldStatusChangedAt:
 		m.ResetStatusChangedAt()
+		return nil
+	case lead.FieldCustomFields:
+		m.ResetCustomFields()
 		return nil
 	case lead.FieldOsmID:
 		m.ResetOsmID()

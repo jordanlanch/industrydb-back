@@ -352,6 +352,7 @@ func main() {
 	batchHandler := handlers.NewBatchHandler(db.Ent, webhookService)
 	leadNoteHandler := handlers.NewLeadNoteHandler(db.Ent, auditLogger)
 	leadLifecycleHandler := handlers.NewLeadLifecycleHandler(db.Ent, auditLogger)
+	customFieldsHandler := handlers.NewCustomFieldsHandler(db.Ent)
 	phoneHandler := handlers.NewPhoneHandler()
 	log.Printf("✅ Webhook and batch handlers initialized")
 
@@ -400,6 +401,12 @@ func main() {
 			leadsGroup.GET("/:id/status-history", leadLifecycleHandler.GetLeadStatusHistory)
 			leadsGroup.GET("/by-status/:status", leadLifecycleHandler.GetLeadsByStatus)
 			leadsGroup.GET("/status-counts", leadLifecycleHandler.GetStatusCounts)
+			// Custom fields
+			leadsGroup.GET("/:id/custom-fields", customFieldsHandler.GetCustomFields)
+			leadsGroup.POST("/:id/custom-fields/set", customFieldsHandler.SetCustomField)
+			leadsGroup.PUT("/:id/custom-fields", customFieldsHandler.UpdateCustomFields)
+			leadsGroup.DELETE("/:id/custom-fields", customFieldsHandler.ClearCustomFields)
+			leadsGroup.DELETE("/:id/custom-fields/:key", customFieldsHandler.RemoveCustomField)
 		}
 
 		// Lead notes routes (require email verification)
