@@ -92,8 +92,14 @@ func main() {
 		log.Printf("ℹ️  Sentry disabled (no DSN configured)")
 	}
 
-	// Initialize database
-	db, err := database.NewClient(cfg.DatabaseURL)
+	// Initialize database with SSL configuration
+	sslCfg := &database.SSLConfig{
+		Mode:         cfg.DBSSLMode,
+		CertPath:     cfg.DBSSLCertPath,
+		KeyPath:      cfg.DBSSLKeyPath,
+		RootCertPath: cfg.DBSSLRootCertPath,
+	}
+	db, err := database.NewClientWithSSL(cfg.DatabaseURL, sslCfg)
 	if err != nil {
 		log.Fatalf("❌ Failed to connect to database: %v", err)
 	}

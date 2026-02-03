@@ -90,8 +90,14 @@ func New(cfg *config.Config) (*Container, error) {
 func (c *Container) initInfrastructure() error {
 	var err error
 
-	// Database
-	c.DB, err = database.NewClient(c.Config.DatabaseURL)
+	// Database with SSL configuration
+	sslCfg := &database.SSLConfig{
+		Mode:         c.Config.DBSSLMode,
+		CertPath:     c.Config.DBSSLCertPath,
+		KeyPath:      c.Config.DBSSLKeyPath,
+		RootCertPath: c.Config.DBSSLRootCertPath,
+	}
+	c.DB, err = database.NewClientWithSSL(c.Config.DatabaseURL, sslCfg)
 	if err != nil {
 		c.Logger.Error("Failed to connect to database", "error", err)
 		return err

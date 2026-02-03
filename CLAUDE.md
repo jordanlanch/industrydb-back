@@ -3147,6 +3147,94 @@ API_PORT=8080
 FRONTEND_URL=http://localhost:5678
 ```
 
+### Database SSL/TLS Configuration
+**Implemented:** 2026-02-03
+
+IndustryDB supports secure PostgreSQL connections with SSL/TLS encryption for production environments.
+
+**SSL Modes:**
+- `disable` - No SSL (development only)
+- `require` - Require SSL but don't verify certificates (recommended for production)
+- `verify-ca` - Require SSL and verify CA certificate
+- `verify-full` - Require SSL, verify CA and hostname (most secure)
+
+**Configuration:**
+
+**Development (no SSL):**
+```env
+DB_SSL_MODE=disable
+```
+
+**Production (SSL required):**
+```env
+DB_SSL_MODE=require
+DB_SSL_ROOT_CERT_PATH=/etc/ssl/certs/rds-ca-2019-root.pem
+```
+
+**Production with Certificate Authentication:**
+```env
+DB_SSL_MODE=verify-full
+DB_SSL_CERT_PATH=/etc/ssl/certs/client-cert.pem
+DB_SSL_KEY_PATH=/etc/ssl/certs/client-key.pem
+DB_SSL_ROOT_CERT_PATH=/etc/ssl/certs/ca-cert.pem
+```
+
+**Cloud Provider Examples:**
+
+**AWS RDS:**
+```env
+DB_SSL_MODE=require
+DB_SSL_ROOT_CERT_PATH=/etc/ssl/certs/rds-ca-2019-root.pem
+# Download RDS CA: https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem
+```
+
+**Google Cloud SQL:**
+```env
+DB_SSL_MODE=require
+DB_SSL_ROOT_CERT_PATH=/etc/ssl/certs/server-ca.pem
+DB_SSL_CERT_PATH=/etc/ssl/certs/client-cert.pem
+DB_SSL_KEY_PATH=/etc/ssl/certs/client-key.pem
+```
+
+**Azure Database for PostgreSQL:**
+```env
+DB_SSL_MODE=require
+DB_SSL_ROOT_CERT_PATH=/etc/ssl/certs/BaltimoreCyberTrustRoot.crt.pem
+```
+
+**Implementation:**
+- Service: `backend/pkg/database/database.go`
+- Config: `backend/config/config.go`
+- Functions: `NewClientWithSSL()`, `BuildConnectionString()`
+
+**Security Features:**
+- Automatic SSL mode detection from environment
+- Support for certificate-based authentication
+- Validates SSL configuration on startup
+- Logs SSL status (mode and certificate paths)
+- Connection string builder with URL-safe encoding
+
+**Testing SSL Connection:**
+```bash
+# Test SSL connection (local PostgreSQL with SSL)
+export DB_SSL_MODE=require
+export DATABASE_URL="postgres://user:pass@localhost:5432/db"
+go run cmd/api/main.go
+
+# Expected log:
+# 🔒 Database SSL enabled (mode: require)
+```
+
+**Production Checklist:**
+- ✅ Set `DB_SSL_MODE=require` or higher
+- ✅ Download CA certificate from cloud provider
+- ✅ Set `DB_SSL_ROOT_CERT_PATH` to CA certificate path
+- ✅ Test connection before deployment
+- ✅ Verify SSL in database logs
+- ✅ Monitor connection errors in Sentry
+
+**Resolves Production Blocker:** Database SSL certificates (2 of 4 production blockers)
+
 ## Testing
 
 ```bash

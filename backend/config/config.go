@@ -20,6 +20,12 @@ type Config struct {
 	DBPassword  string
 	DBName      string
 
+	// Database SSL Configuration
+	DBSSLMode         string // disable, require, verify-ca, verify-full
+	DBSSLCertPath     string // Path to client certificate
+	DBSSLKeyPath      string // Path to client key
+	DBSSLRootCertPath string // Path to root CA certificate
+
 	// Redis
 	RedisURL      string
 	RedisHost     string
@@ -102,6 +108,12 @@ func Load() *Config {
 		DBUser:      getEnv("DB_USER", "industrydb"),
 		DBPassword:  getEnv("DB_PASSWORD", "localdev"),
 		DBName:      getEnv("DB_NAME", "industrydb"),
+
+		// Database SSL
+		DBSSLMode:         getEnv("DB_SSL_MODE", "disable"),
+		DBSSLCertPath:     getEnv("DB_SSL_CERT_PATH", ""),
+		DBSSLKeyPath:      getEnv("DB_SSL_KEY_PATH", ""),
+		DBSSLRootCertPath: getEnv("DB_SSL_ROOT_CERT_PATH", ""),
 
 		// Redis
 		RedisURL:      getEnv("REDIS_URL", "redis://localhost:6677"),
