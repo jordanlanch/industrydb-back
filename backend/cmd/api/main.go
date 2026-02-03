@@ -49,6 +49,7 @@ import (
 	"github.com/jordanlanch/industrydb/pkg/cache"
 	"github.com/jordanlanch/industrydb/pkg/database"
 	"github.com/jordanlanch/industrydb/pkg/enrichment"
+	"github.com/jordanlanch/industrydb/pkg/slack"
 	"github.com/jordanlanch/industrydb/pkg/email"
 	"github.com/jordanlanch/industrydb/pkg/export"
 	"github.com/jordanlanch/industrydb/pkg/industries"
@@ -65,6 +66,9 @@ import (
 	echoSwagger "github.com/swaggo/echo-swagger"
 	_ "github.com/jordanlanch/industrydb/docs" // Swagger docs (generated)
 )
+
+// Global Slack service for optional notifications (initialized in main)
+var globalSlackService *slack.Service
 
 // stubEnrichmentProvider is a placeholder provider for development
 // Replace with real enrichment provider (Clearbit, FullContact, etc.) in production
@@ -294,6 +298,16 @@ func main() {
 		cfg.SendGridAPIKey,
 	)
 	// Service logs its own initialization status
+
+	// Initialize Slack service (if webhook URL configured)
+	if cfg.SlackWebhookURL != "" {
+		slackClient := slack.NewWebhookClient(cfg.SlackWebhookURL)
+		globalSlackService = slack.NewService(slackClient)
+		log.Printf("✅ Slack notifications enabled")
+	} else {
+		globalSlackService = slack.NewService(nil)
+		log.Printf("ℹ️  Slack notifications disabled (no webhook URL configured)")
+	}
 
 	// Initialize backup service (if enabled)
 	var backupService *backup.Service

@@ -90,6 +90,9 @@ type Config struct {
 	EmailFrom      string
 	EmailFromName  string
 
+	// Slack
+	SlackWebhookURL string
+
 	// Features
 	FeatureEmailExports bool
 	FeatureAPIAccess    bool
@@ -187,6 +190,9 @@ func Load() *Config {
 		SMTPPassword:   getEnv("SMTP_PASSWORD", ""),
 		EmailFrom:      getEnv("EMAIL_FROM", "noreply@industrydb.io"),
 		EmailFromName:  getEnv("EMAIL_FROM_NAME", "IndustryDB"),
+
+		// Slack
+		SlackWebhookURL: getEnv("SLACK_WEBHOOK_URL", ""),
 
 		// Features
 		FeatureEmailExports: getEnvAsBool("FEATURE_EMAIL_EXPORTS", true),
