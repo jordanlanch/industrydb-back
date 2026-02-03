@@ -84,6 +84,7 @@ func main() {
 
 	// Initialize rate limiters
 	globalRateLimiter := custommiddleware.NewRateLimiter(cfg.RateLimitRequestsPerMinute, cfg.RateLimitBurst)
+	tierRateLimiter := custommiddleware.NewTierRateLimiter()                 // Tier-based rate limiting for authenticated users
 	authRateLimiter := custommiddleware.NewRateLimiter(5, 2)                 // 5 req/min for login
 	registerRateLimiter := custommiddleware.NewRateLimiter(3, 1)             // 3 req/hour (converted to 0.05 req/min)
 	webhookRateLimiter := custommiddleware.NewRateLimiter(100, 20)           // 100 req/min for Stripe webhooks
@@ -287,6 +288,7 @@ func main() {
 	// Protected routes (require JWT with blacklist validation)
 	protected := v1.Group("")
 	protected.Use(custommw.JWTMiddlewareWithBlacklist(cfg.JWTSecret, tokenBlacklist, db.Ent))
+	protected.Use(tierRateLimiter.Middleware()) // Apply tier-based rate limiting to all authenticated endpoints
 	{
 		// Lead routes (require email verification)
 		leadsGroup := protected.Group("/leads")
@@ -303,6 +305,7 @@ func main() {
 			userGroup.GET("/usage", userHandler.GetUsage)
 			userGroup.PATCH("/profile", userHandler.UpdateProfile)
 			userGroup.POST("/onboarding/complete", userHandler.CompleteOnboarding)
+			userGroup.POST("/onboarding/reset", userHandler.ResetOnboarding)
 			userGroup.GET("/data-export", userHandler.ExportPersonalData)
 			userGroup.DELETE("/account", userHandler.DeleteAccount)
 			userGroup.GET("/audit-logs", auditHandler.GetUserLogs)

@@ -1058,6 +1058,67 @@ GET  /api/v1/user/data-export # Export personal data (GDPR)
 DELETE /api/v1/user/account   # Delete account (GDPR)
 ```
 
+#### Organization-Level Subscriptions
+**Implemented:** 2026-02-02
+
+Organizations can now have their own subscriptions separate from individual user accounts.
+
+**Features:**
+- Organization owners can upgrade organization subscription tier
+- Separate Stripe customer for each organization
+- Organization usage limits independent from personal accounts
+- Billing email can be set per organization
+- Webhook support for organization subscription events
+
+**Request Format:**
+```json
+POST /api/v1/billing/checkout
+{
+  "tier": "pro",
+  "organization_id": 123  // Optional: If provided, subscription applies to organization
+}
+```
+
+**How It Works:**
+1. **Personal Subscription** (no organization_id):
+   - Creates/uses user's Stripe customer
+   - Updates user subscription_tier
+   - Applies usage limit to user account
+
+2. **Organization Subscription** (with organization_id):
+   - Creates/uses organization's Stripe customer
+   - Uses organization's billing_email or owner's email
+   - Updates organization subscription_tier
+   - Applies usage limit to organization
+   - Only organization owner can create subscription
+   - Metadata includes organization_id for webhook processing
+
+**Webhook Handling:**
+- `checkout.session.completed`: Updates organization tier and usage limit
+- `customer.subscription.updated`: Updates organization subscription status
+- `customer.subscription.deleted`: Downgrades organization to free tier
+
+**Database Fields:**
+- `organizations.stripe_customer_id` - Stripe customer ID for organization
+- `organizations.billing_email` - Email for billing notifications
+- `organizations.subscription_tier` - Current subscription tier (free/starter/pro/business)
+- `organizations.usage_limit` - Monthly lead access limit
+
+**Usage Limits by Tier:**
+- Free: 50 leads/month
+- Starter: 500 leads/month
+- Pro: 2,000 leads/month
+- Business: 10,000 leads/month
+
+**Authorization:**
+- Only organization owner can manage subscriptions
+- TODO Phase 4: Allow admin members to manage subscriptions
+
+**Frontend Integration:**
+- Organization switcher detects current context
+- Checkout requests include organization_id when in organization context
+- Dashboard shows organization usage and subscription tier
+
 ### Admin API (Requires admin or superadmin role)
 
 **Implemented:** 2026-01-27
@@ -1378,31 +1439,78 @@ Credentials: Enabled
 
 ### Rate Limiting
 **Implemented:** 2026-01-26
+**Enhanced with Tier-Based Limiting:** 2026-02-03
 
-Rate limiting protects against brute force, DoS attacks, and excessive API usage:
+Rate limiting protects against brute force, DoS attacks, and excessive API usage. IndustryDB implements two layers of rate limiting:
+
+#### 1. Endpoint-Specific Rate Limiting (Per-IP)
+Protection for authentication and webhook endpoints:
 
 | Endpoint | Limit | Purpose |
 |----------|-------|---------|
 | `POST /auth/register` | 3 per hour per IP | Prevent account spam |
 | `POST /auth/login` | 5 per minute per IP | Prevent brute force attacks |
 | `POST /webhook/stripe` | 100 per minute | Handle Stripe webhook bursts |
-| All other endpoints | 60 per minute per IP | General API protection |
 
-**Configuration:**
-```env
-RATE_LIMIT_REQUESTS_PER_MINUTE=60
-RATE_LIMIT_BURST=10
-```
+**Implementation:** `backend/pkg/middleware/rate_limiter.go`
+
+#### 2. Tier-Based Rate Limiting (Per-User)
+**Implemented:** 2026-02-03
+
+All authenticated API endpoints have rate limits based on subscription tier:
+
+| Tier | Requests/Minute | Burst | Use Case |
+|------|----------------|-------|----------|
+| **Free** | 60 | 10 | Individual users, light usage |
+| **Starter** | 120 | 20 | Small businesses |
+| **Pro** | 300 | 50 | Growing teams |
+| **Business** | 600 | 100 | High-volume API usage |
+| **Unauthenticated** | 30 | 5 | Public endpoints (before login) |
+
+**How it Works:**
+1. JWT middleware extracts user ID and subscription tier from token
+2. Sets `user_id` and `user_tier` in request context
+3. Tier rate limiter creates per-user rate limiter based on tier
+4. Token bucket algorithm allows burst traffic while maintaining average rate
+5. Unauthenticated requests use IP-based limiting (30 req/min)
 
 **Implementation:**
-- Middleware: `backend/pkg/middleware/rate_limiter.go`
-- Uses `golang.org/x/time/rate` for token bucket algorithm
-- Per-IP tracking with automatic cleanup
-- Configurable per-endpoint limits
+- Middleware: `backend/pkg/middleware/tier_rate_limiter.go`
+- Applied to: All protected routes after JWT authentication
+- Algorithm: Token bucket (`golang.org/x/time/rate`)
+- Tracking: Per-user limiters with automatic cleanup every 5 minutes
+- Concurrency: Thread-safe with `sync.RWMutex`
+
+**Features:**
+- Separate rate limiters per user (no interference between users)
+- Automatic cleanup of inactive limiters (memory efficient)
+- Custom limits per tier (configurable via `SetTierLimits()`)
+- Graceful degradation (defaults to free tier if tier unknown)
+- Detailed error messages include current tier
+
+**Response Format (429 Too Many Requests):**
+```json
+{
+  "error": "rate_limit_exceeded",
+  "message": "Rate limit exceeded for pro tier. Please upgrade for higher limits or try again later.",
+  "tier": "pro"
+}
+```
 
 **Testing:**
 ```bash
+# Test tier-based rate limiting
+go test -v ./pkg/middleware/... -run TestTierRateLimiter
+
+# Test endpoint-specific rate limiting
 go test -v ./pkg/middleware/... -run TestRateLimiter
+```
+
+**Configuration:**
+Rate limits are hard-coded in `TierRateLimiter` but can be customized:
+```go
+tierRateLimiter := custommiddleware.NewTierRateLimiter()
+tierRateLimiter.SetTierLimits("enterprise", 1200, 200)  // Custom tier
 ```
 
 ### Return URL Validation (Open Redirect Protection)
