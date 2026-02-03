@@ -1227,6 +1227,242 @@ results, err := db.Query(...)
 - Echo integration: https://docs.sentry.io/platforms/go/guides/echo/
 - Best practices: https://docs.sentry.io/platforms/go/best-practices/
 
+### Metrics Monitoring with Prometheus
+**Implemented:** 2026-02-03
+
+Prometheus is integrated for comprehensive metrics collection, monitoring, and alerting of API performance and business KPIs.
+
+**Features:**
+- **HTTP Metrics**: Request count, latency, request/response sizes
+- **Business Metrics**: Leads searched, exports created, user registrations, login attempts, subscriptions sold
+- **Database Metrics**: Query duration, active connections
+- **Cache Metrics**: Hit/miss ratios for Redis cache
+- **Custom Labels**: Method, path, status code for fine-grained filtering
+- **Histogram Buckets**: Optimized for API response times and sizes
+
+**Metrics Collected:**
+
+**HTTP Metrics:**
+```
+http_requests_total{method, path, status}          # Total requests
+http_request_duration_seconds{method, path, status} # Request latency
+http_request_size_bytes{method, path}              # Request body size
+http_response_size_bytes{method, path}             # Response body size
+```
+
+**Business Metrics:**
+```
+leads_searched_total           # Total lead searches
+exports_created_total          # Total exports created
+users_registered_total         # Total user registrations
+login_attempts_total{status}   # Login attempts (success/failed)
+subscriptions_sold_total{tier} # Subscriptions by tier (starter/pro/business)
+```
+
+**Database Metrics:**
+```
+db_query_duration_seconds{operation} # Query duration (select/insert/update/delete)
+db_connections_active                # Active database connections
+```
+
+**Cache Metrics:**
+```
+cache_hits_total{cache_type}   # Cache hits (redis/memory)
+cache_misses_total{cache_type} # Cache misses
+```
+
+**Metrics Endpoint:**
+```
+GET /metrics
+```
+
+**Example Response:**
+```prometheus
+# HELP http_requests_total Total number of HTTP requests
+# TYPE http_requests_total counter
+http_requests_total{method="GET",path="/api/v1/leads",status="200"} 1543
+http_requests_total{method="POST",path="/api/v1/auth/login",status="200"} 328
+http_requests_total{method="POST",path="/api/v1/auth/login",status="401"} 12
+
+# HELP http_request_duration_seconds HTTP request latency in seconds
+# TYPE http_request_duration_seconds histogram
+http_request_duration_seconds_bucket{method="GET",path="/api/v1/leads",status="200",le="0.005"} 245
+http_request_duration_seconds_bucket{method="GET",path="/api/v1/leads",status="200",le="0.01"} 892
+http_request_duration_seconds_bucket{method="GET",path="/api/v1/leads",status="200",le="0.025"} 1398
+http_request_duration_seconds_sum{method="GET",path="/api/v1/leads",status="200"} 12.456
+http_request_duration_seconds_count{method="GET",path="/api/v1/leads",status="200"} 1543
+
+# HELP leads_searched_total Total number of lead searches performed
+# TYPE leads_searched_total counter
+leads_searched_total 2456
+
+# HELP db_connections_active Number of active database connections
+# TYPE db_connections_active gauge
+db_connections_active 8
+```
+
+**Implementation:**
+
+**Package:** `backend/pkg/metrics/metrics.go`
+```go
+// Initialize metrics
+prometheusMetrics := metrics.New()
+
+// Add middleware to Echo
+e.Use(prometheusMetrics.Middleware())
+
+// Expose metrics endpoint
+e.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
+```
+
+**Recording Business Metrics:**
+```go
+// In handlers
+prometheusMetrics.RecordLeadSearch()
+prometheusMetrics.RecordExportCreated()
+prometheusMetrics.RecordUserRegistered()
+prometheusMetrics.RecordLoginAttempt(success)
+prometheusMetrics.RecordSubscriptionSold("pro")
+```
+
+**Prometheus Server Configuration:**
+
+**prometheus.yml:**
+```yaml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'industrydb-api'
+    static_configs:
+      - targets: ['localhost:7890']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+```
+
+**Docker Compose Integration:**
+```yaml
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+
+volumes:
+  prometheus-data:
+  grafana-data:
+```
+
+**Grafana Dashboard Setup:**
+
+1. **Add Prometheus Data Source:**
+   - Navigate to Configuration → Data Sources
+   - Add Prometheus: `http://prometheus:9090`
+
+2. **Import Dashboard:**
+   - Dashboard ID: 14530 (Go Metrics)
+   - Or create custom dashboard with panels:
+
+**Example Queries:**
+```promql
+# Request rate (requests per second)
+rate(http_requests_total[5m])
+
+# Average response time
+rate(http_request_duration_seconds_sum[5m]) / rate(http_request_duration_seconds_count[5m])
+
+# 95th percentile latency
+histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
+
+# Error rate (4xx + 5xx)
+sum(rate(http_requests_total{status=~"4..|5.."}[5m]))
+
+# Cache hit ratio
+rate(cache_hits_total[5m]) / (rate(cache_hits_total[5m]) + rate(cache_misses_total[5m]))
+
+# Database connection utilization
+db_connections_active / 25 * 100  # 25 = max connections
+```
+
+**Alerting Rules:**
+
+**alerts.yml:**
+```yaml
+groups:
+  - name: api_alerts
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors/sec"
+
+      - alert: SlowResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 10m
+        annotations:
+          summary: "95th percentile latency > 1s"
+
+      - alert: DatabaseConnectionsHigh
+        expr: db_connections_active / 25 > 0.8
+        for: 5m
+        annotations:
+          summary: "Database connections at 80% capacity"
+```
+
+**Benefits:**
+- **Real-time monitoring**: Track API performance in real-time
+- **Historical data**: Store metrics for long-term trend analysis
+- **Custom alerts**: Get notified of performance degradation
+- **Business insights**: Monitor KPIs (signups, conversions, usage)
+- **Capacity planning**: Identify bottlenecks before they impact users
+- **SLO tracking**: Measure and maintain service level objectives
+
+**Best Practices:**
+1. **Label Cardinality**: Keep label values finite (avoid user IDs, timestamps)
+2. **Histogram Buckets**: Tune buckets to your expected latency distribution
+3. **Retention**: Configure retention based on storage (default 15 days)
+4. **Sampling**: Use recording rules for high-cardinality queries
+5. **Dashboards**: Create role-specific dashboards (dev, ops, business)
+
+**Integration with Grafana:**
+- **Pre-built Dashboards**: Use community dashboards for Go applications
+- **Custom Panels**: Create business-specific visualizations
+- **Annotations**: Mark deployments and incidents on graphs
+- **Variables**: Dynamic dashboards with dropdown filters
+- **Alerts**: Configure alert notifications (Slack, PagerDuty, Email)
+
+**Cost:**
+- **Prometheus**: Free, open-source (self-hosted)
+- **Grafana**: Free, open-source (self-hosted)
+- **Managed Options:**
+  - Grafana Cloud: Free tier (10K metrics), $8/month for more
+  - Amazon Managed Prometheus: $0.03 per metric/month
+  - Google Cloud Managed Prometheus: $0.15 per million samples
+
+**Documentation:**
+- Prometheus: https://prometheus.io/docs/introduction/overview/
+- Go client: https://prometheus.io/docs/guides/go-application/
+- Grafana: https://grafana.com/docs/grafana/latest/
+- Best practices: https://prometheus.io/docs/practices/naming/
+
 ### Authentication
 ```
 POST /api/v1/auth/register    # Create account

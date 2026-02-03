@@ -52,11 +52,13 @@ import (
 	"github.com/jordanlanch/industrydb/pkg/industries"
 	"github.com/jordanlanch/industrydb/pkg/jobs"
 	"github.com/jordanlanch/industrydb/pkg/leads"
+	"github.com/jordanlanch/industrydb/pkg/metrics"
 	custommiddleware "github.com/jordanlanch/industrydb/pkg/middleware"
 	"github.com/jordanlanch/industrydb/pkg/organization"
 	"github.com/jordanlanch/industrydb/pkg/savedsearch"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	echoSwagger "github.com/swaggo/echo-swagger"
 	_ "github.com/jordanlanch/industrydb/docs" // Swagger docs (generated)
 )
@@ -102,6 +104,10 @@ func main() {
 	}
 	defer redisClient.Close()
 
+	// Initialize Prometheus metrics
+	prometheusMetrics := metrics.New()
+	log.Printf("✅ Prometheus metrics initialized")
+
 	// Initialize Echo
 	e := echo.New()
 	e.HideBanner = true
@@ -131,6 +137,9 @@ func main() {
 			Repanic: true, // Repanic after capturing to let the Recover middleware handle it
 		}))
 	}
+
+	// Prometheus metrics middleware
+	e.Use(prometheusMetrics.Middleware())
 
 	// CORS with restricted origins
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -196,6 +205,9 @@ func main() {
 			"cache":    "up",
 		})
 	})
+
+	// Prometheus metrics endpoint (public)
+	e.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
 
 	// Swagger documentation (public)
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
