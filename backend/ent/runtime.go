@@ -17,6 +17,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/subscription"
 	"github.com/jordanlanch/industrydb/ent/usagelog"
 	"github.com/jordanlanch/industrydb/ent/user"
+	"github.com/jordanlanch/industrydb/ent/webhook"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -359,4 +360,36 @@ func init() {
 	user.DefaultOnboardingStep = userDescOnboardingStep.Default.(int)
 	// user.OnboardingStepValidator is a validator for the "onboarding_step" field. It is called by the builders before save.
 	user.OnboardingStepValidator = userDescOnboardingStep.Validators[0].(func(int) error)
+	webhookFields := schema.Webhook{}.Fields()
+	_ = webhookFields
+	// webhookDescURL is the schema descriptor for url field.
+	webhookDescURL := webhookFields[0].Descriptor()
+	// webhook.URLValidator is a validator for the "url" field. It is called by the builders before save.
+	webhook.URLValidator = webhookDescURL.Validators[0].(func(string) error)
+	// webhookDescActive is the schema descriptor for active field.
+	webhookDescActive := webhookFields[3].Descriptor()
+	// webhook.DefaultActive holds the default value on creation for the active field.
+	webhook.DefaultActive = webhookDescActive.Default.(bool)
+	// webhookDescRetryCount is the schema descriptor for retry_count field.
+	webhookDescRetryCount := webhookFields[5].Descriptor()
+	// webhook.DefaultRetryCount holds the default value on creation for the retry_count field.
+	webhook.DefaultRetryCount = webhookDescRetryCount.Default.(int)
+	// webhookDescSuccessCount is the schema descriptor for success_count field.
+	webhookDescSuccessCount := webhookFields[7].Descriptor()
+	// webhook.DefaultSuccessCount holds the default value on creation for the success_count field.
+	webhook.DefaultSuccessCount = webhookDescSuccessCount.Default.(int)
+	// webhookDescFailureCount is the schema descriptor for failure_count field.
+	webhookDescFailureCount := webhookFields[8].Descriptor()
+	// webhook.DefaultFailureCount holds the default value on creation for the failure_count field.
+	webhook.DefaultFailureCount = webhookDescFailureCount.Default.(int)
+	// webhookDescCreatedAt is the schema descriptor for created_at field.
+	webhookDescCreatedAt := webhookFields[9].Descriptor()
+	// webhook.DefaultCreatedAt holds the default value on creation for the created_at field.
+	webhook.DefaultCreatedAt = webhookDescCreatedAt.Default.(func() time.Time)
+	// webhookDescUpdatedAt is the schema descriptor for updated_at field.
+	webhookDescUpdatedAt := webhookFields[10].Descriptor()
+	// webhook.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	webhook.DefaultUpdatedAt = webhookDescUpdatedAt.Default.(func() time.Time)
+	// webhook.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	webhook.UpdateDefaultUpdatedAt = webhookDescUpdatedAt.UpdateDefault.(func() time.Time)
 }

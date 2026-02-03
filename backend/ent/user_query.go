@@ -22,6 +22,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/subscription"
 	"github.com/jordanlanch/industrydb/ent/usagelog"
 	"github.com/jordanlanch/industrydb/ent/user"
+	"github.com/jordanlanch/industrydb/ent/webhook"
 )
 
 // UserQuery is the builder for querying User entities.
@@ -39,6 +40,7 @@ type UserQuery struct {
 	withOwnedOrganizations      *OrganizationQuery
 	withOrganizationMemberships *OrganizationMemberQuery
 	withSavedSearches           *SavedSearchQuery
+	withWebhooks                *WebhookQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -251,6 +253,28 @@ func (_q *UserQuery) QuerySavedSearches() *SavedSearchQuery {
 	return query
 }
 
+// QueryWebhooks chains the current query on the "webhooks" edge.
+func (_q *UserQuery) QueryWebhooks() *WebhookQuery {
+	query := (&WebhookClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(webhook.Table, webhook.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.WebhooksTable, user.WebhooksColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first User entity from the query.
 // Returns a *NotFoundError when no User was found.
 func (_q *UserQuery) First(ctx context.Context) (*User, error) {
@@ -451,6 +475,7 @@ func (_q *UserQuery) Clone() *UserQuery {
 		withOwnedOrganizations:      _q.withOwnedOrganizations.Clone(),
 		withOrganizationMemberships: _q.withOrganizationMemberships.Clone(),
 		withSavedSearches:           _q.withSavedSearches.Clone(),
+		withWebhooks:                _q.withWebhooks.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -545,6 +570,17 @@ func (_q *UserQuery) WithSavedSearches(opts ...func(*SavedSearchQuery)) *UserQue
 	return _q
 }
 
+// WithWebhooks tells the query-builder to eager-load the nodes that are connected to
+// the "webhooks" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithWebhooks(opts ...func(*WebhookQuery)) *UserQuery {
+	query := (&WebhookClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withWebhooks = query
+	return _q
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -623,7 +659,7 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
-		loadedTypes = [8]bool{
+		loadedTypes = [9]bool{
 			_q.withSubscriptions != nil,
 			_q.withExports != nil,
 			_q.withAPIKeys != nil,
@@ -632,6 +668,7 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			_q.withOwnedOrganizations != nil,
 			_q.withOrganizationMemberships != nil,
 			_q.withSavedSearches != nil,
+			_q.withWebhooks != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -707,6 +744,13 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := _q.loadSavedSearches(ctx, query, nodes,
 			func(n *User) { n.Edges.SavedSearches = []*SavedSearch{} },
 			func(n *User, e *SavedSearch) { n.Edges.SavedSearches = append(n.Edges.SavedSearches, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withWebhooks; query != nil {
+		if err := _q.loadWebhooks(ctx, query, nodes,
+			func(n *User) { n.Edges.Webhooks = []*Webhook{} },
+			func(n *User, e *Webhook) { n.Edges.Webhooks = append(n.Edges.Webhooks, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -951,6 +995,37 @@ func (_q *UserQuery) loadSavedSearches(ctx context.Context, query *SavedSearchQu
 		node, ok := nodeids[fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadWebhooks(ctx context.Context, query *WebhookQuery, nodes []*User, init func(*User), assign func(*User, *Webhook)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Webhook(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.WebhooksColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.user_webhooks
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "user_webhooks" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_webhooks" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

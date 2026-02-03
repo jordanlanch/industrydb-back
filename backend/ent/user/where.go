@@ -1479,6 +1479,29 @@ func HasSavedSearchesWith(preds ...predicate.SavedSearch) predicate.User {
 	})
 }
 
+// HasWebhooks applies the HasEdge predicate on the "webhooks" edge.
+func HasWebhooks() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, WebhooksTable, WebhooksColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasWebhooksWith applies the HasEdge predicate on the "webhooks" edge with a given conditions (other predicates).
+func HasWebhooksWith(preds ...predicate.Webhook) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newWebhooksStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.User) predicate.User {
 	return predicate.User(sql.AndPredicates(predicates...))

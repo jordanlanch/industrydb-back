@@ -23,6 +23,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/subscription"
 	"github.com/jordanlanch/industrydb/ent/usagelog"
 	"github.com/jordanlanch/industrydb/ent/user"
+	"github.com/jordanlanch/industrydb/ent/webhook"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -94,6 +95,7 @@ func checkColumn(t, c string) error {
 			subscription.Table:       subscription.ValidColumn,
 			usagelog.Table:           usagelog.ValidColumn,
 			user.Table:               user.ValidColumn,
+			webhook.Table:            webhook.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

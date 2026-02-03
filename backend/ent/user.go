@@ -89,9 +89,11 @@ type UserEdges struct {
 	OrganizationMemberships []*OrganizationMember `json:"organization_memberships,omitempty"`
 	// User's saved searches
 	SavedSearches []*SavedSearch `json:"saved_searches,omitempty"`
+	// User's configured webhooks
+	Webhooks []*Webhook `json:"webhooks,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [8]bool
+	loadedTypes [9]bool
 }
 
 // SubscriptionsOrErr returns the Subscriptions value or an error if the edge
@@ -164,6 +166,15 @@ func (e UserEdges) SavedSearchesOrErr() ([]*SavedSearch, error) {
 		return e.SavedSearches, nil
 	}
 	return nil, &NotLoadedError{edge: "saved_searches"}
+}
+
+// WebhooksOrErr returns the Webhooks value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) WebhooksOrErr() ([]*Webhook, error) {
+	if e.loadedTypes[8] {
+		return e.Webhooks, nil
+	}
+	return nil, &NotLoadedError{edge: "webhooks"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -405,6 +416,11 @@ func (_m *User) QueryOrganizationMemberships() *OrganizationMemberQuery {
 // QuerySavedSearches queries the "saved_searches" edge of the User entity.
 func (_m *User) QuerySavedSearches() *SavedSearchQuery {
 	return NewUserClient(_m.config).QuerySavedSearches(_m)
+}
+
+// QueryWebhooks queries the "webhooks" edge of the User entity.
+func (_m *User) QueryWebhooks() *WebhookQuery {
+	return NewUserClient(_m.config).QueryWebhooks(_m)
 }
 
 // Update returns a builder for updating this User.

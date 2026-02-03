@@ -34,6 +34,8 @@ type Tx struct {
 	UsageLog *UsageLogClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// Webhook is the client for interacting with the Webhook builders.
+	Webhook *WebhookClient
 
 	// lazily loaded.
 	client     *Client
@@ -176,6 +178,7 @@ func (tx *Tx) init() {
 	tx.Subscription = NewSubscriptionClient(tx.config)
 	tx.UsageLog = NewUsageLogClient(tx.config)
 	tx.User = NewUserClient(tx.config)
+	tx.Webhook = NewWebhookClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

@@ -79,6 +79,8 @@ const (
 	EdgeOrganizationMemberships = "organization_memberships"
 	// EdgeSavedSearches holds the string denoting the saved_searches edge name in mutations.
 	EdgeSavedSearches = "saved_searches"
+	// EdgeWebhooks holds the string denoting the webhooks edge name in mutations.
+	EdgeWebhooks = "webhooks"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// SubscriptionsTable is the table that holds the subscriptions relation/edge.
@@ -137,6 +139,13 @@ const (
 	SavedSearchesInverseTable = "saved_searches"
 	// SavedSearchesColumn is the table column denoting the saved_searches relation/edge.
 	SavedSearchesColumn = "user_id"
+	// WebhooksTable is the table that holds the webhooks relation/edge.
+	WebhooksTable = "webhooks"
+	// WebhooksInverseTable is the table name for the Webhook entity.
+	// It exists in this package in order to avoid circular dependency with the "webhook" package.
+	WebhooksInverseTable = "webhooks"
+	// WebhooksColumn is the table column denoting the webhooks relation/edge.
+	WebhooksColumn = "user_webhooks"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -507,6 +516,20 @@ func BySavedSearches(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newSavedSearchesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByWebhooksCount orders the results by webhooks count.
+func ByWebhooksCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newWebhooksStep(), opts...)
+	}
+}
+
+// ByWebhooks orders the results by webhooks terms.
+func ByWebhooks(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newWebhooksStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSubscriptionsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -561,5 +584,12 @@ func newSavedSearchesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(SavedSearchesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, SavedSearchesTable, SavedSearchesColumn),
+	)
+}
+func newWebhooksStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(WebhooksInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, WebhooksTable, WebhooksColumn),
 	)
 }

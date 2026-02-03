@@ -633,6 +633,48 @@ var (
 			},
 		},
 	}
+	// WebhooksColumns holds the columns for the "webhooks" table.
+	WebhooksColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "url", Type: field.TypeString},
+		{Name: "events", Type: field.TypeJSON},
+		{Name: "secret", Type: field.TypeString},
+		{Name: "active", Type: field.TypeBool, Default: true},
+		{Name: "description", Type: field.TypeString, Nullable: true},
+		{Name: "retry_count", Type: field.TypeInt, Default: 3},
+		{Name: "last_triggered_at", Type: field.TypeTime, Nullable: true},
+		{Name: "success_count", Type: field.TypeInt, Default: 0},
+		{Name: "failure_count", Type: field.TypeInt, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "user_webhooks", Type: field.TypeInt},
+	}
+	// WebhooksTable holds the schema information for the "webhooks" table.
+	WebhooksTable = &schema.Table{
+		Name:       "webhooks",
+		Columns:    WebhooksColumns,
+		PrimaryKey: []*schema.Column{WebhooksColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "webhooks_users_webhooks",
+				Columns:    []*schema.Column{WebhooksColumns[12]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "webhook_active",
+				Unique:  false,
+				Columns: []*schema.Column{WebhooksColumns[4]},
+			},
+			{
+				Name:    "webhook_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{WebhooksColumns[10]},
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		APIKeysTable,
@@ -646,6 +688,7 @@ var (
 		SubscriptionsTable,
 		UsageLogsTable,
 		UsersTable,
+		WebhooksTable,
 	}
 )
 
@@ -660,4 +703,5 @@ func init() {
 	SavedSearchesTable.ForeignKeys[0].RefTable = UsersTable
 	SubscriptionsTable.ForeignKeys[0].RefTable = UsersTable
 	UsageLogsTable.ForeignKeys[0].RefTable = UsersTable
+	WebhooksTable.ForeignKeys[0].RefTable = UsersTable
 }

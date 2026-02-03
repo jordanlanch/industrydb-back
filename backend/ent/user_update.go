@@ -21,6 +21,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/subscription"
 	"github.com/jordanlanch/industrydb/ent/usagelog"
 	"github.com/jordanlanch/industrydb/ent/user"
+	"github.com/jordanlanch/industrydb/ent/webhook"
 )
 
 // UserUpdate is the builder for updating User entities.
@@ -551,6 +552,21 @@ func (_u *UserUpdate) AddSavedSearches(v ...*SavedSearch) *UserUpdate {
 	return _u.AddSavedSearchIDs(ids...)
 }
 
+// AddWebhookIDs adds the "webhooks" edge to the Webhook entity by IDs.
+func (_u *UserUpdate) AddWebhookIDs(ids ...int) *UserUpdate {
+	_u.mutation.AddWebhookIDs(ids...)
+	return _u
+}
+
+// AddWebhooks adds the "webhooks" edges to the Webhook entity.
+func (_u *UserUpdate) AddWebhooks(v ...*Webhook) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddWebhookIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -722,6 +738,27 @@ func (_u *UserUpdate) RemoveSavedSearches(v ...*SavedSearch) *UserUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveSavedSearchIDs(ids...)
+}
+
+// ClearWebhooks clears all "webhooks" edges to the Webhook entity.
+func (_u *UserUpdate) ClearWebhooks() *UserUpdate {
+	_u.mutation.ClearWebhooks()
+	return _u
+}
+
+// RemoveWebhookIDs removes the "webhooks" edge to Webhook entities by IDs.
+func (_u *UserUpdate) RemoveWebhookIDs(ids ...int) *UserUpdate {
+	_u.mutation.RemoveWebhookIDs(ids...)
+	return _u
+}
+
+// RemoveWebhooks removes "webhooks" edges to Webhook entities.
+func (_u *UserUpdate) RemoveWebhooks(v ...*Webhook) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveWebhookIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -1285,6 +1322,51 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.WebhooksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.WebhooksTable,
+			Columns: []string{user.WebhooksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedWebhooksIDs(); len(nodes) > 0 && !_u.mutation.WebhooksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.WebhooksTable,
+			Columns: []string{user.WebhooksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.WebhooksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.WebhooksTable,
+			Columns: []string{user.WebhooksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -1820,6 +1902,21 @@ func (_u *UserUpdateOne) AddSavedSearches(v ...*SavedSearch) *UserUpdateOne {
 	return _u.AddSavedSearchIDs(ids...)
 }
 
+// AddWebhookIDs adds the "webhooks" edge to the Webhook entity by IDs.
+func (_u *UserUpdateOne) AddWebhookIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.AddWebhookIDs(ids...)
+	return _u
+}
+
+// AddWebhooks adds the "webhooks" edges to the Webhook entity.
+func (_u *UserUpdateOne) AddWebhooks(v ...*Webhook) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddWebhookIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -1991,6 +2088,27 @@ func (_u *UserUpdateOne) RemoveSavedSearches(v ...*SavedSearch) *UserUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveSavedSearchIDs(ids...)
+}
+
+// ClearWebhooks clears all "webhooks" edges to the Webhook entity.
+func (_u *UserUpdateOne) ClearWebhooks() *UserUpdateOne {
+	_u.mutation.ClearWebhooks()
+	return _u
+}
+
+// RemoveWebhookIDs removes the "webhooks" edge to Webhook entities by IDs.
+func (_u *UserUpdateOne) RemoveWebhookIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.RemoveWebhookIDs(ids...)
+	return _u
+}
+
+// RemoveWebhooks removes "webhooks" edges to Webhook entities.
+func (_u *UserUpdateOne) RemoveWebhooks(v ...*Webhook) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveWebhookIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -2577,6 +2695,51 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(savedsearch.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.WebhooksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.WebhooksTable,
+			Columns: []string{user.WebhooksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedWebhooksIDs(); len(nodes) > 0 && !_u.mutation.WebhooksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.WebhooksTable,
+			Columns: []string{user.WebhooksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.WebhooksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.WebhooksTable,
+			Columns: []string{user.WebhooksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(webhook.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

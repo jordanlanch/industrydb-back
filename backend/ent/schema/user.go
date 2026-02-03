@@ -132,6 +132,8 @@ func (User) Edges() []ent.Edge {
 			Comment("Organization memberships"),
 		edge.To("saved_searches", SavedSearch.Type).
 			Comment("User's saved searches"),
+		edge.To("webhooks", Webhook.Type).
+			Comment("User's configured webhooks"),
 	}
 }
 
