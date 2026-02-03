@@ -12,6 +12,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/jordanlanch/industrydb/ent/affiliate"
+	"github.com/jordanlanch/industrydb/ent/affiliateconversion"
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
@@ -62,6 +64,8 @@ type UserQuery struct {
 	withSentReferrals                *ReferralQuery
 	withReceivedReferrals            *ReferralQuery
 	withExperimentAssignments        *ExperimentAssignmentQuery
+	withAffiliate                    *AffiliateQuery
+	withAffiliateConversions         *AffiliateConversionQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -560,6 +564,50 @@ func (_q *UserQuery) QueryExperimentAssignments() *ExperimentAssignmentQuery {
 	return query
 }
 
+// QueryAffiliate chains the current query on the "affiliate" edge.
+func (_q *UserQuery) QueryAffiliate() *AffiliateQuery {
+	query := (&AffiliateClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(affiliate.Table, affiliate.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, user.AffiliateTable, user.AffiliateColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryAffiliateConversions chains the current query on the "affiliate_conversions" edge.
+func (_q *UserQuery) QueryAffiliateConversions() *AffiliateConversionQuery {
+	query := (&AffiliateConversionClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(affiliateconversion.Table, affiliateconversion.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.AffiliateConversionsTable, user.AffiliateConversionsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first User entity from the query.
 // Returns a *NotFoundError when no User was found.
 func (_q *UserQuery) First(ctx context.Context) (*User, error) {
@@ -773,6 +821,8 @@ func (_q *UserQuery) Clone() *UserQuery {
 		withSentReferrals:                _q.withSentReferrals.Clone(),
 		withReceivedReferrals:            _q.withReceivedReferrals.Clone(),
 		withExperimentAssignments:        _q.withExperimentAssignments.Clone(),
+		withAffiliate:                    _q.withAffiliate.Clone(),
+		withAffiliateConversions:         _q.withAffiliateConversions.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -1010,6 +1060,28 @@ func (_q *UserQuery) WithExperimentAssignments(opts ...func(*ExperimentAssignmen
 	return _q
 }
 
+// WithAffiliate tells the query-builder to eager-load the nodes that are connected to
+// the "affiliate" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithAffiliate(opts ...func(*AffiliateQuery)) *UserQuery {
+	query := (&AffiliateClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withAffiliate = query
+	return _q
+}
+
+// WithAffiliateConversions tells the query-builder to eager-load the nodes that are connected to
+// the "affiliate_conversions" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithAffiliateConversions(opts ...func(*AffiliateConversionQuery)) *UserQuery {
+	query := (&AffiliateConversionClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withAffiliateConversions = query
+	return _q
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -1088,7 +1160,7 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
-		loadedTypes = [21]bool{
+		loadedTypes = [23]bool{
 			_q.withSubscriptions != nil,
 			_q.withExports != nil,
 			_q.withAPIKeys != nil,
@@ -1110,6 +1182,8 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			_q.withSentReferrals != nil,
 			_q.withReceivedReferrals != nil,
 			_q.withExperimentAssignments != nil,
+			_q.withAffiliate != nil,
+			_q.withAffiliateConversions != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -1285,6 +1359,21 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			func(n *User) { n.Edges.ExperimentAssignments = []*ExperimentAssignment{} },
 			func(n *User, e *ExperimentAssignment) {
 				n.Edges.ExperimentAssignments = append(n.Edges.ExperimentAssignments, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withAffiliate; query != nil {
+		if err := _q.loadAffiliate(ctx, query, nodes, nil,
+			func(n *User, e *Affiliate) { n.Edges.Affiliate = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withAffiliateConversions; query != nil {
+		if err := _q.loadAffiliateConversions(ctx, query, nodes,
+			func(n *User) { n.Edges.AffiliateConversions = []*AffiliateConversion{} },
+			func(n *User, e *AffiliateConversion) {
+				n.Edges.AffiliateConversions = append(n.Edges.AffiliateConversions, e)
 			}); err != nil {
 			return nil, err
 		}
@@ -1917,6 +2006,63 @@ func (_q *UserQuery) loadExperimentAssignments(ctx context.Context, query *Exper
 	}
 	query.Where(predicate.ExperimentAssignment(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(user.ExperimentAssignmentsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.UserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadAffiliate(ctx context.Context, query *AffiliateQuery, nodes []*User, init func(*User), assign func(*User, *Affiliate)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(affiliate.FieldUserID)
+	}
+	query.Where(predicate.Affiliate(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.AffiliateColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.UserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadAffiliateConversions(ctx context.Context, query *AffiliateConversionQuery, nodes []*User, init func(*User), assign func(*User, *AffiliateConversion)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(affiliateconversion.FieldUserID)
+	}
+	query.Where(predicate.AffiliateConversion(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.AffiliateConversionsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

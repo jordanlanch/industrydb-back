@@ -59,6 +59,173 @@ var (
 			},
 		},
 	}
+	// AffiliatesColumns holds the columns for the "affiliates" table.
+	AffiliatesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "affiliate_code", Type: field.TypeString, Unique: true, Size: 32},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "active", "suspended", "terminated"}, Default: "pending"},
+		{Name: "commission_rate", Type: field.TypeFloat64, Default: 0.1},
+		{Name: "total_earnings", Type: field.TypeFloat64, Default: 0},
+		{Name: "pending_earnings", Type: field.TypeFloat64, Default: 0},
+		{Name: "paid_earnings", Type: field.TypeFloat64, Default: 0},
+		{Name: "total_clicks", Type: field.TypeInt, Default: 0},
+		{Name: "total_conversions", Type: field.TypeInt, Default: 0},
+		{Name: "payment_method", Type: field.TypeString, Nullable: true},
+		{Name: "payment_details", Type: field.TypeString, Nullable: true},
+		{Name: "approved_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_payout_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "user_id", Type: field.TypeInt, Unique: true},
+	}
+	// AffiliatesTable holds the schema information for the "affiliates" table.
+	AffiliatesTable = &schema.Table{
+		Name:       "affiliates",
+		Columns:    AffiliatesColumns,
+		PrimaryKey: []*schema.Column{AffiliatesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "affiliates_users_affiliate",
+				Columns:    []*schema.Column{AffiliatesColumns[15]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "affiliate_affiliate_code",
+				Unique:  true,
+				Columns: []*schema.Column{AffiliatesColumns[1]},
+			},
+			{
+				Name:    "affiliate_user_id",
+				Unique:  true,
+				Columns: []*schema.Column{AffiliatesColumns[15]},
+			},
+			{
+				Name:    "affiliate_status",
+				Unique:  false,
+				Columns: []*schema.Column{AffiliatesColumns[2]},
+			},
+			{
+				Name:    "affiliate_total_earnings",
+				Unique:  false,
+				Columns: []*schema.Column{AffiliatesColumns[4]},
+			},
+		},
+	}
+	// AffiliateClicksColumns holds the columns for the "affiliate_clicks" table.
+	AffiliateClicksColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "ip_address", Type: field.TypeString, Nullable: true},
+		{Name: "user_agent", Type: field.TypeString, Nullable: true},
+		{Name: "referrer", Type: field.TypeString, Nullable: true},
+		{Name: "landing_page", Type: field.TypeString, Nullable: true},
+		{Name: "utm_source", Type: field.TypeString, Nullable: true},
+		{Name: "utm_medium", Type: field.TypeString, Nullable: true},
+		{Name: "utm_campaign", Type: field.TypeString, Nullable: true},
+		{Name: "converted", Type: field.TypeBool, Default: false},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "affiliate_id", Type: field.TypeInt},
+	}
+	// AffiliateClicksTable holds the schema information for the "affiliate_clicks" table.
+	AffiliateClicksTable = &schema.Table{
+		Name:       "affiliate_clicks",
+		Columns:    AffiliateClicksColumns,
+		PrimaryKey: []*schema.Column{AffiliateClicksColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "affiliate_clicks_affiliates_clicks",
+				Columns:    []*schema.Column{AffiliateClicksColumns[10]},
+				RefColumns: []*schema.Column{AffiliatesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "affiliateclick_affiliate_id",
+				Unique:  false,
+				Columns: []*schema.Column{AffiliateClicksColumns[10]},
+			},
+			{
+				Name:    "affiliateclick_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{AffiliateClicksColumns[9]},
+			},
+			{
+				Name:    "affiliateclick_converted",
+				Unique:  false,
+				Columns: []*schema.Column{AffiliateClicksColumns[8]},
+			},
+			{
+				Name:    "affiliateclick_ip_address",
+				Unique:  false,
+				Columns: []*schema.Column{AffiliateClicksColumns[1]},
+			},
+		},
+	}
+	// AffiliateConversionsColumns holds the columns for the "affiliate_conversions" table.
+	AffiliateConversionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "conversion_type", Type: field.TypeString},
+		{Name: "order_value", Type: field.TypeFloat64, Default: 0},
+		{Name: "commission_amount", Type: field.TypeFloat64},
+		{Name: "commission_rate", Type: field.TypeFloat64},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "approved", "paid", "rejected"}, Default: "pending"},
+		{Name: "rejection_reason", Type: field.TypeString, Nullable: true},
+		{Name: "approved_at", Type: field.TypeTime, Nullable: true},
+		{Name: "paid_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "affiliate_id", Type: field.TypeInt},
+		{Name: "user_id", Type: field.TypeInt},
+	}
+	// AffiliateConversionsTable holds the schema information for the "affiliate_conversions" table.
+	AffiliateConversionsTable = &schema.Table{
+		Name:       "affiliate_conversions",
+		Columns:    AffiliateConversionsColumns,
+		PrimaryKey: []*schema.Column{AffiliateConversionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "affiliate_conversions_affiliates_conversions",
+				Columns:    []*schema.Column{AffiliateConversionsColumns[10]},
+				RefColumns: []*schema.Column{AffiliatesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "affiliate_conversions_users_affiliate_conversions",
+				Columns:    []*schema.Column{AffiliateConversionsColumns[11]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "affiliateconversion_affiliate_id",
+				Unique:  false,
+				Columns: []*schema.Column{AffiliateConversionsColumns[10]},
+			},
+			{
+				Name:    "affiliateconversion_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{AffiliateConversionsColumns[11]},
+			},
+			{
+				Name:    "affiliateconversion_status",
+				Unique:  false,
+				Columns: []*schema.Column{AffiliateConversionsColumns[5]},
+			},
+			{
+				Name:    "affiliateconversion_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{AffiliateConversionsColumns[9]},
+			},
+			{
+				Name:    "affiliateconversion_conversion_type",
+				Unique:  false,
+				Columns: []*schema.Column{AffiliateConversionsColumns[1]},
+			},
+		},
+	}
 	// AuditLogsColumns holds the columns for the "audit_logs" table.
 	AuditLogsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -1314,6 +1481,9 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		APIKeysTable,
+		AffiliatesTable,
+		AffiliateClicksTable,
+		AffiliateConversionsTable,
 		AuditLogsTable,
 		EmailSequencesTable,
 		EmailSequenceEnrollmentsTable,
@@ -1342,6 +1512,10 @@ var (
 
 func init() {
 	APIKeysTable.ForeignKeys[0].RefTable = UsersTable
+	AffiliatesTable.ForeignKeys[0].RefTable = UsersTable
+	AffiliateClicksTable.ForeignKeys[0].RefTable = AffiliatesTable
+	AffiliateConversionsTable.ForeignKeys[0].RefTable = AffiliatesTable
+	AffiliateConversionsTable.ForeignKeys[1].RefTable = UsersTable
 	AuditLogsTable.ForeignKeys[0].RefTable = UsersTable
 	EmailSequencesTable.ForeignKeys[0].RefTable = UsersTable
 	EmailSequenceEnrollmentsTable.ForeignKeys[0].RefTable = EmailSequencesTable

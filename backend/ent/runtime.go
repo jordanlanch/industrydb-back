@@ -5,6 +5,9 @@ package ent
 import (
 	"time"
 
+	"github.com/jordanlanch/industrydb/ent/affiliate"
+	"github.com/jordanlanch/industrydb/ent/affiliateclick"
+	"github.com/jordanlanch/industrydb/ent/affiliateconversion"
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
@@ -74,6 +77,80 @@ func init() {
 	apikey.DefaultUpdatedAt = apikeyDescUpdatedAt.Default.(func() time.Time)
 	// apikey.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	apikey.UpdateDefaultUpdatedAt = apikeyDescUpdatedAt.UpdateDefault.(func() time.Time)
+	affiliateFields := schema.Affiliate{}.Fields()
+	_ = affiliateFields
+	// affiliateDescAffiliateCode is the schema descriptor for affiliate_code field.
+	affiliateDescAffiliateCode := affiliateFields[1].Descriptor()
+	// affiliate.AffiliateCodeValidator is a validator for the "affiliate_code" field. It is called by the builders before save.
+	affiliate.AffiliateCodeValidator = func() func(string) error {
+		validators := affiliateDescAffiliateCode.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(affiliate_code string) error {
+			for _, fn := range fns {
+				if err := fn(affiliate_code); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// affiliateDescCommissionRate is the schema descriptor for commission_rate field.
+	affiliateDescCommissionRate := affiliateFields[3].Descriptor()
+	// affiliate.DefaultCommissionRate holds the default value on creation for the commission_rate field.
+	affiliate.DefaultCommissionRate = affiliateDescCommissionRate.Default.(float64)
+	// affiliateDescTotalEarnings is the schema descriptor for total_earnings field.
+	affiliateDescTotalEarnings := affiliateFields[4].Descriptor()
+	// affiliate.DefaultTotalEarnings holds the default value on creation for the total_earnings field.
+	affiliate.DefaultTotalEarnings = affiliateDescTotalEarnings.Default.(float64)
+	// affiliateDescPendingEarnings is the schema descriptor for pending_earnings field.
+	affiliateDescPendingEarnings := affiliateFields[5].Descriptor()
+	// affiliate.DefaultPendingEarnings holds the default value on creation for the pending_earnings field.
+	affiliate.DefaultPendingEarnings = affiliateDescPendingEarnings.Default.(float64)
+	// affiliateDescPaidEarnings is the schema descriptor for paid_earnings field.
+	affiliateDescPaidEarnings := affiliateFields[6].Descriptor()
+	// affiliate.DefaultPaidEarnings holds the default value on creation for the paid_earnings field.
+	affiliate.DefaultPaidEarnings = affiliateDescPaidEarnings.Default.(float64)
+	// affiliateDescTotalClicks is the schema descriptor for total_clicks field.
+	affiliateDescTotalClicks := affiliateFields[7].Descriptor()
+	// affiliate.DefaultTotalClicks holds the default value on creation for the total_clicks field.
+	affiliate.DefaultTotalClicks = affiliateDescTotalClicks.Default.(int)
+	// affiliateDescTotalConversions is the schema descriptor for total_conversions field.
+	affiliateDescTotalConversions := affiliateFields[8].Descriptor()
+	// affiliate.DefaultTotalConversions holds the default value on creation for the total_conversions field.
+	affiliate.DefaultTotalConversions = affiliateDescTotalConversions.Default.(int)
+	// affiliateDescCreatedAt is the schema descriptor for created_at field.
+	affiliateDescCreatedAt := affiliateFields[13].Descriptor()
+	// affiliate.DefaultCreatedAt holds the default value on creation for the created_at field.
+	affiliate.DefaultCreatedAt = affiliateDescCreatedAt.Default.(func() time.Time)
+	// affiliateDescUpdatedAt is the schema descriptor for updated_at field.
+	affiliateDescUpdatedAt := affiliateFields[14].Descriptor()
+	// affiliate.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	affiliate.DefaultUpdatedAt = affiliateDescUpdatedAt.Default.(func() time.Time)
+	// affiliate.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	affiliate.UpdateDefaultUpdatedAt = affiliateDescUpdatedAt.UpdateDefault.(func() time.Time)
+	affiliateclickFields := schema.AffiliateClick{}.Fields()
+	_ = affiliateclickFields
+	// affiliateclickDescConverted is the schema descriptor for converted field.
+	affiliateclickDescConverted := affiliateclickFields[8].Descriptor()
+	// affiliateclick.DefaultConverted holds the default value on creation for the converted field.
+	affiliateclick.DefaultConverted = affiliateclickDescConverted.Default.(bool)
+	// affiliateclickDescCreatedAt is the schema descriptor for created_at field.
+	affiliateclickDescCreatedAt := affiliateclickFields[9].Descriptor()
+	// affiliateclick.DefaultCreatedAt holds the default value on creation for the created_at field.
+	affiliateclick.DefaultCreatedAt = affiliateclickDescCreatedAt.Default.(func() time.Time)
+	affiliateconversionFields := schema.AffiliateConversion{}.Fields()
+	_ = affiliateconversionFields
+	// affiliateconversionDescOrderValue is the schema descriptor for order_value field.
+	affiliateconversionDescOrderValue := affiliateconversionFields[3].Descriptor()
+	// affiliateconversion.DefaultOrderValue holds the default value on creation for the order_value field.
+	affiliateconversion.DefaultOrderValue = affiliateconversionDescOrderValue.Default.(float64)
+	// affiliateconversionDescCreatedAt is the schema descriptor for created_at field.
+	affiliateconversionDescCreatedAt := affiliateconversionFields[10].Descriptor()
+	// affiliateconversion.DefaultCreatedAt holds the default value on creation for the created_at field.
+	affiliateconversion.DefaultCreatedAt = affiliateconversionDescCreatedAt.Default.(func() time.Time)
 	auditlogFields := schema.AuditLog{}.Fields()
 	_ = auditlogFields
 	// auditlogDescCreatedAt is the schema descriptor for created_at field.

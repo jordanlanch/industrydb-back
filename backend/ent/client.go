@@ -15,6 +15,9 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/jordanlanch/industrydb/ent/affiliate"
+	"github.com/jordanlanch/industrydb/ent/affiliateclick"
+	"github.com/jordanlanch/industrydb/ent/affiliateconversion"
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
@@ -48,6 +51,12 @@ type Client struct {
 	Schema *migrate.Schema
 	// APIKey is the client for interacting with the APIKey builders.
 	APIKey *APIKeyClient
+	// Affiliate is the client for interacting with the Affiliate builders.
+	Affiliate *AffiliateClient
+	// AffiliateClick is the client for interacting with the AffiliateClick builders.
+	AffiliateClick *AffiliateClickClient
+	// AffiliateConversion is the client for interacting with the AffiliateConversion builders.
+	AffiliateConversion *AffiliateConversionClient
 	// AuditLog is the client for interacting with the AuditLog builders.
 	AuditLog *AuditLogClient
 	// EmailSequence is the client for interacting with the EmailSequence builders.
@@ -106,6 +115,9 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.APIKey = NewAPIKeyClient(c.config)
+	c.Affiliate = NewAffiliateClient(c.config)
+	c.AffiliateClick = NewAffiliateClickClient(c.config)
+	c.AffiliateConversion = NewAffiliateConversionClient(c.config)
 	c.AuditLog = NewAuditLogClient(c.config)
 	c.EmailSequence = NewEmailSequenceClient(c.config)
 	c.EmailSequenceEnrollment = NewEmailSequenceEnrollmentClient(c.config)
@@ -222,6 +234,9 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ctx:                     ctx,
 		config:                  cfg,
 		APIKey:                  NewAPIKeyClient(cfg),
+		Affiliate:               NewAffiliateClient(cfg),
+		AffiliateClick:          NewAffiliateClickClient(cfg),
+		AffiliateConversion:     NewAffiliateConversionClient(cfg),
 		AuditLog:                NewAuditLogClient(cfg),
 		EmailSequence:           NewEmailSequenceClient(cfg),
 		EmailSequenceEnrollment: NewEmailSequenceEnrollmentClient(cfg),
@@ -265,6 +280,9 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ctx:                     ctx,
 		config:                  cfg,
 		APIKey:                  NewAPIKeyClient(cfg),
+		Affiliate:               NewAffiliateClient(cfg),
+		AffiliateClick:          NewAffiliateClickClient(cfg),
+		AffiliateConversion:     NewAffiliateConversionClient(cfg),
 		AuditLog:                NewAuditLogClient(cfg),
 		EmailSequence:           NewEmailSequenceClient(cfg),
 		EmailSequenceEnrollment: NewEmailSequenceEnrollmentClient(cfg),
@@ -317,12 +335,12 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.APIKey, c.AuditLog, c.EmailSequence, c.EmailSequenceEnrollment,
-		c.EmailSequenceSend, c.EmailSequenceStep, c.Experiment, c.ExperimentAssignment,
-		c.Export, c.Industry, c.Lead, c.LeadAssignment, c.LeadNote,
-		c.LeadStatusHistory, c.Organization, c.OrganizationMember, c.Referral,
-		c.SavedSearch, c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog,
-		c.User, c.Webhook,
+		c.APIKey, c.Affiliate, c.AffiliateClick, c.AffiliateConversion, c.AuditLog,
+		c.EmailSequence, c.EmailSequenceEnrollment, c.EmailSequenceSend,
+		c.EmailSequenceStep, c.Experiment, c.ExperimentAssignment, c.Export,
+		c.Industry, c.Lead, c.LeadAssignment, c.LeadNote, c.LeadStatusHistory,
+		c.Organization, c.OrganizationMember, c.Referral, c.SavedSearch,
+		c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog, c.User, c.Webhook,
 	} {
 		n.Use(hooks...)
 	}
@@ -332,12 +350,12 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.APIKey, c.AuditLog, c.EmailSequence, c.EmailSequenceEnrollment,
-		c.EmailSequenceSend, c.EmailSequenceStep, c.Experiment, c.ExperimentAssignment,
-		c.Export, c.Industry, c.Lead, c.LeadAssignment, c.LeadNote,
-		c.LeadStatusHistory, c.Organization, c.OrganizationMember, c.Referral,
-		c.SavedSearch, c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog,
-		c.User, c.Webhook,
+		c.APIKey, c.Affiliate, c.AffiliateClick, c.AffiliateConversion, c.AuditLog,
+		c.EmailSequence, c.EmailSequenceEnrollment, c.EmailSequenceSend,
+		c.EmailSequenceStep, c.Experiment, c.ExperimentAssignment, c.Export,
+		c.Industry, c.Lead, c.LeadAssignment, c.LeadNote, c.LeadStatusHistory,
+		c.Organization, c.OrganizationMember, c.Referral, c.SavedSearch,
+		c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog, c.User, c.Webhook,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -348,6 +366,12 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *APIKeyMutation:
 		return c.APIKey.mutate(ctx, m)
+	case *AffiliateMutation:
+		return c.Affiliate.mutate(ctx, m)
+	case *AffiliateClickMutation:
+		return c.AffiliateClick.mutate(ctx, m)
+	case *AffiliateConversionMutation:
+		return c.AffiliateConversion.mutate(ctx, m)
 	case *AuditLogMutation:
 		return c.AuditLog.mutate(ctx, m)
 	case *EmailSequenceMutation:
@@ -545,6 +569,501 @@ func (c *APIKeyClient) mutate(ctx context.Context, m *APIKeyMutation) (Value, er
 		return (&APIKeyDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown APIKey mutation op: %q", m.Op())
+	}
+}
+
+// AffiliateClient is a client for the Affiliate schema.
+type AffiliateClient struct {
+	config
+}
+
+// NewAffiliateClient returns a client for the Affiliate from the given config.
+func NewAffiliateClient(c config) *AffiliateClient {
+	return &AffiliateClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `affiliate.Hooks(f(g(h())))`.
+func (c *AffiliateClient) Use(hooks ...Hook) {
+	c.hooks.Affiliate = append(c.hooks.Affiliate, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `affiliate.Intercept(f(g(h())))`.
+func (c *AffiliateClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Affiliate = append(c.inters.Affiliate, interceptors...)
+}
+
+// Create returns a builder for creating a Affiliate entity.
+func (c *AffiliateClient) Create() *AffiliateCreate {
+	mutation := newAffiliateMutation(c.config, OpCreate)
+	return &AffiliateCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Affiliate entities.
+func (c *AffiliateClient) CreateBulk(builders ...*AffiliateCreate) *AffiliateCreateBulk {
+	return &AffiliateCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AffiliateClient) MapCreateBulk(slice any, setFunc func(*AffiliateCreate, int)) *AffiliateCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AffiliateCreateBulk{err: fmt.Errorf("calling to AffiliateClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AffiliateCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AffiliateCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Affiliate.
+func (c *AffiliateClient) Update() *AffiliateUpdate {
+	mutation := newAffiliateMutation(c.config, OpUpdate)
+	return &AffiliateUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AffiliateClient) UpdateOne(_m *Affiliate) *AffiliateUpdateOne {
+	mutation := newAffiliateMutation(c.config, OpUpdateOne, withAffiliate(_m))
+	return &AffiliateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AffiliateClient) UpdateOneID(id int) *AffiliateUpdateOne {
+	mutation := newAffiliateMutation(c.config, OpUpdateOne, withAffiliateID(id))
+	return &AffiliateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Affiliate.
+func (c *AffiliateClient) Delete() *AffiliateDelete {
+	mutation := newAffiliateMutation(c.config, OpDelete)
+	return &AffiliateDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AffiliateClient) DeleteOne(_m *Affiliate) *AffiliateDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AffiliateClient) DeleteOneID(id int) *AffiliateDeleteOne {
+	builder := c.Delete().Where(affiliate.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AffiliateDeleteOne{builder}
+}
+
+// Query returns a query builder for Affiliate.
+func (c *AffiliateClient) Query() *AffiliateQuery {
+	return &AffiliateQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAffiliate},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Affiliate entity by its id.
+func (c *AffiliateClient) Get(ctx context.Context, id int) (*Affiliate, error) {
+	return c.Query().Where(affiliate.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AffiliateClient) GetX(ctx context.Context, id int) *Affiliate {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a Affiliate.
+func (c *AffiliateClient) QueryUser(_m *Affiliate) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(affiliate.Table, affiliate.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, affiliate.UserTable, affiliate.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryClicks queries the clicks edge of a Affiliate.
+func (c *AffiliateClient) QueryClicks(_m *Affiliate) *AffiliateClickQuery {
+	query := (&AffiliateClickClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(affiliate.Table, affiliate.FieldID, id),
+			sqlgraph.To(affiliateclick.Table, affiliateclick.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, affiliate.ClicksTable, affiliate.ClicksColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryConversions queries the conversions edge of a Affiliate.
+func (c *AffiliateClient) QueryConversions(_m *Affiliate) *AffiliateConversionQuery {
+	query := (&AffiliateConversionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(affiliate.Table, affiliate.FieldID, id),
+			sqlgraph.To(affiliateconversion.Table, affiliateconversion.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, affiliate.ConversionsTable, affiliate.ConversionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *AffiliateClient) Hooks() []Hook {
+	return c.hooks.Affiliate
+}
+
+// Interceptors returns the client interceptors.
+func (c *AffiliateClient) Interceptors() []Interceptor {
+	return c.inters.Affiliate
+}
+
+func (c *AffiliateClient) mutate(ctx context.Context, m *AffiliateMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AffiliateCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AffiliateUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AffiliateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AffiliateDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Affiliate mutation op: %q", m.Op())
+	}
+}
+
+// AffiliateClickClient is a client for the AffiliateClick schema.
+type AffiliateClickClient struct {
+	config
+}
+
+// NewAffiliateClickClient returns a client for the AffiliateClick from the given config.
+func NewAffiliateClickClient(c config) *AffiliateClickClient {
+	return &AffiliateClickClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `affiliateclick.Hooks(f(g(h())))`.
+func (c *AffiliateClickClient) Use(hooks ...Hook) {
+	c.hooks.AffiliateClick = append(c.hooks.AffiliateClick, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `affiliateclick.Intercept(f(g(h())))`.
+func (c *AffiliateClickClient) Intercept(interceptors ...Interceptor) {
+	c.inters.AffiliateClick = append(c.inters.AffiliateClick, interceptors...)
+}
+
+// Create returns a builder for creating a AffiliateClick entity.
+func (c *AffiliateClickClient) Create() *AffiliateClickCreate {
+	mutation := newAffiliateClickMutation(c.config, OpCreate)
+	return &AffiliateClickCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of AffiliateClick entities.
+func (c *AffiliateClickClient) CreateBulk(builders ...*AffiliateClickCreate) *AffiliateClickCreateBulk {
+	return &AffiliateClickCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AffiliateClickClient) MapCreateBulk(slice any, setFunc func(*AffiliateClickCreate, int)) *AffiliateClickCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AffiliateClickCreateBulk{err: fmt.Errorf("calling to AffiliateClickClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AffiliateClickCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AffiliateClickCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AffiliateClick.
+func (c *AffiliateClickClient) Update() *AffiliateClickUpdate {
+	mutation := newAffiliateClickMutation(c.config, OpUpdate)
+	return &AffiliateClickUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AffiliateClickClient) UpdateOne(_m *AffiliateClick) *AffiliateClickUpdateOne {
+	mutation := newAffiliateClickMutation(c.config, OpUpdateOne, withAffiliateClick(_m))
+	return &AffiliateClickUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AffiliateClickClient) UpdateOneID(id int) *AffiliateClickUpdateOne {
+	mutation := newAffiliateClickMutation(c.config, OpUpdateOne, withAffiliateClickID(id))
+	return &AffiliateClickUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AffiliateClick.
+func (c *AffiliateClickClient) Delete() *AffiliateClickDelete {
+	mutation := newAffiliateClickMutation(c.config, OpDelete)
+	return &AffiliateClickDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AffiliateClickClient) DeleteOne(_m *AffiliateClick) *AffiliateClickDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AffiliateClickClient) DeleteOneID(id int) *AffiliateClickDeleteOne {
+	builder := c.Delete().Where(affiliateclick.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AffiliateClickDeleteOne{builder}
+}
+
+// Query returns a query builder for AffiliateClick.
+func (c *AffiliateClickClient) Query() *AffiliateClickQuery {
+	return &AffiliateClickQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAffiliateClick},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a AffiliateClick entity by its id.
+func (c *AffiliateClickClient) Get(ctx context.Context, id int) (*AffiliateClick, error) {
+	return c.Query().Where(affiliateclick.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AffiliateClickClient) GetX(ctx context.Context, id int) *AffiliateClick {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryAffiliate queries the affiliate edge of a AffiliateClick.
+func (c *AffiliateClickClient) QueryAffiliate(_m *AffiliateClick) *AffiliateQuery {
+	query := (&AffiliateClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(affiliateclick.Table, affiliateclick.FieldID, id),
+			sqlgraph.To(affiliate.Table, affiliate.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, affiliateclick.AffiliateTable, affiliateclick.AffiliateColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *AffiliateClickClient) Hooks() []Hook {
+	return c.hooks.AffiliateClick
+}
+
+// Interceptors returns the client interceptors.
+func (c *AffiliateClickClient) Interceptors() []Interceptor {
+	return c.inters.AffiliateClick
+}
+
+func (c *AffiliateClickClient) mutate(ctx context.Context, m *AffiliateClickMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AffiliateClickCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AffiliateClickUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AffiliateClickUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AffiliateClickDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown AffiliateClick mutation op: %q", m.Op())
+	}
+}
+
+// AffiliateConversionClient is a client for the AffiliateConversion schema.
+type AffiliateConversionClient struct {
+	config
+}
+
+// NewAffiliateConversionClient returns a client for the AffiliateConversion from the given config.
+func NewAffiliateConversionClient(c config) *AffiliateConversionClient {
+	return &AffiliateConversionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `affiliateconversion.Hooks(f(g(h())))`.
+func (c *AffiliateConversionClient) Use(hooks ...Hook) {
+	c.hooks.AffiliateConversion = append(c.hooks.AffiliateConversion, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `affiliateconversion.Intercept(f(g(h())))`.
+func (c *AffiliateConversionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.AffiliateConversion = append(c.inters.AffiliateConversion, interceptors...)
+}
+
+// Create returns a builder for creating a AffiliateConversion entity.
+func (c *AffiliateConversionClient) Create() *AffiliateConversionCreate {
+	mutation := newAffiliateConversionMutation(c.config, OpCreate)
+	return &AffiliateConversionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of AffiliateConversion entities.
+func (c *AffiliateConversionClient) CreateBulk(builders ...*AffiliateConversionCreate) *AffiliateConversionCreateBulk {
+	return &AffiliateConversionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AffiliateConversionClient) MapCreateBulk(slice any, setFunc func(*AffiliateConversionCreate, int)) *AffiliateConversionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AffiliateConversionCreateBulk{err: fmt.Errorf("calling to AffiliateConversionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AffiliateConversionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AffiliateConversionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AffiliateConversion.
+func (c *AffiliateConversionClient) Update() *AffiliateConversionUpdate {
+	mutation := newAffiliateConversionMutation(c.config, OpUpdate)
+	return &AffiliateConversionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AffiliateConversionClient) UpdateOne(_m *AffiliateConversion) *AffiliateConversionUpdateOne {
+	mutation := newAffiliateConversionMutation(c.config, OpUpdateOne, withAffiliateConversion(_m))
+	return &AffiliateConversionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AffiliateConversionClient) UpdateOneID(id int) *AffiliateConversionUpdateOne {
+	mutation := newAffiliateConversionMutation(c.config, OpUpdateOne, withAffiliateConversionID(id))
+	return &AffiliateConversionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AffiliateConversion.
+func (c *AffiliateConversionClient) Delete() *AffiliateConversionDelete {
+	mutation := newAffiliateConversionMutation(c.config, OpDelete)
+	return &AffiliateConversionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AffiliateConversionClient) DeleteOne(_m *AffiliateConversion) *AffiliateConversionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AffiliateConversionClient) DeleteOneID(id int) *AffiliateConversionDeleteOne {
+	builder := c.Delete().Where(affiliateconversion.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AffiliateConversionDeleteOne{builder}
+}
+
+// Query returns a query builder for AffiliateConversion.
+func (c *AffiliateConversionClient) Query() *AffiliateConversionQuery {
+	return &AffiliateConversionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAffiliateConversion},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a AffiliateConversion entity by its id.
+func (c *AffiliateConversionClient) Get(ctx context.Context, id int) (*AffiliateConversion, error) {
+	return c.Query().Where(affiliateconversion.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AffiliateConversionClient) GetX(ctx context.Context, id int) *AffiliateConversion {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryAffiliate queries the affiliate edge of a AffiliateConversion.
+func (c *AffiliateConversionClient) QueryAffiliate(_m *AffiliateConversion) *AffiliateQuery {
+	query := (&AffiliateClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(affiliateconversion.Table, affiliateconversion.FieldID, id),
+			sqlgraph.To(affiliate.Table, affiliate.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, affiliateconversion.AffiliateTable, affiliateconversion.AffiliateColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUser queries the user edge of a AffiliateConversion.
+func (c *AffiliateConversionClient) QueryUser(_m *AffiliateConversion) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(affiliateconversion.Table, affiliateconversion.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, affiliateconversion.UserTable, affiliateconversion.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *AffiliateConversionClient) Hooks() []Hook {
+	return c.hooks.AffiliateConversion
+}
+
+// Interceptors returns the client interceptors.
+func (c *AffiliateConversionClient) Interceptors() []Interceptor {
+	return c.inters.AffiliateConversion
+}
+
+func (c *AffiliateConversionClient) mutate(ctx context.Context, m *AffiliateConversionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AffiliateConversionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AffiliateConversionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AffiliateConversionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AffiliateConversionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown AffiliateConversion mutation op: %q", m.Op())
 	}
 }
 
@@ -4537,6 +5056,38 @@ func (c *UserClient) QueryExperimentAssignments(_m *User) *ExperimentAssignmentQ
 	return query
 }
 
+// QueryAffiliate queries the affiliate edge of a User.
+func (c *UserClient) QueryAffiliate(_m *User) *AffiliateQuery {
+	query := (&AffiliateClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(affiliate.Table, affiliate.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, user.AffiliateTable, user.AffiliateColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAffiliateConversions queries the affiliate_conversions edge of a User.
+func (c *UserClient) QueryAffiliateConversions(_m *User) *AffiliateConversionQuery {
+	query := (&AffiliateConversionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(affiliateconversion.Table, affiliateconversion.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.AffiliateConversionsTable, user.AffiliateConversionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -4714,17 +5265,18 @@ func (c *WebhookClient) mutate(ctx context.Context, m *WebhookMutation) (Value, 
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		APIKey, AuditLog, EmailSequence, EmailSequenceEnrollment, EmailSequenceSend,
-		EmailSequenceStep, Experiment, ExperimentAssignment, Export, Industry, Lead,
-		LeadAssignment, LeadNote, LeadStatusHistory, Organization, OrganizationMember,
-		Referral, SavedSearch, Subscription, Territory, TerritoryMember, UsageLog,
-		User, Webhook []ent.Hook
+		APIKey, Affiliate, AffiliateClick, AffiliateConversion, AuditLog, EmailSequence,
+		EmailSequenceEnrollment, EmailSequenceSend, EmailSequenceStep, Experiment,
+		ExperimentAssignment, Export, Industry, Lead, LeadAssignment, LeadNote,
+		LeadStatusHistory, Organization, OrganizationMember, Referral, SavedSearch,
+		Subscription, Territory, TerritoryMember, UsageLog, User, Webhook []ent.Hook
 	}
 	inters struct {
-		APIKey, AuditLog, EmailSequence, EmailSequenceEnrollment, EmailSequenceSend,
-		EmailSequenceStep, Experiment, ExperimentAssignment, Export, Industry, Lead,
-		LeadAssignment, LeadNote, LeadStatusHistory, Organization, OrganizationMember,
-		Referral, SavedSearch, Subscription, Territory, TerritoryMember, UsageLog,
-		User, Webhook []ent.Interceptor
+		APIKey, Affiliate, AffiliateClick, AffiliateConversion, AuditLog, EmailSequence,
+		EmailSequenceEnrollment, EmailSequenceSend, EmailSequenceStep, Experiment,
+		ExperimentAssignment, Export, Industry, Lead, LeadAssignment, LeadNote,
+		LeadStatusHistory, Organization, OrganizationMember, Referral, SavedSearch,
+		Subscription, Territory, TerritoryMember, UsageLog, User,
+		Webhook []ent.Interceptor
 	}
 )

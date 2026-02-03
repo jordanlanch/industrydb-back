@@ -1778,6 +1778,52 @@ func HasExperimentAssignmentsWith(preds ...predicate.ExperimentAssignment) predi
 	})
 }
 
+// HasAffiliate applies the HasEdge predicate on the "affiliate" edge.
+func HasAffiliate() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, AffiliateTable, AffiliateColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAffiliateWith applies the HasEdge predicate on the "affiliate" edge with a given conditions (other predicates).
+func HasAffiliateWith(preds ...predicate.Affiliate) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newAffiliateStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasAffiliateConversions applies the HasEdge predicate on the "affiliate_conversions" edge.
+func HasAffiliateConversions() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, AffiliateConversionsTable, AffiliateConversionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAffiliateConversionsWith applies the HasEdge predicate on the "affiliate_conversions" edge with a given conditions (other predicates).
+func HasAffiliateConversionsWith(preds ...predicate.AffiliateConversion) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newAffiliateConversionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.User) predicate.User {
 	return predicate.User(sql.AndPredicates(predicates...))

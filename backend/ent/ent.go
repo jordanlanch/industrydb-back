@@ -12,6 +12,9 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/jordanlanch/industrydb/ent/affiliate"
+	"github.com/jordanlanch/industrydb/ent/affiliateclick"
+	"github.com/jordanlanch/industrydb/ent/affiliateconversion"
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
@@ -97,6 +100,9 @@ func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			apikey.Table:                  apikey.ValidColumn,
+			affiliate.Table:               affiliate.ValidColumn,
+			affiliateclick.Table:          affiliateclick.ValidColumn,
+			affiliateconversion.Table:     affiliateconversion.ValidColumn,
 			auditlog.Table:                auditlog.ValidColumn,
 			emailsequence.Table:           emailsequence.ValidColumn,
 			emailsequenceenrollment.Table: emailsequenceenrollment.ValidColumn,

@@ -158,6 +158,11 @@ func (User) Edges() []ent.Edge {
 			Comment("Referrals received by this user (how they signed up)"),
 		edge.To("experiment_assignments", ExperimentAssignment.Type).
 			Comment("A/B test variant assignments for this user"),
+		edge.To("affiliate", Affiliate.Type).
+			Unique().
+			Comment("Affiliate account for this user"),
+		edge.To("affiliate_conversions", AffiliateConversion.Type).
+			Comment("Conversions attributed to this user"),
 	}
 }
 

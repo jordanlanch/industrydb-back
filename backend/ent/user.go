@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/jordanlanch/industrydb/ent/affiliate"
 	"github.com/jordanlanch/industrydb/ent/user"
 )
 
@@ -115,9 +116,13 @@ type UserEdges struct {
 	ReceivedReferrals []*Referral `json:"received_referrals,omitempty"`
 	// A/B test variant assignments for this user
 	ExperimentAssignments []*ExperimentAssignment `json:"experiment_assignments,omitempty"`
+	// Affiliate account for this user
+	Affiliate *Affiliate `json:"affiliate,omitempty"`
+	// Conversions attributed to this user
+	AffiliateConversions []*AffiliateConversion `json:"affiliate_conversions,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [21]bool
+	loadedTypes [23]bool
 }
 
 // SubscriptionsOrErr returns the Subscriptions value or an error if the edge
@@ -307,6 +312,26 @@ func (e UserEdges) ExperimentAssignmentsOrErr() ([]*ExperimentAssignment, error)
 		return e.ExperimentAssignments, nil
 	}
 	return nil, &NotLoadedError{edge: "experiment_assignments"}
+}
+
+// AffiliateOrErr returns the Affiliate value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e UserEdges) AffiliateOrErr() (*Affiliate, error) {
+	if e.Affiliate != nil {
+		return e.Affiliate, nil
+	} else if e.loadedTypes[21] {
+		return nil, &NotFoundError{label: affiliate.Label}
+	}
+	return nil, &NotLoadedError{edge: "affiliate"}
+}
+
+// AffiliateConversionsOrErr returns the AffiliateConversions value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) AffiliateConversionsOrErr() ([]*AffiliateConversion, error) {
+	if e.loadedTypes[22] {
+		return e.AffiliateConversions, nil
+	}
+	return nil, &NotLoadedError{edge: "affiliate_conversions"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -613,6 +638,16 @@ func (_m *User) QueryReceivedReferrals() *ReferralQuery {
 // QueryExperimentAssignments queries the "experiment_assignments" edge of the User entity.
 func (_m *User) QueryExperimentAssignments() *ExperimentAssignmentQuery {
 	return NewUserClient(_m.config).QueryExperimentAssignments(_m)
+}
+
+// QueryAffiliate queries the "affiliate" edge of the User entity.
+func (_m *User) QueryAffiliate() *AffiliateQuery {
+	return NewUserClient(_m.config).QueryAffiliate(_m)
+}
+
+// QueryAffiliateConversions queries the "affiliate_conversions" edge of the User entity.
+func (_m *User) QueryAffiliateConversions() *AffiliateConversionQuery {
+	return NewUserClient(_m.config).QueryAffiliateConversions(_m)
 }
 
 // Update returns a builder for updating this User.

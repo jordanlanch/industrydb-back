@@ -14,6 +14,12 @@ type Tx struct {
 	config
 	// APIKey is the client for interacting with the APIKey builders.
 	APIKey *APIKeyClient
+	// Affiliate is the client for interacting with the Affiliate builders.
+	Affiliate *AffiliateClient
+	// AffiliateClick is the client for interacting with the AffiliateClick builders.
+	AffiliateClick *AffiliateClickClient
+	// AffiliateConversion is the client for interacting with the AffiliateConversion builders.
+	AffiliateConversion *AffiliateConversionClient
 	// AuditLog is the client for interacting with the AuditLog builders.
 	AuditLog *AuditLogClient
 	// EmailSequence is the client for interacting with the EmailSequence builders.
@@ -192,6 +198,9 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.APIKey = NewAPIKeyClient(tx.config)
+	tx.Affiliate = NewAffiliateClient(tx.config)
+	tx.AffiliateClick = NewAffiliateClickClient(tx.config)
+	tx.AffiliateConversion = NewAffiliateConversionClient(tx.config)
 	tx.AuditLog = NewAuditLogClient(tx.config)
 	tx.EmailSequence = NewEmailSequenceClient(tx.config)
 	tx.EmailSequenceEnrollment = NewEmailSequenceEnrollmentClient(tx.config)

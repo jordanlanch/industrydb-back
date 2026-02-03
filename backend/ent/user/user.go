@@ -105,6 +105,10 @@ const (
 	EdgeReceivedReferrals = "received_referrals"
 	// EdgeExperimentAssignments holds the string denoting the experiment_assignments edge name in mutations.
 	EdgeExperimentAssignments = "experiment_assignments"
+	// EdgeAffiliate holds the string denoting the affiliate edge name in mutations.
+	EdgeAffiliate = "affiliate"
+	// EdgeAffiliateConversions holds the string denoting the affiliate_conversions edge name in mutations.
+	EdgeAffiliateConversions = "affiliate_conversions"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// SubscriptionsTable is the table that holds the subscriptions relation/edge.
@@ -254,6 +258,20 @@ const (
 	ExperimentAssignmentsInverseTable = "experiment_assignments"
 	// ExperimentAssignmentsColumn is the table column denoting the experiment_assignments relation/edge.
 	ExperimentAssignmentsColumn = "user_id"
+	// AffiliateTable is the table that holds the affiliate relation/edge.
+	AffiliateTable = "affiliates"
+	// AffiliateInverseTable is the table name for the Affiliate entity.
+	// It exists in this package in order to avoid circular dependency with the "affiliate" package.
+	AffiliateInverseTable = "affiliates"
+	// AffiliateColumn is the table column denoting the affiliate relation/edge.
+	AffiliateColumn = "user_id"
+	// AffiliateConversionsTable is the table that holds the affiliate_conversions relation/edge.
+	AffiliateConversionsTable = "affiliate_conversions"
+	// AffiliateConversionsInverseTable is the table name for the AffiliateConversion entity.
+	// It exists in this package in order to avoid circular dependency with the "affiliateconversion" package.
+	AffiliateConversionsInverseTable = "affiliate_conversions"
+	// AffiliateConversionsColumn is the table column denoting the affiliate_conversions relation/edge.
+	AffiliateConversionsColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -806,6 +824,27 @@ func ByExperimentAssignments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOp
 		sqlgraph.OrderByNeighborTerms(s, newExperimentAssignmentsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByAffiliateField orders the results by affiliate field.
+func ByAffiliateField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAffiliateStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByAffiliateConversionsCount orders the results by affiliate_conversions count.
+func ByAffiliateConversionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAffiliateConversionsStep(), opts...)
+	}
+}
+
+// ByAffiliateConversions orders the results by affiliate_conversions terms.
+func ByAffiliateConversions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAffiliateConversionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSubscriptionsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -951,5 +990,19 @@ func newExperimentAssignmentsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ExperimentAssignmentsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, ExperimentAssignmentsTable, ExperimentAssignmentsColumn),
+	)
+}
+func newAffiliateStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AffiliateInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, AffiliateTable, AffiliateColumn),
+	)
+}
+func newAffiliateConversionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AffiliateConversionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AffiliateConversionsTable, AffiliateConversionsColumn),
 	)
 }

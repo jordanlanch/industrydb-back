@@ -9,6 +9,15 @@ import (
 // APIKey is the predicate function for apikey builders.
 type APIKey func(*sql.Selector)
 
+// Affiliate is the predicate function for affiliate builders.
+type Affiliate func(*sql.Selector)
+
+// AffiliateClick is the predicate function for affiliateclick builders.
+type AffiliateClick func(*sql.Selector)
+
+// AffiliateConversion is the predicate function for affiliateconversion builders.
+type AffiliateConversion func(*sql.Selector)
+
 // AuditLog is the predicate function for auditlog builders.
 type AuditLog func(*sql.Selector)
 
