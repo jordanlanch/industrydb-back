@@ -1413,7 +1413,7 @@ curl -H "X-API-Key: idb_abc123..." https://api.industrydb.io/api/v1/leads
 - Schema: `backend/ent/schema/apikey.go`
 
 ### Query Parameters for /api/v1/leads
-**Enhanced:** 2026-02-03 - Added website, social media, and radius search filters
+**Enhanced:** 2026-02-03 - Added website, social media, radius search, and sorting
 
 ```
 ?industry=tattoo|beauty|barber|gym|restaurant
@@ -1428,6 +1428,7 @@ curl -H "X-API-Key: idb_abc123..." https://api.industrydb.io/api/v1/leads
 &longitude=-74.0060
 &radius=10
 &unit=km|miles
+&sort_by=newest|quality_score|verified|distance
 &page=1
 &limit=50
 ```
@@ -1447,6 +1448,15 @@ curl -H "X-API-Key: idb_abc123..." https://api.industrydb.io/api/v1/leads
 
 All three parameters (`latitude`, `longitude`, `radius`) must be provided for radius search to activate.
 
+**Sorting Options:**
+- `sort_by` - Sort results by specified field:
+  - `newest` (default) - Most recently added leads first
+  - `quality_score` - Highest quality score first (based on data completeness)
+  - `verified` - Verified leads first, then by creation date
+  - `distance` - Closest leads first (requires `latitude` and `longitude`)
+
+If `sort_by=distance` is used without coordinates, falls back to `newest`.
+
 **Examples:**
 ```bash
 # Find verified tattoo studios in US with website and social media
@@ -1457,6 +1467,15 @@ GET /api/v1/leads?industry=tattoo&latitude=40.7128&longitude=-74.0060&radius=10&
 
 # Find restaurants within 5 miles with email
 GET /api/v1/leads?industry=restaurant&latitude=34.0522&longitude=-118.2437&radius=5&unit=miles&has_email=true
+
+# Find tattoo studios sorted by quality score (highest first)
+GET /api/v1/leads?industry=tattoo&country=US&sort_by=quality_score
+
+# Find verified beauty salons sorted by verified status
+GET /api/v1/leads?industry=beauty&sort_by=verified
+
+# Find gyms near a location, sorted by distance (closest first)
+GET /api/v1/leads?industry=gym&latitude=40.7128&longitude=-74.0060&radius=20&unit=km&sort_by=distance
 ```
 
 **Implementation:**

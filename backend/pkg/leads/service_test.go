@@ -3,6 +3,7 @@ package leads
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/jordanlanch/industrydb/ent"
 	"github.com/jordanlanch/industrydb/ent/enttest"
@@ -410,4 +411,166 @@ func TestSearch_PartialRadiusParametersIgnoresFilter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, 2, result.Pagination.Total, "Should ignore radius filter if parameters incomplete")
+}
+
+// Sorting tests
+
+func createTestLeadWithQualityScore(t *testing.T, client *ent.Client, name string, qualityScore int, verified bool) *ent.Lead {
+	lead, err := client.Lead.Create().
+		SetName(name).
+		SetIndustry(lead.IndustryTattoo).
+		SetCountry("US").
+		SetCity("Test City").
+		SetQualityScore(qualityScore).
+		SetVerified(verified).
+		Save(context.Background())
+	require.NoError(t, err)
+	return lead
+}
+
+func TestSearch_SortByNewest(t *testing.T) {
+	service, client := setupTestService(t)
+	defer client.Close()
+
+	// Create leads with small time gaps
+	time.Sleep(10 * time.Millisecond)
+	createTestLeadWithQualityScore(t, client, "Oldest Lead", 50, false)
+	time.Sleep(10 * time.Millisecond)
+	createTestLeadWithQualityScore(t, client, "Middle Lead", 60, false)
+	time.Sleep(10 * time.Millisecond)
+	createTestLeadWithQualityScore(t, client, "Newest Lead", 70, false)
+
+	// Sort by newest (default)
+	req := models.LeadSearchRequest{
+		Industry: "tattoo",
+		SortBy:   "newest",
+		Page:     1,
+		Limit:    10,
+	}
+
+	result, err := service.Search(context.Background(), req)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, 3, result.Pagination.Total)
+
+	// Verify newest first
+	if len(result.Data) >= 3 {
+		assert.Equal(t, "Newest Lead", result.Data[0].Name)
+		assert.Equal(t, "Middle Lead", result.Data[1].Name)
+		assert.Equal(t, "Oldest Lead", result.Data[2].Name)
+	}
+}
+
+func TestSearch_SortByQualityScore(t *testing.T) {
+	service, client := setupTestService(t)
+	defer client.Close()
+
+	createTestLeadWithQualityScore(t, client, "Low Quality", 30, false)
+	createTestLeadWithQualityScore(t, client, "High Quality", 90, false)
+	createTestLeadWithQualityScore(t, client, "Medium Quality", 60, false)
+
+	// Sort by quality score
+	req := models.LeadSearchRequest{
+		Industry: "tattoo",
+		SortBy:   "quality_score",
+		Page:     1,
+		Limit:    10,
+	}
+
+	result, err := service.Search(context.Background(), req)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, 3, result.Pagination.Total)
+
+	// Verify highest quality first
+	if len(result.Data) >= 3 {
+		assert.Equal(t, "High Quality", result.Data[0].Name)
+		assert.True(t, result.Data[0].QualityScore >= result.Data[1].QualityScore)
+		assert.True(t, result.Data[1].QualityScore >= result.Data[2].QualityScore)
+	}
+}
+
+func TestSearch_SortByVerified(t *testing.T) {
+	service, client := setupTestService(t)
+	defer client.Close()
+
+	createTestLeadWithQualityScore(t, client, "Unverified 1", 50, false)
+	createTestLeadWithQualityScore(t, client, "Verified 1", 60, true)
+	createTestLeadWithQualityScore(t, client, "Unverified 2", 70, false)
+	createTestLeadWithQualityScore(t, client, "Verified 2", 80, true)
+
+	// Sort by verified status
+	req := models.LeadSearchRequest{
+		Industry: "tattoo",
+		SortBy:   "verified",
+		Page:     1,
+		Limit:    10,
+	}
+
+	result, err := service.Search(context.Background(), req)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, 4, result.Pagination.Total)
+
+	// Verify verified leads come first
+	if len(result.Data) >= 4 {
+		assert.True(t, result.Data[0].Verified, "First lead should be verified")
+		assert.True(t, result.Data[1].Verified, "Second lead should be verified")
+		assert.False(t, result.Data[2].Verified, "Third lead should be unverified")
+		assert.False(t, result.Data[3].Verified, "Fourth lead should be unverified")
+	}
+}
+
+func TestSearch_DefaultSortingWhenNoSortByProvided(t *testing.T) {
+	service, client := setupTestService(t)
+	defer client.Close()
+
+	time.Sleep(10 * time.Millisecond)
+	createTestLeadWithQualityScore(t, client, "First", 50, false)
+	time.Sleep(10 * time.Millisecond)
+	createTestLeadWithQualityScore(t, client, "Second", 60, false)
+
+	// No sort_by parameter (should default to newest)
+	req := models.LeadSearchRequest{
+		Industry: "tattoo",
+		Page:     1,
+		Limit:    10,
+	}
+
+	result, err := service.Search(context.Background(), req)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+
+	// Should be sorted by newest (default)
+	if len(result.Data) >= 2 {
+		assert.Equal(t, "Second", result.Data[0].Name)
+		assert.Equal(t, "First", result.Data[1].Name)
+	}
+}
+
+func TestSearch_SortByInvalidValueUsesDefault(t *testing.T) {
+	service, client := setupTestService(t)
+	defer client.Close()
+
+	time.Sleep(10 * time.Millisecond)
+	createTestLeadWithQualityScore(t, client, "First", 50, false)
+	time.Sleep(10 * time.Millisecond)
+	createTestLeadWithQualityScore(t, client, "Second", 60, false)
+
+	// Invalid sort_by value (should use default: newest)
+	req := models.LeadSearchRequest{
+		Industry: "tattoo",
+		SortBy:   "invalid_sort",
+		Page:     1,
+		Limit:    10,
+	}
+
+	result, err := service.Search(context.Background(), req)
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+
+	// Should fallback to newest (default)
+	if len(result.Data) >= 2 {
+		assert.Equal(t, "Second", result.Data[0].Name)
+	}
 }

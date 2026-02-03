@@ -126,12 +126,35 @@ func (s *Service) Search(ctx context.Context, req models.LeadSearchRequest) (*mo
 	offset := (req.Page - 1) * req.Limit
 	totalPages := (total + req.Limit - 1) / req.Limit
 
+	// Apply sorting
+	sortedQuery := query.Limit(req.Limit).Offset(offset)
+
+	switch req.SortBy {
+	case "quality_score":
+		sortedQuery = sortedQuery.Order(ent.Desc(lead.FieldQualityScore))
+	case "verified":
+		// Verified first, then by creation date
+		sortedQuery = sortedQuery.Order(ent.Desc(lead.FieldVerified), ent.Desc(lead.FieldCreatedAt))
+	case "distance":
+		// Distance sorting only works with radius search
+		if req.Latitude != nil && req.Longitude != nil {
+			sortedQuery = sortedQuery.Order(func(s *sql.Selector) {
+				s.OrderExpr(sql.Expr(fmt.Sprintf(
+					"ST_Distance(ST_MakePoint(longitude, latitude)::geography, ST_MakePoint(%f, %f)::geography)",
+					*req.Longitude, *req.Latitude,
+				)))
+			})
+		} else {
+			// Fallback to newest if no coordinates provided
+			sortedQuery = sortedQuery.Order(ent.Desc(lead.FieldCreatedAt))
+		}
+	default:
+		// Default: newest first (by creation date)
+		sortedQuery = sortedQuery.Order(ent.Desc(lead.FieldCreatedAt))
+	}
+
 	// Get paginated results
-	leads, err := query.
-		Limit(req.Limit).
-		Offset(offset).
-		Order(ent.Desc(lead.FieldCreatedAt)).
-		All(ctx)
+	leads, err := sortedQuery.All(ctx)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to query leads: %w", err)
@@ -255,12 +278,13 @@ func (s *Service) generateCacheKey(req models.LeadSearchRequest) string {
 	if req.Radius != nil {
 		radius = fmt.Sprintf("%f", *req.Radius)
 	}
+	sortBy := req.SortBy
 
-	return fmt.Sprintf("leads:search:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%d:%d",
+	return fmt.Sprintf("leads:search:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%d:%d",
 		req.Industry, req.SubNiche, req.CuisineType, req.SportType, req.TattooStyle,
 		req.Country, req.City,
 		hasEmail, hasPhone, hasWebsite, hasSocialMedia, verified,
-		latitude, longitude, radius, unit,
+		latitude, longitude, radius, unit, sortBy,
 		req.Page, req.Limit)
 }
 

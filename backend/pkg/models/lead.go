@@ -20,8 +20,10 @@ type LeadSearchRequest struct {
 	Longitude *float64 `query:"longitude" validate:"omitempty,min=-180,max=180"`
 	Radius    *float64 `query:"radius" validate:"omitempty,min=0"`
 	Unit      string   `query:"unit" validate:"omitempty,oneof=km miles"`
-	Page      int      `query:"page" validate:"min=1"`
-	Limit     int      `query:"limit" validate:"min=1,max=100"`
+	// Sorting
+	SortBy string `query:"sort_by" validate:"omitempty,oneof=newest quality_score distance verified"`
+	Page   int    `query:"page" validate:"min=1"`
+	Limit  int    `query:"limit" validate:"min=1,max=100"`
 }
 
 // LeadResponse represents a single lead in API responses
