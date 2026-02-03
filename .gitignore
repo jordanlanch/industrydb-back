@@ -12,8 +12,11 @@
 *.pem
 *.crt
 *.p12
-secrets/
+/secrets/
 config/production.yml
+
+# Allow pkg/secrets/ (application code, not actual secrets)
+!backend/pkg/secrets/
 
 # ================================
 # GO (Backend)

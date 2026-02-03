@@ -91,6 +91,12 @@ type Config struct {
 	// Monitoring
 	SentryDSN         string
 	SentryEnvironment string
+
+	// Secrets Management
+	SecretsBackend        string // "env" or "aws-secrets-manager"
+	AWSSecretsRegion      string // AWS region for Secrets Manager
+	UseSecretsManager     bool   // Enable secrets manager for sensitive values
+	SecretsManagerEnabled bool   // AWS_SECRETS_MANAGER_ENABLED environment variable
 }
 
 // Load loads configuration from environment variables
@@ -177,6 +183,12 @@ func Load() *Config {
 		// Monitoring
 		SentryDSN:         getEnv("SENTRY_DSN", ""),
 		SentryEnvironment: getEnv("SENTRY_ENVIRONMENT", "development"),
+
+		// Secrets Management
+		SecretsManagerEnabled: getEnvAsBool("AWS_SECRETS_MANAGER_ENABLED", false),
+		SecretsBackend:        getEnv("SECRETS_BACKEND", "env"),
+		AWSSecretsRegion:      getEnv("AWS_SECRETS_REGION", "us-east-1"),
+		UseSecretsManager:     getEnvAsBool("USE_SECRETS_MANAGER", false),
 	}
 }
 
