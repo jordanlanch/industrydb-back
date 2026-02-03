@@ -44,6 +44,7 @@ import (
 	"github.com/jordanlanch/industrydb/pkg/apikey"
 	"github.com/jordanlanch/industrydb/pkg/audit"
 	"github.com/jordanlanch/industrydb/pkg/auth"
+	"github.com/jordanlanch/industrydb/pkg/backup"
 	"github.com/jordanlanch/industrydb/pkg/billing"
 	"github.com/jordanlanch/industrydb/pkg/cache"
 	"github.com/jordanlanch/industrydb/pkg/database"
@@ -273,6 +274,30 @@ func main() {
 	)
 	log.Printf("✅ Email service initialized")
 
+	// Initialize backup service (if enabled)
+	var backupService *backup.Service
+	if cfg.BackupEnabled {
+		backupCfg := backup.Config{
+			AWSAccessKeyID:     cfg.AWSAccessKeyID,
+			AWSSecretAccessKey: cfg.AWSSecretAccessKey,
+			AWSRegion:          cfg.AWSRegion,
+			S3Bucket:           cfg.BackupS3Bucket,
+			DatabaseURL:        cfg.DatabaseURL,
+			LocalBackupDir:     cfg.BackupLocalDir,
+			RetentionDays:      cfg.BackupRetentionDays,
+		}
+		var err error
+		backupService, err = backup.NewService(backupCfg)
+		if err != nil {
+			log.Printf("⚠️  Failed to initialize backup service: %v", err)
+		} else {
+			log.Printf("✅ Backup service initialized (S3: %s, retention: %d days)",
+				cfg.BackupS3Bucket, cfg.BackupRetentionDays)
+		}
+	} else {
+		log.Printf("ℹ️  Backup service disabled (BACKUP_ENABLED=false)")
+	}
+
 	// Initialize services
 	leadService := leads.NewService(db.Ent, redisClient)
 	analyticsService := analytics.NewService(db.Ent)
@@ -313,6 +338,12 @@ func main() {
 	industriesHandler := handlers.NewIndustryHandler(industriesService)
 	jobsHandler := handlers.NewJobsHandler(cronManager.GetMonitor())
 	savedSearchHandler := handlers.NewSavedSearchHandler(savedSearchService)
+
+	// Backup handler (admin only, if enabled)
+	var backupHandler *handlers.BackupHandler
+	if backupService != nil {
+		backupHandler = handlers.NewBackupHandler(backupService)
+	}
 
 	// Authentication routes (public)
 	authRoutes := v1.Group("/auth")
@@ -442,6 +473,16 @@ func main() {
 				jobsGroup.POST("/trigger-batch-fetch", jobsHandler.TriggerBatchFetchHandler)
 				jobsGroup.GET("/stats", jobsHandler.GetPopulationStatsHandler)
 				jobsGroup.POST("/auto-populate", jobsHandler.AutoPopulateHandler)
+			}
+
+			// Backup routes (if backup service enabled)
+			if backupHandler != nil {
+				backupGroup := adminGroup.Group("/backup")
+				{
+					backupGroup.POST("/create", backupHandler.CreateBackup)
+					backupGroup.GET("/list", backupHandler.ListBackups)
+					backupGroup.POST("/restore", backupHandler.RestoreBackup)
+				}
 			}
 		}
 	}

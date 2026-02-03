@@ -58,6 +58,16 @@ type Config struct {
 	AWSRegion        string
 	S3Bucket         string
 
+	// AWS Credentials
+	AWSAccessKeyID     string
+	AWSSecretAccessKey string
+
+	// Backup
+	BackupEnabled       bool
+	BackupRetentionDays int
+	BackupS3Bucket      string
+	BackupLocalDir      string
+
 	// Email
 	SMTPHost     string
 	SMTPPort     string
@@ -125,6 +135,16 @@ func Load() *Config {
 		StorageLocalPath: getEnv("STORAGE_LOCAL_PATH", "./data/exports"),
 		AWSRegion:        getEnv("AWS_REGION", "us-east-1"),
 		S3Bucket:         getEnv("S3_BUCKET", ""),
+
+		// AWS Credentials
+		AWSAccessKeyID:     getEnv("AWS_ACCESS_KEY_ID", ""),
+		AWSSecretAccessKey: getEnv("AWS_SECRET_ACCESS_KEY", ""),
+
+		// Backup
+		BackupEnabled:       getEnvAsBool("BACKUP_ENABLED", false),
+		BackupRetentionDays: getEnvAsInt("BACKUP_RETENTION_DAYS", 30),
+		BackupS3Bucket:      getEnv("BACKUP_S3_BUCKET", ""),
+		BackupLocalDir:      getEnv("BACKUP_LOCAL_DIR", "./data/backups"),
 
 		// Email
 		SMTPHost:     getEnv("SMTP_HOST", ""),
