@@ -1640,6 +1640,75 @@ func HasEmailSequenceEnrollmentsMadeWith(preds ...predicate.EmailSequenceEnrollm
 	})
 }
 
+// HasTerritoriesCreated applies the HasEdge predicate on the "territories_created" edge.
+func HasTerritoriesCreated() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, TerritoriesCreatedTable, TerritoriesCreatedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTerritoriesCreatedWith applies the HasEdge predicate on the "territories_created" edge with a given conditions (other predicates).
+func HasTerritoriesCreatedWith(preds ...predicate.Territory) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newTerritoriesCreatedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasTerritoryMemberships applies the HasEdge predicate on the "territory_memberships" edge.
+func HasTerritoryMemberships() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, TerritoryMembershipsTable, TerritoryMembershipsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTerritoryMembershipsWith applies the HasEdge predicate on the "territory_memberships" edge with a given conditions (other predicates).
+func HasTerritoryMembershipsWith(preds ...predicate.TerritoryMember) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newTerritoryMembershipsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasTerritoryMembersAdded applies the HasEdge predicate on the "territory_members_added" edge.
+func HasTerritoryMembersAdded() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, TerritoryMembersAddedTable, TerritoryMembersAddedColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTerritoryMembersAddedWith applies the HasEdge predicate on the "territory_members_added" edge with a given conditions (other predicates).
+func HasTerritoryMembersAddedWith(preds ...predicate.TerritoryMember) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newTerritoryMembersAddedStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.User) predicate.User {
 	return predicate.User(sql.AndPredicates(predicates...))

@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"github.com/jordanlanch/industrydb/ent/lead"
+	"github.com/jordanlanch/industrydb/ent/territory"
 )
 
 // Lead is the model entity for the Lead schema.
@@ -72,8 +73,9 @@ type Lead struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the LeadQuery when eager-loading is set.
-	Edges        LeadEdges `json:"edges"`
-	selectValues sql.SelectValues
+	Edges           LeadEdges `json:"edges"`
+	territory_leads *int
+	selectValues    sql.SelectValues
 }
 
 // LeadEdges holds the relations/edges for other nodes in the graph.
@@ -88,9 +90,11 @@ type LeadEdges struct {
 	EmailSequenceEnrollments []*EmailSequenceEnrollment `json:"email_sequence_enrollments,omitempty"`
 	// Emails sent to this lead
 	EmailSequenceSends []*EmailSequenceSend `json:"email_sequence_sends,omitempty"`
+	// Territory this lead belongs to
+	Territory *Territory `json:"territory,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [5]bool
+	loadedTypes [6]bool
 }
 
 // NotesOrErr returns the Notes value or an error if the edge
@@ -138,6 +142,17 @@ func (e LeadEdges) EmailSequenceSendsOrErr() ([]*EmailSequenceSend, error) {
 	return nil, &NotLoadedError{edge: "email_sequence_sends"}
 }
 
+// TerritoryOrErr returns the Territory value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e LeadEdges) TerritoryOrErr() (*Territory, error) {
+	if e.Territory != nil {
+		return e.Territory, nil
+	} else if e.loadedTypes[5] {
+		return nil, &NotFoundError{label: territory.Label}
+	}
+	return nil, &NotLoadedError{edge: "territory"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Lead) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -155,6 +170,8 @@ func (*Lead) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullString)
 		case lead.FieldStatusChangedAt, lead.FieldCreatedAt, lead.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
+		case lead.ForeignKeys[0]: // territory_leads
+			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -340,6 +357,13 @@ func (_m *Lead) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
+		case lead.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field territory_leads", value)
+			} else if value.Valid {
+				_m.territory_leads = new(int)
+				*_m.territory_leads = int(value.Int64)
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -376,6 +400,11 @@ func (_m *Lead) QueryEmailSequenceEnrollments() *EmailSequenceEnrollmentQuery {
 // QueryEmailSequenceSends queries the "email_sequence_sends" edge of the Lead entity.
 func (_m *Lead) QueryEmailSequenceSends() *EmailSequenceSendQuery {
 	return NewLeadClient(_m.config).QueryEmailSequenceSends(_m)
+}
+
+// QueryTerritory queries the "territory" edge of the Lead entity.
+func (_m *Lead) QueryTerritory() *TerritoryQuery {
+	return NewLeadClient(_m.config).QueryTerritory(_m)
 }
 
 // Update returns a builder for updating this Lead.

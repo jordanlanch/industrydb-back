@@ -25,6 +25,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/predicate"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
 	"github.com/jordanlanch/industrydb/ent/subscription"
+	"github.com/jordanlanch/industrydb/ent/territory"
+	"github.com/jordanlanch/industrydb/ent/territorymember"
 	"github.com/jordanlanch/industrydb/ent/usagelog"
 	"github.com/jordanlanch/industrydb/ent/user"
 	"github.com/jordanlanch/industrydb/ent/webhook"
@@ -52,6 +54,9 @@ type UserQuery struct {
 	withLeadAssignmentsMade          *LeadAssignmentQuery
 	withEmailSequencesCreated        *EmailSequenceQuery
 	withEmailSequenceEnrollmentsMade *EmailSequenceEnrollmentQuery
+	withTerritoriesCreated           *TerritoryQuery
+	withTerritoryMemberships         *TerritoryMemberQuery
+	withTerritoryMembersAdded        *TerritoryMemberQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -418,6 +423,72 @@ func (_q *UserQuery) QueryEmailSequenceEnrollmentsMade() *EmailSequenceEnrollmen
 	return query
 }
 
+// QueryTerritoriesCreated chains the current query on the "territories_created" edge.
+func (_q *UserQuery) QueryTerritoriesCreated() *TerritoryQuery {
+	query := (&TerritoryClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(territory.Table, territory.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.TerritoriesCreatedTable, user.TerritoriesCreatedColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTerritoryMemberships chains the current query on the "territory_memberships" edge.
+func (_q *UserQuery) QueryTerritoryMemberships() *TerritoryMemberQuery {
+	query := (&TerritoryMemberClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(territorymember.Table, territorymember.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.TerritoryMembershipsTable, user.TerritoryMembershipsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTerritoryMembersAdded chains the current query on the "territory_members_added" edge.
+func (_q *UserQuery) QueryTerritoryMembersAdded() *TerritoryMemberQuery {
+	query := (&TerritoryMemberClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(territorymember.Table, territorymember.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.TerritoryMembersAddedTable, user.TerritoryMembersAddedColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first User entity from the query.
 // Returns a *NotFoundError when no User was found.
 func (_q *UserQuery) First(ctx context.Context) (*User, error) {
@@ -625,6 +696,9 @@ func (_q *UserQuery) Clone() *UserQuery {
 		withLeadAssignmentsMade:          _q.withLeadAssignmentsMade.Clone(),
 		withEmailSequencesCreated:        _q.withEmailSequencesCreated.Clone(),
 		withEmailSequenceEnrollmentsMade: _q.withEmailSequenceEnrollmentsMade.Clone(),
+		withTerritoriesCreated:           _q.withTerritoriesCreated.Clone(),
+		withTerritoryMemberships:         _q.withTerritoryMemberships.Clone(),
+		withTerritoryMembersAdded:        _q.withTerritoryMembersAdded.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -796,6 +870,39 @@ func (_q *UserQuery) WithEmailSequenceEnrollmentsMade(opts ...func(*EmailSequenc
 	return _q
 }
 
+// WithTerritoriesCreated tells the query-builder to eager-load the nodes that are connected to
+// the "territories_created" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithTerritoriesCreated(opts ...func(*TerritoryQuery)) *UserQuery {
+	query := (&TerritoryClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withTerritoriesCreated = query
+	return _q
+}
+
+// WithTerritoryMemberships tells the query-builder to eager-load the nodes that are connected to
+// the "territory_memberships" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithTerritoryMemberships(opts ...func(*TerritoryMemberQuery)) *UserQuery {
+	query := (&TerritoryMemberClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withTerritoryMemberships = query
+	return _q
+}
+
+// WithTerritoryMembersAdded tells the query-builder to eager-load the nodes that are connected to
+// the "territory_members_added" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithTerritoryMembersAdded(opts ...func(*TerritoryMemberQuery)) *UserQuery {
+	query := (&TerritoryMemberClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withTerritoryMembersAdded = query
+	return _q
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -874,7 +981,7 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
-		loadedTypes = [15]bool{
+		loadedTypes = [18]bool{
 			_q.withSubscriptions != nil,
 			_q.withExports != nil,
 			_q.withAPIKeys != nil,
@@ -890,6 +997,9 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			_q.withLeadAssignmentsMade != nil,
 			_q.withEmailSequencesCreated != nil,
 			_q.withEmailSequenceEnrollmentsMade != nil,
+			_q.withTerritoriesCreated != nil,
+			_q.withTerritoryMemberships != nil,
+			_q.withTerritoryMembersAdded != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -1017,6 +1127,31 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			func(n *User) { n.Edges.EmailSequenceEnrollmentsMade = []*EmailSequenceEnrollment{} },
 			func(n *User, e *EmailSequenceEnrollment) {
 				n.Edges.EmailSequenceEnrollmentsMade = append(n.Edges.EmailSequenceEnrollmentsMade, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withTerritoriesCreated; query != nil {
+		if err := _q.loadTerritoriesCreated(ctx, query, nodes,
+			func(n *User) { n.Edges.TerritoriesCreated = []*Territory{} },
+			func(n *User, e *Territory) { n.Edges.TerritoriesCreated = append(n.Edges.TerritoriesCreated, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withTerritoryMemberships; query != nil {
+		if err := _q.loadTerritoryMemberships(ctx, query, nodes,
+			func(n *User) { n.Edges.TerritoryMemberships = []*TerritoryMember{} },
+			func(n *User, e *TerritoryMember) {
+				n.Edges.TerritoryMemberships = append(n.Edges.TerritoryMemberships, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withTerritoryMembersAdded; query != nil {
+		if err := _q.loadTerritoryMembersAdded(ctx, query, nodes,
+			func(n *User) { n.Edges.TerritoryMembersAdded = []*TerritoryMember{} },
+			func(n *User, e *TerritoryMember) {
+				n.Edges.TerritoryMembersAdded = append(n.Edges.TerritoryMembersAdded, e)
 			}); err != nil {
 			return nil, err
 		}
@@ -1476,6 +1611,96 @@ func (_q *UserQuery) loadEmailSequenceEnrollmentsMade(ctx context.Context, query
 		node, ok := nodeids[fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "enrolled_by_user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadTerritoriesCreated(ctx context.Context, query *TerritoryQuery, nodes []*User, init func(*User), assign func(*User, *Territory)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(territory.FieldCreatedByUserID)
+	}
+	query.Where(predicate.Territory(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.TerritoriesCreatedColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.CreatedByUserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "created_by_user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadTerritoryMemberships(ctx context.Context, query *TerritoryMemberQuery, nodes []*User, init func(*User), assign func(*User, *TerritoryMember)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(territorymember.FieldUserID)
+	}
+	query.Where(predicate.TerritoryMember(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.TerritoryMembershipsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.UserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadTerritoryMembersAdded(ctx context.Context, query *TerritoryMemberQuery, nodes []*User, init func(*User), assign func(*User, *TerritoryMember)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(territorymember.FieldAddedByUserID)
+	}
+	query.Where(predicate.TerritoryMember(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.TerritoryMembersAddedColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.AddedByUserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "added_by_user_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

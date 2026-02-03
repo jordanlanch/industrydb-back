@@ -24,6 +24,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/predicate"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
 	"github.com/jordanlanch/industrydb/ent/subscription"
+	"github.com/jordanlanch/industrydb/ent/territory"
+	"github.com/jordanlanch/industrydb/ent/territorymember"
 	"github.com/jordanlanch/industrydb/ent/usagelog"
 	"github.com/jordanlanch/industrydb/ent/user"
 	"github.com/jordanlanch/industrydb/ent/webhook"
@@ -662,6 +664,51 @@ func (_u *UserUpdate) AddEmailSequenceEnrollmentsMade(v ...*EmailSequenceEnrollm
 	return _u.AddEmailSequenceEnrollmentsMadeIDs(ids...)
 }
 
+// AddTerritoriesCreatedIDs adds the "territories_created" edge to the Territory entity by IDs.
+func (_u *UserUpdate) AddTerritoriesCreatedIDs(ids ...int) *UserUpdate {
+	_u.mutation.AddTerritoriesCreatedIDs(ids...)
+	return _u
+}
+
+// AddTerritoriesCreated adds the "territories_created" edges to the Territory entity.
+func (_u *UserUpdate) AddTerritoriesCreated(v ...*Territory) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddTerritoriesCreatedIDs(ids...)
+}
+
+// AddTerritoryMembershipIDs adds the "territory_memberships" edge to the TerritoryMember entity by IDs.
+func (_u *UserUpdate) AddTerritoryMembershipIDs(ids ...int) *UserUpdate {
+	_u.mutation.AddTerritoryMembershipIDs(ids...)
+	return _u
+}
+
+// AddTerritoryMemberships adds the "territory_memberships" edges to the TerritoryMember entity.
+func (_u *UserUpdate) AddTerritoryMemberships(v ...*TerritoryMember) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddTerritoryMembershipIDs(ids...)
+}
+
+// AddTerritoryMembersAddedIDs adds the "territory_members_added" edge to the TerritoryMember entity by IDs.
+func (_u *UserUpdate) AddTerritoryMembersAddedIDs(ids ...int) *UserUpdate {
+	_u.mutation.AddTerritoryMembersAddedIDs(ids...)
+	return _u
+}
+
+// AddTerritoryMembersAdded adds the "territory_members_added" edges to the TerritoryMember entity.
+func (_u *UserUpdate) AddTerritoryMembersAdded(v ...*TerritoryMember) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddTerritoryMembersAddedIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -980,6 +1027,69 @@ func (_u *UserUpdate) RemoveEmailSequenceEnrollmentsMade(v ...*EmailSequenceEnro
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveEmailSequenceEnrollmentsMadeIDs(ids...)
+}
+
+// ClearTerritoriesCreated clears all "territories_created" edges to the Territory entity.
+func (_u *UserUpdate) ClearTerritoriesCreated() *UserUpdate {
+	_u.mutation.ClearTerritoriesCreated()
+	return _u
+}
+
+// RemoveTerritoriesCreatedIDs removes the "territories_created" edge to Territory entities by IDs.
+func (_u *UserUpdate) RemoveTerritoriesCreatedIDs(ids ...int) *UserUpdate {
+	_u.mutation.RemoveTerritoriesCreatedIDs(ids...)
+	return _u
+}
+
+// RemoveTerritoriesCreated removes "territories_created" edges to Territory entities.
+func (_u *UserUpdate) RemoveTerritoriesCreated(v ...*Territory) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveTerritoriesCreatedIDs(ids...)
+}
+
+// ClearTerritoryMemberships clears all "territory_memberships" edges to the TerritoryMember entity.
+func (_u *UserUpdate) ClearTerritoryMemberships() *UserUpdate {
+	_u.mutation.ClearTerritoryMemberships()
+	return _u
+}
+
+// RemoveTerritoryMembershipIDs removes the "territory_memberships" edge to TerritoryMember entities by IDs.
+func (_u *UserUpdate) RemoveTerritoryMembershipIDs(ids ...int) *UserUpdate {
+	_u.mutation.RemoveTerritoryMembershipIDs(ids...)
+	return _u
+}
+
+// RemoveTerritoryMemberships removes "territory_memberships" edges to TerritoryMember entities.
+func (_u *UserUpdate) RemoveTerritoryMemberships(v ...*TerritoryMember) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveTerritoryMembershipIDs(ids...)
+}
+
+// ClearTerritoryMembersAdded clears all "territory_members_added" edges to the TerritoryMember entity.
+func (_u *UserUpdate) ClearTerritoryMembersAdded() *UserUpdate {
+	_u.mutation.ClearTerritoryMembersAdded()
+	return _u
+}
+
+// RemoveTerritoryMembersAddedIDs removes the "territory_members_added" edge to TerritoryMember entities by IDs.
+func (_u *UserUpdate) RemoveTerritoryMembersAddedIDs(ids ...int) *UserUpdate {
+	_u.mutation.RemoveTerritoryMembersAddedIDs(ids...)
+	return _u
+}
+
+// RemoveTerritoryMembersAdded removes "territory_members_added" edges to TerritoryMember entities.
+func (_u *UserUpdate) RemoveTerritoryMembersAdded(v ...*TerritoryMember) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveTerritoryMembersAddedIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -1858,6 +1968,141 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.TerritoriesCreatedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoriesCreatedTable,
+			Columns: []string{user.TerritoriesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territory.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedTerritoriesCreatedIDs(); len(nodes) > 0 && !_u.mutation.TerritoriesCreatedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoriesCreatedTable,
+			Columns: []string{user.TerritoriesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.TerritoriesCreatedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoriesCreatedTable,
+			Columns: []string{user.TerritoriesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.TerritoryMembershipsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoryMembershipsTable,
+			Columns: []string{user.TerritoryMembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territorymember.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedTerritoryMembershipsIDs(); len(nodes) > 0 && !_u.mutation.TerritoryMembershipsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoryMembershipsTable,
+			Columns: []string{user.TerritoryMembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territorymember.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.TerritoryMembershipsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoryMembershipsTable,
+			Columns: []string{user.TerritoryMembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territorymember.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.TerritoryMembersAddedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoryMembersAddedTable,
+			Columns: []string{user.TerritoryMembersAddedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territorymember.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedTerritoryMembersAddedIDs(); len(nodes) > 0 && !_u.mutation.TerritoryMembersAddedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoryMembersAddedTable,
+			Columns: []string{user.TerritoryMembersAddedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territorymember.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.TerritoryMembersAddedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoryMembersAddedTable,
+			Columns: []string{user.TerritoryMembersAddedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territorymember.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -2498,6 +2743,51 @@ func (_u *UserUpdateOne) AddEmailSequenceEnrollmentsMade(v ...*EmailSequenceEnro
 	return _u.AddEmailSequenceEnrollmentsMadeIDs(ids...)
 }
 
+// AddTerritoriesCreatedIDs adds the "territories_created" edge to the Territory entity by IDs.
+func (_u *UserUpdateOne) AddTerritoriesCreatedIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.AddTerritoriesCreatedIDs(ids...)
+	return _u
+}
+
+// AddTerritoriesCreated adds the "territories_created" edges to the Territory entity.
+func (_u *UserUpdateOne) AddTerritoriesCreated(v ...*Territory) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddTerritoriesCreatedIDs(ids...)
+}
+
+// AddTerritoryMembershipIDs adds the "territory_memberships" edge to the TerritoryMember entity by IDs.
+func (_u *UserUpdateOne) AddTerritoryMembershipIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.AddTerritoryMembershipIDs(ids...)
+	return _u
+}
+
+// AddTerritoryMemberships adds the "territory_memberships" edges to the TerritoryMember entity.
+func (_u *UserUpdateOne) AddTerritoryMemberships(v ...*TerritoryMember) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddTerritoryMembershipIDs(ids...)
+}
+
+// AddTerritoryMembersAddedIDs adds the "territory_members_added" edge to the TerritoryMember entity by IDs.
+func (_u *UserUpdateOne) AddTerritoryMembersAddedIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.AddTerritoryMembersAddedIDs(ids...)
+	return _u
+}
+
+// AddTerritoryMembersAdded adds the "territory_members_added" edges to the TerritoryMember entity.
+func (_u *UserUpdateOne) AddTerritoryMembersAdded(v ...*TerritoryMember) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddTerritoryMembersAddedIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -2816,6 +3106,69 @@ func (_u *UserUpdateOne) RemoveEmailSequenceEnrollmentsMade(v ...*EmailSequenceE
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveEmailSequenceEnrollmentsMadeIDs(ids...)
+}
+
+// ClearTerritoriesCreated clears all "territories_created" edges to the Territory entity.
+func (_u *UserUpdateOne) ClearTerritoriesCreated() *UserUpdateOne {
+	_u.mutation.ClearTerritoriesCreated()
+	return _u
+}
+
+// RemoveTerritoriesCreatedIDs removes the "territories_created" edge to Territory entities by IDs.
+func (_u *UserUpdateOne) RemoveTerritoriesCreatedIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.RemoveTerritoriesCreatedIDs(ids...)
+	return _u
+}
+
+// RemoveTerritoriesCreated removes "territories_created" edges to Territory entities.
+func (_u *UserUpdateOne) RemoveTerritoriesCreated(v ...*Territory) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveTerritoriesCreatedIDs(ids...)
+}
+
+// ClearTerritoryMemberships clears all "territory_memberships" edges to the TerritoryMember entity.
+func (_u *UserUpdateOne) ClearTerritoryMemberships() *UserUpdateOne {
+	_u.mutation.ClearTerritoryMemberships()
+	return _u
+}
+
+// RemoveTerritoryMembershipIDs removes the "territory_memberships" edge to TerritoryMember entities by IDs.
+func (_u *UserUpdateOne) RemoveTerritoryMembershipIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.RemoveTerritoryMembershipIDs(ids...)
+	return _u
+}
+
+// RemoveTerritoryMemberships removes "territory_memberships" edges to TerritoryMember entities.
+func (_u *UserUpdateOne) RemoveTerritoryMemberships(v ...*TerritoryMember) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveTerritoryMembershipIDs(ids...)
+}
+
+// ClearTerritoryMembersAdded clears all "territory_members_added" edges to the TerritoryMember entity.
+func (_u *UserUpdateOne) ClearTerritoryMembersAdded() *UserUpdateOne {
+	_u.mutation.ClearTerritoryMembersAdded()
+	return _u
+}
+
+// RemoveTerritoryMembersAddedIDs removes the "territory_members_added" edge to TerritoryMember entities by IDs.
+func (_u *UserUpdateOne) RemoveTerritoryMembersAddedIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.RemoveTerritoryMembersAddedIDs(ids...)
+	return _u
+}
+
+// RemoveTerritoryMembersAdded removes "territory_members_added" edges to TerritoryMember entities.
+func (_u *UserUpdateOne) RemoveTerritoryMembersAdded(v ...*TerritoryMember) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveTerritoryMembersAddedIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -3717,6 +4070,141 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(emailsequenceenrollment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.TerritoriesCreatedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoriesCreatedTable,
+			Columns: []string{user.TerritoriesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territory.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedTerritoriesCreatedIDs(); len(nodes) > 0 && !_u.mutation.TerritoriesCreatedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoriesCreatedTable,
+			Columns: []string{user.TerritoriesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.TerritoriesCreatedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoriesCreatedTable,
+			Columns: []string{user.TerritoriesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.TerritoryMembershipsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoryMembershipsTable,
+			Columns: []string{user.TerritoryMembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territorymember.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedTerritoryMembershipsIDs(); len(nodes) > 0 && !_u.mutation.TerritoryMembershipsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoryMembershipsTable,
+			Columns: []string{user.TerritoryMembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territorymember.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.TerritoryMembershipsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoryMembershipsTable,
+			Columns: []string{user.TerritoryMembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territorymember.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.TerritoryMembersAddedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoryMembersAddedTable,
+			Columns: []string{user.TerritoryMembersAddedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territorymember.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedTerritoryMembersAddedIDs(); len(nodes) > 0 && !_u.mutation.TerritoryMembersAddedCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoryMembersAddedTable,
+			Columns: []string{user.TerritoryMembersAddedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territorymember.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.TerritoryMembersAddedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoryMembersAddedTable,
+			Columns: []string{user.TerritoryMembersAddedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territorymember.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

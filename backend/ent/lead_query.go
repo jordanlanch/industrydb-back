@@ -19,6 +19,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/predicate"
+	"github.com/jordanlanch/industrydb/ent/territory"
 )
 
 // LeadQuery is the builder for querying Lead entities.
@@ -33,6 +34,8 @@ type LeadQuery struct {
 	withAssignments              *LeadAssignmentQuery
 	withEmailSequenceEnrollments *EmailSequenceEnrollmentQuery
 	withEmailSequenceSends       *EmailSequenceSendQuery
+	withTerritory                *TerritoryQuery
+	withFKs                      bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -172,6 +175,28 @@ func (_q *LeadQuery) QueryEmailSequenceSends() *EmailSequenceSendQuery {
 			sqlgraph.From(lead.Table, lead.FieldID, selector),
 			sqlgraph.To(emailsequencesend.Table, emailsequencesend.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, lead.EmailSequenceSendsTable, lead.EmailSequenceSendsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTerritory chains the current query on the "territory" edge.
+func (_q *LeadQuery) QueryTerritory() *TerritoryQuery {
+	query := (&TerritoryClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(lead.Table, lead.FieldID, selector),
+			sqlgraph.To(territory.Table, territory.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, lead.TerritoryTable, lead.TerritoryColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -376,6 +401,7 @@ func (_q *LeadQuery) Clone() *LeadQuery {
 		withAssignments:              _q.withAssignments.Clone(),
 		withEmailSequenceEnrollments: _q.withEmailSequenceEnrollments.Clone(),
 		withEmailSequenceSends:       _q.withEmailSequenceSends.Clone(),
+		withTerritory:                _q.withTerritory.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -434,6 +460,17 @@ func (_q *LeadQuery) WithEmailSequenceSends(opts ...func(*EmailSequenceSendQuery
 		opt(query)
 	}
 	_q.withEmailSequenceSends = query
+	return _q
+}
+
+// WithTerritory tells the query-builder to eager-load the nodes that are connected to
+// the "territory" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *LeadQuery) WithTerritory(opts ...func(*TerritoryQuery)) *LeadQuery {
+	query := (&TerritoryClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withTerritory = query
 	return _q
 }
 
@@ -514,15 +551,23 @@ func (_q *LeadQuery) prepareQuery(ctx context.Context) error {
 func (_q *LeadQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Lead, error) {
 	var (
 		nodes       = []*Lead{}
+		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [5]bool{
+		loadedTypes = [6]bool{
 			_q.withNotes != nil,
 			_q.withStatusHistory != nil,
 			_q.withAssignments != nil,
 			_q.withEmailSequenceEnrollments != nil,
 			_q.withEmailSequenceSends != nil,
+			_q.withTerritory != nil,
 		}
 	)
+	if _q.withTerritory != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, lead.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Lead).scanValues(nil, columns)
 	}
@@ -577,6 +622,12 @@ func (_q *LeadQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Lead, e
 			func(n *Lead, e *EmailSequenceSend) {
 				n.Edges.EmailSequenceSends = append(n.Edges.EmailSequenceSends, e)
 			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withTerritory; query != nil {
+		if err := _q.loadTerritory(ctx, query, nodes, nil,
+			func(n *Lead, e *Territory) { n.Edges.Territory = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -730,6 +781,38 @@ func (_q *LeadQuery) loadEmailSequenceSends(ctx context.Context, query *EmailSeq
 			return fmt.Errorf(`unexpected referenced foreign-key "lead_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
+	}
+	return nil
+}
+func (_q *LeadQuery) loadTerritory(ctx context.Context, query *TerritoryQuery, nodes []*Lead, init func(*Lead), assign func(*Lead, *Territory)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Lead)
+	for i := range nodes {
+		if nodes[i].territory_leads == nil {
+			continue
+		}
+		fk := *nodes[i].territory_leads
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(territory.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "territory_leads" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
 	}
 	return nil
 }

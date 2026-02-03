@@ -93,6 +93,12 @@ const (
 	EdgeEmailSequencesCreated = "email_sequences_created"
 	// EdgeEmailSequenceEnrollmentsMade holds the string denoting the email_sequence_enrollments_made edge name in mutations.
 	EdgeEmailSequenceEnrollmentsMade = "email_sequence_enrollments_made"
+	// EdgeTerritoriesCreated holds the string denoting the territories_created edge name in mutations.
+	EdgeTerritoriesCreated = "territories_created"
+	// EdgeTerritoryMemberships holds the string denoting the territory_memberships edge name in mutations.
+	EdgeTerritoryMemberships = "territory_memberships"
+	// EdgeTerritoryMembersAdded holds the string denoting the territory_members_added edge name in mutations.
+	EdgeTerritoryMembersAdded = "territory_members_added"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// SubscriptionsTable is the table that holds the subscriptions relation/edge.
@@ -200,6 +206,27 @@ const (
 	EmailSequenceEnrollmentsMadeInverseTable = "email_sequence_enrollments"
 	// EmailSequenceEnrollmentsMadeColumn is the table column denoting the email_sequence_enrollments_made relation/edge.
 	EmailSequenceEnrollmentsMadeColumn = "enrolled_by_user_id"
+	// TerritoriesCreatedTable is the table that holds the territories_created relation/edge.
+	TerritoriesCreatedTable = "territories"
+	// TerritoriesCreatedInverseTable is the table name for the Territory entity.
+	// It exists in this package in order to avoid circular dependency with the "territory" package.
+	TerritoriesCreatedInverseTable = "territories"
+	// TerritoriesCreatedColumn is the table column denoting the territories_created relation/edge.
+	TerritoriesCreatedColumn = "created_by_user_id"
+	// TerritoryMembershipsTable is the table that holds the territory_memberships relation/edge.
+	TerritoryMembershipsTable = "territory_members"
+	// TerritoryMembershipsInverseTable is the table name for the TerritoryMember entity.
+	// It exists in this package in order to avoid circular dependency with the "territorymember" package.
+	TerritoryMembershipsInverseTable = "territory_members"
+	// TerritoryMembershipsColumn is the table column denoting the territory_memberships relation/edge.
+	TerritoryMembershipsColumn = "user_id"
+	// TerritoryMembersAddedTable is the table that holds the territory_members_added relation/edge.
+	TerritoryMembersAddedTable = "territory_members"
+	// TerritoryMembersAddedInverseTable is the table name for the TerritoryMember entity.
+	// It exists in this package in order to avoid circular dependency with the "territorymember" package.
+	TerritoryMembersAddedInverseTable = "territory_members"
+	// TerritoryMembersAddedColumn is the table column denoting the territory_members_added relation/edge.
+	TerritoryMembersAddedColumn = "added_by_user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -668,6 +695,48 @@ func ByEmailSequenceEnrollmentsMade(term sql.OrderTerm, terms ...sql.OrderTerm) 
 		sqlgraph.OrderByNeighborTerms(s, newEmailSequenceEnrollmentsMadeStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByTerritoriesCreatedCount orders the results by territories_created count.
+func ByTerritoriesCreatedCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newTerritoriesCreatedStep(), opts...)
+	}
+}
+
+// ByTerritoriesCreated orders the results by territories_created terms.
+func ByTerritoriesCreated(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTerritoriesCreatedStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByTerritoryMembershipsCount orders the results by territory_memberships count.
+func ByTerritoryMembershipsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newTerritoryMembershipsStep(), opts...)
+	}
+}
+
+// ByTerritoryMemberships orders the results by territory_memberships terms.
+func ByTerritoryMemberships(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTerritoryMembershipsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByTerritoryMembersAddedCount orders the results by territory_members_added count.
+func ByTerritoryMembersAddedCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newTerritoryMembersAddedStep(), opts...)
+	}
+}
+
+// ByTerritoryMembersAdded orders the results by territory_members_added terms.
+func ByTerritoryMembersAdded(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTerritoryMembersAddedStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSubscriptionsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -771,5 +840,26 @@ func newEmailSequenceEnrollmentsMadeStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(EmailSequenceEnrollmentsMadeInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, EmailSequenceEnrollmentsMadeTable, EmailSequenceEnrollmentsMadeColumn),
+	)
+}
+func newTerritoriesCreatedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TerritoriesCreatedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, TerritoriesCreatedTable, TerritoriesCreatedColumn),
+	)
+}
+func newTerritoryMembershipsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TerritoryMembershipsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, TerritoryMembershipsTable, TerritoryMembershipsColumn),
+	)
+}
+func newTerritoryMembersAddedStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TerritoryMembersAddedInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, TerritoryMembersAddedTable, TerritoryMembersAddedColumn),
 	)
 }

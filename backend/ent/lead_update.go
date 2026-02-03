@@ -19,6 +19,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/predicate"
+	"github.com/jordanlanch/industrydb/ent/territory"
 )
 
 // LeadUpdate is the builder for updating Lead entities.
@@ -542,6 +543,25 @@ func (_u *LeadUpdate) AddEmailSequenceSends(v ...*EmailSequenceSend) *LeadUpdate
 	return _u.AddEmailSequenceSendIDs(ids...)
 }
 
+// SetTerritoryID sets the "territory" edge to the Territory entity by ID.
+func (_u *LeadUpdate) SetTerritoryID(id int) *LeadUpdate {
+	_u.mutation.SetTerritoryID(id)
+	return _u
+}
+
+// SetNillableTerritoryID sets the "territory" edge to the Territory entity by ID if the given value is not nil.
+func (_u *LeadUpdate) SetNillableTerritoryID(id *int) *LeadUpdate {
+	if id != nil {
+		_u = _u.SetTerritoryID(*id)
+	}
+	return _u
+}
+
+// SetTerritory sets the "territory" edge to the Territory entity.
+func (_u *LeadUpdate) SetTerritory(v *Territory) *LeadUpdate {
+	return _u.SetTerritoryID(v.ID)
+}
+
 // Mutation returns the LeadMutation object of the builder.
 func (_u *LeadUpdate) Mutation() *LeadMutation {
 	return _u.mutation
@@ -650,6 +670,12 @@ func (_u *LeadUpdate) RemoveEmailSequenceSends(v ...*EmailSequenceSend) *LeadUpd
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveEmailSequenceSendIDs(ids...)
+}
+
+// ClearTerritory clears the "territory" edge to the Territory entity.
+func (_u *LeadUpdate) ClearTerritory() *LeadUpdate {
+	_u.mutation.ClearTerritory()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -1090,6 +1116,35 @@ func (_u *LeadUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(emailsequencesend.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.TerritoryCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   lead.TerritoryTable,
+			Columns: []string{lead.TerritoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territory.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.TerritoryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   lead.TerritoryTable,
+			Columns: []string{lead.TerritoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territory.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -1625,6 +1680,25 @@ func (_u *LeadUpdateOne) AddEmailSequenceSends(v ...*EmailSequenceSend) *LeadUpd
 	return _u.AddEmailSequenceSendIDs(ids...)
 }
 
+// SetTerritoryID sets the "territory" edge to the Territory entity by ID.
+func (_u *LeadUpdateOne) SetTerritoryID(id int) *LeadUpdateOne {
+	_u.mutation.SetTerritoryID(id)
+	return _u
+}
+
+// SetNillableTerritoryID sets the "territory" edge to the Territory entity by ID if the given value is not nil.
+func (_u *LeadUpdateOne) SetNillableTerritoryID(id *int) *LeadUpdateOne {
+	if id != nil {
+		_u = _u.SetTerritoryID(*id)
+	}
+	return _u
+}
+
+// SetTerritory sets the "territory" edge to the Territory entity.
+func (_u *LeadUpdateOne) SetTerritory(v *Territory) *LeadUpdateOne {
+	return _u.SetTerritoryID(v.ID)
+}
+
 // Mutation returns the LeadMutation object of the builder.
 func (_u *LeadUpdateOne) Mutation() *LeadMutation {
 	return _u.mutation
@@ -1733,6 +1807,12 @@ func (_u *LeadUpdateOne) RemoveEmailSequenceSends(v ...*EmailSequenceSend) *Lead
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveEmailSequenceSendIDs(ids...)
+}
+
+// ClearTerritory clears the "territory" edge to the Territory entity.
+func (_u *LeadUpdateOne) ClearTerritory() *LeadUpdateOne {
+	_u.mutation.ClearTerritory()
+	return _u
 }
 
 // Where appends a list predicates to the LeadUpdate builder.
@@ -2203,6 +2283,35 @@ func (_u *LeadUpdateOne) sqlSave(ctx context.Context) (_node *Lead, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(emailsequencesend.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.TerritoryCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   lead.TerritoryTable,
+			Columns: []string{lead.TerritoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territory.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.TerritoryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   lead.TerritoryTable,
+			Columns: []string{lead.TerritoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territory.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

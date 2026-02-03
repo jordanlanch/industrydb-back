@@ -28,6 +28,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
 	"github.com/jordanlanch/industrydb/ent/subscription"
+	"github.com/jordanlanch/industrydb/ent/territory"
+	"github.com/jordanlanch/industrydb/ent/territorymember"
 	"github.com/jordanlanch/industrydb/ent/usagelog"
 	"github.com/jordanlanch/industrydb/ent/user"
 	"github.com/jordanlanch/industrydb/ent/webhook"
@@ -107,6 +109,8 @@ func checkColumn(t, c string) error {
 			organizationmember.Table:      organizationmember.ValidColumn,
 			savedsearch.Table:             savedsearch.ValidColumn,
 			subscription.Table:            subscription.ValidColumn,
+			territory.Table:               territory.ValidColumn,
+			territorymember.Table:         territorymember.ValidColumn,
 			usagelog.Table:                usagelog.ValidColumn,
 			user.Table:                    user.ValidColumn,
 			webhook.Table:                 webhook.ValidColumn,

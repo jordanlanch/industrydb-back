@@ -1565,6 +1565,29 @@ func HasEmailSequenceSendsWith(preds ...predicate.EmailSequenceSend) predicate.L
 	})
 }
 
+// HasTerritory applies the HasEdge predicate on the "territory" edge.
+func HasTerritory() predicate.Lead {
+	return predicate.Lead(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, TerritoryTable, TerritoryColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTerritoryWith applies the HasEdge predicate on the "territory" edge with a given conditions (other predicates).
+func HasTerritoryWith(preds ...predicate.Territory) predicate.Lead {
+	return predicate.Lead(func(s *sql.Selector) {
+		step := newTerritoryStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Lead) predicate.Lead {
 	return predicate.Lead(sql.AndPredicates(predicates...))

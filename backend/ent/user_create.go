@@ -22,6 +22,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
 	"github.com/jordanlanch/industrydb/ent/subscription"
+	"github.com/jordanlanch/industrydb/ent/territory"
+	"github.com/jordanlanch/industrydb/ent/territorymember"
 	"github.com/jordanlanch/industrydb/ent/usagelog"
 	"github.com/jordanlanch/industrydb/ent/user"
 	"github.com/jordanlanch/industrydb/ent/webhook"
@@ -571,6 +573,51 @@ func (_c *UserCreate) AddEmailSequenceEnrollmentsMade(v ...*EmailSequenceEnrollm
 	return _c.AddEmailSequenceEnrollmentsMadeIDs(ids...)
 }
 
+// AddTerritoriesCreatedIDs adds the "territories_created" edge to the Territory entity by IDs.
+func (_c *UserCreate) AddTerritoriesCreatedIDs(ids ...int) *UserCreate {
+	_c.mutation.AddTerritoriesCreatedIDs(ids...)
+	return _c
+}
+
+// AddTerritoriesCreated adds the "territories_created" edges to the Territory entity.
+func (_c *UserCreate) AddTerritoriesCreated(v ...*Territory) *UserCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddTerritoriesCreatedIDs(ids...)
+}
+
+// AddTerritoryMembershipIDs adds the "territory_memberships" edge to the TerritoryMember entity by IDs.
+func (_c *UserCreate) AddTerritoryMembershipIDs(ids ...int) *UserCreate {
+	_c.mutation.AddTerritoryMembershipIDs(ids...)
+	return _c
+}
+
+// AddTerritoryMemberships adds the "territory_memberships" edges to the TerritoryMember entity.
+func (_c *UserCreate) AddTerritoryMemberships(v ...*TerritoryMember) *UserCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddTerritoryMembershipIDs(ids...)
+}
+
+// AddTerritoryMembersAddedIDs adds the "territory_members_added" edge to the TerritoryMember entity by IDs.
+func (_c *UserCreate) AddTerritoryMembersAddedIDs(ids ...int) *UserCreate {
+	_c.mutation.AddTerritoryMembersAddedIDs(ids...)
+	return _c
+}
+
+// AddTerritoryMembersAdded adds the "territory_members_added" edges to the TerritoryMember entity.
+func (_c *UserCreate) AddTerritoryMembersAdded(v ...*TerritoryMember) *UserCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddTerritoryMembersAddedIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_c *UserCreate) Mutation() *UserMutation {
 	return _c.mutation
@@ -1091,6 +1138,54 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(emailsequenceenrollment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.TerritoriesCreatedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoriesCreatedTable,
+			Columns: []string{user.TerritoriesCreatedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.TerritoryMembershipsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoryMembershipsTable,
+			Columns: []string{user.TerritoryMembershipsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territorymember.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.TerritoryMembersAddedIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TerritoryMembersAddedTable,
+			Columns: []string{user.TerritoryMembersAddedColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territorymember.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

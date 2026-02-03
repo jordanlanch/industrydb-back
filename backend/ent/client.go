@@ -31,6 +31,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
 	"github.com/jordanlanch/industrydb/ent/subscription"
+	"github.com/jordanlanch/industrydb/ent/territory"
+	"github.com/jordanlanch/industrydb/ent/territorymember"
 	"github.com/jordanlanch/industrydb/ent/usagelog"
 	"github.com/jordanlanch/industrydb/ent/user"
 	"github.com/jordanlanch/industrydb/ent/webhook"
@@ -73,6 +75,10 @@ type Client struct {
 	SavedSearch *SavedSearchClient
 	// Subscription is the client for interacting with the Subscription builders.
 	Subscription *SubscriptionClient
+	// Territory is the client for interacting with the Territory builders.
+	Territory *TerritoryClient
+	// TerritoryMember is the client for interacting with the TerritoryMember builders.
+	TerritoryMember *TerritoryMemberClient
 	// UsageLog is the client for interacting with the UsageLog builders.
 	UsageLog *UsageLogClient
 	// User is the client for interacting with the User builders.
@@ -106,6 +112,8 @@ func (c *Client) init() {
 	c.OrganizationMember = NewOrganizationMemberClient(c.config)
 	c.SavedSearch = NewSavedSearchClient(c.config)
 	c.Subscription = NewSubscriptionClient(c.config)
+	c.Territory = NewTerritoryClient(c.config)
+	c.TerritoryMember = NewTerritoryMemberClient(c.config)
 	c.UsageLog = NewUsageLogClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.Webhook = NewWebhookClient(c.config)
@@ -217,6 +225,8 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		OrganizationMember:      NewOrganizationMemberClient(cfg),
 		SavedSearch:             NewSavedSearchClient(cfg),
 		Subscription:            NewSubscriptionClient(cfg),
+		Territory:               NewTerritoryClient(cfg),
+		TerritoryMember:         NewTerritoryMemberClient(cfg),
 		UsageLog:                NewUsageLogClient(cfg),
 		User:                    NewUserClient(cfg),
 		Webhook:                 NewWebhookClient(cfg),
@@ -255,6 +265,8 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		OrganizationMember:      NewOrganizationMemberClient(cfg),
 		SavedSearch:             NewSavedSearchClient(cfg),
 		Subscription:            NewSubscriptionClient(cfg),
+		Territory:               NewTerritoryClient(cfg),
+		TerritoryMember:         NewTerritoryMemberClient(cfg),
 		UsageLog:                NewUsageLogClient(cfg),
 		User:                    NewUserClient(cfg),
 		Webhook:                 NewWebhookClient(cfg),
@@ -290,8 +302,8 @@ func (c *Client) Use(hooks ...Hook) {
 		c.APIKey, c.AuditLog, c.EmailSequence, c.EmailSequenceEnrollment,
 		c.EmailSequenceSend, c.EmailSequenceStep, c.Export, c.Industry, c.Lead,
 		c.LeadAssignment, c.LeadNote, c.LeadStatusHistory, c.Organization,
-		c.OrganizationMember, c.SavedSearch, c.Subscription, c.UsageLog, c.User,
-		c.Webhook,
+		c.OrganizationMember, c.SavedSearch, c.Subscription, c.Territory,
+		c.TerritoryMember, c.UsageLog, c.User, c.Webhook,
 	} {
 		n.Use(hooks...)
 	}
@@ -304,8 +316,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.APIKey, c.AuditLog, c.EmailSequence, c.EmailSequenceEnrollment,
 		c.EmailSequenceSend, c.EmailSequenceStep, c.Export, c.Industry, c.Lead,
 		c.LeadAssignment, c.LeadNote, c.LeadStatusHistory, c.Organization,
-		c.OrganizationMember, c.SavedSearch, c.Subscription, c.UsageLog, c.User,
-		c.Webhook,
+		c.OrganizationMember, c.SavedSearch, c.Subscription, c.Territory,
+		c.TerritoryMember, c.UsageLog, c.User, c.Webhook,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -346,6 +358,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.SavedSearch.mutate(ctx, m)
 	case *SubscriptionMutation:
 		return c.Subscription.mutate(ctx, m)
+	case *TerritoryMutation:
+		return c.Territory.mutate(ctx, m)
+	case *TerritoryMemberMutation:
+		return c.TerritoryMember.mutate(ctx, m)
 	case *UsageLogMutation:
 		return c.UsageLog.mutate(ctx, m)
 	case *UserMutation:
@@ -1865,6 +1881,22 @@ func (c *LeadClient) QueryEmailSequenceSends(_m *Lead) *EmailSequenceSendQuery {
 	return query
 }
 
+// QueryTerritory queries the territory edge of a Lead.
+func (c *LeadClient) QueryTerritory(_m *Lead) *TerritoryQuery {
+	query := (&TerritoryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(lead.Table, lead.FieldID, id),
+			sqlgraph.To(territory.Table, territory.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, lead.TerritoryTable, lead.TerritoryColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *LeadClient) Hooks() []Hook {
 	return c.hooks.Lead
@@ -3045,6 +3077,368 @@ func (c *SubscriptionClient) mutate(ctx context.Context, m *SubscriptionMutation
 	}
 }
 
+// TerritoryClient is a client for the Territory schema.
+type TerritoryClient struct {
+	config
+}
+
+// NewTerritoryClient returns a client for the Territory from the given config.
+func NewTerritoryClient(c config) *TerritoryClient {
+	return &TerritoryClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `territory.Hooks(f(g(h())))`.
+func (c *TerritoryClient) Use(hooks ...Hook) {
+	c.hooks.Territory = append(c.hooks.Territory, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `territory.Intercept(f(g(h())))`.
+func (c *TerritoryClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Territory = append(c.inters.Territory, interceptors...)
+}
+
+// Create returns a builder for creating a Territory entity.
+func (c *TerritoryClient) Create() *TerritoryCreate {
+	mutation := newTerritoryMutation(c.config, OpCreate)
+	return &TerritoryCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Territory entities.
+func (c *TerritoryClient) CreateBulk(builders ...*TerritoryCreate) *TerritoryCreateBulk {
+	return &TerritoryCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TerritoryClient) MapCreateBulk(slice any, setFunc func(*TerritoryCreate, int)) *TerritoryCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TerritoryCreateBulk{err: fmt.Errorf("calling to TerritoryClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TerritoryCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TerritoryCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Territory.
+func (c *TerritoryClient) Update() *TerritoryUpdate {
+	mutation := newTerritoryMutation(c.config, OpUpdate)
+	return &TerritoryUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TerritoryClient) UpdateOne(_m *Territory) *TerritoryUpdateOne {
+	mutation := newTerritoryMutation(c.config, OpUpdateOne, withTerritory(_m))
+	return &TerritoryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TerritoryClient) UpdateOneID(id int) *TerritoryUpdateOne {
+	mutation := newTerritoryMutation(c.config, OpUpdateOne, withTerritoryID(id))
+	return &TerritoryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Territory.
+func (c *TerritoryClient) Delete() *TerritoryDelete {
+	mutation := newTerritoryMutation(c.config, OpDelete)
+	return &TerritoryDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TerritoryClient) DeleteOne(_m *Territory) *TerritoryDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TerritoryClient) DeleteOneID(id int) *TerritoryDeleteOne {
+	builder := c.Delete().Where(territory.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TerritoryDeleteOne{builder}
+}
+
+// Query returns a query builder for Territory.
+func (c *TerritoryClient) Query() *TerritoryQuery {
+	return &TerritoryQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTerritory},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Territory entity by its id.
+func (c *TerritoryClient) Get(ctx context.Context, id int) (*Territory, error) {
+	return c.Query().Where(territory.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TerritoryClient) GetX(ctx context.Context, id int) *Territory {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryCreatedBy queries the created_by edge of a Territory.
+func (c *TerritoryClient) QueryCreatedBy(_m *Territory) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(territory.Table, territory.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, territory.CreatedByTable, territory.CreatedByColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryMembers queries the members edge of a Territory.
+func (c *TerritoryClient) QueryMembers(_m *Territory) *TerritoryMemberQuery {
+	query := (&TerritoryMemberClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(territory.Table, territory.FieldID, id),
+			sqlgraph.To(territorymember.Table, territorymember.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, territory.MembersTable, territory.MembersColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLeads queries the leads edge of a Territory.
+func (c *TerritoryClient) QueryLeads(_m *Territory) *LeadQuery {
+	query := (&LeadClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(territory.Table, territory.FieldID, id),
+			sqlgraph.To(lead.Table, lead.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, territory.LeadsTable, territory.LeadsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *TerritoryClient) Hooks() []Hook {
+	return c.hooks.Territory
+}
+
+// Interceptors returns the client interceptors.
+func (c *TerritoryClient) Interceptors() []Interceptor {
+	return c.inters.Territory
+}
+
+func (c *TerritoryClient) mutate(ctx context.Context, m *TerritoryMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TerritoryCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TerritoryUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TerritoryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TerritoryDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Territory mutation op: %q", m.Op())
+	}
+}
+
+// TerritoryMemberClient is a client for the TerritoryMember schema.
+type TerritoryMemberClient struct {
+	config
+}
+
+// NewTerritoryMemberClient returns a client for the TerritoryMember from the given config.
+func NewTerritoryMemberClient(c config) *TerritoryMemberClient {
+	return &TerritoryMemberClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `territorymember.Hooks(f(g(h())))`.
+func (c *TerritoryMemberClient) Use(hooks ...Hook) {
+	c.hooks.TerritoryMember = append(c.hooks.TerritoryMember, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `territorymember.Intercept(f(g(h())))`.
+func (c *TerritoryMemberClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TerritoryMember = append(c.inters.TerritoryMember, interceptors...)
+}
+
+// Create returns a builder for creating a TerritoryMember entity.
+func (c *TerritoryMemberClient) Create() *TerritoryMemberCreate {
+	mutation := newTerritoryMemberMutation(c.config, OpCreate)
+	return &TerritoryMemberCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TerritoryMember entities.
+func (c *TerritoryMemberClient) CreateBulk(builders ...*TerritoryMemberCreate) *TerritoryMemberCreateBulk {
+	return &TerritoryMemberCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TerritoryMemberClient) MapCreateBulk(slice any, setFunc func(*TerritoryMemberCreate, int)) *TerritoryMemberCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TerritoryMemberCreateBulk{err: fmt.Errorf("calling to TerritoryMemberClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TerritoryMemberCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TerritoryMemberCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TerritoryMember.
+func (c *TerritoryMemberClient) Update() *TerritoryMemberUpdate {
+	mutation := newTerritoryMemberMutation(c.config, OpUpdate)
+	return &TerritoryMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TerritoryMemberClient) UpdateOne(_m *TerritoryMember) *TerritoryMemberUpdateOne {
+	mutation := newTerritoryMemberMutation(c.config, OpUpdateOne, withTerritoryMember(_m))
+	return &TerritoryMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TerritoryMemberClient) UpdateOneID(id int) *TerritoryMemberUpdateOne {
+	mutation := newTerritoryMemberMutation(c.config, OpUpdateOne, withTerritoryMemberID(id))
+	return &TerritoryMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TerritoryMember.
+func (c *TerritoryMemberClient) Delete() *TerritoryMemberDelete {
+	mutation := newTerritoryMemberMutation(c.config, OpDelete)
+	return &TerritoryMemberDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TerritoryMemberClient) DeleteOne(_m *TerritoryMember) *TerritoryMemberDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TerritoryMemberClient) DeleteOneID(id int) *TerritoryMemberDeleteOne {
+	builder := c.Delete().Where(territorymember.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TerritoryMemberDeleteOne{builder}
+}
+
+// Query returns a query builder for TerritoryMember.
+func (c *TerritoryMemberClient) Query() *TerritoryMemberQuery {
+	return &TerritoryMemberQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTerritoryMember},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a TerritoryMember entity by its id.
+func (c *TerritoryMemberClient) Get(ctx context.Context, id int) (*TerritoryMember, error) {
+	return c.Query().Where(territorymember.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TerritoryMemberClient) GetX(ctx context.Context, id int) *TerritoryMember {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryTerritory queries the territory edge of a TerritoryMember.
+func (c *TerritoryMemberClient) QueryTerritory(_m *TerritoryMember) *TerritoryQuery {
+	query := (&TerritoryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(territorymember.Table, territorymember.FieldID, id),
+			sqlgraph.To(territory.Table, territory.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, territorymember.TerritoryTable, territorymember.TerritoryColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUser queries the user edge of a TerritoryMember.
+func (c *TerritoryMemberClient) QueryUser(_m *TerritoryMember) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(territorymember.Table, territorymember.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, territorymember.UserTable, territorymember.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAddedBy queries the added_by edge of a TerritoryMember.
+func (c *TerritoryMemberClient) QueryAddedBy(_m *TerritoryMember) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(territorymember.Table, territorymember.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, territorymember.AddedByTable, territorymember.AddedByColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *TerritoryMemberClient) Hooks() []Hook {
+	return c.hooks.TerritoryMember
+}
+
+// Interceptors returns the client interceptors.
+func (c *TerritoryMemberClient) Interceptors() []Interceptor {
+	return c.inters.TerritoryMember
+}
+
+func (c *TerritoryMemberClient) mutate(ctx context.Context, m *TerritoryMemberMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TerritoryMemberCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TerritoryMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TerritoryMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TerritoryMemberDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TerritoryMember mutation op: %q", m.Op())
+	}
+}
+
 // UsageLogClient is a client for the UsageLog schema.
 type UsageLogClient struct {
 	config
@@ -3542,6 +3936,54 @@ func (c *UserClient) QueryEmailSequenceEnrollmentsMade(_m *User) *EmailSequenceE
 	return query
 }
 
+// QueryTerritoriesCreated queries the territories_created edge of a User.
+func (c *UserClient) QueryTerritoriesCreated(_m *User) *TerritoryQuery {
+	query := (&TerritoryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(territory.Table, territory.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.TerritoriesCreatedTable, user.TerritoriesCreatedColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTerritoryMemberships queries the territory_memberships edge of a User.
+func (c *UserClient) QueryTerritoryMemberships(_m *User) *TerritoryMemberQuery {
+	query := (&TerritoryMemberClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(territorymember.Table, territorymember.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.TerritoryMembershipsTable, user.TerritoryMembershipsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTerritoryMembersAdded queries the territory_members_added edge of a User.
+func (c *UserClient) QueryTerritoryMembersAdded(_m *User) *TerritoryMemberQuery {
+	query := (&TerritoryMemberClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(territorymember.Table, territorymember.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.TerritoryMembersAddedTable, user.TerritoryMembersAddedColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -3722,12 +4164,12 @@ type (
 		APIKey, AuditLog, EmailSequence, EmailSequenceEnrollment, EmailSequenceSend,
 		EmailSequenceStep, Export, Industry, Lead, LeadAssignment, LeadNote,
 		LeadStatusHistory, Organization, OrganizationMember, SavedSearch, Subscription,
-		UsageLog, User, Webhook []ent.Hook
+		Territory, TerritoryMember, UsageLog, User, Webhook []ent.Hook
 	}
 	inters struct {
 		APIKey, AuditLog, EmailSequence, EmailSequenceEnrollment, EmailSequenceSend,
 		EmailSequenceStep, Export, Industry, Lead, LeadAssignment, LeadNote,
 		LeadStatusHistory, Organization, OrganizationMember, SavedSearch, Subscription,
-		UsageLog, User, Webhook []ent.Interceptor
+		Territory, TerritoryMember, UsageLog, User, Webhook []ent.Interceptor
 	}
 )

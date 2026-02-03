@@ -16,6 +16,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
+	"github.com/jordanlanch/industrydb/ent/territory"
 )
 
 // LeadCreate is the builder for creating a Lead entity.
@@ -400,6 +401,25 @@ func (_c *LeadCreate) AddEmailSequenceSends(v ...*EmailSequenceSend) *LeadCreate
 	return _c.AddEmailSequenceSendIDs(ids...)
 }
 
+// SetTerritoryID sets the "territory" edge to the Territory entity by ID.
+func (_c *LeadCreate) SetTerritoryID(id int) *LeadCreate {
+	_c.mutation.SetTerritoryID(id)
+	return _c
+}
+
+// SetNillableTerritoryID sets the "territory" edge to the Territory entity by ID if the given value is not nil.
+func (_c *LeadCreate) SetNillableTerritoryID(id *int) *LeadCreate {
+	if id != nil {
+		_c = _c.SetTerritoryID(*id)
+	}
+	return _c
+}
+
+// SetTerritory sets the "territory" edge to the Territory entity.
+func (_c *LeadCreate) SetTerritory(v *Territory) *LeadCreate {
+	return _c.SetTerritoryID(v.ID)
+}
+
 // Mutation returns the LeadMutation object of the builder.
 func (_c *LeadCreate) Mutation() *LeadMutation {
 	return _c.mutation
@@ -731,6 +751,23 @@ func (_c *LeadCreate) createSpec() (*Lead, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.TerritoryIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   lead.TerritoryTable,
+			Columns: []string{lead.TerritoryColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(territory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.territory_leads = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

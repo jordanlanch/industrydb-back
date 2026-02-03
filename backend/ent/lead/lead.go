@@ -77,6 +77,8 @@ const (
 	EdgeEmailSequenceEnrollments = "email_sequence_enrollments"
 	// EdgeEmailSequenceSends holds the string denoting the email_sequence_sends edge name in mutations.
 	EdgeEmailSequenceSends = "email_sequence_sends"
+	// EdgeTerritory holds the string denoting the territory edge name in mutations.
+	EdgeTerritory = "territory"
 	// Table holds the table name of the lead in the database.
 	Table = "leads"
 	// NotesTable is the table that holds the notes relation/edge.
@@ -114,6 +116,13 @@ const (
 	EmailSequenceSendsInverseTable = "email_sequence_sends"
 	// EmailSequenceSendsColumn is the table column denoting the email_sequence_sends relation/edge.
 	EmailSequenceSendsColumn = "lead_id"
+	// TerritoryTable is the table that holds the territory relation/edge.
+	TerritoryTable = "leads"
+	// TerritoryInverseTable is the table name for the Territory entity.
+	// It exists in this package in order to avoid circular dependency with the "territory" package.
+	TerritoryInverseTable = "territories"
+	// TerritoryColumn is the table column denoting the territory relation/edge.
+	TerritoryColumn = "territory_leads"
 )
 
 // Columns holds all SQL columns for lead fields.
@@ -147,10 +156,21 @@ var Columns = []string{
 	FieldUpdatedAt,
 }
 
+// ForeignKeys holds the SQL foreign-keys that are owned by the "leads"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"territory_leads",
+}
+
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -509,6 +529,13 @@ func ByEmailSequenceSends(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOptio
 		sqlgraph.OrderByNeighborTerms(s, newEmailSequenceSendsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByTerritoryField orders the results by territory field.
+func ByTerritoryField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTerritoryStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newNotesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -542,5 +569,12 @@ func newEmailSequenceSendsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(EmailSequenceSendsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, EmailSequenceSendsTable, EmailSequenceSendsColumn),
+	)
+}
+func newTerritoryStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TerritoryInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, TerritoryTable, TerritoryColumn),
 	)
 }

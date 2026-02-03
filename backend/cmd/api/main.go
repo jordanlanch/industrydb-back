@@ -356,6 +356,7 @@ func main() {
 	phoneHandler := handlers.NewPhoneHandler()
 	leadAssignmentHandler := handlers.NewLeadAssignmentHandler(db.Ent, auditLogger)
 	leadScoringHandler := handlers.NewLeadScoringHandler(db.Ent)
+	territoryHandler := handlers.NewTerritoryHandler(db.Ent)
 	log.Printf("✅ Webhook and batch handlers initialized")
 
 	// Backup handler (admin only, if enabled)
@@ -434,6 +435,22 @@ func main() {
 			leadNotesGroup.DELETE("/:id", leadNoteHandler.DeleteNote)
 		}
 
+		// Territory routes (require email verification)
+		territoriesGroup := protected.Group("/territories")
+		territoriesGroup.Use(custommiddleware.RequireEmailVerified(db.Ent))
+		{
+			// Territory CRUD
+			territoriesGroup.POST("", territoryHandler.CreateTerritory)
+			territoriesGroup.GET("", territoryHandler.ListTerritories)
+			territoriesGroup.GET("/:id", territoryHandler.GetTerritory)
+			territoriesGroup.PUT("/:id", territoryHandler.UpdateTerritory)
+
+			// Territory members
+			territoriesGroup.POST("/:id/members", territoryHandler.AddMember)
+			territoriesGroup.GET("/:id/members", territoryHandler.GetTerritoryMembers)
+			territoriesGroup.DELETE("/:id/members/:user_id", territoryHandler.RemoveMember)
+		}
+
 		// User routes
 		userGroup := protected.Group("/user")
 		{
@@ -445,6 +462,7 @@ func main() {
 			userGroup.DELETE("/account", userHandler.DeleteAccount)
 			userGroup.GET("/audit-logs", auditHandler.GetUserLogs)
 			userGroup.GET("/assigned-leads", leadAssignmentHandler.GetUserLeads)
+			userGroup.GET("/territories", territoryHandler.GetUserTerritories)
 		}
 
 		// Analytics routes

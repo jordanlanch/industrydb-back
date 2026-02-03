@@ -146,6 +146,12 @@ func (User) Edges() []ent.Edge {
 			Comment("Email sequences created by this user"),
 		edge.To("email_sequence_enrollments_made", EmailSequenceEnrollment.Type).
 			Comment("Email sequence enrollments made by this user"),
+		edge.To("territories_created", Territory.Type).
+			Comment("Territories created by this user"),
+		edge.To("territory_memberships", TerritoryMember.Type).
+			Comment("Territories this user is a member of"),
+		edge.To("territory_members_added", TerritoryMember.Type).
+			Comment("Territory members added by this user"),
 	}
 }
 

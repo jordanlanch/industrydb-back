@@ -451,12 +451,21 @@ var (
 		{Name: "tattoo_style", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "territory_leads", Type: field.TypeInt, Nullable: true},
 	}
 	// LeadsTable holds the schema information for the "leads" table.
 	LeadsTable = &schema.Table{
 		Name:       "leads",
 		Columns:    LeadsColumns,
 		PrimaryKey: []*schema.Column{LeadsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "leads_territories_leads",
+				Columns:    []*schema.Column{LeadsColumns[27]},
+				RefColumns: []*schema.Column{TerritoriesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 		Indexes: []*schema.Index{
 			{
 				Name:    "lead_industry_country",
@@ -902,6 +911,103 @@ var (
 			},
 		},
 	}
+	// TerritoriesColumns holds the columns for the "territories" table.
+	TerritoriesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString, Size: 200},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "countries", Type: field.TypeJSON, Nullable: true},
+		{Name: "regions", Type: field.TypeJSON, Nullable: true},
+		{Name: "cities", Type: field.TypeJSON, Nullable: true},
+		{Name: "industries", Type: field.TypeJSON, Nullable: true},
+		{Name: "active", Type: field.TypeBool, Default: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "created_by_user_id", Type: field.TypeInt},
+	}
+	// TerritoriesTable holds the schema information for the "territories" table.
+	TerritoriesTable = &schema.Table{
+		Name:       "territories",
+		Columns:    TerritoriesColumns,
+		PrimaryKey: []*schema.Column{TerritoriesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "territories_users_territories_created",
+				Columns:    []*schema.Column{TerritoriesColumns[10]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "territory_active",
+				Unique:  false,
+				Columns: []*schema.Column{TerritoriesColumns[7]},
+			},
+			{
+				Name:    "territory_created_by_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{TerritoriesColumns[10]},
+			},
+			{
+				Name:    "territory_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{TerritoriesColumns[8]},
+			},
+		},
+	}
+	// TerritoryMembersColumns holds the columns for the "territory_members" table.
+	TerritoryMembersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "role", Type: field.TypeEnum, Enums: []string{"manager", "member"}, Default: "member"},
+		{Name: "joined_at", Type: field.TypeTime},
+		{Name: "territory_id", Type: field.TypeInt},
+		{Name: "user_id", Type: field.TypeInt},
+		{Name: "added_by_user_id", Type: field.TypeInt},
+	}
+	// TerritoryMembersTable holds the schema information for the "territory_members" table.
+	TerritoryMembersTable = &schema.Table{
+		Name:       "territory_members",
+		Columns:    TerritoryMembersColumns,
+		PrimaryKey: []*schema.Column{TerritoryMembersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "territory_members_territories_members",
+				Columns:    []*schema.Column{TerritoryMembersColumns[3]},
+				RefColumns: []*schema.Column{TerritoriesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "territory_members_users_territory_memberships",
+				Columns:    []*schema.Column{TerritoryMembersColumns[4]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "territory_members_users_territory_members_added",
+				Columns:    []*schema.Column{TerritoryMembersColumns[5]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "territorymember_territory_id_user_id",
+				Unique:  true,
+				Columns: []*schema.Column{TerritoryMembersColumns[3], TerritoryMembersColumns[4]},
+			},
+			{
+				Name:    "territorymember_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{TerritoryMembersColumns[4]},
+			},
+			{
+				Name:    "territorymember_role",
+				Unique:  false,
+				Columns: []*schema.Column{TerritoryMembersColumns[1]},
+			},
+		},
+	}
 	// UsageLogsColumns holds the columns for the "usage_logs" table.
 	UsageLogsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -1058,6 +1164,8 @@ var (
 		OrganizationMembersTable,
 		SavedSearchesTable,
 		SubscriptionsTable,
+		TerritoriesTable,
+		TerritoryMembersTable,
 		UsageLogsTable,
 		UsersTable,
 		WebhooksTable,
@@ -1077,6 +1185,7 @@ func init() {
 	EmailSequenceStepsTable.ForeignKeys[0].RefTable = EmailSequencesTable
 	ExportsTable.ForeignKeys[0].RefTable = OrganizationsTable
 	ExportsTable.ForeignKeys[1].RefTable = UsersTable
+	LeadsTable.ForeignKeys[0].RefTable = TerritoriesTable
 	LeadAssignmentsTable.ForeignKeys[0].RefTable = LeadsTable
 	LeadAssignmentsTable.ForeignKeys[1].RefTable = UsersTable
 	LeadAssignmentsTable.ForeignKeys[2].RefTable = UsersTable
@@ -1089,6 +1198,10 @@ func init() {
 	OrganizationMembersTable.ForeignKeys[1].RefTable = UsersTable
 	SavedSearchesTable.ForeignKeys[0].RefTable = UsersTable
 	SubscriptionsTable.ForeignKeys[0].RefTable = UsersTable
+	TerritoriesTable.ForeignKeys[0].RefTable = UsersTable
+	TerritoryMembersTable.ForeignKeys[0].RefTable = TerritoriesTable
+	TerritoryMembersTable.ForeignKeys[1].RefTable = UsersTable
+	TerritoryMembersTable.ForeignKeys[2].RefTable = UsersTable
 	UsageLogsTable.ForeignKeys[0].RefTable = UsersTable
 	WebhooksTable.ForeignKeys[0].RefTable = UsersTable
 }

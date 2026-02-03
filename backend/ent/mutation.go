@@ -28,6 +28,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/predicate"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
 	"github.com/jordanlanch/industrydb/ent/subscription"
+	"github.com/jordanlanch/industrydb/ent/territory"
+	"github.com/jordanlanch/industrydb/ent/territorymember"
 	"github.com/jordanlanch/industrydb/ent/usagelog"
 	"github.com/jordanlanch/industrydb/ent/user"
 	"github.com/jordanlanch/industrydb/ent/webhook"
@@ -58,6 +60,8 @@ const (
 	TypeOrganizationMember      = "OrganizationMember"
 	TypeSavedSearch             = "SavedSearch"
 	TypeSubscription            = "Subscription"
+	TypeTerritory               = "Territory"
+	TypeTerritoryMember         = "TerritoryMember"
 	TypeUsageLog                = "UsageLog"
 	TypeUser                    = "User"
 	TypeWebhook                 = "Webhook"
@@ -8162,6 +8166,8 @@ type LeadMutation struct {
 	email_sequence_sends              map[int]struct{}
 	removedemail_sequence_sends       map[int]struct{}
 	clearedemail_sequence_sends       bool
+	territory                         *int
+	clearedterritory                  bool
 	done                              bool
 	oldValue                          func(context.Context) (*Lead, error)
 	predicates                        []predicate.Lead
@@ -9757,6 +9763,45 @@ func (m *LeadMutation) ResetEmailSequenceSends() {
 	m.removedemail_sequence_sends = nil
 }
 
+// SetTerritoryID sets the "territory" edge to the Territory entity by id.
+func (m *LeadMutation) SetTerritoryID(id int) {
+	m.territory = &id
+}
+
+// ClearTerritory clears the "territory" edge to the Territory entity.
+func (m *LeadMutation) ClearTerritory() {
+	m.clearedterritory = true
+}
+
+// TerritoryCleared reports if the "territory" edge to the Territory entity was cleared.
+func (m *LeadMutation) TerritoryCleared() bool {
+	return m.clearedterritory
+}
+
+// TerritoryID returns the "territory" edge ID in the mutation.
+func (m *LeadMutation) TerritoryID() (id int, exists bool) {
+	if m.territory != nil {
+		return *m.territory, true
+	}
+	return
+}
+
+// TerritoryIDs returns the "territory" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TerritoryID instead. It exists only for internal usage by the builders.
+func (m *LeadMutation) TerritoryIDs() (ids []int) {
+	if id := m.territory; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTerritory resets all changes to the "territory" edge.
+func (m *LeadMutation) ResetTerritory() {
+	m.territory = nil
+	m.clearedterritory = false
+}
+
 // Where appends a list predicates to the LeadMutation builder.
 func (m *LeadMutation) Where(ps ...predicate.Lead) {
 	m.predicates = append(m.predicates, ps...)
@@ -10453,7 +10498,7 @@ func (m *LeadMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *LeadMutation) AddedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 6)
 	if m.notes != nil {
 		edges = append(edges, lead.EdgeNotes)
 	}
@@ -10468,6 +10513,9 @@ func (m *LeadMutation) AddedEdges() []string {
 	}
 	if m.email_sequence_sends != nil {
 		edges = append(edges, lead.EdgeEmailSequenceSends)
+	}
+	if m.territory != nil {
+		edges = append(edges, lead.EdgeTerritory)
 	}
 	return edges
 }
@@ -10506,13 +10554,17 @@ func (m *LeadMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case lead.EdgeTerritory:
+		if id := m.territory; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *LeadMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 6)
 	if m.removednotes != nil {
 		edges = append(edges, lead.EdgeNotes)
 	}
@@ -10571,7 +10623,7 @@ func (m *LeadMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *LeadMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 5)
+	edges := make([]string, 0, 6)
 	if m.clearednotes {
 		edges = append(edges, lead.EdgeNotes)
 	}
@@ -10586,6 +10638,9 @@ func (m *LeadMutation) ClearedEdges() []string {
 	}
 	if m.clearedemail_sequence_sends {
 		edges = append(edges, lead.EdgeEmailSequenceSends)
+	}
+	if m.clearedterritory {
+		edges = append(edges, lead.EdgeTerritory)
 	}
 	return edges
 }
@@ -10604,6 +10659,8 @@ func (m *LeadMutation) EdgeCleared(name string) bool {
 		return m.clearedemail_sequence_enrollments
 	case lead.EdgeEmailSequenceSends:
 		return m.clearedemail_sequence_sends
+	case lead.EdgeTerritory:
+		return m.clearedterritory
 	}
 	return false
 }
@@ -10612,6 +10669,9 @@ func (m *LeadMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *LeadMutation) ClearEdge(name string) error {
 	switch name {
+	case lead.EdgeTerritory:
+		m.ClearTerritory()
+		return nil
 	}
 	return fmt.Errorf("unknown Lead unique edge %s", name)
 }
@@ -10634,6 +10694,9 @@ func (m *LeadMutation) ResetEdge(name string) error {
 		return nil
 	case lead.EdgeEmailSequenceSends:
 		m.ResetEmailSequenceSends()
+		return nil
+	case lead.EdgeTerritory:
+		m.ResetTerritory()
 		return nil
 	}
 	return fmt.Errorf("unknown Lead edge %s", name)
@@ -16759,6 +16822,1926 @@ func (m *SubscriptionMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Subscription edge %s", name)
 }
 
+// TerritoryMutation represents an operation that mutates the Territory nodes in the graph.
+type TerritoryMutation struct {
+	config
+	op                Op
+	typ               string
+	id                *int
+	name              *string
+	description       *string
+	countries         *[]string
+	appendcountries   []string
+	regions           *[]string
+	appendregions     []string
+	cities            *[]string
+	appendcities      []string
+	industries        *[]string
+	appendindustries  []string
+	active            *bool
+	created_at        *time.Time
+	updated_at        *time.Time
+	clearedFields     map[string]struct{}
+	created_by        *int
+	clearedcreated_by bool
+	members           map[int]struct{}
+	removedmembers    map[int]struct{}
+	clearedmembers    bool
+	leads             map[int]struct{}
+	removedleads      map[int]struct{}
+	clearedleads      bool
+	done              bool
+	oldValue          func(context.Context) (*Territory, error)
+	predicates        []predicate.Territory
+}
+
+var _ ent.Mutation = (*TerritoryMutation)(nil)
+
+// territoryOption allows management of the mutation configuration using functional options.
+type territoryOption func(*TerritoryMutation)
+
+// newTerritoryMutation creates new mutation for the Territory entity.
+func newTerritoryMutation(c config, op Op, opts ...territoryOption) *TerritoryMutation {
+	m := &TerritoryMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeTerritory,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withTerritoryID sets the ID field of the mutation.
+func withTerritoryID(id int) territoryOption {
+	return func(m *TerritoryMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Territory
+		)
+		m.oldValue = func(ctx context.Context) (*Territory, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Territory.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withTerritory sets the old Territory of the mutation.
+func withTerritory(node *Territory) territoryOption {
+	return func(m *TerritoryMutation) {
+		m.oldValue = func(context.Context) (*Territory, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m TerritoryMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m TerritoryMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *TerritoryMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *TerritoryMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Territory.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetName sets the "name" field.
+func (m *TerritoryMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *TerritoryMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Territory entity.
+// If the Territory object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TerritoryMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *TerritoryMutation) ResetName() {
+	m.name = nil
+}
+
+// SetDescription sets the "description" field.
+func (m *TerritoryMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *TerritoryMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the Territory entity.
+// If the Territory object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TerritoryMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ClearDescription clears the value of the "description" field.
+func (m *TerritoryMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[territory.FieldDescription] = struct{}{}
+}
+
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *TerritoryMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[territory.FieldDescription]
+	return ok
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *TerritoryMutation) ResetDescription() {
+	m.description = nil
+	delete(m.clearedFields, territory.FieldDescription)
+}
+
+// SetCountries sets the "countries" field.
+func (m *TerritoryMutation) SetCountries(s []string) {
+	m.countries = &s
+	m.appendcountries = nil
+}
+
+// Countries returns the value of the "countries" field in the mutation.
+func (m *TerritoryMutation) Countries() (r []string, exists bool) {
+	v := m.countries
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCountries returns the old "countries" field's value of the Territory entity.
+// If the Territory object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TerritoryMutation) OldCountries(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCountries is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCountries requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCountries: %w", err)
+	}
+	return oldValue.Countries, nil
+}
+
+// AppendCountries adds s to the "countries" field.
+func (m *TerritoryMutation) AppendCountries(s []string) {
+	m.appendcountries = append(m.appendcountries, s...)
+}
+
+// AppendedCountries returns the list of values that were appended to the "countries" field in this mutation.
+func (m *TerritoryMutation) AppendedCountries() ([]string, bool) {
+	if len(m.appendcountries) == 0 {
+		return nil, false
+	}
+	return m.appendcountries, true
+}
+
+// ClearCountries clears the value of the "countries" field.
+func (m *TerritoryMutation) ClearCountries() {
+	m.countries = nil
+	m.appendcountries = nil
+	m.clearedFields[territory.FieldCountries] = struct{}{}
+}
+
+// CountriesCleared returns if the "countries" field was cleared in this mutation.
+func (m *TerritoryMutation) CountriesCleared() bool {
+	_, ok := m.clearedFields[territory.FieldCountries]
+	return ok
+}
+
+// ResetCountries resets all changes to the "countries" field.
+func (m *TerritoryMutation) ResetCountries() {
+	m.countries = nil
+	m.appendcountries = nil
+	delete(m.clearedFields, territory.FieldCountries)
+}
+
+// SetRegions sets the "regions" field.
+func (m *TerritoryMutation) SetRegions(s []string) {
+	m.regions = &s
+	m.appendregions = nil
+}
+
+// Regions returns the value of the "regions" field in the mutation.
+func (m *TerritoryMutation) Regions() (r []string, exists bool) {
+	v := m.regions
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRegions returns the old "regions" field's value of the Territory entity.
+// If the Territory object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TerritoryMutation) OldRegions(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRegions is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRegions requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRegions: %w", err)
+	}
+	return oldValue.Regions, nil
+}
+
+// AppendRegions adds s to the "regions" field.
+func (m *TerritoryMutation) AppendRegions(s []string) {
+	m.appendregions = append(m.appendregions, s...)
+}
+
+// AppendedRegions returns the list of values that were appended to the "regions" field in this mutation.
+func (m *TerritoryMutation) AppendedRegions() ([]string, bool) {
+	if len(m.appendregions) == 0 {
+		return nil, false
+	}
+	return m.appendregions, true
+}
+
+// ClearRegions clears the value of the "regions" field.
+func (m *TerritoryMutation) ClearRegions() {
+	m.regions = nil
+	m.appendregions = nil
+	m.clearedFields[territory.FieldRegions] = struct{}{}
+}
+
+// RegionsCleared returns if the "regions" field was cleared in this mutation.
+func (m *TerritoryMutation) RegionsCleared() bool {
+	_, ok := m.clearedFields[territory.FieldRegions]
+	return ok
+}
+
+// ResetRegions resets all changes to the "regions" field.
+func (m *TerritoryMutation) ResetRegions() {
+	m.regions = nil
+	m.appendregions = nil
+	delete(m.clearedFields, territory.FieldRegions)
+}
+
+// SetCities sets the "cities" field.
+func (m *TerritoryMutation) SetCities(s []string) {
+	m.cities = &s
+	m.appendcities = nil
+}
+
+// Cities returns the value of the "cities" field in the mutation.
+func (m *TerritoryMutation) Cities() (r []string, exists bool) {
+	v := m.cities
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCities returns the old "cities" field's value of the Territory entity.
+// If the Territory object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TerritoryMutation) OldCities(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCities is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCities requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCities: %w", err)
+	}
+	return oldValue.Cities, nil
+}
+
+// AppendCities adds s to the "cities" field.
+func (m *TerritoryMutation) AppendCities(s []string) {
+	m.appendcities = append(m.appendcities, s...)
+}
+
+// AppendedCities returns the list of values that were appended to the "cities" field in this mutation.
+func (m *TerritoryMutation) AppendedCities() ([]string, bool) {
+	if len(m.appendcities) == 0 {
+		return nil, false
+	}
+	return m.appendcities, true
+}
+
+// ClearCities clears the value of the "cities" field.
+func (m *TerritoryMutation) ClearCities() {
+	m.cities = nil
+	m.appendcities = nil
+	m.clearedFields[territory.FieldCities] = struct{}{}
+}
+
+// CitiesCleared returns if the "cities" field was cleared in this mutation.
+func (m *TerritoryMutation) CitiesCleared() bool {
+	_, ok := m.clearedFields[territory.FieldCities]
+	return ok
+}
+
+// ResetCities resets all changes to the "cities" field.
+func (m *TerritoryMutation) ResetCities() {
+	m.cities = nil
+	m.appendcities = nil
+	delete(m.clearedFields, territory.FieldCities)
+}
+
+// SetIndustries sets the "industries" field.
+func (m *TerritoryMutation) SetIndustries(s []string) {
+	m.industries = &s
+	m.appendindustries = nil
+}
+
+// Industries returns the value of the "industries" field in the mutation.
+func (m *TerritoryMutation) Industries() (r []string, exists bool) {
+	v := m.industries
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIndustries returns the old "industries" field's value of the Territory entity.
+// If the Territory object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TerritoryMutation) OldIndustries(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIndustries is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIndustries requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIndustries: %w", err)
+	}
+	return oldValue.Industries, nil
+}
+
+// AppendIndustries adds s to the "industries" field.
+func (m *TerritoryMutation) AppendIndustries(s []string) {
+	m.appendindustries = append(m.appendindustries, s...)
+}
+
+// AppendedIndustries returns the list of values that were appended to the "industries" field in this mutation.
+func (m *TerritoryMutation) AppendedIndustries() ([]string, bool) {
+	if len(m.appendindustries) == 0 {
+		return nil, false
+	}
+	return m.appendindustries, true
+}
+
+// ClearIndustries clears the value of the "industries" field.
+func (m *TerritoryMutation) ClearIndustries() {
+	m.industries = nil
+	m.appendindustries = nil
+	m.clearedFields[territory.FieldIndustries] = struct{}{}
+}
+
+// IndustriesCleared returns if the "industries" field was cleared in this mutation.
+func (m *TerritoryMutation) IndustriesCleared() bool {
+	_, ok := m.clearedFields[territory.FieldIndustries]
+	return ok
+}
+
+// ResetIndustries resets all changes to the "industries" field.
+func (m *TerritoryMutation) ResetIndustries() {
+	m.industries = nil
+	m.appendindustries = nil
+	delete(m.clearedFields, territory.FieldIndustries)
+}
+
+// SetCreatedByUserID sets the "created_by_user_id" field.
+func (m *TerritoryMutation) SetCreatedByUserID(i int) {
+	m.created_by = &i
+}
+
+// CreatedByUserID returns the value of the "created_by_user_id" field in the mutation.
+func (m *TerritoryMutation) CreatedByUserID() (r int, exists bool) {
+	v := m.created_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedByUserID returns the old "created_by_user_id" field's value of the Territory entity.
+// If the Territory object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TerritoryMutation) OldCreatedByUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedByUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedByUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedByUserID: %w", err)
+	}
+	return oldValue.CreatedByUserID, nil
+}
+
+// ResetCreatedByUserID resets all changes to the "created_by_user_id" field.
+func (m *TerritoryMutation) ResetCreatedByUserID() {
+	m.created_by = nil
+}
+
+// SetActive sets the "active" field.
+func (m *TerritoryMutation) SetActive(b bool) {
+	m.active = &b
+}
+
+// Active returns the value of the "active" field in the mutation.
+func (m *TerritoryMutation) Active() (r bool, exists bool) {
+	v := m.active
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldActive returns the old "active" field's value of the Territory entity.
+// If the Territory object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TerritoryMutation) OldActive(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldActive is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldActive requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldActive: %w", err)
+	}
+	return oldValue.Active, nil
+}
+
+// ResetActive resets all changes to the "active" field.
+func (m *TerritoryMutation) ResetActive() {
+	m.active = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *TerritoryMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *TerritoryMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Territory entity.
+// If the Territory object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TerritoryMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *TerritoryMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *TerritoryMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *TerritoryMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Territory entity.
+// If the Territory object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TerritoryMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *TerritoryMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetCreatedByID sets the "created_by" edge to the User entity by id.
+func (m *TerritoryMutation) SetCreatedByID(id int) {
+	m.created_by = &id
+}
+
+// ClearCreatedBy clears the "created_by" edge to the User entity.
+func (m *TerritoryMutation) ClearCreatedBy() {
+	m.clearedcreated_by = true
+	m.clearedFields[territory.FieldCreatedByUserID] = struct{}{}
+}
+
+// CreatedByCleared reports if the "created_by" edge to the User entity was cleared.
+func (m *TerritoryMutation) CreatedByCleared() bool {
+	return m.clearedcreated_by
+}
+
+// CreatedByID returns the "created_by" edge ID in the mutation.
+func (m *TerritoryMutation) CreatedByID() (id int, exists bool) {
+	if m.created_by != nil {
+		return *m.created_by, true
+	}
+	return
+}
+
+// CreatedByIDs returns the "created_by" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// CreatedByID instead. It exists only for internal usage by the builders.
+func (m *TerritoryMutation) CreatedByIDs() (ids []int) {
+	if id := m.created_by; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetCreatedBy resets all changes to the "created_by" edge.
+func (m *TerritoryMutation) ResetCreatedBy() {
+	m.created_by = nil
+	m.clearedcreated_by = false
+}
+
+// AddMemberIDs adds the "members" edge to the TerritoryMember entity by ids.
+func (m *TerritoryMutation) AddMemberIDs(ids ...int) {
+	if m.members == nil {
+		m.members = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.members[ids[i]] = struct{}{}
+	}
+}
+
+// ClearMembers clears the "members" edge to the TerritoryMember entity.
+func (m *TerritoryMutation) ClearMembers() {
+	m.clearedmembers = true
+}
+
+// MembersCleared reports if the "members" edge to the TerritoryMember entity was cleared.
+func (m *TerritoryMutation) MembersCleared() bool {
+	return m.clearedmembers
+}
+
+// RemoveMemberIDs removes the "members" edge to the TerritoryMember entity by IDs.
+func (m *TerritoryMutation) RemoveMemberIDs(ids ...int) {
+	if m.removedmembers == nil {
+		m.removedmembers = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.members, ids[i])
+		m.removedmembers[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedMembers returns the removed IDs of the "members" edge to the TerritoryMember entity.
+func (m *TerritoryMutation) RemovedMembersIDs() (ids []int) {
+	for id := range m.removedmembers {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// MembersIDs returns the "members" edge IDs in the mutation.
+func (m *TerritoryMutation) MembersIDs() (ids []int) {
+	for id := range m.members {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetMembers resets all changes to the "members" edge.
+func (m *TerritoryMutation) ResetMembers() {
+	m.members = nil
+	m.clearedmembers = false
+	m.removedmembers = nil
+}
+
+// AddLeadIDs adds the "leads" edge to the Lead entity by ids.
+func (m *TerritoryMutation) AddLeadIDs(ids ...int) {
+	if m.leads == nil {
+		m.leads = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.leads[ids[i]] = struct{}{}
+	}
+}
+
+// ClearLeads clears the "leads" edge to the Lead entity.
+func (m *TerritoryMutation) ClearLeads() {
+	m.clearedleads = true
+}
+
+// LeadsCleared reports if the "leads" edge to the Lead entity was cleared.
+func (m *TerritoryMutation) LeadsCleared() bool {
+	return m.clearedleads
+}
+
+// RemoveLeadIDs removes the "leads" edge to the Lead entity by IDs.
+func (m *TerritoryMutation) RemoveLeadIDs(ids ...int) {
+	if m.removedleads == nil {
+		m.removedleads = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.leads, ids[i])
+		m.removedleads[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedLeads returns the removed IDs of the "leads" edge to the Lead entity.
+func (m *TerritoryMutation) RemovedLeadsIDs() (ids []int) {
+	for id := range m.removedleads {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// LeadsIDs returns the "leads" edge IDs in the mutation.
+func (m *TerritoryMutation) LeadsIDs() (ids []int) {
+	for id := range m.leads {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetLeads resets all changes to the "leads" edge.
+func (m *TerritoryMutation) ResetLeads() {
+	m.leads = nil
+	m.clearedleads = false
+	m.removedleads = nil
+}
+
+// Where appends a list predicates to the TerritoryMutation builder.
+func (m *TerritoryMutation) Where(ps ...predicate.Territory) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the TerritoryMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *TerritoryMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Territory, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *TerritoryMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *TerritoryMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Territory).
+func (m *TerritoryMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *TerritoryMutation) Fields() []string {
+	fields := make([]string, 0, 10)
+	if m.name != nil {
+		fields = append(fields, territory.FieldName)
+	}
+	if m.description != nil {
+		fields = append(fields, territory.FieldDescription)
+	}
+	if m.countries != nil {
+		fields = append(fields, territory.FieldCountries)
+	}
+	if m.regions != nil {
+		fields = append(fields, territory.FieldRegions)
+	}
+	if m.cities != nil {
+		fields = append(fields, territory.FieldCities)
+	}
+	if m.industries != nil {
+		fields = append(fields, territory.FieldIndustries)
+	}
+	if m.created_by != nil {
+		fields = append(fields, territory.FieldCreatedByUserID)
+	}
+	if m.active != nil {
+		fields = append(fields, territory.FieldActive)
+	}
+	if m.created_at != nil {
+		fields = append(fields, territory.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, territory.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *TerritoryMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case territory.FieldName:
+		return m.Name()
+	case territory.FieldDescription:
+		return m.Description()
+	case territory.FieldCountries:
+		return m.Countries()
+	case territory.FieldRegions:
+		return m.Regions()
+	case territory.FieldCities:
+		return m.Cities()
+	case territory.FieldIndustries:
+		return m.Industries()
+	case territory.FieldCreatedByUserID:
+		return m.CreatedByUserID()
+	case territory.FieldActive:
+		return m.Active()
+	case territory.FieldCreatedAt:
+		return m.CreatedAt()
+	case territory.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *TerritoryMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case territory.FieldName:
+		return m.OldName(ctx)
+	case territory.FieldDescription:
+		return m.OldDescription(ctx)
+	case territory.FieldCountries:
+		return m.OldCountries(ctx)
+	case territory.FieldRegions:
+		return m.OldRegions(ctx)
+	case territory.FieldCities:
+		return m.OldCities(ctx)
+	case territory.FieldIndustries:
+		return m.OldIndustries(ctx)
+	case territory.FieldCreatedByUserID:
+		return m.OldCreatedByUserID(ctx)
+	case territory.FieldActive:
+		return m.OldActive(ctx)
+	case territory.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case territory.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown Territory field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TerritoryMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case territory.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case territory.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case territory.FieldCountries:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCountries(v)
+		return nil
+	case territory.FieldRegions:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRegions(v)
+		return nil
+	case territory.FieldCities:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCities(v)
+		return nil
+	case territory.FieldIndustries:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIndustries(v)
+		return nil
+	case territory.FieldCreatedByUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedByUserID(v)
+		return nil
+	case territory.FieldActive:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetActive(v)
+		return nil
+	case territory.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case territory.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Territory field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *TerritoryMutation) AddedFields() []string {
+	var fields []string
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *TerritoryMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TerritoryMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Territory numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *TerritoryMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(territory.FieldDescription) {
+		fields = append(fields, territory.FieldDescription)
+	}
+	if m.FieldCleared(territory.FieldCountries) {
+		fields = append(fields, territory.FieldCountries)
+	}
+	if m.FieldCleared(territory.FieldRegions) {
+		fields = append(fields, territory.FieldRegions)
+	}
+	if m.FieldCleared(territory.FieldCities) {
+		fields = append(fields, territory.FieldCities)
+	}
+	if m.FieldCleared(territory.FieldIndustries) {
+		fields = append(fields, territory.FieldIndustries)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *TerritoryMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *TerritoryMutation) ClearField(name string) error {
+	switch name {
+	case territory.FieldDescription:
+		m.ClearDescription()
+		return nil
+	case territory.FieldCountries:
+		m.ClearCountries()
+		return nil
+	case territory.FieldRegions:
+		m.ClearRegions()
+		return nil
+	case territory.FieldCities:
+		m.ClearCities()
+		return nil
+	case territory.FieldIndustries:
+		m.ClearIndustries()
+		return nil
+	}
+	return fmt.Errorf("unknown Territory nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *TerritoryMutation) ResetField(name string) error {
+	switch name {
+	case territory.FieldName:
+		m.ResetName()
+		return nil
+	case territory.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case territory.FieldCountries:
+		m.ResetCountries()
+		return nil
+	case territory.FieldRegions:
+		m.ResetRegions()
+		return nil
+	case territory.FieldCities:
+		m.ResetCities()
+		return nil
+	case territory.FieldIndustries:
+		m.ResetIndustries()
+		return nil
+	case territory.FieldCreatedByUserID:
+		m.ResetCreatedByUserID()
+		return nil
+	case territory.FieldActive:
+		m.ResetActive()
+		return nil
+	case territory.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case territory.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Territory field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *TerritoryMutation) AddedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.created_by != nil {
+		edges = append(edges, territory.EdgeCreatedBy)
+	}
+	if m.members != nil {
+		edges = append(edges, territory.EdgeMembers)
+	}
+	if m.leads != nil {
+		edges = append(edges, territory.EdgeLeads)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *TerritoryMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case territory.EdgeCreatedBy:
+		if id := m.created_by; id != nil {
+			return []ent.Value{*id}
+		}
+	case territory.EdgeMembers:
+		ids := make([]ent.Value, 0, len(m.members))
+		for id := range m.members {
+			ids = append(ids, id)
+		}
+		return ids
+	case territory.EdgeLeads:
+		ids := make([]ent.Value, 0, len(m.leads))
+		for id := range m.leads {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *TerritoryMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.removedmembers != nil {
+		edges = append(edges, territory.EdgeMembers)
+	}
+	if m.removedleads != nil {
+		edges = append(edges, territory.EdgeLeads)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *TerritoryMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case territory.EdgeMembers:
+		ids := make([]ent.Value, 0, len(m.removedmembers))
+		for id := range m.removedmembers {
+			ids = append(ids, id)
+		}
+		return ids
+	case territory.EdgeLeads:
+		ids := make([]ent.Value, 0, len(m.removedleads))
+		for id := range m.removedleads {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *TerritoryMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.clearedcreated_by {
+		edges = append(edges, territory.EdgeCreatedBy)
+	}
+	if m.clearedmembers {
+		edges = append(edges, territory.EdgeMembers)
+	}
+	if m.clearedleads {
+		edges = append(edges, territory.EdgeLeads)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *TerritoryMutation) EdgeCleared(name string) bool {
+	switch name {
+	case territory.EdgeCreatedBy:
+		return m.clearedcreated_by
+	case territory.EdgeMembers:
+		return m.clearedmembers
+	case territory.EdgeLeads:
+		return m.clearedleads
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *TerritoryMutation) ClearEdge(name string) error {
+	switch name {
+	case territory.EdgeCreatedBy:
+		m.ClearCreatedBy()
+		return nil
+	}
+	return fmt.Errorf("unknown Territory unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *TerritoryMutation) ResetEdge(name string) error {
+	switch name {
+	case territory.EdgeCreatedBy:
+		m.ResetCreatedBy()
+		return nil
+	case territory.EdgeMembers:
+		m.ResetMembers()
+		return nil
+	case territory.EdgeLeads:
+		m.ResetLeads()
+		return nil
+	}
+	return fmt.Errorf("unknown Territory edge %s", name)
+}
+
+// TerritoryMemberMutation represents an operation that mutates the TerritoryMember nodes in the graph.
+type TerritoryMemberMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int
+	role             *territorymember.Role
+	joined_at        *time.Time
+	clearedFields    map[string]struct{}
+	territory        *int
+	clearedterritory bool
+	user             *int
+	cleareduser      bool
+	added_by         *int
+	clearedadded_by  bool
+	done             bool
+	oldValue         func(context.Context) (*TerritoryMember, error)
+	predicates       []predicate.TerritoryMember
+}
+
+var _ ent.Mutation = (*TerritoryMemberMutation)(nil)
+
+// territorymemberOption allows management of the mutation configuration using functional options.
+type territorymemberOption func(*TerritoryMemberMutation)
+
+// newTerritoryMemberMutation creates new mutation for the TerritoryMember entity.
+func newTerritoryMemberMutation(c config, op Op, opts ...territorymemberOption) *TerritoryMemberMutation {
+	m := &TerritoryMemberMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeTerritoryMember,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withTerritoryMemberID sets the ID field of the mutation.
+func withTerritoryMemberID(id int) territorymemberOption {
+	return func(m *TerritoryMemberMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *TerritoryMember
+		)
+		m.oldValue = func(ctx context.Context) (*TerritoryMember, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().TerritoryMember.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withTerritoryMember sets the old TerritoryMember of the mutation.
+func withTerritoryMember(node *TerritoryMember) territorymemberOption {
+	return func(m *TerritoryMemberMutation) {
+		m.oldValue = func(context.Context) (*TerritoryMember, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m TerritoryMemberMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m TerritoryMemberMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *TerritoryMemberMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *TerritoryMemberMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().TerritoryMember.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetTerritoryID sets the "territory_id" field.
+func (m *TerritoryMemberMutation) SetTerritoryID(i int) {
+	m.territory = &i
+}
+
+// TerritoryID returns the value of the "territory_id" field in the mutation.
+func (m *TerritoryMemberMutation) TerritoryID() (r int, exists bool) {
+	v := m.territory
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTerritoryID returns the old "territory_id" field's value of the TerritoryMember entity.
+// If the TerritoryMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TerritoryMemberMutation) OldTerritoryID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTerritoryID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTerritoryID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTerritoryID: %w", err)
+	}
+	return oldValue.TerritoryID, nil
+}
+
+// ResetTerritoryID resets all changes to the "territory_id" field.
+func (m *TerritoryMemberMutation) ResetTerritoryID() {
+	m.territory = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *TerritoryMemberMutation) SetUserID(i int) {
+	m.user = &i
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *TerritoryMemberMutation) UserID() (r int, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the TerritoryMember entity.
+// If the TerritoryMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TerritoryMemberMutation) OldUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *TerritoryMemberMutation) ResetUserID() {
+	m.user = nil
+}
+
+// SetRole sets the "role" field.
+func (m *TerritoryMemberMutation) SetRole(t territorymember.Role) {
+	m.role = &t
+}
+
+// Role returns the value of the "role" field in the mutation.
+func (m *TerritoryMemberMutation) Role() (r territorymember.Role, exists bool) {
+	v := m.role
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRole returns the old "role" field's value of the TerritoryMember entity.
+// If the TerritoryMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TerritoryMemberMutation) OldRole(ctx context.Context) (v territorymember.Role, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRole is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRole requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRole: %w", err)
+	}
+	return oldValue.Role, nil
+}
+
+// ResetRole resets all changes to the "role" field.
+func (m *TerritoryMemberMutation) ResetRole() {
+	m.role = nil
+}
+
+// SetJoinedAt sets the "joined_at" field.
+func (m *TerritoryMemberMutation) SetJoinedAt(t time.Time) {
+	m.joined_at = &t
+}
+
+// JoinedAt returns the value of the "joined_at" field in the mutation.
+func (m *TerritoryMemberMutation) JoinedAt() (r time.Time, exists bool) {
+	v := m.joined_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldJoinedAt returns the old "joined_at" field's value of the TerritoryMember entity.
+// If the TerritoryMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TerritoryMemberMutation) OldJoinedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldJoinedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldJoinedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldJoinedAt: %w", err)
+	}
+	return oldValue.JoinedAt, nil
+}
+
+// ResetJoinedAt resets all changes to the "joined_at" field.
+func (m *TerritoryMemberMutation) ResetJoinedAt() {
+	m.joined_at = nil
+}
+
+// SetAddedByUserID sets the "added_by_user_id" field.
+func (m *TerritoryMemberMutation) SetAddedByUserID(i int) {
+	m.added_by = &i
+}
+
+// AddedByUserID returns the value of the "added_by_user_id" field in the mutation.
+func (m *TerritoryMemberMutation) AddedByUserID() (r int, exists bool) {
+	v := m.added_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAddedByUserID returns the old "added_by_user_id" field's value of the TerritoryMember entity.
+// If the TerritoryMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TerritoryMemberMutation) OldAddedByUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAddedByUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAddedByUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAddedByUserID: %w", err)
+	}
+	return oldValue.AddedByUserID, nil
+}
+
+// ResetAddedByUserID resets all changes to the "added_by_user_id" field.
+func (m *TerritoryMemberMutation) ResetAddedByUserID() {
+	m.added_by = nil
+}
+
+// ClearTerritory clears the "territory" edge to the Territory entity.
+func (m *TerritoryMemberMutation) ClearTerritory() {
+	m.clearedterritory = true
+	m.clearedFields[territorymember.FieldTerritoryID] = struct{}{}
+}
+
+// TerritoryCleared reports if the "territory" edge to the Territory entity was cleared.
+func (m *TerritoryMemberMutation) TerritoryCleared() bool {
+	return m.clearedterritory
+}
+
+// TerritoryIDs returns the "territory" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TerritoryID instead. It exists only for internal usage by the builders.
+func (m *TerritoryMemberMutation) TerritoryIDs() (ids []int) {
+	if id := m.territory; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTerritory resets all changes to the "territory" edge.
+func (m *TerritoryMemberMutation) ResetTerritory() {
+	m.territory = nil
+	m.clearedterritory = false
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (m *TerritoryMemberMutation) ClearUser() {
+	m.cleareduser = true
+	m.clearedFields[territorymember.FieldUserID] = struct{}{}
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *TerritoryMemberMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *TerritoryMemberMutation) UserIDs() (ids []int) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *TerritoryMemberMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
+// SetAddedByID sets the "added_by" edge to the User entity by id.
+func (m *TerritoryMemberMutation) SetAddedByID(id int) {
+	m.added_by = &id
+}
+
+// ClearAddedBy clears the "added_by" edge to the User entity.
+func (m *TerritoryMemberMutation) ClearAddedBy() {
+	m.clearedadded_by = true
+	m.clearedFields[territorymember.FieldAddedByUserID] = struct{}{}
+}
+
+// AddedByCleared reports if the "added_by" edge to the User entity was cleared.
+func (m *TerritoryMemberMutation) AddedByCleared() bool {
+	return m.clearedadded_by
+}
+
+// AddedByID returns the "added_by" edge ID in the mutation.
+func (m *TerritoryMemberMutation) AddedByID() (id int, exists bool) {
+	if m.added_by != nil {
+		return *m.added_by, true
+	}
+	return
+}
+
+// AddedByIDs returns the "added_by" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// AddedByID instead. It exists only for internal usage by the builders.
+func (m *TerritoryMemberMutation) AddedByIDs() (ids []int) {
+	if id := m.added_by; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetAddedBy resets all changes to the "added_by" edge.
+func (m *TerritoryMemberMutation) ResetAddedBy() {
+	m.added_by = nil
+	m.clearedadded_by = false
+}
+
+// Where appends a list predicates to the TerritoryMemberMutation builder.
+func (m *TerritoryMemberMutation) Where(ps ...predicate.TerritoryMember) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the TerritoryMemberMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *TerritoryMemberMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.TerritoryMember, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *TerritoryMemberMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *TerritoryMemberMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (TerritoryMember).
+func (m *TerritoryMemberMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *TerritoryMemberMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.territory != nil {
+		fields = append(fields, territorymember.FieldTerritoryID)
+	}
+	if m.user != nil {
+		fields = append(fields, territorymember.FieldUserID)
+	}
+	if m.role != nil {
+		fields = append(fields, territorymember.FieldRole)
+	}
+	if m.joined_at != nil {
+		fields = append(fields, territorymember.FieldJoinedAt)
+	}
+	if m.added_by != nil {
+		fields = append(fields, territorymember.FieldAddedByUserID)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *TerritoryMemberMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case territorymember.FieldTerritoryID:
+		return m.TerritoryID()
+	case territorymember.FieldUserID:
+		return m.UserID()
+	case territorymember.FieldRole:
+		return m.Role()
+	case territorymember.FieldJoinedAt:
+		return m.JoinedAt()
+	case territorymember.FieldAddedByUserID:
+		return m.AddedByUserID()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *TerritoryMemberMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case territorymember.FieldTerritoryID:
+		return m.OldTerritoryID(ctx)
+	case territorymember.FieldUserID:
+		return m.OldUserID(ctx)
+	case territorymember.FieldRole:
+		return m.OldRole(ctx)
+	case territorymember.FieldJoinedAt:
+		return m.OldJoinedAt(ctx)
+	case territorymember.FieldAddedByUserID:
+		return m.OldAddedByUserID(ctx)
+	}
+	return nil, fmt.Errorf("unknown TerritoryMember field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TerritoryMemberMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case territorymember.FieldTerritoryID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTerritoryID(v)
+		return nil
+	case territorymember.FieldUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case territorymember.FieldRole:
+		v, ok := value.(territorymember.Role)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRole(v)
+		return nil
+	case territorymember.FieldJoinedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetJoinedAt(v)
+		return nil
+	case territorymember.FieldAddedByUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAddedByUserID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown TerritoryMember field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *TerritoryMemberMutation) AddedFields() []string {
+	var fields []string
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *TerritoryMemberMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TerritoryMemberMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown TerritoryMember numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *TerritoryMemberMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *TerritoryMemberMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *TerritoryMemberMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown TerritoryMember nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *TerritoryMemberMutation) ResetField(name string) error {
+	switch name {
+	case territorymember.FieldTerritoryID:
+		m.ResetTerritoryID()
+		return nil
+	case territorymember.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case territorymember.FieldRole:
+		m.ResetRole()
+		return nil
+	case territorymember.FieldJoinedAt:
+		m.ResetJoinedAt()
+		return nil
+	case territorymember.FieldAddedByUserID:
+		m.ResetAddedByUserID()
+		return nil
+	}
+	return fmt.Errorf("unknown TerritoryMember field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *TerritoryMemberMutation) AddedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.territory != nil {
+		edges = append(edges, territorymember.EdgeTerritory)
+	}
+	if m.user != nil {
+		edges = append(edges, territorymember.EdgeUser)
+	}
+	if m.added_by != nil {
+		edges = append(edges, territorymember.EdgeAddedBy)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *TerritoryMemberMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case territorymember.EdgeTerritory:
+		if id := m.territory; id != nil {
+			return []ent.Value{*id}
+		}
+	case territorymember.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	case territorymember.EdgeAddedBy:
+		if id := m.added_by; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *TerritoryMemberMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 3)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *TerritoryMemberMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *TerritoryMemberMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.clearedterritory {
+		edges = append(edges, territorymember.EdgeTerritory)
+	}
+	if m.cleareduser {
+		edges = append(edges, territorymember.EdgeUser)
+	}
+	if m.clearedadded_by {
+		edges = append(edges, territorymember.EdgeAddedBy)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *TerritoryMemberMutation) EdgeCleared(name string) bool {
+	switch name {
+	case territorymember.EdgeTerritory:
+		return m.clearedterritory
+	case territorymember.EdgeUser:
+		return m.cleareduser
+	case territorymember.EdgeAddedBy:
+		return m.clearedadded_by
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *TerritoryMemberMutation) ClearEdge(name string) error {
+	switch name {
+	case territorymember.EdgeTerritory:
+		m.ClearTerritory()
+		return nil
+	case territorymember.EdgeUser:
+		m.ClearUser()
+		return nil
+	case territorymember.EdgeAddedBy:
+		m.ClearAddedBy()
+		return nil
+	}
+	return fmt.Errorf("unknown TerritoryMember unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *TerritoryMemberMutation) ResetEdge(name string) error {
+	switch name {
+	case territorymember.EdgeTerritory:
+		m.ResetTerritory()
+		return nil
+	case territorymember.EdgeUser:
+		m.ResetUser()
+		return nil
+	case territorymember.EdgeAddedBy:
+		m.ResetAddedBy()
+		return nil
+	}
+	return fmt.Errorf("unknown TerritoryMember edge %s", name)
+}
+
 // UsageLogMutation represents an operation that mutates the UsageLog nodes in the graph.
 type UsageLogMutation struct {
 	config
@@ -17492,6 +19475,15 @@ type UserMutation struct {
 	email_sequence_enrollments_made        map[int]struct{}
 	removedemail_sequence_enrollments_made map[int]struct{}
 	clearedemail_sequence_enrollments_made bool
+	territories_created                    map[int]struct{}
+	removedterritories_created             map[int]struct{}
+	clearedterritories_created             bool
+	territory_memberships                  map[int]struct{}
+	removedterritory_memberships           map[int]struct{}
+	clearedterritory_memberships           bool
+	territory_members_added                map[int]struct{}
+	removedterritory_members_added         map[int]struct{}
+	clearedterritory_members_added         bool
 	done                                   bool
 	oldValue                               func(context.Context) (*User, error)
 	predicates                             []predicate.User
@@ -19459,6 +21451,168 @@ func (m *UserMutation) ResetEmailSequenceEnrollmentsMade() {
 	m.removedemail_sequence_enrollments_made = nil
 }
 
+// AddTerritoriesCreatedIDs adds the "territories_created" edge to the Territory entity by ids.
+func (m *UserMutation) AddTerritoriesCreatedIDs(ids ...int) {
+	if m.territories_created == nil {
+		m.territories_created = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.territories_created[ids[i]] = struct{}{}
+	}
+}
+
+// ClearTerritoriesCreated clears the "territories_created" edge to the Territory entity.
+func (m *UserMutation) ClearTerritoriesCreated() {
+	m.clearedterritories_created = true
+}
+
+// TerritoriesCreatedCleared reports if the "territories_created" edge to the Territory entity was cleared.
+func (m *UserMutation) TerritoriesCreatedCleared() bool {
+	return m.clearedterritories_created
+}
+
+// RemoveTerritoriesCreatedIDs removes the "territories_created" edge to the Territory entity by IDs.
+func (m *UserMutation) RemoveTerritoriesCreatedIDs(ids ...int) {
+	if m.removedterritories_created == nil {
+		m.removedterritories_created = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.territories_created, ids[i])
+		m.removedterritories_created[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedTerritoriesCreated returns the removed IDs of the "territories_created" edge to the Territory entity.
+func (m *UserMutation) RemovedTerritoriesCreatedIDs() (ids []int) {
+	for id := range m.removedterritories_created {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// TerritoriesCreatedIDs returns the "territories_created" edge IDs in the mutation.
+func (m *UserMutation) TerritoriesCreatedIDs() (ids []int) {
+	for id := range m.territories_created {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetTerritoriesCreated resets all changes to the "territories_created" edge.
+func (m *UserMutation) ResetTerritoriesCreated() {
+	m.territories_created = nil
+	m.clearedterritories_created = false
+	m.removedterritories_created = nil
+}
+
+// AddTerritoryMembershipIDs adds the "territory_memberships" edge to the TerritoryMember entity by ids.
+func (m *UserMutation) AddTerritoryMembershipIDs(ids ...int) {
+	if m.territory_memberships == nil {
+		m.territory_memberships = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.territory_memberships[ids[i]] = struct{}{}
+	}
+}
+
+// ClearTerritoryMemberships clears the "territory_memberships" edge to the TerritoryMember entity.
+func (m *UserMutation) ClearTerritoryMemberships() {
+	m.clearedterritory_memberships = true
+}
+
+// TerritoryMembershipsCleared reports if the "territory_memberships" edge to the TerritoryMember entity was cleared.
+func (m *UserMutation) TerritoryMembershipsCleared() bool {
+	return m.clearedterritory_memberships
+}
+
+// RemoveTerritoryMembershipIDs removes the "territory_memberships" edge to the TerritoryMember entity by IDs.
+func (m *UserMutation) RemoveTerritoryMembershipIDs(ids ...int) {
+	if m.removedterritory_memberships == nil {
+		m.removedterritory_memberships = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.territory_memberships, ids[i])
+		m.removedterritory_memberships[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedTerritoryMemberships returns the removed IDs of the "territory_memberships" edge to the TerritoryMember entity.
+func (m *UserMutation) RemovedTerritoryMembershipsIDs() (ids []int) {
+	for id := range m.removedterritory_memberships {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// TerritoryMembershipsIDs returns the "territory_memberships" edge IDs in the mutation.
+func (m *UserMutation) TerritoryMembershipsIDs() (ids []int) {
+	for id := range m.territory_memberships {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetTerritoryMemberships resets all changes to the "territory_memberships" edge.
+func (m *UserMutation) ResetTerritoryMemberships() {
+	m.territory_memberships = nil
+	m.clearedterritory_memberships = false
+	m.removedterritory_memberships = nil
+}
+
+// AddTerritoryMembersAddedIDs adds the "territory_members_added" edge to the TerritoryMember entity by ids.
+func (m *UserMutation) AddTerritoryMembersAddedIDs(ids ...int) {
+	if m.territory_members_added == nil {
+		m.territory_members_added = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.territory_members_added[ids[i]] = struct{}{}
+	}
+}
+
+// ClearTerritoryMembersAdded clears the "territory_members_added" edge to the TerritoryMember entity.
+func (m *UserMutation) ClearTerritoryMembersAdded() {
+	m.clearedterritory_members_added = true
+}
+
+// TerritoryMembersAddedCleared reports if the "territory_members_added" edge to the TerritoryMember entity was cleared.
+func (m *UserMutation) TerritoryMembersAddedCleared() bool {
+	return m.clearedterritory_members_added
+}
+
+// RemoveTerritoryMembersAddedIDs removes the "territory_members_added" edge to the TerritoryMember entity by IDs.
+func (m *UserMutation) RemoveTerritoryMembersAddedIDs(ids ...int) {
+	if m.removedterritory_members_added == nil {
+		m.removedterritory_members_added = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.territory_members_added, ids[i])
+		m.removedterritory_members_added[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedTerritoryMembersAdded returns the removed IDs of the "territory_members_added" edge to the TerritoryMember entity.
+func (m *UserMutation) RemovedTerritoryMembersAddedIDs() (ids []int) {
+	for id := range m.removedterritory_members_added {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// TerritoryMembersAddedIDs returns the "territory_members_added" edge IDs in the mutation.
+func (m *UserMutation) TerritoryMembersAddedIDs() (ids []int) {
+	for id := range m.territory_members_added {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetTerritoryMembersAdded resets all changes to the "territory_members_added" edge.
+func (m *UserMutation) ResetTerritoryMembersAdded() {
+	m.territory_members_added = nil
+	m.clearedterritory_members_added = false
+	m.removedterritory_members_added = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -20085,7 +22239,7 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 15)
+	edges := make([]string, 0, 18)
 	if m.subscriptions != nil {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -20130,6 +22284,15 @@ func (m *UserMutation) AddedEdges() []string {
 	}
 	if m.email_sequence_enrollments_made != nil {
 		edges = append(edges, user.EdgeEmailSequenceEnrollmentsMade)
+	}
+	if m.territories_created != nil {
+		edges = append(edges, user.EdgeTerritoriesCreated)
+	}
+	if m.territory_memberships != nil {
+		edges = append(edges, user.EdgeTerritoryMemberships)
+	}
+	if m.territory_members_added != nil {
+		edges = append(edges, user.EdgeTerritoryMembersAdded)
 	}
 	return edges
 }
@@ -20228,13 +22391,31 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeTerritoriesCreated:
+		ids := make([]ent.Value, 0, len(m.territories_created))
+		for id := range m.territories_created {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgeTerritoryMemberships:
+		ids := make([]ent.Value, 0, len(m.territory_memberships))
+		for id := range m.territory_memberships {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgeTerritoryMembersAdded:
+		ids := make([]ent.Value, 0, len(m.territory_members_added))
+		for id := range m.territory_members_added {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 15)
+	edges := make([]string, 0, 18)
 	if m.removedsubscriptions != nil {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -20279,6 +22460,15 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedemail_sequence_enrollments_made != nil {
 		edges = append(edges, user.EdgeEmailSequenceEnrollmentsMade)
+	}
+	if m.removedterritories_created != nil {
+		edges = append(edges, user.EdgeTerritoriesCreated)
+	}
+	if m.removedterritory_memberships != nil {
+		edges = append(edges, user.EdgeTerritoryMemberships)
+	}
+	if m.removedterritory_members_added != nil {
+		edges = append(edges, user.EdgeTerritoryMembersAdded)
 	}
 	return edges
 }
@@ -20377,13 +22567,31 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeTerritoriesCreated:
+		ids := make([]ent.Value, 0, len(m.removedterritories_created))
+		for id := range m.removedterritories_created {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgeTerritoryMemberships:
+		ids := make([]ent.Value, 0, len(m.removedterritory_memberships))
+		for id := range m.removedterritory_memberships {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgeTerritoryMembersAdded:
+		ids := make([]ent.Value, 0, len(m.removedterritory_members_added))
+		for id := range m.removedterritory_members_added {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 15)
+	edges := make([]string, 0, 18)
 	if m.clearedsubscriptions {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -20429,6 +22637,15 @@ func (m *UserMutation) ClearedEdges() []string {
 	if m.clearedemail_sequence_enrollments_made {
 		edges = append(edges, user.EdgeEmailSequenceEnrollmentsMade)
 	}
+	if m.clearedterritories_created {
+		edges = append(edges, user.EdgeTerritoriesCreated)
+	}
+	if m.clearedterritory_memberships {
+		edges = append(edges, user.EdgeTerritoryMemberships)
+	}
+	if m.clearedterritory_members_added {
+		edges = append(edges, user.EdgeTerritoryMembersAdded)
+	}
 	return edges
 }
 
@@ -20466,6 +22683,12 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedemail_sequences_created
 	case user.EdgeEmailSequenceEnrollmentsMade:
 		return m.clearedemail_sequence_enrollments_made
+	case user.EdgeTerritoriesCreated:
+		return m.clearedterritories_created
+	case user.EdgeTerritoryMemberships:
+		return m.clearedterritory_memberships
+	case user.EdgeTerritoryMembersAdded:
+		return m.clearedterritory_members_added
 	}
 	return false
 }
@@ -20526,6 +22749,15 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgeEmailSequenceEnrollmentsMade:
 		m.ResetEmailSequenceEnrollmentsMade()
+		return nil
+	case user.EdgeTerritoriesCreated:
+		m.ResetTerritoriesCreated()
+		return nil
+	case user.EdgeTerritoryMemberships:
+		m.ResetTerritoryMemberships()
+		return nil
+	case user.EdgeTerritoryMembersAdded:
+		m.ResetTerritoryMembersAdded()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

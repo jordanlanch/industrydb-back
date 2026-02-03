@@ -44,6 +44,10 @@ type Tx struct {
 	SavedSearch *SavedSearchClient
 	// Subscription is the client for interacting with the Subscription builders.
 	Subscription *SubscriptionClient
+	// Territory is the client for interacting with the Territory builders.
+	Territory *TerritoryClient
+	// TerritoryMember is the client for interacting with the TerritoryMember builders.
+	TerritoryMember *TerritoryMemberClient
 	// UsageLog is the client for interacting with the UsageLog builders.
 	UsageLog *UsageLogClient
 	// User is the client for interacting with the User builders.
@@ -197,6 +201,8 @@ func (tx *Tx) init() {
 	tx.OrganizationMember = NewOrganizationMemberClient(tx.config)
 	tx.SavedSearch = NewSavedSearchClient(tx.config)
 	tx.Subscription = NewSubscriptionClient(tx.config)
+	tx.Territory = NewTerritoryClient(tx.config)
+	tx.TerritoryMember = NewTerritoryMemberClient(tx.config)
 	tx.UsageLog = NewUsageLogClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.Webhook = NewWebhookClient(tx.config)

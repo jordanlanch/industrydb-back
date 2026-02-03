@@ -22,6 +22,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
 	"github.com/jordanlanch/industrydb/ent/schema"
 	"github.com/jordanlanch/industrydb/ent/subscription"
+	"github.com/jordanlanch/industrydb/ent/territory"
+	"github.com/jordanlanch/industrydb/ent/territorymember"
 	"github.com/jordanlanch/industrydb/ent/usagelog"
 	"github.com/jordanlanch/industrydb/ent/user"
 	"github.com/jordanlanch/industrydb/ent/webhook"
@@ -527,6 +529,62 @@ func init() {
 	subscription.DefaultUpdatedAt = subscriptionDescUpdatedAt.Default.(func() time.Time)
 	// subscription.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	subscription.UpdateDefaultUpdatedAt = subscriptionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	territoryFields := schema.Territory{}.Fields()
+	_ = territoryFields
+	// territoryDescName is the schema descriptor for name field.
+	territoryDescName := territoryFields[0].Descriptor()
+	// territory.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	territory.NameValidator = func() func(string) error {
+		validators := territoryDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// territoryDescCreatedByUserID is the schema descriptor for created_by_user_id field.
+	territoryDescCreatedByUserID := territoryFields[6].Descriptor()
+	// territory.CreatedByUserIDValidator is a validator for the "created_by_user_id" field. It is called by the builders before save.
+	territory.CreatedByUserIDValidator = territoryDescCreatedByUserID.Validators[0].(func(int) error)
+	// territoryDescActive is the schema descriptor for active field.
+	territoryDescActive := territoryFields[7].Descriptor()
+	// territory.DefaultActive holds the default value on creation for the active field.
+	territory.DefaultActive = territoryDescActive.Default.(bool)
+	// territoryDescCreatedAt is the schema descriptor for created_at field.
+	territoryDescCreatedAt := territoryFields[8].Descriptor()
+	// territory.DefaultCreatedAt holds the default value on creation for the created_at field.
+	territory.DefaultCreatedAt = territoryDescCreatedAt.Default.(func() time.Time)
+	// territoryDescUpdatedAt is the schema descriptor for updated_at field.
+	territoryDescUpdatedAt := territoryFields[9].Descriptor()
+	// territory.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	territory.DefaultUpdatedAt = territoryDescUpdatedAt.Default.(func() time.Time)
+	// territory.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	territory.UpdateDefaultUpdatedAt = territoryDescUpdatedAt.UpdateDefault.(func() time.Time)
+	territorymemberFields := schema.TerritoryMember{}.Fields()
+	_ = territorymemberFields
+	// territorymemberDescTerritoryID is the schema descriptor for territory_id field.
+	territorymemberDescTerritoryID := territorymemberFields[0].Descriptor()
+	// territorymember.TerritoryIDValidator is a validator for the "territory_id" field. It is called by the builders before save.
+	territorymember.TerritoryIDValidator = territorymemberDescTerritoryID.Validators[0].(func(int) error)
+	// territorymemberDescUserID is the schema descriptor for user_id field.
+	territorymemberDescUserID := territorymemberFields[1].Descriptor()
+	// territorymember.UserIDValidator is a validator for the "user_id" field. It is called by the builders before save.
+	territorymember.UserIDValidator = territorymemberDescUserID.Validators[0].(func(int) error)
+	// territorymemberDescJoinedAt is the schema descriptor for joined_at field.
+	territorymemberDescJoinedAt := territorymemberFields[3].Descriptor()
+	// territorymember.DefaultJoinedAt holds the default value on creation for the joined_at field.
+	territorymember.DefaultJoinedAt = territorymemberDescJoinedAt.Default.(func() time.Time)
+	// territorymemberDescAddedByUserID is the schema descriptor for added_by_user_id field.
+	territorymemberDescAddedByUserID := territorymemberFields[4].Descriptor()
+	// territorymember.AddedByUserIDValidator is a validator for the "added_by_user_id" field. It is called by the builders before save.
+	territorymember.AddedByUserIDValidator = territorymemberDescAddedByUserID.Validators[0].(func(int) error)
 	usagelogFields := schema.UsageLog{}.Fields()
 	_ = usagelogFields
 	// usagelogDescCount is the schema descriptor for count field.

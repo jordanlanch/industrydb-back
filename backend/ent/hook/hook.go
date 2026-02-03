@@ -201,6 +201,30 @@ func (f SubscriptionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SubscriptionMutation", m)
 }
 
+// The TerritoryFunc type is an adapter to allow the use of ordinary
+// function as Territory mutator.
+type TerritoryFunc func(context.Context, *ent.TerritoryMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TerritoryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TerritoryMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TerritoryMutation", m)
+}
+
+// The TerritoryMemberFunc type is an adapter to allow the use of ordinary
+// function as TerritoryMember mutator.
+type TerritoryMemberFunc func(context.Context, *ent.TerritoryMemberMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TerritoryMemberFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TerritoryMemberMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TerritoryMemberMutation", m)
+}
+
 // The UsageLogFunc type is an adapter to allow the use of ordinary
 // function as UsageLog mutator.
 type UsageLogFunc func(context.Context, *ent.UsageLogMutation) (ent.Value, error)

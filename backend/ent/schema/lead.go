@@ -165,6 +165,11 @@ func (Lead) Edges() []ent.Edge {
 
 		edge.To("email_sequence_sends", EmailSequenceSend.Type).
 			Comment("Emails sent to this lead"),
+
+		edge.From("territory", Territory.Type).
+			Ref("leads").
+			Unique().
+			Comment("Territory this lead belongs to"),
 	}
 }
 

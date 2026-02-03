@@ -54,6 +54,12 @@ type SavedSearch func(*sql.Selector)
 // Subscription is the predicate function for subscription builders.
 type Subscription func(*sql.Selector)
 
+// Territory is the predicate function for territory builders.
+type Territory func(*sql.Selector)
+
+// TerritoryMember is the predicate function for territorymember builders.
+type TerritoryMember func(*sql.Selector)
+
 // UsageLog is the predicate function for usagelog builders.
 type UsageLog func(*sql.Selector)
 

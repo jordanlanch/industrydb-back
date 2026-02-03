@@ -103,9 +103,15 @@ type UserEdges struct {
 	EmailSequencesCreated []*EmailSequence `json:"email_sequences_created,omitempty"`
 	// Email sequence enrollments made by this user
 	EmailSequenceEnrollmentsMade []*EmailSequenceEnrollment `json:"email_sequence_enrollments_made,omitempty"`
+	// Territories created by this user
+	TerritoriesCreated []*Territory `json:"territories_created,omitempty"`
+	// Territories this user is a member of
+	TerritoryMemberships []*TerritoryMember `json:"territory_memberships,omitempty"`
+	// Territory members added by this user
+	TerritoryMembersAdded []*TerritoryMember `json:"territory_members_added,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [15]bool
+	loadedTypes [18]bool
 }
 
 // SubscriptionsOrErr returns the Subscriptions value or an error if the edge
@@ -241,6 +247,33 @@ func (e UserEdges) EmailSequenceEnrollmentsMadeOrErr() ([]*EmailSequenceEnrollme
 		return e.EmailSequenceEnrollmentsMade, nil
 	}
 	return nil, &NotLoadedError{edge: "email_sequence_enrollments_made"}
+}
+
+// TerritoriesCreatedOrErr returns the TerritoriesCreated value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) TerritoriesCreatedOrErr() ([]*Territory, error) {
+	if e.loadedTypes[15] {
+		return e.TerritoriesCreated, nil
+	}
+	return nil, &NotLoadedError{edge: "territories_created"}
+}
+
+// TerritoryMembershipsOrErr returns the TerritoryMemberships value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) TerritoryMembershipsOrErr() ([]*TerritoryMember, error) {
+	if e.loadedTypes[16] {
+		return e.TerritoryMemberships, nil
+	}
+	return nil, &NotLoadedError{edge: "territory_memberships"}
+}
+
+// TerritoryMembersAddedOrErr returns the TerritoryMembersAdded value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) TerritoryMembersAddedOrErr() ([]*TerritoryMember, error) {
+	if e.loadedTypes[17] {
+		return e.TerritoryMembersAdded, nil
+	}
+	return nil, &NotLoadedError{edge: "territory_members_added"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -517,6 +550,21 @@ func (_m *User) QueryEmailSequencesCreated() *EmailSequenceQuery {
 // QueryEmailSequenceEnrollmentsMade queries the "email_sequence_enrollments_made" edge of the User entity.
 func (_m *User) QueryEmailSequenceEnrollmentsMade() *EmailSequenceEnrollmentQuery {
 	return NewUserClient(_m.config).QueryEmailSequenceEnrollmentsMade(_m)
+}
+
+// QueryTerritoriesCreated queries the "territories_created" edge of the User entity.
+func (_m *User) QueryTerritoriesCreated() *TerritoryQuery {
+	return NewUserClient(_m.config).QueryTerritoriesCreated(_m)
+}
+
+// QueryTerritoryMemberships queries the "territory_memberships" edge of the User entity.
+func (_m *User) QueryTerritoryMemberships() *TerritoryMemberQuery {
+	return NewUserClient(_m.config).QueryTerritoryMemberships(_m)
+}
+
+// QueryTerritoryMembersAdded queries the "territory_members_added" edge of the User entity.
+func (_m *User) QueryTerritoryMembersAdded() *TerritoryMemberQuery {
+	return NewUserClient(_m.config).QueryTerritoryMembersAdded(_m)
 }
 
 // Update returns a builder for updating this User.
