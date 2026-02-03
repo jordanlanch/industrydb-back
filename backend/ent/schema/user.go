@@ -152,6 +152,10 @@ func (User) Edges() []ent.Edge {
 			Comment("Territories this user is a member of"),
 		edge.To("territory_members_added", TerritoryMember.Type).
 			Comment("Territory members added by this user"),
+		edge.To("sent_referrals", Referral.Type).
+			Comment("Referrals sent by this user"),
+		edge.To("received_referrals", Referral.Type).
+			Comment("Referrals received by this user (how they signed up)"),
 	}
 }
 

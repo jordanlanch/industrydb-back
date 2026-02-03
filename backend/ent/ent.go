@@ -26,6 +26,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
+	"github.com/jordanlanch/industrydb/ent/referral"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
 	"github.com/jordanlanch/industrydb/ent/subscription"
 	"github.com/jordanlanch/industrydb/ent/territory"
@@ -107,6 +108,7 @@ func checkColumn(t, c string) error {
 			leadstatushistory.Table:       leadstatushistory.ValidColumn,
 			organization.Table:            organization.ValidColumn,
 			organizationmember.Table:      organizationmember.ValidColumn,
+			referral.Table:                referral.ValidColumn,
 			savedsearch.Table:             savedsearch.ValidColumn,
 			subscription.Table:            subscription.ValidColumn,
 			territory.Table:               territory.ValidColumn,

@@ -48,6 +48,9 @@ type Organization func(*sql.Selector)
 // OrganizationMember is the predicate function for organizationmember builders.
 type OrganizationMember func(*sql.Selector)
 
+// Referral is the predicate function for referral builders.
+type Referral func(*sql.Selector)
+
 // SavedSearch is the predicate function for savedsearch builders.
 type SavedSearch func(*sql.Selector)
 

@@ -29,6 +29,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
+	"github.com/jordanlanch/industrydb/ent/referral"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
 	"github.com/jordanlanch/industrydb/ent/subscription"
 	"github.com/jordanlanch/industrydb/ent/territory"
@@ -71,6 +72,8 @@ type Client struct {
 	Organization *OrganizationClient
 	// OrganizationMember is the client for interacting with the OrganizationMember builders.
 	OrganizationMember *OrganizationMemberClient
+	// Referral is the client for interacting with the Referral builders.
+	Referral *ReferralClient
 	// SavedSearch is the client for interacting with the SavedSearch builders.
 	SavedSearch *SavedSearchClient
 	// Subscription is the client for interacting with the Subscription builders.
@@ -110,6 +113,7 @@ func (c *Client) init() {
 	c.LeadStatusHistory = NewLeadStatusHistoryClient(c.config)
 	c.Organization = NewOrganizationClient(c.config)
 	c.OrganizationMember = NewOrganizationMemberClient(c.config)
+	c.Referral = NewReferralClient(c.config)
 	c.SavedSearch = NewSavedSearchClient(c.config)
 	c.Subscription = NewSubscriptionClient(c.config)
 	c.Territory = NewTerritoryClient(c.config)
@@ -223,6 +227,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		LeadStatusHistory:       NewLeadStatusHistoryClient(cfg),
 		Organization:            NewOrganizationClient(cfg),
 		OrganizationMember:      NewOrganizationMemberClient(cfg),
+		Referral:                NewReferralClient(cfg),
 		SavedSearch:             NewSavedSearchClient(cfg),
 		Subscription:            NewSubscriptionClient(cfg),
 		Territory:               NewTerritoryClient(cfg),
@@ -263,6 +268,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		LeadStatusHistory:       NewLeadStatusHistoryClient(cfg),
 		Organization:            NewOrganizationClient(cfg),
 		OrganizationMember:      NewOrganizationMemberClient(cfg),
+		Referral:                NewReferralClient(cfg),
 		SavedSearch:             NewSavedSearchClient(cfg),
 		Subscription:            NewSubscriptionClient(cfg),
 		Territory:               NewTerritoryClient(cfg),
@@ -302,7 +308,7 @@ func (c *Client) Use(hooks ...Hook) {
 		c.APIKey, c.AuditLog, c.EmailSequence, c.EmailSequenceEnrollment,
 		c.EmailSequenceSend, c.EmailSequenceStep, c.Export, c.Industry, c.Lead,
 		c.LeadAssignment, c.LeadNote, c.LeadStatusHistory, c.Organization,
-		c.OrganizationMember, c.SavedSearch, c.Subscription, c.Territory,
+		c.OrganizationMember, c.Referral, c.SavedSearch, c.Subscription, c.Territory,
 		c.TerritoryMember, c.UsageLog, c.User, c.Webhook,
 	} {
 		n.Use(hooks...)
@@ -316,7 +322,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.APIKey, c.AuditLog, c.EmailSequence, c.EmailSequenceEnrollment,
 		c.EmailSequenceSend, c.EmailSequenceStep, c.Export, c.Industry, c.Lead,
 		c.LeadAssignment, c.LeadNote, c.LeadStatusHistory, c.Organization,
-		c.OrganizationMember, c.SavedSearch, c.Subscription, c.Territory,
+		c.OrganizationMember, c.Referral, c.SavedSearch, c.Subscription, c.Territory,
 		c.TerritoryMember, c.UsageLog, c.User, c.Webhook,
 	} {
 		n.Intercept(interceptors...)
@@ -354,6 +360,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Organization.mutate(ctx, m)
 	case *OrganizationMemberMutation:
 		return c.OrganizationMember.mutate(ctx, m)
+	case *ReferralMutation:
+		return c.Referral.mutate(ctx, m)
 	case *SavedSearchMutation:
 		return c.SavedSearch.mutate(ctx, m)
 	case *SubscriptionMutation:
@@ -2779,6 +2787,171 @@ func (c *OrganizationMemberClient) mutate(ctx context.Context, m *OrganizationMe
 	}
 }
 
+// ReferralClient is a client for the Referral schema.
+type ReferralClient struct {
+	config
+}
+
+// NewReferralClient returns a client for the Referral from the given config.
+func NewReferralClient(c config) *ReferralClient {
+	return &ReferralClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `referral.Hooks(f(g(h())))`.
+func (c *ReferralClient) Use(hooks ...Hook) {
+	c.hooks.Referral = append(c.hooks.Referral, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `referral.Intercept(f(g(h())))`.
+func (c *ReferralClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Referral = append(c.inters.Referral, interceptors...)
+}
+
+// Create returns a builder for creating a Referral entity.
+func (c *ReferralClient) Create() *ReferralCreate {
+	mutation := newReferralMutation(c.config, OpCreate)
+	return &ReferralCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Referral entities.
+func (c *ReferralClient) CreateBulk(builders ...*ReferralCreate) *ReferralCreateBulk {
+	return &ReferralCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ReferralClient) MapCreateBulk(slice any, setFunc func(*ReferralCreate, int)) *ReferralCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ReferralCreateBulk{err: fmt.Errorf("calling to ReferralClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ReferralCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ReferralCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Referral.
+func (c *ReferralClient) Update() *ReferralUpdate {
+	mutation := newReferralMutation(c.config, OpUpdate)
+	return &ReferralUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ReferralClient) UpdateOne(_m *Referral) *ReferralUpdateOne {
+	mutation := newReferralMutation(c.config, OpUpdateOne, withReferral(_m))
+	return &ReferralUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ReferralClient) UpdateOneID(id int) *ReferralUpdateOne {
+	mutation := newReferralMutation(c.config, OpUpdateOne, withReferralID(id))
+	return &ReferralUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Referral.
+func (c *ReferralClient) Delete() *ReferralDelete {
+	mutation := newReferralMutation(c.config, OpDelete)
+	return &ReferralDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ReferralClient) DeleteOne(_m *Referral) *ReferralDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ReferralClient) DeleteOneID(id int) *ReferralDeleteOne {
+	builder := c.Delete().Where(referral.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ReferralDeleteOne{builder}
+}
+
+// Query returns a query builder for Referral.
+func (c *ReferralClient) Query() *ReferralQuery {
+	return &ReferralQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeReferral},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Referral entity by its id.
+func (c *ReferralClient) Get(ctx context.Context, id int) (*Referral, error) {
+	return c.Query().Where(referral.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ReferralClient) GetX(ctx context.Context, id int) *Referral {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryReferrer queries the referrer edge of a Referral.
+func (c *ReferralClient) QueryReferrer(_m *Referral) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(referral.Table, referral.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, referral.ReferrerTable, referral.ReferrerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReferred queries the referred edge of a Referral.
+func (c *ReferralClient) QueryReferred(_m *Referral) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(referral.Table, referral.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, referral.ReferredTable, referral.ReferredColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ReferralClient) Hooks() []Hook {
+	return c.hooks.Referral
+}
+
+// Interceptors returns the client interceptors.
+func (c *ReferralClient) Interceptors() []Interceptor {
+	return c.inters.Referral
+}
+
+func (c *ReferralClient) mutate(ctx context.Context, m *ReferralMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ReferralCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ReferralUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ReferralUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ReferralDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Referral mutation op: %q", m.Op())
+	}
+}
+
 // SavedSearchClient is a client for the SavedSearch schema.
 type SavedSearchClient struct {
 	config
@@ -3984,6 +4157,38 @@ func (c *UserClient) QueryTerritoryMembersAdded(_m *User) *TerritoryMemberQuery 
 	return query
 }
 
+// QuerySentReferrals queries the sent_referrals edge of a User.
+func (c *UserClient) QuerySentReferrals(_m *User) *ReferralQuery {
+	query := (&ReferralClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(referral.Table, referral.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.SentReferralsTable, user.SentReferralsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReceivedReferrals queries the received_referrals edge of a User.
+func (c *UserClient) QueryReceivedReferrals(_m *User) *ReferralQuery {
+	query := (&ReferralClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(referral.Table, referral.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ReceivedReferralsTable, user.ReceivedReferralsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -4163,13 +4368,14 @@ type (
 	hooks struct {
 		APIKey, AuditLog, EmailSequence, EmailSequenceEnrollment, EmailSequenceSend,
 		EmailSequenceStep, Export, Industry, Lead, LeadAssignment, LeadNote,
-		LeadStatusHistory, Organization, OrganizationMember, SavedSearch, Subscription,
-		Territory, TerritoryMember, UsageLog, User, Webhook []ent.Hook
+		LeadStatusHistory, Organization, OrganizationMember, Referral, SavedSearch,
+		Subscription, Territory, TerritoryMember, UsageLog, User, Webhook []ent.Hook
 	}
 	inters struct {
 		APIKey, AuditLog, EmailSequence, EmailSequenceEnrollment, EmailSequenceSend,
 		EmailSequenceStep, Export, Industry, Lead, LeadAssignment, LeadNote,
-		LeadStatusHistory, Organization, OrganizationMember, SavedSearch, Subscription,
-		Territory, TerritoryMember, UsageLog, User, Webhook []ent.Interceptor
+		LeadStatusHistory, Organization, OrganizationMember, Referral, SavedSearch,
+		Subscription, Territory, TerritoryMember, UsageLog, User,
+		Webhook []ent.Interceptor
 	}
 )

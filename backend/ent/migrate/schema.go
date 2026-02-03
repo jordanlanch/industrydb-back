@@ -825,6 +825,62 @@ var (
 			},
 		},
 	}
+	// ReferralsColumns holds the columns for the "referrals" table.
+	ReferralsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "referral_code", Type: field.TypeString, Unique: true, Size: 32},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "completed", "rewarded", "expired"}, Default: "pending"},
+		{Name: "reward_type", Type: field.TypeEnum, Enums: []string{"credit", "discount", "upgrade", "none"}, Default: "credit"},
+		{Name: "reward_amount", Type: field.TypeFloat64, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "completed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rewarded_at", Type: field.TypeTime, Nullable: true},
+		{Name: "expires_at", Type: field.TypeTime, Nullable: true},
+		{Name: "referrer_user_id", Type: field.TypeInt},
+		{Name: "referred_user_id", Type: field.TypeInt, Nullable: true},
+	}
+	// ReferralsTable holds the schema information for the "referrals" table.
+	ReferralsTable = &schema.Table{
+		Name:       "referrals",
+		Columns:    ReferralsColumns,
+		PrimaryKey: []*schema.Column{ReferralsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "referrals_users_sent_referrals",
+				Columns:    []*schema.Column{ReferralsColumns[9]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "referrals_users_received_referrals",
+				Columns:    []*schema.Column{ReferralsColumns[10]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "referral_referral_code",
+				Unique:  true,
+				Columns: []*schema.Column{ReferralsColumns[1]},
+			},
+			{
+				Name:    "referral_referrer_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{ReferralsColumns[9]},
+			},
+			{
+				Name:    "referral_status",
+				Unique:  false,
+				Columns: []*schema.Column{ReferralsColumns[2]},
+			},
+			{
+				Name:    "referral_referrer_user_id_status",
+				Unique:  false,
+				Columns: []*schema.Column{ReferralsColumns[9], ReferralsColumns[2]},
+			},
+		},
+	}
 	// SavedSearchesColumns holds the columns for the "saved_searches" table.
 	SavedSearchesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -1162,6 +1218,7 @@ var (
 		LeadStatusHistoriesTable,
 		OrganizationsTable,
 		OrganizationMembersTable,
+		ReferralsTable,
 		SavedSearchesTable,
 		SubscriptionsTable,
 		TerritoriesTable,
@@ -1196,6 +1253,8 @@ func init() {
 	OrganizationsTable.ForeignKeys[0].RefTable = UsersTable
 	OrganizationMembersTable.ForeignKeys[0].RefTable = OrganizationsTable
 	OrganizationMembersTable.ForeignKeys[1].RefTable = UsersTable
+	ReferralsTable.ForeignKeys[0].RefTable = UsersTable
+	ReferralsTable.ForeignKeys[1].RefTable = UsersTable
 	SavedSearchesTable.ForeignKeys[0].RefTable = UsersTable
 	SubscriptionsTable.ForeignKeys[0].RefTable = UsersTable
 	TerritoriesTable.ForeignKeys[0].RefTable = UsersTable

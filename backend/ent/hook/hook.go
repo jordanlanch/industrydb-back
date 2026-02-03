@@ -177,6 +177,18 @@ func (f OrganizationMemberFunc) Mutate(ctx context.Context, m ent.Mutation) (ent
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.OrganizationMemberMutation", m)
 }
 
+// The ReferralFunc type is an adapter to allow the use of ordinary
+// function as Referral mutator.
+type ReferralFunc func(context.Context, *ent.ReferralMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ReferralFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ReferralMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ReferralMutation", m)
+}
+
 // The SavedSearchFunc type is an adapter to allow the use of ordinary
 // function as SavedSearch mutator.
 type SavedSearchFunc func(context.Context, *ent.SavedSearchMutation) (ent.Value, error)

@@ -1709,6 +1709,52 @@ func HasTerritoryMembersAddedWith(preds ...predicate.TerritoryMember) predicate.
 	})
 }
 
+// HasSentReferrals applies the HasEdge predicate on the "sent_referrals" edge.
+func HasSentReferrals() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, SentReferralsTable, SentReferralsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSentReferralsWith applies the HasEdge predicate on the "sent_referrals" edge with a given conditions (other predicates).
+func HasSentReferralsWith(preds ...predicate.Referral) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newSentReferralsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasReceivedReferrals applies the HasEdge predicate on the "received_referrals" edge.
+func HasReceivedReferrals() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ReceivedReferralsTable, ReceivedReferralsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasReceivedReferralsWith applies the HasEdge predicate on the "received_referrals" edge with a given conditions (other predicates).
+func HasReceivedReferralsWith(preds ...predicate.Referral) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newReceivedReferralsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.User) predicate.User {
 	return predicate.User(sql.AndPredicates(predicates...))

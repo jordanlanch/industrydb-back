@@ -99,6 +99,10 @@ const (
 	EdgeTerritoryMemberships = "territory_memberships"
 	// EdgeTerritoryMembersAdded holds the string denoting the territory_members_added edge name in mutations.
 	EdgeTerritoryMembersAdded = "territory_members_added"
+	// EdgeSentReferrals holds the string denoting the sent_referrals edge name in mutations.
+	EdgeSentReferrals = "sent_referrals"
+	// EdgeReceivedReferrals holds the string denoting the received_referrals edge name in mutations.
+	EdgeReceivedReferrals = "received_referrals"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// SubscriptionsTable is the table that holds the subscriptions relation/edge.
@@ -227,6 +231,20 @@ const (
 	TerritoryMembersAddedInverseTable = "territory_members"
 	// TerritoryMembersAddedColumn is the table column denoting the territory_members_added relation/edge.
 	TerritoryMembersAddedColumn = "added_by_user_id"
+	// SentReferralsTable is the table that holds the sent_referrals relation/edge.
+	SentReferralsTable = "referrals"
+	// SentReferralsInverseTable is the table name for the Referral entity.
+	// It exists in this package in order to avoid circular dependency with the "referral" package.
+	SentReferralsInverseTable = "referrals"
+	// SentReferralsColumn is the table column denoting the sent_referrals relation/edge.
+	SentReferralsColumn = "referrer_user_id"
+	// ReceivedReferralsTable is the table that holds the received_referrals relation/edge.
+	ReceivedReferralsTable = "referrals"
+	// ReceivedReferralsInverseTable is the table name for the Referral entity.
+	// It exists in this package in order to avoid circular dependency with the "referral" package.
+	ReceivedReferralsInverseTable = "referrals"
+	// ReceivedReferralsColumn is the table column denoting the received_referrals relation/edge.
+	ReceivedReferralsColumn = "referred_user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -737,6 +755,34 @@ func ByTerritoryMembersAdded(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOp
 		sqlgraph.OrderByNeighborTerms(s, newTerritoryMembersAddedStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// BySentReferralsCount orders the results by sent_referrals count.
+func BySentReferralsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newSentReferralsStep(), opts...)
+	}
+}
+
+// BySentReferrals orders the results by sent_referrals terms.
+func BySentReferrals(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSentReferralsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByReceivedReferralsCount orders the results by received_referrals count.
+func ByReceivedReferralsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newReceivedReferralsStep(), opts...)
+	}
+}
+
+// ByReceivedReferrals orders the results by received_referrals terms.
+func ByReceivedReferrals(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newReceivedReferralsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSubscriptionsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -861,5 +907,19 @@ func newTerritoryMembersAddedStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(TerritoryMembersAddedInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, TerritoryMembersAddedTable, TerritoryMembersAddedColumn),
+	)
+}
+func newSentReferralsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SentReferralsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, SentReferralsTable, SentReferralsColumn),
+	)
+}
+func newReceivedReferralsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ReceivedReferralsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ReceivedReferralsTable, ReceivedReferralsColumn),
 	)
 }

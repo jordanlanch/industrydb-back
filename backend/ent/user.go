@@ -109,9 +109,13 @@ type UserEdges struct {
 	TerritoryMemberships []*TerritoryMember `json:"territory_memberships,omitempty"`
 	// Territory members added by this user
 	TerritoryMembersAdded []*TerritoryMember `json:"territory_members_added,omitempty"`
+	// Referrals sent by this user
+	SentReferrals []*Referral `json:"sent_referrals,omitempty"`
+	// Referrals received by this user (how they signed up)
+	ReceivedReferrals []*Referral `json:"received_referrals,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [18]bool
+	loadedTypes [20]bool
 }
 
 // SubscriptionsOrErr returns the Subscriptions value or an error if the edge
@@ -274,6 +278,24 @@ func (e UserEdges) TerritoryMembersAddedOrErr() ([]*TerritoryMember, error) {
 		return e.TerritoryMembersAdded, nil
 	}
 	return nil, &NotLoadedError{edge: "territory_members_added"}
+}
+
+// SentReferralsOrErr returns the SentReferrals value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) SentReferralsOrErr() ([]*Referral, error) {
+	if e.loadedTypes[18] {
+		return e.SentReferrals, nil
+	}
+	return nil, &NotLoadedError{edge: "sent_referrals"}
+}
+
+// ReceivedReferralsOrErr returns the ReceivedReferrals value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) ReceivedReferralsOrErr() ([]*Referral, error) {
+	if e.loadedTypes[19] {
+		return e.ReceivedReferrals, nil
+	}
+	return nil, &NotLoadedError{edge: "received_referrals"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -565,6 +587,16 @@ func (_m *User) QueryTerritoryMemberships() *TerritoryMemberQuery {
 // QueryTerritoryMembersAdded queries the "territory_members_added" edge of the User entity.
 func (_m *User) QueryTerritoryMembersAdded() *TerritoryMemberQuery {
 	return NewUserClient(_m.config).QueryTerritoryMembersAdded(_m)
+}
+
+// QuerySentReferrals queries the "sent_referrals" edge of the User entity.
+func (_m *User) QuerySentReferrals() *ReferralQuery {
+	return NewUserClient(_m.config).QuerySentReferrals(_m)
+}
+
+// QueryReceivedReferrals queries the "received_referrals" edge of the User entity.
+func (_m *User) QueryReceivedReferrals() *ReferralQuery {
+	return NewUserClient(_m.config).QueryReceivedReferrals(_m)
 }
 
 // Update returns a builder for updating this User.

@@ -361,6 +361,7 @@ func main() {
 	funnelHandler := handlers.NewFunnelHandler(db.Ent)
 	cohortHandler := handlers.NewCohortHandler(db.Ent)
 	revenueHandler := handlers.NewRevenueHandler(db.Ent)
+	referralHandler := handlers.NewReferralHandler(db.Ent)
 	log.Printf("✅ Webhook and batch handlers initialized")
 
 	// Backup handler (admin only, if enabled)
@@ -530,6 +531,17 @@ func main() {
 			revenueGroup.GET("/by-tier", revenueHandler.GetRevenueByTier)
 			revenueGroup.GET("/growth-rate", revenueHandler.GetGrowthRate)
 		}
+
+		// Referral program routes
+		referralGroup := protected.Group("/referrals")
+		{
+			referralGroup.GET("/code", referralHandler.GetReferralCode)
+			referralGroup.GET("/stats", referralHandler.GetReferralStats)
+			referralGroup.GET("/history", referralHandler.ListReferrals)
+		}
+
+		// Referral validation (public - no auth required)
+		v1.GET("/referrals/validate", referralHandler.ValidateReferralCode)
 
 		// Export routes (require email verification)
 		exportsGroup := protected.Group("/exports")

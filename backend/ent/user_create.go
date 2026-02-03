@@ -20,6 +20,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
+	"github.com/jordanlanch/industrydb/ent/referral"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
 	"github.com/jordanlanch/industrydb/ent/subscription"
 	"github.com/jordanlanch/industrydb/ent/territory"
@@ -618,6 +619,36 @@ func (_c *UserCreate) AddTerritoryMembersAdded(v ...*TerritoryMember) *UserCreat
 	return _c.AddTerritoryMembersAddedIDs(ids...)
 }
 
+// AddSentReferralIDs adds the "sent_referrals" edge to the Referral entity by IDs.
+func (_c *UserCreate) AddSentReferralIDs(ids ...int) *UserCreate {
+	_c.mutation.AddSentReferralIDs(ids...)
+	return _c
+}
+
+// AddSentReferrals adds the "sent_referrals" edges to the Referral entity.
+func (_c *UserCreate) AddSentReferrals(v ...*Referral) *UserCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddSentReferralIDs(ids...)
+}
+
+// AddReceivedReferralIDs adds the "received_referrals" edge to the Referral entity by IDs.
+func (_c *UserCreate) AddReceivedReferralIDs(ids ...int) *UserCreate {
+	_c.mutation.AddReceivedReferralIDs(ids...)
+	return _c
+}
+
+// AddReceivedReferrals adds the "received_referrals" edges to the Referral entity.
+func (_c *UserCreate) AddReceivedReferrals(v ...*Referral) *UserCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddReceivedReferralIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_c *UserCreate) Mutation() *UserMutation {
 	return _c.mutation
@@ -1186,6 +1217,38 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(territorymember.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.SentReferralsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.SentReferralsTable,
+			Columns: []string{user.SentReferralsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referral.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ReceivedReferralsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ReceivedReferralsTable,
+			Columns: []string{user.ReceivedReferralsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(referral.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

@@ -40,6 +40,8 @@ type Tx struct {
 	Organization *OrganizationClient
 	// OrganizationMember is the client for interacting with the OrganizationMember builders.
 	OrganizationMember *OrganizationMemberClient
+	// Referral is the client for interacting with the Referral builders.
+	Referral *ReferralClient
 	// SavedSearch is the client for interacting with the SavedSearch builders.
 	SavedSearch *SavedSearchClient
 	// Subscription is the client for interacting with the Subscription builders.
@@ -199,6 +201,7 @@ func (tx *Tx) init() {
 	tx.LeadStatusHistory = NewLeadStatusHistoryClient(tx.config)
 	tx.Organization = NewOrganizationClient(tx.config)
 	tx.OrganizationMember = NewOrganizationMemberClient(tx.config)
+	tx.Referral = NewReferralClient(tx.config)
 	tx.SavedSearch = NewSavedSearchClient(tx.config)
 	tx.Subscription = NewSubscriptionClient(tx.config)
 	tx.Territory = NewTerritoryClient(tx.config)

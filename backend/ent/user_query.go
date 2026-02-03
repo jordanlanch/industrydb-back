@@ -23,6 +23,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/predicate"
+	"github.com/jordanlanch/industrydb/ent/referral"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
 	"github.com/jordanlanch/industrydb/ent/subscription"
 	"github.com/jordanlanch/industrydb/ent/territory"
@@ -57,6 +58,8 @@ type UserQuery struct {
 	withTerritoriesCreated           *TerritoryQuery
 	withTerritoryMemberships         *TerritoryMemberQuery
 	withTerritoryMembersAdded        *TerritoryMemberQuery
+	withSentReferrals                *ReferralQuery
+	withReceivedReferrals            *ReferralQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -489,6 +492,50 @@ func (_q *UserQuery) QueryTerritoryMembersAdded() *TerritoryMemberQuery {
 	return query
 }
 
+// QuerySentReferrals chains the current query on the "sent_referrals" edge.
+func (_q *UserQuery) QuerySentReferrals() *ReferralQuery {
+	query := (&ReferralClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(referral.Table, referral.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.SentReferralsTable, user.SentReferralsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryReceivedReferrals chains the current query on the "received_referrals" edge.
+func (_q *UserQuery) QueryReceivedReferrals() *ReferralQuery {
+	query := (&ReferralClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(referral.Table, referral.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ReceivedReferralsTable, user.ReceivedReferralsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first User entity from the query.
 // Returns a *NotFoundError when no User was found.
 func (_q *UserQuery) First(ctx context.Context) (*User, error) {
@@ -699,6 +746,8 @@ func (_q *UserQuery) Clone() *UserQuery {
 		withTerritoriesCreated:           _q.withTerritoriesCreated.Clone(),
 		withTerritoryMemberships:         _q.withTerritoryMemberships.Clone(),
 		withTerritoryMembersAdded:        _q.withTerritoryMembersAdded.Clone(),
+		withSentReferrals:                _q.withSentReferrals.Clone(),
+		withReceivedReferrals:            _q.withReceivedReferrals.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -903,6 +952,28 @@ func (_q *UserQuery) WithTerritoryMembersAdded(opts ...func(*TerritoryMemberQuer
 	return _q
 }
 
+// WithSentReferrals tells the query-builder to eager-load the nodes that are connected to
+// the "sent_referrals" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithSentReferrals(opts ...func(*ReferralQuery)) *UserQuery {
+	query := (&ReferralClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withSentReferrals = query
+	return _q
+}
+
+// WithReceivedReferrals tells the query-builder to eager-load the nodes that are connected to
+// the "received_referrals" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithReceivedReferrals(opts ...func(*ReferralQuery)) *UserQuery {
+	query := (&ReferralClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withReceivedReferrals = query
+	return _q
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -981,7 +1052,7 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
-		loadedTypes = [18]bool{
+		loadedTypes = [20]bool{
 			_q.withSubscriptions != nil,
 			_q.withExports != nil,
 			_q.withAPIKeys != nil,
@@ -1000,6 +1071,8 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			_q.withTerritoriesCreated != nil,
 			_q.withTerritoryMemberships != nil,
 			_q.withTerritoryMembersAdded != nil,
+			_q.withSentReferrals != nil,
+			_q.withReceivedReferrals != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -1153,6 +1226,20 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			func(n *User, e *TerritoryMember) {
 				n.Edges.TerritoryMembersAdded = append(n.Edges.TerritoryMembersAdded, e)
 			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withSentReferrals; query != nil {
+		if err := _q.loadSentReferrals(ctx, query, nodes,
+			func(n *User) { n.Edges.SentReferrals = []*Referral{} },
+			func(n *User, e *Referral) { n.Edges.SentReferrals = append(n.Edges.SentReferrals, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withReceivedReferrals; query != nil {
+		if err := _q.loadReceivedReferrals(ctx, query, nodes,
+			func(n *User) { n.Edges.ReceivedReferrals = []*Referral{} },
+			func(n *User, e *Referral) { n.Edges.ReceivedReferrals = append(n.Edges.ReceivedReferrals, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -1701,6 +1788,69 @@ func (_q *UserQuery) loadTerritoryMembersAdded(ctx context.Context, query *Terri
 		node, ok := nodeids[fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "added_by_user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadSentReferrals(ctx context.Context, query *ReferralQuery, nodes []*User, init func(*User), assign func(*User, *Referral)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(referral.FieldReferrerUserID)
+	}
+	query.Where(predicate.Referral(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.SentReferralsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.ReferrerUserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "referrer_user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadReceivedReferrals(ctx context.Context, query *ReferralQuery, nodes []*User, init func(*User), assign func(*User, *Referral)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(referral.FieldReferredUserID)
+	}
+	query.Where(predicate.Referral(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.ReceivedReferralsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.ReferredUserID
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "referred_user_id" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "referred_user_id" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

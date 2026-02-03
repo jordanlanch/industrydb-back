@@ -19,6 +19,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
+	"github.com/jordanlanch/industrydb/ent/referral"
 	"github.com/jordanlanch/industrydb/ent/savedsearch"
 	"github.com/jordanlanch/industrydb/ent/schema"
 	"github.com/jordanlanch/industrydb/ent/subscription"
@@ -479,6 +480,20 @@ func init() {
 	organizationmember.DefaultUpdatedAt = organizationmemberDescUpdatedAt.Default.(func() time.Time)
 	// organizationmember.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	organizationmember.UpdateDefaultUpdatedAt = organizationmemberDescUpdatedAt.UpdateDefault.(func() time.Time)
+	referralFields := schema.Referral{}.Fields()
+	_ = referralFields
+	// referralDescReferralCode is the schema descriptor for referral_code field.
+	referralDescReferralCode := referralFields[2].Descriptor()
+	// referral.ReferralCodeValidator is a validator for the "referral_code" field. It is called by the builders before save.
+	referral.ReferralCodeValidator = referralDescReferralCode.Validators[0].(func(string) error)
+	// referralDescRewardAmount is the schema descriptor for reward_amount field.
+	referralDescRewardAmount := referralFields[5].Descriptor()
+	// referral.DefaultRewardAmount holds the default value on creation for the reward_amount field.
+	referral.DefaultRewardAmount = referralDescRewardAmount.Default.(float64)
+	// referralDescCreatedAt is the schema descriptor for created_at field.
+	referralDescCreatedAt := referralFields[6].Descriptor()
+	// referral.DefaultCreatedAt holds the default value on creation for the created_at field.
+	referral.DefaultCreatedAt = referralDescCreatedAt.Default.(func() time.Time)
 	savedsearchFields := schema.SavedSearch{}.Fields()
 	_ = savedsearchFields
 	// savedsearchDescName is the schema descriptor for name field.
