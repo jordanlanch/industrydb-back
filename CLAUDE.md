@@ -1840,6 +1840,190 @@ curl -H "X-API-Key: idb_abc123..." https://api.industrydb.io/api/v1/leads
 - Handler: `backend/pkg/api/handlers/apikey.go`
 - Schema: `backend/ent/schema/apikey.go`
 
+### Webhooks
+**Implemented:** 2026-02-03
+
+Webhooks allow you to receive real-time notifications when specific events occur in your IndustryDB account. When an event is triggered, IndustryDB will send an HTTP POST request to your configured webhook URL.
+
+```
+POST   /api/v1/webhooks          # Create new webhook
+GET    /api/v1/webhooks          # List all user's webhooks
+GET    /api/v1/webhooks/:id      # Get single webhook details
+PATCH  /api/v1/webhooks/:id      # Update webhook configuration
+DELETE /api/v1/webhooks/:id      # Delete webhook
+```
+
+**Create Webhook:**
+```bash
+POST /api/v1/webhooks
+{
+  "url": "https://your-domain.com/webhook/industrydb",
+  "events": ["lead.created", "export.completed", "export.failed"],
+  "description": "Production webhook for lead notifications"
+}
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "url": "https://your-domain.com/webhook/industrydb",
+  "events": ["lead.created", "export.completed"],
+  "description": "Production webhook",
+  "active": true,
+  "secret": "a1b2c3d4...hex_secret",
+  "created_at": "2026-02-03T10:00:00Z"
+}
+```
+
+**Supported Events:**
+- `lead.created` - New lead added to database
+- `export.completed` - Data export successfully completed
+- `export.failed` - Data export failed
+- `user.registered` - New user registered
+
+**Webhook Payload:**
+```json
+{
+  "event": "export.completed",
+  "data": {
+    "export_id": 123,
+    "user_id": 456,
+    "lead_count": 100,
+    "format": "csv",
+    "download_url": "https://..."
+  },
+  "timestamp": 1706956800
+}
+```
+
+**Security Features:**
+- **HMAC-SHA256 Signature**: Every webhook request includes a signature in the `X-Webhook-Signature` header
+- **Secret Key**: Generated on webhook creation, used to verify request authenticity
+- **Event Header**: Event type included in `X-Webhook-Event` header
+- **Retry Logic**: Failed deliveries are automatically retried with exponential backoff (3 retries by default)
+- **Delivery Tracking**: Success/failure counts tracked for monitoring
+
+**Verifying Webhook Signatures:**
+```go
+import (
+    "crypto/hmac"
+    "crypto/sha256"
+    "encoding/hex"
+)
+
+func verifySignature(payload []byte, signature string, secret string) bool {
+    mac := hmac.New(sha256.New, []byte(secret))
+    mac.Write(payload)
+    expected := hex.EncodeToString(mac.Sum(nil))
+    return hmac.Equal([]byte(signature), []byte(expected))
+}
+```
+
+**Implementation:**
+- Service: `backend/pkg/webhook/service.go`
+- Handler: `backend/pkg/api/handlers/webhook.go`
+- Schema: `backend/ent/schema/webhook.go`
+
+### Batch Operations
+**Implemented:** 2026-02-03
+
+Batch API endpoints allow you to perform operations on multiple resources in a single request. All batch operations are executed within database transactions for consistency.
+
+```
+POST /api/v1/batch/webhooks           # Create multiple webhooks
+POST /api/v1/batch/webhooks/delete    # Delete multiple webhooks
+POST /api/v1/batch/leads/enrich       # Enrich multiple leads
+POST /api/v1/batch/execute            # Execute generic batch operations
+```
+
+**Batch Create Webhooks:**
+```bash
+POST /api/v1/batch/webhooks
+[
+  {
+    "url": "https://example.com/webhook1",
+    "events": ["lead.created"],
+    "description": "Webhook 1"
+  },
+  {
+    "url": "https://example.com/webhook2",
+    "events": ["export.completed"],
+    "description": "Webhook 2"
+  }
+]
+```
+
+**Response:**
+```json
+{
+  "results": [
+    {
+      "success": true,
+      "id": 1,
+      "url": "https://example.com/webhook1",
+      "index": 0
+    },
+    {
+      "success": true,
+      "id": 2,
+      "url": "https://example.com/webhook2",
+      "index": 1
+    }
+  ],
+  "total": 2,
+  "success_count": 2,
+  "failure_count": 0
+}
+```
+
+**Batch Delete Webhooks:**
+```bash
+POST /api/v1/batch/webhooks/delete
+{
+  "ids": [1, 2, 3, 4, 5]
+}
+```
+
+**Batch Lead Enrichment (Placeholder):**
+```bash
+POST /api/v1/batch/leads/enrich
+{
+  "ids": [100, 101, 102]
+}
+```
+
+**Generic Batch Execute:**
+```bash
+POST /api/v1/batch/execute
+[
+  {
+    "operation": "create",
+    "resource": "webhook",
+    "data": {
+      "url": "https://example.com/webhook",
+      "events": ["lead.created"]
+    }
+  },
+  {
+    "operation": "update",
+    "resource": "webhook",
+    "data": {
+      "id": 5,
+      "active": false
+    }
+  }
+]
+```
+
+**Batch Operation Limits:**
+- Maximum 100 webhooks per batch request
+- Maximum 1000 leads per enrichment batch
+- Transaction rollback on any failure (all-or-nothing)
+
+**Implementation:**
+- Handler: `backend/pkg/api/handlers/batch.go`
+
 ### Query Parameters for /api/v1/leads
 **Enhanced:** 2026-02-03 - Added website, social media, radius search, sorting, and full-text search
 

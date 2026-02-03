@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/jordanlanch/industrydb/ent"
+	"github.com/jordanlanch/industrydb/ent/user"
 	"github.com/jordanlanch/industrydb/ent/webhook"
 )
 
@@ -74,13 +75,7 @@ func (s *Service) CreateWebhook(ctx context.Context, userID int, url string, eve
 // ListWebhooks lists all webhooks for a user
 func (s *Service) ListWebhooks(ctx context.Context, userID int) ([]*ent.Webhook, error) {
 	webhooks, err := s.client.Webhook.Query().
-		Where(webhook.HasUserWith(func(q *ent.UserQuery) {
-			q.Where(func(s *ent.UserQuery) {
-				s.Where(func(s *ent.UserQuery) {
-					s.IDEQ(userID)
-				})
-			})
-		})).
+		Where(webhook.HasUserWith(user.ID(userID))).
 		Order(ent.Desc(webhook.FieldCreatedAt)).
 		All(ctx)
 	if err != nil {
@@ -95,9 +90,7 @@ func (s *Service) GetWebhook(ctx context.Context, webhookID int, userID int) (*e
 	wh, err := s.client.Webhook.Query().
 		Where(
 			webhook.ID(webhookID),
-			webhook.HasUserWith(func(q *ent.UserQuery) {
-				q.IDEQ(userID)
-			}),
+			webhook.HasUserWith(user.ID(userID)),
 		).
 		Only(ctx)
 	if err != nil {
@@ -110,9 +103,7 @@ func (s *Service) GetWebhook(ctx context.Context, webhookID int, userID int) (*e
 // UpdateWebhook updates a webhook
 func (s *Service) UpdateWebhook(ctx context.Context, webhookID int, userID int, url *string, events []string, active *bool) (*ent.Webhook, error) {
 	update := s.client.Webhook.UpdateOneID(webhookID).
-		Where(webhook.HasUserWith(func(q *ent.UserQuery) {
-			q.IDEQ(userID)
-		}))
+		Where(webhook.HasUserWith(user.ID(userID)))
 
 	if url != nil {
 		update.SetURL(*url)
@@ -137,9 +128,7 @@ func (s *Service) DeleteWebhook(ctx context.Context, webhookID int, userID int) 
 	_, err := s.client.Webhook.Delete().
 		Where(
 			webhook.ID(webhookID),
-			webhook.HasUserWith(func(q *ent.UserQuery) {
-				q.IDEQ(userID)
-			}),
+			webhook.HasUserWith(user.ID(userID)),
 		).
 		Exec(ctx)
 	if err != nil {
@@ -154,9 +143,7 @@ func (s *Service) TriggerWebhooks(ctx context.Context, userID int, event string,
 	// Query active webhooks that subscribe to this event
 	webhooks, err := s.client.Webhook.Query().
 		Where(
-			webhook.HasUserWith(func(q *ent.UserQuery) {
-				q.IDEQ(userID)
-			}),
+			webhook.HasUserWith(user.ID(userID)),
 			webhook.Active(true),
 		).
 		All(ctx)

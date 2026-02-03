@@ -57,6 +57,7 @@ import (
 	custommiddleware "github.com/jordanlanch/industrydb/pkg/middleware"
 	"github.com/jordanlanch/industrydb/pkg/organization"
 	"github.com/jordanlanch/industrydb/pkg/savedsearch"
+	"github.com/jordanlanch/industrydb/pkg/webhook"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -315,6 +316,8 @@ func main() {
 	apiKeyService := apikey.NewService(db.Ent)
 	industriesService := industries.NewService(db.Ent, redisClient)
 	savedSearchService := savedsearch.NewService(db.Ent)
+	webhookService := webhook.NewService(db.Ent)
+	log.Printf("✅ Webhook service initialized")
 
 	// Initialize cron manager for data acquisition jobs
 	cronManager := jobs.NewCronManager(db.Ent, redisClient, log.Default())
@@ -338,6 +341,9 @@ func main() {
 	industriesHandler := handlers.NewIndustryHandler(industriesService)
 	jobsHandler := handlers.NewJobsHandler(cronManager.GetMonitor())
 	savedSearchHandler := handlers.NewSavedSearchHandler(savedSearchService)
+	webhookHandler := handlers.NewWebhookHandler(webhookService)
+	batchHandler := handlers.NewBatchHandler(db.Ent, webhookService)
+	log.Printf("✅ Webhook and batch handlers initialized")
 
 	// Backup handler (admin only, if enabled)
 	var backupHandler *handlers.BackupHandler
@@ -452,6 +458,25 @@ func main() {
 			savedSearchGroup.GET("/:id", savedSearchHandler.Get)
 			savedSearchGroup.PATCH("/:id", savedSearchHandler.Update)
 			savedSearchGroup.DELETE("/:id", savedSearchHandler.Delete)
+		}
+
+		// Webhook routes
+		webhookGroup := protected.Group("/webhooks")
+		{
+			webhookGroup.POST("", webhookHandler.CreateWebhook)
+			webhookGroup.GET("", webhookHandler.ListWebhooks)
+			webhookGroup.GET("/:id", webhookHandler.GetWebhook)
+			webhookGroup.PATCH("/:id", webhookHandler.UpdateWebhook)
+			webhookGroup.DELETE("/:id", webhookHandler.DeleteWebhook)
+		}
+
+		// Batch operations routes
+		batchGroup := protected.Group("/batch")
+		{
+			batchGroup.POST("/webhooks", batchHandler.BatchWebhookCreate)
+			batchGroup.POST("/webhooks/delete", batchHandler.BatchWebhookDelete)
+			batchGroup.POST("/leads/enrich", batchHandler.BatchLeadEnrich)
+			batchGroup.POST("/execute", batchHandler.BatchExecute)
 		}
 
 		// Admin routes (require admin role)
