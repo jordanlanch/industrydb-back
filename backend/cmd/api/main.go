@@ -359,6 +359,7 @@ func main() {
 	territoryHandler := handlers.NewTerritoryHandler(db.Ent)
 	emailSequenceHandler := handlers.NewEmailSequenceHandler(db.Ent)
 	funnelHandler := handlers.NewFunnelHandler(db.Ent)
+	cohortHandler := handlers.NewCohortHandler(db.Ent)
 	log.Printf("✅ Webhook and batch handlers initialized")
 
 	// Backup handler (admin only, if enabled)
@@ -507,6 +508,16 @@ func main() {
 			funnelGroup.GET("/details", funnelHandler.GetFunnelDetails)
 			funnelGroup.GET("/dropoff", funnelHandler.GetDropoffAnalysis)
 			funnelGroup.GET("/time-to-conversion", funnelHandler.GetTimeToConversion)
+		}
+
+		// Cohort analytics routes (admin only)
+		cohortGroup := protected.Group("/analytics/cohorts")
+		cohortGroup.Use(custommiddleware.RequireAdmin(db.Ent))
+		{
+			cohortGroup.GET("", cohortHandler.GetCohorts)
+			cohortGroup.GET("/retention", cohortHandler.GetCohortRetention)
+			cohortGroup.GET("/comparison", cohortHandler.GetCohortComparison)
+			cohortGroup.GET("/activity", cohortHandler.GetCohortActivityMetrics)
 		}
 
 		// Export routes (require email verification)
