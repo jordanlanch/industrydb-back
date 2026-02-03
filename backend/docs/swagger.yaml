@@ -1,5 +1,17 @@
 basePath: /api/v1
 definitions:
+  handlers.BatchOperation:
+    properties:
+      data:
+        additionalProperties: true
+        type: object
+      operation:
+        description: create, update, delete
+        type: string
+      resource:
+        description: webhook, lead, etc.
+        type: string
+    type: object
   handlers.UpdateUserRequest:
     properties:
       email_verified:
@@ -33,6 +45,10 @@ definitions:
         type: boolean
       has_phone:
         type: boolean
+      has_social_media:
+        type: boolean
+      has_website:
+        type: boolean
       industry:
         type: string
       specialties:
@@ -57,6 +73,9 @@ definitions:
     type: object
   models.CheckoutRequest:
     properties:
+      organization_id:
+        description: 'Optional: If set, subscription applies to organization'
+        type: integer
       tier:
         enum:
         - starter
@@ -197,6 +216,10 @@ definitions:
         type: boolean
       hasPhone:
         type: boolean
+      hasSocialMedia:
+        type: boolean
+      hasWebsite:
+        type: boolean
       industry:
         enum:
         - tattoo
@@ -220,13 +243,37 @@ definitions:
         - spa
         - nail_salon
         type: string
+      latitude:
+        description: Radius search parameters
+        maximum: 90
+        minimum: -90
+        type: number
       limit:
         maximum: 100
         minimum: 1
         type: integer
+      longitude:
+        maximum: 180
+        minimum: -180
+        type: number
       page:
         minimum: 1
         type: integer
+      query:
+        description: Full-text search
+        type: string
+      radius:
+        minimum: 0
+        type: number
+      sortBy:
+        description: Sorting
+        enum:
+        - newest
+        - quality_score
+        - distance
+        - verified
+        - relevance
+        type: string
       specialties:
         items:
           type: string
@@ -236,6 +283,11 @@ definitions:
       subNiche:
         type: string
       tattooStyle:
+        type: string
+      unit:
+        enum:
+        - km
+        - miles
         type: string
       verified:
         type: boolean
@@ -343,6 +395,98 @@ info:
   title: IndustryDB API
   version: "1.0"
 paths:
+  /admin/backup/create:
+    post:
+      consumes:
+      - application/json
+      description: Manually trigger a database backup (admin only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Backup created successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create database backup
+      tags:
+      - admin
+      - backup
+  /admin/backup/list:
+    get:
+      consumes:
+      - application/json
+      description: Get list of all database backups in S3 (admin only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of backups
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List all backups
+      tags:
+      - admin
+      - backup
+  /admin/backup/restore:
+    post:
+      consumes:
+      - application/json
+      description: Restore database from a specific backup in S3 (admin only, use
+        with extreme caution)
+      parameters:
+      - description: S3 key of backup to restore
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties:
+            type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Database restored successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Restore database from backup
+      tags:
+      - admin
+      - backup
   /admin/stats:
     get:
       description: Get aggregated statistics about users, subscriptions, and exports
@@ -624,6 +768,168 @@ paths:
       summary: Register a new user
       tags:
       - Authentication
+  /batch/execute:
+    post:
+      consumes:
+      - application/json
+      description: Execute multiple operations in a single request with transaction
+        support
+      parameters:
+      - description: Array of operations
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            $ref: '#/definitions/handlers.BatchOperation'
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Batch execution results
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Execute batch operations
+      tags:
+      - batch
+  /batch/leads/enrich:
+    post:
+      consumes:
+      - application/json
+      description: Enrich multiple leads with additional data
+      parameters:
+      - description: Array of lead IDs
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties:
+            items:
+              type: integer
+            type: array
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Batch enrichment results
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Batch enrich leads
+      tags:
+      - batch
+  /batch/webhooks:
+    post:
+      consumes:
+      - application/json
+      description: Create multiple webhooks in a single request
+      parameters:
+      - description: Array of webhook configurations
+        in: body
+        name: body
+        required: true
+        schema:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Batch creation results
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Batch create webhooks
+      tags:
+      - batch
+  /batch/webhooks/delete:
+    post:
+      consumes:
+      - application/json
+      description: Delete multiple webhooks in a single request
+      parameters:
+      - description: Array of webhook IDs
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties:
+            items:
+              type: integer
+            type: array
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Batch deletion results
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Batch delete webhooks
+      tags:
+      - batch
   /billing/checkout:
     post:
       consumes:
@@ -1027,6 +1333,33 @@ paths:
       summary: Mark onboarding as completed
       tags:
       - User
+  /user/onboarding/reset:
+    post:
+      consumes:
+      - application/json
+      description: Reset the user's onboarding wizard so they can go through it again
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Onboarding reset
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Reset onboarding status
+      tags:
+      - User
   /webhook/stripe:
     post:
       consumes:
@@ -1063,6 +1396,187 @@ paths:
       summary: Handle Stripe webhook
       tags:
       - Billing
+  /webhooks:
+    get:
+      consumes:
+      - application/json
+      description: Get all webhooks for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of webhooks
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List webhooks
+      tags:
+      - webhooks
+    post:
+      consumes:
+      - application/json
+      description: Create a new webhook subscription
+      parameters:
+      - description: Webhook configuration
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Webhook created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create webhook
+      tags:
+      - webhooks
+  /webhooks/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a webhook
+      parameters:
+      - description: Webhook ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Webhook deleted
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Webhook not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete webhook
+      tags:
+      - webhooks
+    get:
+      consumes:
+      - application/json
+      description: Get a specific webhook by ID
+      parameters:
+      - description: Webhook ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Webhook details
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Webhook not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get webhook
+      tags:
+      - webhooks
+    patch:
+      consumes:
+      - application/json
+      description: Update webhook configuration
+      parameters:
+      - description: Webhook ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Update fields
+        in: body
+        name: body
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated webhook
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Webhook not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update webhook
+      tags:
+      - webhooks
 securityDefinitions:
   ApiKeyAuth:
     description: API Key for programmatic access (Business tier only)
