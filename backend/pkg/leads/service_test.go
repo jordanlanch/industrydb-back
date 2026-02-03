@@ -2,6 +2,8 @@ package leads
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -572,5 +574,228 @@ func TestSearch_SortByInvalidValueUsesDefault(t *testing.T) {
 	// Should fallback to newest (default)
 	if len(result.Data) >= 2 {
 		assert.Equal(t, "Second", result.Data[0].Name)
+	}
+}
+
+func TestSearch_WithTextQuery(t *testing.T) {
+	// Setup
+	db := setupTestDB(t)
+	defer db.Close()
+	service := NewService(db, nil)
+
+	// Create test leads with different names and addresses
+	ctx := context.Background()
+	db.Lead.Create().
+		SetName("Pizza Palace").
+		SetIndustry(lead.IndustryRestaurant).
+		SetCountry("US").
+		SetCity("New York").
+		SetAddress("123 Broadway").
+		SaveX(ctx)
+	db.Lead.Create().
+		SetName("Broadway Gym").
+		SetIndustry(lead.IndustryGym).
+		SetCountry("US").
+		SetCity("New York").
+		SetAddress("456 Main Street").
+		SaveX(ctx)
+	db.Lead.Create().
+		SetName("Main Street Tattoo").
+		SetIndustry(lead.IndustryTattoo).
+		SetCountry("US").
+		SetCity("Los Angeles").
+		SetAddress("789 Oak Avenue").
+		SaveX(ctx)
+
+	// Test search for "Broadway"
+	req := models.LeadSearchRequest{
+		Query: "Broadway",
+		Page:  1,
+		Limit: 10,
+	}
+
+	result, err := service.Search(ctx, req)
+	require.NoError(t, err)
+	assert.GreaterOrEqual(t, result.Pagination.Total, 2) // Pizza Palace and Broadway Gym
+	
+	// Check that results contain "Broadway" in name or address
+	for _, lead := range result.Data {
+		hasMatch := strings.Contains(strings.ToLower(lead.Name), "broadway") ||
+			strings.Contains(strings.ToLower(lead.Address), "broadway")
+		assert.True(t, hasMatch, "Lead %s should contain 'Broadway' in name or address", lead.Name)
+	}
+}
+
+func TestSearch_WithRelevanceSorting(t *testing.T) {
+	// Setup
+	db := setupTestDB(t)
+	defer db.Close()
+	service := NewService(db, nil)
+
+	// Create test leads
+	ctx := context.Background()
+	db.Lead.Create().
+		SetName("Italian Restaurant").
+		SetIndustry(lead.IndustryRestaurant).
+		SetCountry("US").
+		SetCity("New York").
+		SetAddress("123 Main Street").
+		SaveX(ctx)
+	db.Lead.Create().
+		SetName("Restaurant Supplies").
+		SetIndustry(lead.IndustryClothing).
+		SetCountry("US").
+		SetCity("New York").
+		SetAddress("456 Broadway").
+		SaveX(ctx)
+	db.Lead.Create().
+		SetName("Best Restaurant").
+		SetIndustry(lead.IndustryRestaurant).
+		SetCountry("US").
+		SetCity("New York").
+		SetAddress("789 Oak Avenue").
+		SaveX(ctx)
+
+	// Test search with relevance sorting
+	req := models.LeadSearchRequest{
+		Query:  "restaurant",
+		SortBy: "relevance",
+		Page:   1,
+		Limit:  10,
+	}
+
+	result, err := service.Search(ctx, req)
+	require.NoError(t, err)
+	assert.GreaterOrEqual(t, result.Pagination.Total, 3)
+	
+	// All results should contain "restaurant"
+	for _, lead := range result.Data {
+		hasMatch := strings.Contains(strings.ToLower(lead.Name), "restaurant") ||
+			strings.Contains(strings.ToLower(lead.Address), "restaurant") ||
+			strings.Contains(strings.ToLower(lead.City), "restaurant")
+		assert.True(t, hasMatch, "Lead %s should contain 'restaurant'", lead.Name)
+	}
+}
+
+func TestSearch_WithMultiWordQuery(t *testing.T) {
+	// Setup
+	db := setupTestDB(t)
+	defer db.Close()
+	service := NewService(db, nil)
+
+	// Create test leads
+	ctx := context.Background()
+	db.Lead.Create().
+		SetName("New York Pizza").
+		SetIndustry(lead.IndustryRestaurant).
+		SetCountry("US").
+		SetCity("New York").
+		SetAddress("123 Broadway").
+		SaveX(ctx)
+	db.Lead.Create().
+		SetName("Pizza House").
+		SetIndustry(lead.IndustryRestaurant).
+		SetCountry("US").
+		SetCity("Los Angeles").
+		SetAddress("456 Main Street").
+		SaveX(ctx)
+	db.Lead.Create().
+		SetName("Broadway Gym").
+		SetIndustry(lead.IndustryGym).
+		SetCountry("US").
+		SetCity("New York").
+		SetAddress("789 Oak Avenue").
+		SaveX(ctx)
+
+	// Test multi-word search
+	req := models.LeadSearchRequest{
+		Query: "New York",
+		Page:  1,
+		Limit: 10,
+	}
+
+	result, err := service.Search(ctx, req)
+	require.NoError(t, err)
+	assert.GreaterOrEqual(t, result.Pagination.Total, 1) // At least New York Pizza
+	
+	// Results should contain "New" and "York"
+	for _, lead := range result.Data {
+		text := strings.ToLower(lead.Name + " " + lead.Address + " " + lead.City)
+		assert.True(t, strings.Contains(text, "new") || strings.Contains(text, "york"),
+			"Lead %s should contain 'New' or 'York'", lead.Name)
+	}
+}
+
+func TestSearch_EmptyQuery(t *testing.T) {
+	// Setup
+	db := setupTestDB(t)
+	defer db.Close()
+	service := NewService(db, nil)
+
+	// Create test leads
+	ctx := context.Background()
+	for i := 0; i < 5; i++ {
+		db.Lead.Create().
+			SetName(fmt.Sprintf("Test Lead %d", i)).
+			SetIndustry(lead.IndustryRestaurant).
+			SetCountry("US").
+			SetCity("New York").
+			SaveX(ctx)
+	}
+
+	// Test empty query (should return all leads)
+	req := models.LeadSearchRequest{
+		Query: "",
+		Page:  1,
+		Limit: 10,
+	}
+
+	result, err := service.Search(ctx, req)
+	require.NoError(t, err)
+	assert.GreaterOrEqual(t, result.Pagination.Total, 5)
+}
+
+func TestSearch_QueryWithOtherFilters(t *testing.T) {
+	// Setup
+	db := setupTestDB(t)
+	defer db.Close()
+	service := NewService(db, nil)
+
+	// Create test leads
+	ctx := context.Background()
+	db.Lead.Create().
+		SetName("New York Tattoo Studio").
+		SetIndustry(lead.IndustryTattoo).
+		SetCountry("US").
+		SetCity("New York").
+		SaveX(ctx)
+	db.Lead.Create().
+		SetName("New York Gym").
+		SetIndustry(lead.IndustryGym).
+		SetCountry("US").
+		SetCity("New York").
+		SaveX(ctx)
+	db.Lead.Create().
+		SetName("Los Angeles Tattoo").
+		SetIndustry(lead.IndustryTattoo).
+		SetCountry("US").
+		SetCity("Los Angeles").
+		SaveX(ctx)
+
+	// Test query combined with industry filter
+	req := models.LeadSearchRequest{
+		Query:    "New York",
+		Industry: "tattoo",
+		Page:     1,
+		Limit:    10,
+	}
+
+	result, err := service.Search(ctx, req)
+	require.NoError(t, err)
+	assert.Equal(t, 1, result.Pagination.Total) // Only New York Tattoo Studio
+	if len(result.Data) > 0 {
+		assert.Equal(t, "tattoo", result.Data[0].Industry)
+		text := strings.ToLower(result.Data[0].Name + " " + result.Data[0].City)
+		assert.True(t, strings.Contains(text, "new") || strings.Contains(text, "york"))
 	}
 }

@@ -1471,10 +1471,11 @@ curl -H "X-API-Key: idb_abc123..." https://api.industrydb.io/api/v1/leads
 - Schema: `backend/ent/schema/apikey.go`
 
 ### Query Parameters for /api/v1/leads
-**Enhanced:** 2026-02-03 - Added website, social media, radius search, and sorting
+**Enhanced:** 2026-02-03 - Added website, social media, radius search, sorting, and full-text search
 
 ```
-?industry=tattoo|beauty|barber|gym|restaurant
+?q=pizza restaurant broadway
+&industry=tattoo|beauty|barber|gym|restaurant
 &country=US|GB|ES|DE|...
 &city=New York
 &has_email=true
@@ -1486,10 +1487,18 @@ curl -H "X-API-Key: idb_abc123..." https://api.industrydb.io/api/v1/leads
 &longitude=-74.0060
 &radius=10
 &unit=km|miles
-&sort_by=newest|quality_score|verified|distance
+&sort_by=newest|quality_score|verified|distance|relevance
 &page=1
 &limit=50
 ```
+
+**Full-Text Search (PostgreSQL):**
+- `q` - Search query (searches name, address, and city fields)
+- Uses PostgreSQL's `to_tsvector` and `plainto_tsquery` for efficient text search
+- Supports multi-word queries: "New York pizza"
+- Case-insensitive matching
+- Automatically handles stemming and stop words (English language)
+- Can be combined with other filters for refined results
 
 **Advanced Filters:**
 - `has_email` - Filter leads with email addresses
@@ -1512,8 +1521,10 @@ All three parameters (`latitude`, `longitude`, `radius`) must be provided for ra
   - `quality_score` - Highest quality score first (based on data completeness)
   - `verified` - Verified leads first, then by creation date
   - `distance` - Closest leads first (requires `latitude` and `longitude`)
+  - `relevance` - Most relevant results first (requires `q` search query, uses ts_rank)
 
 If `sort_by=distance` is used without coordinates, falls back to `newest`.
+If `sort_by=relevance` is used without a search query, falls back to `newest`.
 
 **Examples:**
 ```bash
@@ -1531,6 +1542,21 @@ GET /api/v1/leads?industry=tattoo&country=US&sort_by=quality_score
 
 # Find verified beauty salons sorted by verified status
 GET /api/v1/leads?industry=beauty&sort_by=verified
+
+# Find gyms near a location, sorted by distance (closest first)
+GET /api/v1/leads?industry=gym&latitude=40.7128&longitude=-74.0060&radius=10&sort_by=distance
+
+# Search for "pizza restaurant" in names and addresses
+GET /api/v1/leads?q=pizza+restaurant
+
+# Search for businesses on "Broadway" sorted by relevance
+GET /api/v1/leads?q=Broadway&sort_by=relevance
+
+# Search for "New York tattoo" in tattoo industry only
+GET /api/v1/leads?q=New+York+tattoo&industry=tattoo&sort_by=relevance
+
+# Multi-word search combined with filters
+GET /api/v1/leads?q=Italian+restaurant&country=US&has_email=true&sort_by=relevance
 
 # Find gyms near a location, sorted by distance (closest first)
 GET /api/v1/leads?industry=gym&latitude=40.7128&longitude=-74.0060&radius=20&unit=km&sort_by=distance

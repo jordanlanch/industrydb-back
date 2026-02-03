@@ -43,11 +43,13 @@ func (s *Service) Search(ctx context.Context, req models.LeadSearchRequest) (*mo
 	// Generate cache key
 	cacheKey := s.generateCacheKey(req)
 
-	// Try to get from cache
-	if cached, err := s.cache.Get(ctx, cacheKey); err == nil && cached != "" {
-		var response models.LeadListResponse
-		if err := json.Unmarshal([]byte(cached), &response); err == nil {
-			return &response, nil
+	// Try to get from cache (if cache client is available)
+	if s.cache != nil {
+		if cached, err := s.cache.Get(ctx, cacheKey); err == nil && cached != "" {
+			var response models.LeadListResponse
+			if err := json.Unmarshal([]byte(cached), &response); err == nil {
+				return &response, nil
+			}
 		}
 	}
 
@@ -93,6 +95,23 @@ func (s *Service) Search(ctx context.Context, req models.LeadSearchRequest) (*mo
 		query = query.Where(lead.VerifiedEQ(*req.Verified))
 	}
 
+	// Full-text search using PostgreSQL ts_query
+	if req.Query != "" {
+		// Use plainto_tsquery to handle user input safely
+		query = query.Where(func(s *sql.Selector) {
+			s.Where(sql.P(func(b *sql.Builder) {
+				// Search in name, address, and city using to_tsvector
+				b.WriteString("(")
+				b.WriteString("to_tsvector('english', COALESCE(name, '')) || ")
+				b.WriteString("to_tsvector('english', COALESCE(address, '')) || ")
+				b.WriteString("to_tsvector('english', COALESCE(city, ''))")
+				b.WriteString(") @@ plainto_tsquery('english', ")
+				b.Arg(req.Query)
+				b.WriteString(")")
+			}))
+		})
+	}
+
 	// Radius search using PostGIS
 	if req.Latitude != nil && req.Longitude != nil && req.Radius != nil {
 		// Convert radius to meters (PostGIS uses meters)
@@ -135,6 +154,19 @@ func (s *Service) Search(ctx context.Context, req models.LeadSearchRequest) (*mo
 	case "verified":
 		// Verified first, then by creation date
 		sortedQuery = sortedQuery.Order(ent.Desc(lead.FieldVerified), ent.Desc(lead.FieldCreatedAt))
+	case "relevance":
+		// Relevance sorting only works with full-text search query
+		if req.Query != "" {
+			sortedQuery = sortedQuery.Order(func(s *sql.Selector) {
+				s.OrderExpr(sql.ExprP(
+					"ts_rank((to_tsvector('english', COALESCE(name, '')) || to_tsvector('english', COALESCE(address, '')) || to_tsvector('english', COALESCE(city, ''))), plainto_tsquery('english', $1)) DESC",
+					req.Query,
+				))
+			})
+		} else {
+			// Fallback to newest if no query provided
+			sortedQuery = sortedQuery.Order(ent.Desc(lead.FieldCreatedAt))
+		}
 	case "distance":
 		// Distance sorting only works with radius search
 		if req.Latitude != nil && req.Longitude != nil {
@@ -193,9 +225,11 @@ func (s *Service) Search(ctx context.Context, req models.LeadSearchRequest) (*mo
 		},
 	}
 
-	// Cache the response for 5 minutes
-	if responseJSON, err := json.Marshal(response); err == nil {
-		_ = s.cache.Set(ctx, cacheKey, responseJSON, 5*time.Minute)
+	// Cache the response for 5 minutes (if cache client is available)
+	if s.cache != nil {
+		if responseJSON, err := json.Marshal(response); err == nil {
+			_ = s.cache.Set(ctx, cacheKey, responseJSON, 5*time.Minute)
+		}
 	}
 
 	return response, nil
@@ -280,7 +314,8 @@ func (s *Service) generateCacheKey(req models.LeadSearchRequest) string {
 	}
 	sortBy := req.SortBy
 
-	return fmt.Sprintf("leads:search:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%d:%d",
+	return fmt.Sprintf("leads:search:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%d:%d",
+		req.Query,
 		req.Industry, req.SubNiche, req.CuisineType, req.SportType, req.TattooStyle,
 		req.Country, req.City,
 		hasEmail, hasPhone, hasWebsite, hasSocialMedia, verified,
@@ -298,10 +333,12 @@ func (s *Service) Preview(ctx context.Context, req models.LeadSearchRequest) (*m
 		fmt.Sprintf("%v", req.Verified))
 
 	// Try to get from cache (15 minutes - longer than search since it's cheaper)
-	if cached, err := s.cache.Get(ctx, cacheKey); err == nil && cached != "" {
-		var response models.LeadPreviewResponse
-		if err := json.Unmarshal([]byte(cached), &response); err == nil {
-			return &response, nil
+	if s.cache != nil {
+		if cached, err := s.cache.Get(ctx, cacheKey); err == nil && cached != "" {
+			var response models.LeadPreviewResponse
+			if err := json.Unmarshal([]byte(cached), &response); err == nil {
+				return &response, nil
+			}
 		}
 	}
 
@@ -345,6 +382,23 @@ func (s *Service) Preview(ctx context.Context, req models.LeadSearchRequest) (*m
 	}
 	if req.Verified != nil {
 		query = query.Where(lead.VerifiedEQ(*req.Verified))
+	}
+
+	// Full-text search using PostgreSQL ts_query
+	if req.Query != "" {
+		// Use plainto_tsquery to handle user input safely
+		query = query.Where(func(s *sql.Selector) {
+			s.Where(sql.P(func(b *sql.Builder) {
+				// Search in name, address, and city using to_tsvector
+				b.WriteString("(")
+				b.WriteString("to_tsvector('english', COALESCE(name, '')) || ")
+				b.WriteString("to_tsvector('english', COALESCE(address, '')) || ")
+				b.WriteString("to_tsvector('english', COALESCE(city, ''))")
+				b.WriteString(") @@ plainto_tsquery('english', ")
+				b.Arg(req.Query)
+				b.WriteString(")")
+			}))
+		})
 	}
 
 	// Radius search using PostGIS
@@ -450,9 +504,11 @@ func (s *Service) Preview(ctx context.Context, req models.LeadSearchRequest) (*m
 		QualityScoreAvg: qualityScoreAvg,
 	}
 
-	// Cache the response for 15 minutes
-	if responseJSON, err := json.Marshal(response); err == nil {
-		_ = s.cache.Set(ctx, cacheKey, responseJSON, 15*time.Minute)
+	// Cache the response for 15 minutes (if cache client is available)
+	if s.cache != nil {
+		if responseJSON, err := json.Marshal(response); err == nil {
+			_ = s.cache.Set(ctx, cacheKey, responseJSON, 15*time.Minute)
+		}
 	}
 
 	return response, nil
@@ -460,6 +516,9 @@ func (s *Service) Preview(ctx context.Context, req models.LeadSearchRequest) (*m
 
 // InvalidateCache invalidates all lead search caches
 func (s *Service) InvalidateCache(ctx context.Context) error {
-	// Delete all keys matching "leads:*" pattern
-	return s.cache.DeletePattern(ctx, "leads:*")
+	// Delete all keys matching "leads:*" pattern (if cache client is available)
+	if s.cache != nil {
+		return s.cache.DeletePattern(ctx, "leads:*")
+	}
+	return nil
 }

@@ -2,6 +2,8 @@ package models
 
 // LeadSearchRequest represents search parameters for leads
 type LeadSearchRequest struct {
+	// Full-text search
+	Query       string   `query:"q"`
 	Industry    string   `query:"industry" validate:"omitempty,oneof=tattoo beauty barber gym restaurant cafe bar bakery dentist pharmacy massage car_repair car_wash car_dealer clothing convenience lawyer accountant spa nail_salon"`
 	SubNiche    string   `query:"sub_niche"`
 	Specialties []string `query:"specialties"`
@@ -21,7 +23,7 @@ type LeadSearchRequest struct {
 	Radius    *float64 `query:"radius" validate:"omitempty,min=0"`
 	Unit      string   `query:"unit" validate:"omitempty,oneof=km miles"`
 	// Sorting
-	SortBy string `query:"sort_by" validate:"omitempty,oneof=newest quality_score distance verified"`
+	SortBy string `query:"sort_by" validate:"omitempty,oneof=newest quality_score distance verified relevance"`
 	Page   int    `query:"page" validate:"min=1"`
 	Limit  int    `query:"limit" validate:"min=1,max=100"`
 }
