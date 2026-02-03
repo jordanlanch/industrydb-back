@@ -328,12 +328,20 @@ func init() {
 	leadDescStatusChangedAt := leadFields[15].Descriptor()
 	// lead.DefaultStatusChangedAt holds the default value on creation for the status_changed_at field.
 	lead.DefaultStatusChangedAt = leadDescStatusChangedAt.Default.(func() time.Time)
+	// leadDescIsEnriched is the schema descriptor for is_enriched field.
+	leadDescIsEnriched := leadFields[30].Descriptor()
+	// lead.DefaultIsEnriched holds the default value on creation for the is_enriched field.
+	lead.DefaultIsEnriched = leadDescIsEnriched.Default.(bool)
+	// leadDescEmailValidated is the schema descriptor for email_validated field.
+	leadDescEmailValidated := leadFields[32].Descriptor()
+	// lead.DefaultEmailValidated holds the default value on creation for the email_validated field.
+	lead.DefaultEmailValidated = leadDescEmailValidated.Default.(bool)
 	// leadDescCreatedAt is the schema descriptor for created_at field.
-	leadDescCreatedAt := leadFields[24].Descriptor()
+	leadDescCreatedAt := leadFields[33].Descriptor()
 	// lead.DefaultCreatedAt holds the default value on creation for the created_at field.
 	lead.DefaultCreatedAt = leadDescCreatedAt.Default.(func() time.Time)
 	// leadDescUpdatedAt is the schema descriptor for updated_at field.
-	leadDescUpdatedAt := leadFields[25].Descriptor()
+	leadDescUpdatedAt := leadFields[34].Descriptor()
 	// lead.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	lead.DefaultUpdatedAt = leadDescUpdatedAt.Default.(func() time.Time)
 	// lead.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.

@@ -63,6 +63,24 @@ const (
 	FieldSportType = "sport_type"
 	// FieldTattooStyle holds the string denoting the tattoo_style field in the database.
 	FieldTattooStyle = "tattoo_style"
+	// FieldCompanyDescription holds the string denoting the company_description field in the database.
+	FieldCompanyDescription = "company_description"
+	// FieldEmployeeCount holds the string denoting the employee_count field in the database.
+	FieldEmployeeCount = "employee_count"
+	// FieldCompanyRevenue holds the string denoting the company_revenue field in the database.
+	FieldCompanyRevenue = "company_revenue"
+	// FieldLinkedinURL holds the string denoting the linkedin_url field in the database.
+	FieldLinkedinURL = "linkedin_url"
+	// FieldTwitterURL holds the string denoting the twitter_url field in the database.
+	FieldTwitterURL = "twitter_url"
+	// FieldFacebookURL holds the string denoting the facebook_url field in the database.
+	FieldFacebookURL = "facebook_url"
+	// FieldIsEnriched holds the string denoting the is_enriched field in the database.
+	FieldIsEnriched = "is_enriched"
+	// FieldEnrichedAt holds the string denoting the enriched_at field in the database.
+	FieldEnrichedAt = "enriched_at"
+	// FieldEmailValidated holds the string denoting the email_validated field in the database.
+	FieldEmailValidated = "email_validated"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -152,6 +170,15 @@ var Columns = []string{
 	FieldCuisineType,
 	FieldSportType,
 	FieldTattooStyle,
+	FieldCompanyDescription,
+	FieldEmployeeCount,
+	FieldCompanyRevenue,
+	FieldLinkedinURL,
+	FieldTwitterURL,
+	FieldFacebookURL,
+	FieldIsEnriched,
+	FieldEnrichedAt,
+	FieldEmailValidated,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -192,6 +219,10 @@ var (
 	QualityScoreValidator func(int) error
 	// DefaultStatusChangedAt holds the default value on creation for the "status_changed_at" field.
 	DefaultStatusChangedAt func() time.Time
+	// DefaultIsEnriched holds the default value on creation for the "is_enriched" field.
+	DefaultIsEnriched bool
+	// DefaultEmailValidated holds the default value on creation for the "email_validated" field.
+	DefaultEmailValidated bool
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
@@ -448,6 +479,51 @@ func BySportType(opts ...sql.OrderTermOption) OrderOption {
 // ByTattooStyle orders the results by the tattoo_style field.
 func ByTattooStyle(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTattooStyle, opts...).ToFunc()
+}
+
+// ByCompanyDescription orders the results by the company_description field.
+func ByCompanyDescription(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCompanyDescription, opts...).ToFunc()
+}
+
+// ByEmployeeCount orders the results by the employee_count field.
+func ByEmployeeCount(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEmployeeCount, opts...).ToFunc()
+}
+
+// ByCompanyRevenue orders the results by the company_revenue field.
+func ByCompanyRevenue(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCompanyRevenue, opts...).ToFunc()
+}
+
+// ByLinkedinURL orders the results by the linkedin_url field.
+func ByLinkedinURL(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLinkedinURL, opts...).ToFunc()
+}
+
+// ByTwitterURL orders the results by the twitter_url field.
+func ByTwitterURL(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTwitterURL, opts...).ToFunc()
+}
+
+// ByFacebookURL orders the results by the facebook_url field.
+func ByFacebookURL(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFacebookURL, opts...).ToFunc()
+}
+
+// ByIsEnriched orders the results by the is_enriched field.
+func ByIsEnriched(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsEnriched, opts...).ToFunc()
+}
+
+// ByEnrichedAt orders the results by the enriched_at field.
+func ByEnrichedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEnrichedAt, opts...).ToFunc()
+}
+
+// ByEmailValidated orders the results by the email_validated field.
+func ByEmailValidated(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEmailValidated, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.

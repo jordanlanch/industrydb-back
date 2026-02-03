@@ -298,6 +298,132 @@ func (_c *LeadCreate) SetNillableTattooStyle(v *string) *LeadCreate {
 	return _c
 }
 
+// SetCompanyDescription sets the "company_description" field.
+func (_c *LeadCreate) SetCompanyDescription(v string) *LeadCreate {
+	_c.mutation.SetCompanyDescription(v)
+	return _c
+}
+
+// SetNillableCompanyDescription sets the "company_description" field if the given value is not nil.
+func (_c *LeadCreate) SetNillableCompanyDescription(v *string) *LeadCreate {
+	if v != nil {
+		_c.SetCompanyDescription(*v)
+	}
+	return _c
+}
+
+// SetEmployeeCount sets the "employee_count" field.
+func (_c *LeadCreate) SetEmployeeCount(v int) *LeadCreate {
+	_c.mutation.SetEmployeeCount(v)
+	return _c
+}
+
+// SetNillableEmployeeCount sets the "employee_count" field if the given value is not nil.
+func (_c *LeadCreate) SetNillableEmployeeCount(v *int) *LeadCreate {
+	if v != nil {
+		_c.SetEmployeeCount(*v)
+	}
+	return _c
+}
+
+// SetCompanyRevenue sets the "company_revenue" field.
+func (_c *LeadCreate) SetCompanyRevenue(v string) *LeadCreate {
+	_c.mutation.SetCompanyRevenue(v)
+	return _c
+}
+
+// SetNillableCompanyRevenue sets the "company_revenue" field if the given value is not nil.
+func (_c *LeadCreate) SetNillableCompanyRevenue(v *string) *LeadCreate {
+	if v != nil {
+		_c.SetCompanyRevenue(*v)
+	}
+	return _c
+}
+
+// SetLinkedinURL sets the "linkedin_url" field.
+func (_c *LeadCreate) SetLinkedinURL(v string) *LeadCreate {
+	_c.mutation.SetLinkedinURL(v)
+	return _c
+}
+
+// SetNillableLinkedinURL sets the "linkedin_url" field if the given value is not nil.
+func (_c *LeadCreate) SetNillableLinkedinURL(v *string) *LeadCreate {
+	if v != nil {
+		_c.SetLinkedinURL(*v)
+	}
+	return _c
+}
+
+// SetTwitterURL sets the "twitter_url" field.
+func (_c *LeadCreate) SetTwitterURL(v string) *LeadCreate {
+	_c.mutation.SetTwitterURL(v)
+	return _c
+}
+
+// SetNillableTwitterURL sets the "twitter_url" field if the given value is not nil.
+func (_c *LeadCreate) SetNillableTwitterURL(v *string) *LeadCreate {
+	if v != nil {
+		_c.SetTwitterURL(*v)
+	}
+	return _c
+}
+
+// SetFacebookURL sets the "facebook_url" field.
+func (_c *LeadCreate) SetFacebookURL(v string) *LeadCreate {
+	_c.mutation.SetFacebookURL(v)
+	return _c
+}
+
+// SetNillableFacebookURL sets the "facebook_url" field if the given value is not nil.
+func (_c *LeadCreate) SetNillableFacebookURL(v *string) *LeadCreate {
+	if v != nil {
+		_c.SetFacebookURL(*v)
+	}
+	return _c
+}
+
+// SetIsEnriched sets the "is_enriched" field.
+func (_c *LeadCreate) SetIsEnriched(v bool) *LeadCreate {
+	_c.mutation.SetIsEnriched(v)
+	return _c
+}
+
+// SetNillableIsEnriched sets the "is_enriched" field if the given value is not nil.
+func (_c *LeadCreate) SetNillableIsEnriched(v *bool) *LeadCreate {
+	if v != nil {
+		_c.SetIsEnriched(*v)
+	}
+	return _c
+}
+
+// SetEnrichedAt sets the "enriched_at" field.
+func (_c *LeadCreate) SetEnrichedAt(v time.Time) *LeadCreate {
+	_c.mutation.SetEnrichedAt(v)
+	return _c
+}
+
+// SetNillableEnrichedAt sets the "enriched_at" field if the given value is not nil.
+func (_c *LeadCreate) SetNillableEnrichedAt(v *time.Time) *LeadCreate {
+	if v != nil {
+		_c.SetEnrichedAt(*v)
+	}
+	return _c
+}
+
+// SetEmailValidated sets the "email_validated" field.
+func (_c *LeadCreate) SetEmailValidated(v bool) *LeadCreate {
+	_c.mutation.SetEmailValidated(v)
+	return _c
+}
+
+// SetNillableEmailValidated sets the "email_validated" field if the given value is not nil.
+func (_c *LeadCreate) SetNillableEmailValidated(v *bool) *LeadCreate {
+	if v != nil {
+		_c.SetEmailValidated(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *LeadCreate) SetCreatedAt(v time.Time) *LeadCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -471,6 +597,14 @@ func (_c *LeadCreate) defaults() {
 		v := lead.DefaultStatusChangedAt()
 		_c.mutation.SetStatusChangedAt(v)
 	}
+	if _, ok := _c.mutation.IsEnriched(); !ok {
+		v := lead.DefaultIsEnriched
+		_c.mutation.SetIsEnriched(v)
+	}
+	if _, ok := _c.mutation.EmailValidated(); !ok {
+		v := lead.DefaultEmailValidated
+		_c.mutation.SetEmailValidated(v)
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := lead.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -536,6 +670,12 @@ func (_c *LeadCreate) check() error {
 	}
 	if _, ok := _c.mutation.StatusChangedAt(); !ok {
 		return &ValidationError{Name: "status_changed_at", err: errors.New(`ent: missing required field "Lead.status_changed_at"`)}
+	}
+	if _, ok := _c.mutation.IsEnriched(); !ok {
+		return &ValidationError{Name: "is_enriched", err: errors.New(`ent: missing required field "Lead.is_enriched"`)}
+	}
+	if _, ok := _c.mutation.EmailValidated(); !ok {
+		return &ValidationError{Name: "email_validated", err: errors.New(`ent: missing required field "Lead.email_validated"`)}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Lead.created_at"`)}
@@ -664,6 +804,42 @@ func (_c *LeadCreate) createSpec() (*Lead, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.TattooStyle(); ok {
 		_spec.SetField(lead.FieldTattooStyle, field.TypeString, value)
 		_node.TattooStyle = value
+	}
+	if value, ok := _c.mutation.CompanyDescription(); ok {
+		_spec.SetField(lead.FieldCompanyDescription, field.TypeString, value)
+		_node.CompanyDescription = value
+	}
+	if value, ok := _c.mutation.EmployeeCount(); ok {
+		_spec.SetField(lead.FieldEmployeeCount, field.TypeInt, value)
+		_node.EmployeeCount = value
+	}
+	if value, ok := _c.mutation.CompanyRevenue(); ok {
+		_spec.SetField(lead.FieldCompanyRevenue, field.TypeString, value)
+		_node.CompanyRevenue = value
+	}
+	if value, ok := _c.mutation.LinkedinURL(); ok {
+		_spec.SetField(lead.FieldLinkedinURL, field.TypeString, value)
+		_node.LinkedinURL = value
+	}
+	if value, ok := _c.mutation.TwitterURL(); ok {
+		_spec.SetField(lead.FieldTwitterURL, field.TypeString, value)
+		_node.TwitterURL = value
+	}
+	if value, ok := _c.mutation.FacebookURL(); ok {
+		_spec.SetField(lead.FieldFacebookURL, field.TypeString, value)
+		_node.FacebookURL = value
+	}
+	if value, ok := _c.mutation.IsEnriched(); ok {
+		_spec.SetField(lead.FieldIsEnriched, field.TypeBool, value)
+		_node.IsEnriched = value
+	}
+	if value, ok := _c.mutation.EnrichedAt(); ok {
+		_spec.SetField(lead.FieldEnrichedAt, field.TypeTime, value)
+		_node.EnrichedAt = &value
+	}
+	if value, ok := _c.mutation.EmailValidated(); ok {
+		_spec.SetField(lead.FieldEmailValidated, field.TypeBool, value)
+		_node.EmailValidated = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(lead.FieldCreatedAt, field.TypeTime, value)

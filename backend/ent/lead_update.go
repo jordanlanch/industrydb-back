@@ -462,6 +462,181 @@ func (_u *LeadUpdate) ClearTattooStyle() *LeadUpdate {
 	return _u
 }
 
+// SetCompanyDescription sets the "company_description" field.
+func (_u *LeadUpdate) SetCompanyDescription(v string) *LeadUpdate {
+	_u.mutation.SetCompanyDescription(v)
+	return _u
+}
+
+// SetNillableCompanyDescription sets the "company_description" field if the given value is not nil.
+func (_u *LeadUpdate) SetNillableCompanyDescription(v *string) *LeadUpdate {
+	if v != nil {
+		_u.SetCompanyDescription(*v)
+	}
+	return _u
+}
+
+// ClearCompanyDescription clears the value of the "company_description" field.
+func (_u *LeadUpdate) ClearCompanyDescription() *LeadUpdate {
+	_u.mutation.ClearCompanyDescription()
+	return _u
+}
+
+// SetEmployeeCount sets the "employee_count" field.
+func (_u *LeadUpdate) SetEmployeeCount(v int) *LeadUpdate {
+	_u.mutation.ResetEmployeeCount()
+	_u.mutation.SetEmployeeCount(v)
+	return _u
+}
+
+// SetNillableEmployeeCount sets the "employee_count" field if the given value is not nil.
+func (_u *LeadUpdate) SetNillableEmployeeCount(v *int) *LeadUpdate {
+	if v != nil {
+		_u.SetEmployeeCount(*v)
+	}
+	return _u
+}
+
+// AddEmployeeCount adds value to the "employee_count" field.
+func (_u *LeadUpdate) AddEmployeeCount(v int) *LeadUpdate {
+	_u.mutation.AddEmployeeCount(v)
+	return _u
+}
+
+// ClearEmployeeCount clears the value of the "employee_count" field.
+func (_u *LeadUpdate) ClearEmployeeCount() *LeadUpdate {
+	_u.mutation.ClearEmployeeCount()
+	return _u
+}
+
+// SetCompanyRevenue sets the "company_revenue" field.
+func (_u *LeadUpdate) SetCompanyRevenue(v string) *LeadUpdate {
+	_u.mutation.SetCompanyRevenue(v)
+	return _u
+}
+
+// SetNillableCompanyRevenue sets the "company_revenue" field if the given value is not nil.
+func (_u *LeadUpdate) SetNillableCompanyRevenue(v *string) *LeadUpdate {
+	if v != nil {
+		_u.SetCompanyRevenue(*v)
+	}
+	return _u
+}
+
+// ClearCompanyRevenue clears the value of the "company_revenue" field.
+func (_u *LeadUpdate) ClearCompanyRevenue() *LeadUpdate {
+	_u.mutation.ClearCompanyRevenue()
+	return _u
+}
+
+// SetLinkedinURL sets the "linkedin_url" field.
+func (_u *LeadUpdate) SetLinkedinURL(v string) *LeadUpdate {
+	_u.mutation.SetLinkedinURL(v)
+	return _u
+}
+
+// SetNillableLinkedinURL sets the "linkedin_url" field if the given value is not nil.
+func (_u *LeadUpdate) SetNillableLinkedinURL(v *string) *LeadUpdate {
+	if v != nil {
+		_u.SetLinkedinURL(*v)
+	}
+	return _u
+}
+
+// ClearLinkedinURL clears the value of the "linkedin_url" field.
+func (_u *LeadUpdate) ClearLinkedinURL() *LeadUpdate {
+	_u.mutation.ClearLinkedinURL()
+	return _u
+}
+
+// SetTwitterURL sets the "twitter_url" field.
+func (_u *LeadUpdate) SetTwitterURL(v string) *LeadUpdate {
+	_u.mutation.SetTwitterURL(v)
+	return _u
+}
+
+// SetNillableTwitterURL sets the "twitter_url" field if the given value is not nil.
+func (_u *LeadUpdate) SetNillableTwitterURL(v *string) *LeadUpdate {
+	if v != nil {
+		_u.SetTwitterURL(*v)
+	}
+	return _u
+}
+
+// ClearTwitterURL clears the value of the "twitter_url" field.
+func (_u *LeadUpdate) ClearTwitterURL() *LeadUpdate {
+	_u.mutation.ClearTwitterURL()
+	return _u
+}
+
+// SetFacebookURL sets the "facebook_url" field.
+func (_u *LeadUpdate) SetFacebookURL(v string) *LeadUpdate {
+	_u.mutation.SetFacebookURL(v)
+	return _u
+}
+
+// SetNillableFacebookURL sets the "facebook_url" field if the given value is not nil.
+func (_u *LeadUpdate) SetNillableFacebookURL(v *string) *LeadUpdate {
+	if v != nil {
+		_u.SetFacebookURL(*v)
+	}
+	return _u
+}
+
+// ClearFacebookURL clears the value of the "facebook_url" field.
+func (_u *LeadUpdate) ClearFacebookURL() *LeadUpdate {
+	_u.mutation.ClearFacebookURL()
+	return _u
+}
+
+// SetIsEnriched sets the "is_enriched" field.
+func (_u *LeadUpdate) SetIsEnriched(v bool) *LeadUpdate {
+	_u.mutation.SetIsEnriched(v)
+	return _u
+}
+
+// SetNillableIsEnriched sets the "is_enriched" field if the given value is not nil.
+func (_u *LeadUpdate) SetNillableIsEnriched(v *bool) *LeadUpdate {
+	if v != nil {
+		_u.SetIsEnriched(*v)
+	}
+	return _u
+}
+
+// SetEnrichedAt sets the "enriched_at" field.
+func (_u *LeadUpdate) SetEnrichedAt(v time.Time) *LeadUpdate {
+	_u.mutation.SetEnrichedAt(v)
+	return _u
+}
+
+// SetNillableEnrichedAt sets the "enriched_at" field if the given value is not nil.
+func (_u *LeadUpdate) SetNillableEnrichedAt(v *time.Time) *LeadUpdate {
+	if v != nil {
+		_u.SetEnrichedAt(*v)
+	}
+	return _u
+}
+
+// ClearEnrichedAt clears the value of the "enriched_at" field.
+func (_u *LeadUpdate) ClearEnrichedAt() *LeadUpdate {
+	_u.mutation.ClearEnrichedAt()
+	return _u
+}
+
+// SetEmailValidated sets the "email_validated" field.
+func (_u *LeadUpdate) SetEmailValidated(v bool) *LeadUpdate {
+	_u.mutation.SetEmailValidated(v)
+	return _u
+}
+
+// SetNillableEmailValidated sets the "email_validated" field if the given value is not nil.
+func (_u *LeadUpdate) SetNillableEmailValidated(v *bool) *LeadUpdate {
+	if v != nil {
+		_u.SetEmailValidated(*v)
+	}
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *LeadUpdate) SetUpdatedAt(v time.Time) *LeadUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -894,6 +1069,57 @@ func (_u *LeadUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.TattooStyleCleared() {
 		_spec.ClearField(lead.FieldTattooStyle, field.TypeString)
+	}
+	if value, ok := _u.mutation.CompanyDescription(); ok {
+		_spec.SetField(lead.FieldCompanyDescription, field.TypeString, value)
+	}
+	if _u.mutation.CompanyDescriptionCleared() {
+		_spec.ClearField(lead.FieldCompanyDescription, field.TypeString)
+	}
+	if value, ok := _u.mutation.EmployeeCount(); ok {
+		_spec.SetField(lead.FieldEmployeeCount, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedEmployeeCount(); ok {
+		_spec.AddField(lead.FieldEmployeeCount, field.TypeInt, value)
+	}
+	if _u.mutation.EmployeeCountCleared() {
+		_spec.ClearField(lead.FieldEmployeeCount, field.TypeInt)
+	}
+	if value, ok := _u.mutation.CompanyRevenue(); ok {
+		_spec.SetField(lead.FieldCompanyRevenue, field.TypeString, value)
+	}
+	if _u.mutation.CompanyRevenueCleared() {
+		_spec.ClearField(lead.FieldCompanyRevenue, field.TypeString)
+	}
+	if value, ok := _u.mutation.LinkedinURL(); ok {
+		_spec.SetField(lead.FieldLinkedinURL, field.TypeString, value)
+	}
+	if _u.mutation.LinkedinURLCleared() {
+		_spec.ClearField(lead.FieldLinkedinURL, field.TypeString)
+	}
+	if value, ok := _u.mutation.TwitterURL(); ok {
+		_spec.SetField(lead.FieldTwitterURL, field.TypeString, value)
+	}
+	if _u.mutation.TwitterURLCleared() {
+		_spec.ClearField(lead.FieldTwitterURL, field.TypeString)
+	}
+	if value, ok := _u.mutation.FacebookURL(); ok {
+		_spec.SetField(lead.FieldFacebookURL, field.TypeString, value)
+	}
+	if _u.mutation.FacebookURLCleared() {
+		_spec.ClearField(lead.FieldFacebookURL, field.TypeString)
+	}
+	if value, ok := _u.mutation.IsEnriched(); ok {
+		_spec.SetField(lead.FieldIsEnriched, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.EnrichedAt(); ok {
+		_spec.SetField(lead.FieldEnrichedAt, field.TypeTime, value)
+	}
+	if _u.mutation.EnrichedAtCleared() {
+		_spec.ClearField(lead.FieldEnrichedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.EmailValidated(); ok {
+		_spec.SetField(lead.FieldEmailValidated, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(lead.FieldUpdatedAt, field.TypeTime, value)
@@ -1599,6 +1825,181 @@ func (_u *LeadUpdateOne) ClearTattooStyle() *LeadUpdateOne {
 	return _u
 }
 
+// SetCompanyDescription sets the "company_description" field.
+func (_u *LeadUpdateOne) SetCompanyDescription(v string) *LeadUpdateOne {
+	_u.mutation.SetCompanyDescription(v)
+	return _u
+}
+
+// SetNillableCompanyDescription sets the "company_description" field if the given value is not nil.
+func (_u *LeadUpdateOne) SetNillableCompanyDescription(v *string) *LeadUpdateOne {
+	if v != nil {
+		_u.SetCompanyDescription(*v)
+	}
+	return _u
+}
+
+// ClearCompanyDescription clears the value of the "company_description" field.
+func (_u *LeadUpdateOne) ClearCompanyDescription() *LeadUpdateOne {
+	_u.mutation.ClearCompanyDescription()
+	return _u
+}
+
+// SetEmployeeCount sets the "employee_count" field.
+func (_u *LeadUpdateOne) SetEmployeeCount(v int) *LeadUpdateOne {
+	_u.mutation.ResetEmployeeCount()
+	_u.mutation.SetEmployeeCount(v)
+	return _u
+}
+
+// SetNillableEmployeeCount sets the "employee_count" field if the given value is not nil.
+func (_u *LeadUpdateOne) SetNillableEmployeeCount(v *int) *LeadUpdateOne {
+	if v != nil {
+		_u.SetEmployeeCount(*v)
+	}
+	return _u
+}
+
+// AddEmployeeCount adds value to the "employee_count" field.
+func (_u *LeadUpdateOne) AddEmployeeCount(v int) *LeadUpdateOne {
+	_u.mutation.AddEmployeeCount(v)
+	return _u
+}
+
+// ClearEmployeeCount clears the value of the "employee_count" field.
+func (_u *LeadUpdateOne) ClearEmployeeCount() *LeadUpdateOne {
+	_u.mutation.ClearEmployeeCount()
+	return _u
+}
+
+// SetCompanyRevenue sets the "company_revenue" field.
+func (_u *LeadUpdateOne) SetCompanyRevenue(v string) *LeadUpdateOne {
+	_u.mutation.SetCompanyRevenue(v)
+	return _u
+}
+
+// SetNillableCompanyRevenue sets the "company_revenue" field if the given value is not nil.
+func (_u *LeadUpdateOne) SetNillableCompanyRevenue(v *string) *LeadUpdateOne {
+	if v != nil {
+		_u.SetCompanyRevenue(*v)
+	}
+	return _u
+}
+
+// ClearCompanyRevenue clears the value of the "company_revenue" field.
+func (_u *LeadUpdateOne) ClearCompanyRevenue() *LeadUpdateOne {
+	_u.mutation.ClearCompanyRevenue()
+	return _u
+}
+
+// SetLinkedinURL sets the "linkedin_url" field.
+func (_u *LeadUpdateOne) SetLinkedinURL(v string) *LeadUpdateOne {
+	_u.mutation.SetLinkedinURL(v)
+	return _u
+}
+
+// SetNillableLinkedinURL sets the "linkedin_url" field if the given value is not nil.
+func (_u *LeadUpdateOne) SetNillableLinkedinURL(v *string) *LeadUpdateOne {
+	if v != nil {
+		_u.SetLinkedinURL(*v)
+	}
+	return _u
+}
+
+// ClearLinkedinURL clears the value of the "linkedin_url" field.
+func (_u *LeadUpdateOne) ClearLinkedinURL() *LeadUpdateOne {
+	_u.mutation.ClearLinkedinURL()
+	return _u
+}
+
+// SetTwitterURL sets the "twitter_url" field.
+func (_u *LeadUpdateOne) SetTwitterURL(v string) *LeadUpdateOne {
+	_u.mutation.SetTwitterURL(v)
+	return _u
+}
+
+// SetNillableTwitterURL sets the "twitter_url" field if the given value is not nil.
+func (_u *LeadUpdateOne) SetNillableTwitterURL(v *string) *LeadUpdateOne {
+	if v != nil {
+		_u.SetTwitterURL(*v)
+	}
+	return _u
+}
+
+// ClearTwitterURL clears the value of the "twitter_url" field.
+func (_u *LeadUpdateOne) ClearTwitterURL() *LeadUpdateOne {
+	_u.mutation.ClearTwitterURL()
+	return _u
+}
+
+// SetFacebookURL sets the "facebook_url" field.
+func (_u *LeadUpdateOne) SetFacebookURL(v string) *LeadUpdateOne {
+	_u.mutation.SetFacebookURL(v)
+	return _u
+}
+
+// SetNillableFacebookURL sets the "facebook_url" field if the given value is not nil.
+func (_u *LeadUpdateOne) SetNillableFacebookURL(v *string) *LeadUpdateOne {
+	if v != nil {
+		_u.SetFacebookURL(*v)
+	}
+	return _u
+}
+
+// ClearFacebookURL clears the value of the "facebook_url" field.
+func (_u *LeadUpdateOne) ClearFacebookURL() *LeadUpdateOne {
+	_u.mutation.ClearFacebookURL()
+	return _u
+}
+
+// SetIsEnriched sets the "is_enriched" field.
+func (_u *LeadUpdateOne) SetIsEnriched(v bool) *LeadUpdateOne {
+	_u.mutation.SetIsEnriched(v)
+	return _u
+}
+
+// SetNillableIsEnriched sets the "is_enriched" field if the given value is not nil.
+func (_u *LeadUpdateOne) SetNillableIsEnriched(v *bool) *LeadUpdateOne {
+	if v != nil {
+		_u.SetIsEnriched(*v)
+	}
+	return _u
+}
+
+// SetEnrichedAt sets the "enriched_at" field.
+func (_u *LeadUpdateOne) SetEnrichedAt(v time.Time) *LeadUpdateOne {
+	_u.mutation.SetEnrichedAt(v)
+	return _u
+}
+
+// SetNillableEnrichedAt sets the "enriched_at" field if the given value is not nil.
+func (_u *LeadUpdateOne) SetNillableEnrichedAt(v *time.Time) *LeadUpdateOne {
+	if v != nil {
+		_u.SetEnrichedAt(*v)
+	}
+	return _u
+}
+
+// ClearEnrichedAt clears the value of the "enriched_at" field.
+func (_u *LeadUpdateOne) ClearEnrichedAt() *LeadUpdateOne {
+	_u.mutation.ClearEnrichedAt()
+	return _u
+}
+
+// SetEmailValidated sets the "email_validated" field.
+func (_u *LeadUpdateOne) SetEmailValidated(v bool) *LeadUpdateOne {
+	_u.mutation.SetEmailValidated(v)
+	return _u
+}
+
+// SetNillableEmailValidated sets the "email_validated" field if the given value is not nil.
+func (_u *LeadUpdateOne) SetNillableEmailValidated(v *bool) *LeadUpdateOne {
+	if v != nil {
+		_u.SetEmailValidated(*v)
+	}
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *LeadUpdateOne) SetUpdatedAt(v time.Time) *LeadUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
@@ -2061,6 +2462,57 @@ func (_u *LeadUpdateOne) sqlSave(ctx context.Context) (_node *Lead, err error) {
 	}
 	if _u.mutation.TattooStyleCleared() {
 		_spec.ClearField(lead.FieldTattooStyle, field.TypeString)
+	}
+	if value, ok := _u.mutation.CompanyDescription(); ok {
+		_spec.SetField(lead.FieldCompanyDescription, field.TypeString, value)
+	}
+	if _u.mutation.CompanyDescriptionCleared() {
+		_spec.ClearField(lead.FieldCompanyDescription, field.TypeString)
+	}
+	if value, ok := _u.mutation.EmployeeCount(); ok {
+		_spec.SetField(lead.FieldEmployeeCount, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedEmployeeCount(); ok {
+		_spec.AddField(lead.FieldEmployeeCount, field.TypeInt, value)
+	}
+	if _u.mutation.EmployeeCountCleared() {
+		_spec.ClearField(lead.FieldEmployeeCount, field.TypeInt)
+	}
+	if value, ok := _u.mutation.CompanyRevenue(); ok {
+		_spec.SetField(lead.FieldCompanyRevenue, field.TypeString, value)
+	}
+	if _u.mutation.CompanyRevenueCleared() {
+		_spec.ClearField(lead.FieldCompanyRevenue, field.TypeString)
+	}
+	if value, ok := _u.mutation.LinkedinURL(); ok {
+		_spec.SetField(lead.FieldLinkedinURL, field.TypeString, value)
+	}
+	if _u.mutation.LinkedinURLCleared() {
+		_spec.ClearField(lead.FieldLinkedinURL, field.TypeString)
+	}
+	if value, ok := _u.mutation.TwitterURL(); ok {
+		_spec.SetField(lead.FieldTwitterURL, field.TypeString, value)
+	}
+	if _u.mutation.TwitterURLCleared() {
+		_spec.ClearField(lead.FieldTwitterURL, field.TypeString)
+	}
+	if value, ok := _u.mutation.FacebookURL(); ok {
+		_spec.SetField(lead.FieldFacebookURL, field.TypeString, value)
+	}
+	if _u.mutation.FacebookURLCleared() {
+		_spec.ClearField(lead.FieldFacebookURL, field.TypeString)
+	}
+	if value, ok := _u.mutation.IsEnriched(); ok {
+		_spec.SetField(lead.FieldIsEnriched, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.EnrichedAt(); ok {
+		_spec.SetField(lead.FieldEnrichedAt, field.TypeTime, value)
+	}
+	if _u.mutation.EnrichedAtCleared() {
+		_spec.ClearField(lead.FieldEnrichedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.EmailValidated(); ok {
+		_spec.SetField(lead.FieldEmailValidated, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(lead.FieldUpdatedAt, field.TypeTime, value)

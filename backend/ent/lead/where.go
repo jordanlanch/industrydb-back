@@ -145,6 +145,51 @@ func TattooStyle(v string) predicate.Lead {
 	return predicate.Lead(sql.FieldEQ(FieldTattooStyle, v))
 }
 
+// CompanyDescription applies equality check predicate on the "company_description" field. It's identical to CompanyDescriptionEQ.
+func CompanyDescription(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldCompanyDescription, v))
+}
+
+// EmployeeCount applies equality check predicate on the "employee_count" field. It's identical to EmployeeCountEQ.
+func EmployeeCount(v int) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldEmployeeCount, v))
+}
+
+// CompanyRevenue applies equality check predicate on the "company_revenue" field. It's identical to CompanyRevenueEQ.
+func CompanyRevenue(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldCompanyRevenue, v))
+}
+
+// LinkedinURL applies equality check predicate on the "linkedin_url" field. It's identical to LinkedinURLEQ.
+func LinkedinURL(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldLinkedinURL, v))
+}
+
+// TwitterURL applies equality check predicate on the "twitter_url" field. It's identical to TwitterURLEQ.
+func TwitterURL(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldTwitterURL, v))
+}
+
+// FacebookURL applies equality check predicate on the "facebook_url" field. It's identical to FacebookURLEQ.
+func FacebookURL(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldFacebookURL, v))
+}
+
+// IsEnriched applies equality check predicate on the "is_enriched" field. It's identical to IsEnrichedEQ.
+func IsEnriched(v bool) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldIsEnriched, v))
+}
+
+// EnrichedAt applies equality check predicate on the "enriched_at" field. It's identical to EnrichedAtEQ.
+func EnrichedAt(v time.Time) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldEnrichedAt, v))
+}
+
+// EmailValidated applies equality check predicate on the "email_validated" field. It's identical to EmailValidatedEQ.
+func EmailValidated(v bool) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldEmailValidated, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.Lead {
 	return predicate.Lead(sql.FieldEQ(FieldCreatedAt, v))
@@ -1368,6 +1413,501 @@ func TattooStyleEqualFold(v string) predicate.Lead {
 // TattooStyleContainsFold applies the ContainsFold predicate on the "tattoo_style" field.
 func TattooStyleContainsFold(v string) predicate.Lead {
 	return predicate.Lead(sql.FieldContainsFold(FieldTattooStyle, v))
+}
+
+// CompanyDescriptionEQ applies the EQ predicate on the "company_description" field.
+func CompanyDescriptionEQ(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldCompanyDescription, v))
+}
+
+// CompanyDescriptionNEQ applies the NEQ predicate on the "company_description" field.
+func CompanyDescriptionNEQ(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldNEQ(FieldCompanyDescription, v))
+}
+
+// CompanyDescriptionIn applies the In predicate on the "company_description" field.
+func CompanyDescriptionIn(vs ...string) predicate.Lead {
+	return predicate.Lead(sql.FieldIn(FieldCompanyDescription, vs...))
+}
+
+// CompanyDescriptionNotIn applies the NotIn predicate on the "company_description" field.
+func CompanyDescriptionNotIn(vs ...string) predicate.Lead {
+	return predicate.Lead(sql.FieldNotIn(FieldCompanyDescription, vs...))
+}
+
+// CompanyDescriptionGT applies the GT predicate on the "company_description" field.
+func CompanyDescriptionGT(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldGT(FieldCompanyDescription, v))
+}
+
+// CompanyDescriptionGTE applies the GTE predicate on the "company_description" field.
+func CompanyDescriptionGTE(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldGTE(FieldCompanyDescription, v))
+}
+
+// CompanyDescriptionLT applies the LT predicate on the "company_description" field.
+func CompanyDescriptionLT(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldLT(FieldCompanyDescription, v))
+}
+
+// CompanyDescriptionLTE applies the LTE predicate on the "company_description" field.
+func CompanyDescriptionLTE(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldLTE(FieldCompanyDescription, v))
+}
+
+// CompanyDescriptionContains applies the Contains predicate on the "company_description" field.
+func CompanyDescriptionContains(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldContains(FieldCompanyDescription, v))
+}
+
+// CompanyDescriptionHasPrefix applies the HasPrefix predicate on the "company_description" field.
+func CompanyDescriptionHasPrefix(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldHasPrefix(FieldCompanyDescription, v))
+}
+
+// CompanyDescriptionHasSuffix applies the HasSuffix predicate on the "company_description" field.
+func CompanyDescriptionHasSuffix(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldHasSuffix(FieldCompanyDescription, v))
+}
+
+// CompanyDescriptionIsNil applies the IsNil predicate on the "company_description" field.
+func CompanyDescriptionIsNil() predicate.Lead {
+	return predicate.Lead(sql.FieldIsNull(FieldCompanyDescription))
+}
+
+// CompanyDescriptionNotNil applies the NotNil predicate on the "company_description" field.
+func CompanyDescriptionNotNil() predicate.Lead {
+	return predicate.Lead(sql.FieldNotNull(FieldCompanyDescription))
+}
+
+// CompanyDescriptionEqualFold applies the EqualFold predicate on the "company_description" field.
+func CompanyDescriptionEqualFold(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldEqualFold(FieldCompanyDescription, v))
+}
+
+// CompanyDescriptionContainsFold applies the ContainsFold predicate on the "company_description" field.
+func CompanyDescriptionContainsFold(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldContainsFold(FieldCompanyDescription, v))
+}
+
+// EmployeeCountEQ applies the EQ predicate on the "employee_count" field.
+func EmployeeCountEQ(v int) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldEmployeeCount, v))
+}
+
+// EmployeeCountNEQ applies the NEQ predicate on the "employee_count" field.
+func EmployeeCountNEQ(v int) predicate.Lead {
+	return predicate.Lead(sql.FieldNEQ(FieldEmployeeCount, v))
+}
+
+// EmployeeCountIn applies the In predicate on the "employee_count" field.
+func EmployeeCountIn(vs ...int) predicate.Lead {
+	return predicate.Lead(sql.FieldIn(FieldEmployeeCount, vs...))
+}
+
+// EmployeeCountNotIn applies the NotIn predicate on the "employee_count" field.
+func EmployeeCountNotIn(vs ...int) predicate.Lead {
+	return predicate.Lead(sql.FieldNotIn(FieldEmployeeCount, vs...))
+}
+
+// EmployeeCountGT applies the GT predicate on the "employee_count" field.
+func EmployeeCountGT(v int) predicate.Lead {
+	return predicate.Lead(sql.FieldGT(FieldEmployeeCount, v))
+}
+
+// EmployeeCountGTE applies the GTE predicate on the "employee_count" field.
+func EmployeeCountGTE(v int) predicate.Lead {
+	return predicate.Lead(sql.FieldGTE(FieldEmployeeCount, v))
+}
+
+// EmployeeCountLT applies the LT predicate on the "employee_count" field.
+func EmployeeCountLT(v int) predicate.Lead {
+	return predicate.Lead(sql.FieldLT(FieldEmployeeCount, v))
+}
+
+// EmployeeCountLTE applies the LTE predicate on the "employee_count" field.
+func EmployeeCountLTE(v int) predicate.Lead {
+	return predicate.Lead(sql.FieldLTE(FieldEmployeeCount, v))
+}
+
+// EmployeeCountIsNil applies the IsNil predicate on the "employee_count" field.
+func EmployeeCountIsNil() predicate.Lead {
+	return predicate.Lead(sql.FieldIsNull(FieldEmployeeCount))
+}
+
+// EmployeeCountNotNil applies the NotNil predicate on the "employee_count" field.
+func EmployeeCountNotNil() predicate.Lead {
+	return predicate.Lead(sql.FieldNotNull(FieldEmployeeCount))
+}
+
+// CompanyRevenueEQ applies the EQ predicate on the "company_revenue" field.
+func CompanyRevenueEQ(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldCompanyRevenue, v))
+}
+
+// CompanyRevenueNEQ applies the NEQ predicate on the "company_revenue" field.
+func CompanyRevenueNEQ(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldNEQ(FieldCompanyRevenue, v))
+}
+
+// CompanyRevenueIn applies the In predicate on the "company_revenue" field.
+func CompanyRevenueIn(vs ...string) predicate.Lead {
+	return predicate.Lead(sql.FieldIn(FieldCompanyRevenue, vs...))
+}
+
+// CompanyRevenueNotIn applies the NotIn predicate on the "company_revenue" field.
+func CompanyRevenueNotIn(vs ...string) predicate.Lead {
+	return predicate.Lead(sql.FieldNotIn(FieldCompanyRevenue, vs...))
+}
+
+// CompanyRevenueGT applies the GT predicate on the "company_revenue" field.
+func CompanyRevenueGT(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldGT(FieldCompanyRevenue, v))
+}
+
+// CompanyRevenueGTE applies the GTE predicate on the "company_revenue" field.
+func CompanyRevenueGTE(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldGTE(FieldCompanyRevenue, v))
+}
+
+// CompanyRevenueLT applies the LT predicate on the "company_revenue" field.
+func CompanyRevenueLT(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldLT(FieldCompanyRevenue, v))
+}
+
+// CompanyRevenueLTE applies the LTE predicate on the "company_revenue" field.
+func CompanyRevenueLTE(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldLTE(FieldCompanyRevenue, v))
+}
+
+// CompanyRevenueContains applies the Contains predicate on the "company_revenue" field.
+func CompanyRevenueContains(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldContains(FieldCompanyRevenue, v))
+}
+
+// CompanyRevenueHasPrefix applies the HasPrefix predicate on the "company_revenue" field.
+func CompanyRevenueHasPrefix(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldHasPrefix(FieldCompanyRevenue, v))
+}
+
+// CompanyRevenueHasSuffix applies the HasSuffix predicate on the "company_revenue" field.
+func CompanyRevenueHasSuffix(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldHasSuffix(FieldCompanyRevenue, v))
+}
+
+// CompanyRevenueIsNil applies the IsNil predicate on the "company_revenue" field.
+func CompanyRevenueIsNil() predicate.Lead {
+	return predicate.Lead(sql.FieldIsNull(FieldCompanyRevenue))
+}
+
+// CompanyRevenueNotNil applies the NotNil predicate on the "company_revenue" field.
+func CompanyRevenueNotNil() predicate.Lead {
+	return predicate.Lead(sql.FieldNotNull(FieldCompanyRevenue))
+}
+
+// CompanyRevenueEqualFold applies the EqualFold predicate on the "company_revenue" field.
+func CompanyRevenueEqualFold(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldEqualFold(FieldCompanyRevenue, v))
+}
+
+// CompanyRevenueContainsFold applies the ContainsFold predicate on the "company_revenue" field.
+func CompanyRevenueContainsFold(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldContainsFold(FieldCompanyRevenue, v))
+}
+
+// LinkedinURLEQ applies the EQ predicate on the "linkedin_url" field.
+func LinkedinURLEQ(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldLinkedinURL, v))
+}
+
+// LinkedinURLNEQ applies the NEQ predicate on the "linkedin_url" field.
+func LinkedinURLNEQ(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldNEQ(FieldLinkedinURL, v))
+}
+
+// LinkedinURLIn applies the In predicate on the "linkedin_url" field.
+func LinkedinURLIn(vs ...string) predicate.Lead {
+	return predicate.Lead(sql.FieldIn(FieldLinkedinURL, vs...))
+}
+
+// LinkedinURLNotIn applies the NotIn predicate on the "linkedin_url" field.
+func LinkedinURLNotIn(vs ...string) predicate.Lead {
+	return predicate.Lead(sql.FieldNotIn(FieldLinkedinURL, vs...))
+}
+
+// LinkedinURLGT applies the GT predicate on the "linkedin_url" field.
+func LinkedinURLGT(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldGT(FieldLinkedinURL, v))
+}
+
+// LinkedinURLGTE applies the GTE predicate on the "linkedin_url" field.
+func LinkedinURLGTE(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldGTE(FieldLinkedinURL, v))
+}
+
+// LinkedinURLLT applies the LT predicate on the "linkedin_url" field.
+func LinkedinURLLT(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldLT(FieldLinkedinURL, v))
+}
+
+// LinkedinURLLTE applies the LTE predicate on the "linkedin_url" field.
+func LinkedinURLLTE(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldLTE(FieldLinkedinURL, v))
+}
+
+// LinkedinURLContains applies the Contains predicate on the "linkedin_url" field.
+func LinkedinURLContains(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldContains(FieldLinkedinURL, v))
+}
+
+// LinkedinURLHasPrefix applies the HasPrefix predicate on the "linkedin_url" field.
+func LinkedinURLHasPrefix(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldHasPrefix(FieldLinkedinURL, v))
+}
+
+// LinkedinURLHasSuffix applies the HasSuffix predicate on the "linkedin_url" field.
+func LinkedinURLHasSuffix(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldHasSuffix(FieldLinkedinURL, v))
+}
+
+// LinkedinURLIsNil applies the IsNil predicate on the "linkedin_url" field.
+func LinkedinURLIsNil() predicate.Lead {
+	return predicate.Lead(sql.FieldIsNull(FieldLinkedinURL))
+}
+
+// LinkedinURLNotNil applies the NotNil predicate on the "linkedin_url" field.
+func LinkedinURLNotNil() predicate.Lead {
+	return predicate.Lead(sql.FieldNotNull(FieldLinkedinURL))
+}
+
+// LinkedinURLEqualFold applies the EqualFold predicate on the "linkedin_url" field.
+func LinkedinURLEqualFold(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldEqualFold(FieldLinkedinURL, v))
+}
+
+// LinkedinURLContainsFold applies the ContainsFold predicate on the "linkedin_url" field.
+func LinkedinURLContainsFold(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldContainsFold(FieldLinkedinURL, v))
+}
+
+// TwitterURLEQ applies the EQ predicate on the "twitter_url" field.
+func TwitterURLEQ(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldTwitterURL, v))
+}
+
+// TwitterURLNEQ applies the NEQ predicate on the "twitter_url" field.
+func TwitterURLNEQ(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldNEQ(FieldTwitterURL, v))
+}
+
+// TwitterURLIn applies the In predicate on the "twitter_url" field.
+func TwitterURLIn(vs ...string) predicate.Lead {
+	return predicate.Lead(sql.FieldIn(FieldTwitterURL, vs...))
+}
+
+// TwitterURLNotIn applies the NotIn predicate on the "twitter_url" field.
+func TwitterURLNotIn(vs ...string) predicate.Lead {
+	return predicate.Lead(sql.FieldNotIn(FieldTwitterURL, vs...))
+}
+
+// TwitterURLGT applies the GT predicate on the "twitter_url" field.
+func TwitterURLGT(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldGT(FieldTwitterURL, v))
+}
+
+// TwitterURLGTE applies the GTE predicate on the "twitter_url" field.
+func TwitterURLGTE(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldGTE(FieldTwitterURL, v))
+}
+
+// TwitterURLLT applies the LT predicate on the "twitter_url" field.
+func TwitterURLLT(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldLT(FieldTwitterURL, v))
+}
+
+// TwitterURLLTE applies the LTE predicate on the "twitter_url" field.
+func TwitterURLLTE(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldLTE(FieldTwitterURL, v))
+}
+
+// TwitterURLContains applies the Contains predicate on the "twitter_url" field.
+func TwitterURLContains(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldContains(FieldTwitterURL, v))
+}
+
+// TwitterURLHasPrefix applies the HasPrefix predicate on the "twitter_url" field.
+func TwitterURLHasPrefix(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldHasPrefix(FieldTwitterURL, v))
+}
+
+// TwitterURLHasSuffix applies the HasSuffix predicate on the "twitter_url" field.
+func TwitterURLHasSuffix(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldHasSuffix(FieldTwitterURL, v))
+}
+
+// TwitterURLIsNil applies the IsNil predicate on the "twitter_url" field.
+func TwitterURLIsNil() predicate.Lead {
+	return predicate.Lead(sql.FieldIsNull(FieldTwitterURL))
+}
+
+// TwitterURLNotNil applies the NotNil predicate on the "twitter_url" field.
+func TwitterURLNotNil() predicate.Lead {
+	return predicate.Lead(sql.FieldNotNull(FieldTwitterURL))
+}
+
+// TwitterURLEqualFold applies the EqualFold predicate on the "twitter_url" field.
+func TwitterURLEqualFold(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldEqualFold(FieldTwitterURL, v))
+}
+
+// TwitterURLContainsFold applies the ContainsFold predicate on the "twitter_url" field.
+func TwitterURLContainsFold(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldContainsFold(FieldTwitterURL, v))
+}
+
+// FacebookURLEQ applies the EQ predicate on the "facebook_url" field.
+func FacebookURLEQ(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldFacebookURL, v))
+}
+
+// FacebookURLNEQ applies the NEQ predicate on the "facebook_url" field.
+func FacebookURLNEQ(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldNEQ(FieldFacebookURL, v))
+}
+
+// FacebookURLIn applies the In predicate on the "facebook_url" field.
+func FacebookURLIn(vs ...string) predicate.Lead {
+	return predicate.Lead(sql.FieldIn(FieldFacebookURL, vs...))
+}
+
+// FacebookURLNotIn applies the NotIn predicate on the "facebook_url" field.
+func FacebookURLNotIn(vs ...string) predicate.Lead {
+	return predicate.Lead(sql.FieldNotIn(FieldFacebookURL, vs...))
+}
+
+// FacebookURLGT applies the GT predicate on the "facebook_url" field.
+func FacebookURLGT(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldGT(FieldFacebookURL, v))
+}
+
+// FacebookURLGTE applies the GTE predicate on the "facebook_url" field.
+func FacebookURLGTE(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldGTE(FieldFacebookURL, v))
+}
+
+// FacebookURLLT applies the LT predicate on the "facebook_url" field.
+func FacebookURLLT(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldLT(FieldFacebookURL, v))
+}
+
+// FacebookURLLTE applies the LTE predicate on the "facebook_url" field.
+func FacebookURLLTE(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldLTE(FieldFacebookURL, v))
+}
+
+// FacebookURLContains applies the Contains predicate on the "facebook_url" field.
+func FacebookURLContains(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldContains(FieldFacebookURL, v))
+}
+
+// FacebookURLHasPrefix applies the HasPrefix predicate on the "facebook_url" field.
+func FacebookURLHasPrefix(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldHasPrefix(FieldFacebookURL, v))
+}
+
+// FacebookURLHasSuffix applies the HasSuffix predicate on the "facebook_url" field.
+func FacebookURLHasSuffix(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldHasSuffix(FieldFacebookURL, v))
+}
+
+// FacebookURLIsNil applies the IsNil predicate on the "facebook_url" field.
+func FacebookURLIsNil() predicate.Lead {
+	return predicate.Lead(sql.FieldIsNull(FieldFacebookURL))
+}
+
+// FacebookURLNotNil applies the NotNil predicate on the "facebook_url" field.
+func FacebookURLNotNil() predicate.Lead {
+	return predicate.Lead(sql.FieldNotNull(FieldFacebookURL))
+}
+
+// FacebookURLEqualFold applies the EqualFold predicate on the "facebook_url" field.
+func FacebookURLEqualFold(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldEqualFold(FieldFacebookURL, v))
+}
+
+// FacebookURLContainsFold applies the ContainsFold predicate on the "facebook_url" field.
+func FacebookURLContainsFold(v string) predicate.Lead {
+	return predicate.Lead(sql.FieldContainsFold(FieldFacebookURL, v))
+}
+
+// IsEnrichedEQ applies the EQ predicate on the "is_enriched" field.
+func IsEnrichedEQ(v bool) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldIsEnriched, v))
+}
+
+// IsEnrichedNEQ applies the NEQ predicate on the "is_enriched" field.
+func IsEnrichedNEQ(v bool) predicate.Lead {
+	return predicate.Lead(sql.FieldNEQ(FieldIsEnriched, v))
+}
+
+// EnrichedAtEQ applies the EQ predicate on the "enriched_at" field.
+func EnrichedAtEQ(v time.Time) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldEnrichedAt, v))
+}
+
+// EnrichedAtNEQ applies the NEQ predicate on the "enriched_at" field.
+func EnrichedAtNEQ(v time.Time) predicate.Lead {
+	return predicate.Lead(sql.FieldNEQ(FieldEnrichedAt, v))
+}
+
+// EnrichedAtIn applies the In predicate on the "enriched_at" field.
+func EnrichedAtIn(vs ...time.Time) predicate.Lead {
+	return predicate.Lead(sql.FieldIn(FieldEnrichedAt, vs...))
+}
+
+// EnrichedAtNotIn applies the NotIn predicate on the "enriched_at" field.
+func EnrichedAtNotIn(vs ...time.Time) predicate.Lead {
+	return predicate.Lead(sql.FieldNotIn(FieldEnrichedAt, vs...))
+}
+
+// EnrichedAtGT applies the GT predicate on the "enriched_at" field.
+func EnrichedAtGT(v time.Time) predicate.Lead {
+	return predicate.Lead(sql.FieldGT(FieldEnrichedAt, v))
+}
+
+// EnrichedAtGTE applies the GTE predicate on the "enriched_at" field.
+func EnrichedAtGTE(v time.Time) predicate.Lead {
+	return predicate.Lead(sql.FieldGTE(FieldEnrichedAt, v))
+}
+
+// EnrichedAtLT applies the LT predicate on the "enriched_at" field.
+func EnrichedAtLT(v time.Time) predicate.Lead {
+	return predicate.Lead(sql.FieldLT(FieldEnrichedAt, v))
+}
+
+// EnrichedAtLTE applies the LTE predicate on the "enriched_at" field.
+func EnrichedAtLTE(v time.Time) predicate.Lead {
+	return predicate.Lead(sql.FieldLTE(FieldEnrichedAt, v))
+}
+
+// EnrichedAtIsNil applies the IsNil predicate on the "enriched_at" field.
+func EnrichedAtIsNil() predicate.Lead {
+	return predicate.Lead(sql.FieldIsNull(FieldEnrichedAt))
+}
+
+// EnrichedAtNotNil applies the NotNil predicate on the "enriched_at" field.
+func EnrichedAtNotNil() predicate.Lead {
+	return predicate.Lead(sql.FieldNotNull(FieldEnrichedAt))
+}
+
+// EmailValidatedEQ applies the EQ predicate on the "email_validated" field.
+func EmailValidatedEQ(v bool) predicate.Lead {
+	return predicate.Lead(sql.FieldEQ(FieldEmailValidated, v))
+}
+
+// EmailValidatedNEQ applies the NEQ predicate on the "email_validated" field.
+func EmailValidatedNEQ(v bool) predicate.Lead {
+	return predicate.Lead(sql.FieldNEQ(FieldEmailValidated, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.

@@ -8150,6 +8150,16 @@ type LeadMutation struct {
 	cuisine_type                      *string
 	sport_type                        *string
 	tattoo_style                      *string
+	company_description               *string
+	employee_count                    *int
+	addemployee_count                 *int
+	company_revenue                   *string
+	linkedin_url                      *string
+	twitter_url                       *string
+	facebook_url                      *string
+	is_enriched                       *bool
+	enriched_at                       *time.Time
+	email_validated                   *bool
 	created_at                        *time.Time
 	updated_at                        *time.Time
 	clearedFields                     map[string]struct{}
@@ -9423,6 +9433,442 @@ func (m *LeadMutation) ResetTattooStyle() {
 	delete(m.clearedFields, lead.FieldTattooStyle)
 }
 
+// SetCompanyDescription sets the "company_description" field.
+func (m *LeadMutation) SetCompanyDescription(s string) {
+	m.company_description = &s
+}
+
+// CompanyDescription returns the value of the "company_description" field in the mutation.
+func (m *LeadMutation) CompanyDescription() (r string, exists bool) {
+	v := m.company_description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCompanyDescription returns the old "company_description" field's value of the Lead entity.
+// If the Lead object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadMutation) OldCompanyDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCompanyDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCompanyDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCompanyDescription: %w", err)
+	}
+	return oldValue.CompanyDescription, nil
+}
+
+// ClearCompanyDescription clears the value of the "company_description" field.
+func (m *LeadMutation) ClearCompanyDescription() {
+	m.company_description = nil
+	m.clearedFields[lead.FieldCompanyDescription] = struct{}{}
+}
+
+// CompanyDescriptionCleared returns if the "company_description" field was cleared in this mutation.
+func (m *LeadMutation) CompanyDescriptionCleared() bool {
+	_, ok := m.clearedFields[lead.FieldCompanyDescription]
+	return ok
+}
+
+// ResetCompanyDescription resets all changes to the "company_description" field.
+func (m *LeadMutation) ResetCompanyDescription() {
+	m.company_description = nil
+	delete(m.clearedFields, lead.FieldCompanyDescription)
+}
+
+// SetEmployeeCount sets the "employee_count" field.
+func (m *LeadMutation) SetEmployeeCount(i int) {
+	m.employee_count = &i
+	m.addemployee_count = nil
+}
+
+// EmployeeCount returns the value of the "employee_count" field in the mutation.
+func (m *LeadMutation) EmployeeCount() (r int, exists bool) {
+	v := m.employee_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEmployeeCount returns the old "employee_count" field's value of the Lead entity.
+// If the Lead object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadMutation) OldEmployeeCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEmployeeCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEmployeeCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEmployeeCount: %w", err)
+	}
+	return oldValue.EmployeeCount, nil
+}
+
+// AddEmployeeCount adds i to the "employee_count" field.
+func (m *LeadMutation) AddEmployeeCount(i int) {
+	if m.addemployee_count != nil {
+		*m.addemployee_count += i
+	} else {
+		m.addemployee_count = &i
+	}
+}
+
+// AddedEmployeeCount returns the value that was added to the "employee_count" field in this mutation.
+func (m *LeadMutation) AddedEmployeeCount() (r int, exists bool) {
+	v := m.addemployee_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearEmployeeCount clears the value of the "employee_count" field.
+func (m *LeadMutation) ClearEmployeeCount() {
+	m.employee_count = nil
+	m.addemployee_count = nil
+	m.clearedFields[lead.FieldEmployeeCount] = struct{}{}
+}
+
+// EmployeeCountCleared returns if the "employee_count" field was cleared in this mutation.
+func (m *LeadMutation) EmployeeCountCleared() bool {
+	_, ok := m.clearedFields[lead.FieldEmployeeCount]
+	return ok
+}
+
+// ResetEmployeeCount resets all changes to the "employee_count" field.
+func (m *LeadMutation) ResetEmployeeCount() {
+	m.employee_count = nil
+	m.addemployee_count = nil
+	delete(m.clearedFields, lead.FieldEmployeeCount)
+}
+
+// SetCompanyRevenue sets the "company_revenue" field.
+func (m *LeadMutation) SetCompanyRevenue(s string) {
+	m.company_revenue = &s
+}
+
+// CompanyRevenue returns the value of the "company_revenue" field in the mutation.
+func (m *LeadMutation) CompanyRevenue() (r string, exists bool) {
+	v := m.company_revenue
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCompanyRevenue returns the old "company_revenue" field's value of the Lead entity.
+// If the Lead object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadMutation) OldCompanyRevenue(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCompanyRevenue is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCompanyRevenue requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCompanyRevenue: %w", err)
+	}
+	return oldValue.CompanyRevenue, nil
+}
+
+// ClearCompanyRevenue clears the value of the "company_revenue" field.
+func (m *LeadMutation) ClearCompanyRevenue() {
+	m.company_revenue = nil
+	m.clearedFields[lead.FieldCompanyRevenue] = struct{}{}
+}
+
+// CompanyRevenueCleared returns if the "company_revenue" field was cleared in this mutation.
+func (m *LeadMutation) CompanyRevenueCleared() bool {
+	_, ok := m.clearedFields[lead.FieldCompanyRevenue]
+	return ok
+}
+
+// ResetCompanyRevenue resets all changes to the "company_revenue" field.
+func (m *LeadMutation) ResetCompanyRevenue() {
+	m.company_revenue = nil
+	delete(m.clearedFields, lead.FieldCompanyRevenue)
+}
+
+// SetLinkedinURL sets the "linkedin_url" field.
+func (m *LeadMutation) SetLinkedinURL(s string) {
+	m.linkedin_url = &s
+}
+
+// LinkedinURL returns the value of the "linkedin_url" field in the mutation.
+func (m *LeadMutation) LinkedinURL() (r string, exists bool) {
+	v := m.linkedin_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLinkedinURL returns the old "linkedin_url" field's value of the Lead entity.
+// If the Lead object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadMutation) OldLinkedinURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLinkedinURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLinkedinURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLinkedinURL: %w", err)
+	}
+	return oldValue.LinkedinURL, nil
+}
+
+// ClearLinkedinURL clears the value of the "linkedin_url" field.
+func (m *LeadMutation) ClearLinkedinURL() {
+	m.linkedin_url = nil
+	m.clearedFields[lead.FieldLinkedinURL] = struct{}{}
+}
+
+// LinkedinURLCleared returns if the "linkedin_url" field was cleared in this mutation.
+func (m *LeadMutation) LinkedinURLCleared() bool {
+	_, ok := m.clearedFields[lead.FieldLinkedinURL]
+	return ok
+}
+
+// ResetLinkedinURL resets all changes to the "linkedin_url" field.
+func (m *LeadMutation) ResetLinkedinURL() {
+	m.linkedin_url = nil
+	delete(m.clearedFields, lead.FieldLinkedinURL)
+}
+
+// SetTwitterURL sets the "twitter_url" field.
+func (m *LeadMutation) SetTwitterURL(s string) {
+	m.twitter_url = &s
+}
+
+// TwitterURL returns the value of the "twitter_url" field in the mutation.
+func (m *LeadMutation) TwitterURL() (r string, exists bool) {
+	v := m.twitter_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTwitterURL returns the old "twitter_url" field's value of the Lead entity.
+// If the Lead object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadMutation) OldTwitterURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTwitterURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTwitterURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTwitterURL: %w", err)
+	}
+	return oldValue.TwitterURL, nil
+}
+
+// ClearTwitterURL clears the value of the "twitter_url" field.
+func (m *LeadMutation) ClearTwitterURL() {
+	m.twitter_url = nil
+	m.clearedFields[lead.FieldTwitterURL] = struct{}{}
+}
+
+// TwitterURLCleared returns if the "twitter_url" field was cleared in this mutation.
+func (m *LeadMutation) TwitterURLCleared() bool {
+	_, ok := m.clearedFields[lead.FieldTwitterURL]
+	return ok
+}
+
+// ResetTwitterURL resets all changes to the "twitter_url" field.
+func (m *LeadMutation) ResetTwitterURL() {
+	m.twitter_url = nil
+	delete(m.clearedFields, lead.FieldTwitterURL)
+}
+
+// SetFacebookURL sets the "facebook_url" field.
+func (m *LeadMutation) SetFacebookURL(s string) {
+	m.facebook_url = &s
+}
+
+// FacebookURL returns the value of the "facebook_url" field in the mutation.
+func (m *LeadMutation) FacebookURL() (r string, exists bool) {
+	v := m.facebook_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFacebookURL returns the old "facebook_url" field's value of the Lead entity.
+// If the Lead object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadMutation) OldFacebookURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFacebookURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFacebookURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFacebookURL: %w", err)
+	}
+	return oldValue.FacebookURL, nil
+}
+
+// ClearFacebookURL clears the value of the "facebook_url" field.
+func (m *LeadMutation) ClearFacebookURL() {
+	m.facebook_url = nil
+	m.clearedFields[lead.FieldFacebookURL] = struct{}{}
+}
+
+// FacebookURLCleared returns if the "facebook_url" field was cleared in this mutation.
+func (m *LeadMutation) FacebookURLCleared() bool {
+	_, ok := m.clearedFields[lead.FieldFacebookURL]
+	return ok
+}
+
+// ResetFacebookURL resets all changes to the "facebook_url" field.
+func (m *LeadMutation) ResetFacebookURL() {
+	m.facebook_url = nil
+	delete(m.clearedFields, lead.FieldFacebookURL)
+}
+
+// SetIsEnriched sets the "is_enriched" field.
+func (m *LeadMutation) SetIsEnriched(b bool) {
+	m.is_enriched = &b
+}
+
+// IsEnriched returns the value of the "is_enriched" field in the mutation.
+func (m *LeadMutation) IsEnriched() (r bool, exists bool) {
+	v := m.is_enriched
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsEnriched returns the old "is_enriched" field's value of the Lead entity.
+// If the Lead object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadMutation) OldIsEnriched(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsEnriched is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsEnriched requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsEnriched: %w", err)
+	}
+	return oldValue.IsEnriched, nil
+}
+
+// ResetIsEnriched resets all changes to the "is_enriched" field.
+func (m *LeadMutation) ResetIsEnriched() {
+	m.is_enriched = nil
+}
+
+// SetEnrichedAt sets the "enriched_at" field.
+func (m *LeadMutation) SetEnrichedAt(t time.Time) {
+	m.enriched_at = &t
+}
+
+// EnrichedAt returns the value of the "enriched_at" field in the mutation.
+func (m *LeadMutation) EnrichedAt() (r time.Time, exists bool) {
+	v := m.enriched_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnrichedAt returns the old "enriched_at" field's value of the Lead entity.
+// If the Lead object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadMutation) OldEnrichedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnrichedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnrichedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnrichedAt: %w", err)
+	}
+	return oldValue.EnrichedAt, nil
+}
+
+// ClearEnrichedAt clears the value of the "enriched_at" field.
+func (m *LeadMutation) ClearEnrichedAt() {
+	m.enriched_at = nil
+	m.clearedFields[lead.FieldEnrichedAt] = struct{}{}
+}
+
+// EnrichedAtCleared returns if the "enriched_at" field was cleared in this mutation.
+func (m *LeadMutation) EnrichedAtCleared() bool {
+	_, ok := m.clearedFields[lead.FieldEnrichedAt]
+	return ok
+}
+
+// ResetEnrichedAt resets all changes to the "enriched_at" field.
+func (m *LeadMutation) ResetEnrichedAt() {
+	m.enriched_at = nil
+	delete(m.clearedFields, lead.FieldEnrichedAt)
+}
+
+// SetEmailValidated sets the "email_validated" field.
+func (m *LeadMutation) SetEmailValidated(b bool) {
+	m.email_validated = &b
+}
+
+// EmailValidated returns the value of the "email_validated" field in the mutation.
+func (m *LeadMutation) EmailValidated() (r bool, exists bool) {
+	v := m.email_validated
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEmailValidated returns the old "email_validated" field's value of the Lead entity.
+// If the Lead object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadMutation) OldEmailValidated(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEmailValidated is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEmailValidated requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEmailValidated: %w", err)
+	}
+	return oldValue.EmailValidated, nil
+}
+
+// ResetEmailValidated resets all changes to the "email_validated" field.
+func (m *LeadMutation) ResetEmailValidated() {
+	m.email_validated = nil
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (m *LeadMutation) SetCreatedAt(t time.Time) {
 	m.created_at = &t
@@ -9838,7 +10284,7 @@ func (m *LeadMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *LeadMutation) Fields() []string {
-	fields := make([]string, 0, 26)
+	fields := make([]string, 0, 35)
 	if m.name != nil {
 		fields = append(fields, lead.FieldName)
 	}
@@ -9911,6 +10357,33 @@ func (m *LeadMutation) Fields() []string {
 	if m.tattoo_style != nil {
 		fields = append(fields, lead.FieldTattooStyle)
 	}
+	if m.company_description != nil {
+		fields = append(fields, lead.FieldCompanyDescription)
+	}
+	if m.employee_count != nil {
+		fields = append(fields, lead.FieldEmployeeCount)
+	}
+	if m.company_revenue != nil {
+		fields = append(fields, lead.FieldCompanyRevenue)
+	}
+	if m.linkedin_url != nil {
+		fields = append(fields, lead.FieldLinkedinURL)
+	}
+	if m.twitter_url != nil {
+		fields = append(fields, lead.FieldTwitterURL)
+	}
+	if m.facebook_url != nil {
+		fields = append(fields, lead.FieldFacebookURL)
+	}
+	if m.is_enriched != nil {
+		fields = append(fields, lead.FieldIsEnriched)
+	}
+	if m.enriched_at != nil {
+		fields = append(fields, lead.FieldEnrichedAt)
+	}
+	if m.email_validated != nil {
+		fields = append(fields, lead.FieldEmailValidated)
+	}
 	if m.created_at != nil {
 		fields = append(fields, lead.FieldCreatedAt)
 	}
@@ -9973,6 +10446,24 @@ func (m *LeadMutation) Field(name string) (ent.Value, bool) {
 		return m.SportType()
 	case lead.FieldTattooStyle:
 		return m.TattooStyle()
+	case lead.FieldCompanyDescription:
+		return m.CompanyDescription()
+	case lead.FieldEmployeeCount:
+		return m.EmployeeCount()
+	case lead.FieldCompanyRevenue:
+		return m.CompanyRevenue()
+	case lead.FieldLinkedinURL:
+		return m.LinkedinURL()
+	case lead.FieldTwitterURL:
+		return m.TwitterURL()
+	case lead.FieldFacebookURL:
+		return m.FacebookURL()
+	case lead.FieldIsEnriched:
+		return m.IsEnriched()
+	case lead.FieldEnrichedAt:
+		return m.EnrichedAt()
+	case lead.FieldEmailValidated:
+		return m.EmailValidated()
 	case lead.FieldCreatedAt:
 		return m.CreatedAt()
 	case lead.FieldUpdatedAt:
@@ -10034,6 +10525,24 @@ func (m *LeadMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldSportType(ctx)
 	case lead.FieldTattooStyle:
 		return m.OldTattooStyle(ctx)
+	case lead.FieldCompanyDescription:
+		return m.OldCompanyDescription(ctx)
+	case lead.FieldEmployeeCount:
+		return m.OldEmployeeCount(ctx)
+	case lead.FieldCompanyRevenue:
+		return m.OldCompanyRevenue(ctx)
+	case lead.FieldLinkedinURL:
+		return m.OldLinkedinURL(ctx)
+	case lead.FieldTwitterURL:
+		return m.OldTwitterURL(ctx)
+	case lead.FieldFacebookURL:
+		return m.OldFacebookURL(ctx)
+	case lead.FieldIsEnriched:
+		return m.OldIsEnriched(ctx)
+	case lead.FieldEnrichedAt:
+		return m.OldEnrichedAt(ctx)
+	case lead.FieldEmailValidated:
+		return m.OldEmailValidated(ctx)
 	case lead.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case lead.FieldUpdatedAt:
@@ -10215,6 +10724,69 @@ func (m *LeadMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetTattooStyle(v)
 		return nil
+	case lead.FieldCompanyDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCompanyDescription(v)
+		return nil
+	case lead.FieldEmployeeCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEmployeeCount(v)
+		return nil
+	case lead.FieldCompanyRevenue:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCompanyRevenue(v)
+		return nil
+	case lead.FieldLinkedinURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLinkedinURL(v)
+		return nil
+	case lead.FieldTwitterURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTwitterURL(v)
+		return nil
+	case lead.FieldFacebookURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFacebookURL(v)
+		return nil
+	case lead.FieldIsEnriched:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsEnriched(v)
+		return nil
+	case lead.FieldEnrichedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnrichedAt(v)
+		return nil
+	case lead.FieldEmailValidated:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEmailValidated(v)
+		return nil
 	case lead.FieldCreatedAt:
 		v, ok := value.(time.Time)
 		if !ok {
@@ -10246,6 +10818,9 @@ func (m *LeadMutation) AddedFields() []string {
 	if m.addquality_score != nil {
 		fields = append(fields, lead.FieldQualityScore)
 	}
+	if m.addemployee_count != nil {
+		fields = append(fields, lead.FieldEmployeeCount)
+	}
 	return fields
 }
 
@@ -10260,6 +10835,8 @@ func (m *LeadMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedLongitude()
 	case lead.FieldQualityScore:
 		return m.AddedQualityScore()
+	case lead.FieldEmployeeCount:
+		return m.AddedEmployeeCount()
 	}
 	return nil, false
 }
@@ -10289,6 +10866,13 @@ func (m *LeadMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddQualityScore(v)
+		return nil
+	case lead.FieldEmployeeCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEmployeeCount(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Lead numeric field %s", name)
@@ -10345,6 +10929,27 @@ func (m *LeadMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(lead.FieldTattooStyle) {
 		fields = append(fields, lead.FieldTattooStyle)
+	}
+	if m.FieldCleared(lead.FieldCompanyDescription) {
+		fields = append(fields, lead.FieldCompanyDescription)
+	}
+	if m.FieldCleared(lead.FieldEmployeeCount) {
+		fields = append(fields, lead.FieldEmployeeCount)
+	}
+	if m.FieldCleared(lead.FieldCompanyRevenue) {
+		fields = append(fields, lead.FieldCompanyRevenue)
+	}
+	if m.FieldCleared(lead.FieldLinkedinURL) {
+		fields = append(fields, lead.FieldLinkedinURL)
+	}
+	if m.FieldCleared(lead.FieldTwitterURL) {
+		fields = append(fields, lead.FieldTwitterURL)
+	}
+	if m.FieldCleared(lead.FieldFacebookURL) {
+		fields = append(fields, lead.FieldFacebookURL)
+	}
+	if m.FieldCleared(lead.FieldEnrichedAt) {
+		fields = append(fields, lead.FieldEnrichedAt)
 	}
 	return fields
 }
@@ -10407,6 +11012,27 @@ func (m *LeadMutation) ClearField(name string) error {
 		return nil
 	case lead.FieldTattooStyle:
 		m.ClearTattooStyle()
+		return nil
+	case lead.FieldCompanyDescription:
+		m.ClearCompanyDescription()
+		return nil
+	case lead.FieldEmployeeCount:
+		m.ClearEmployeeCount()
+		return nil
+	case lead.FieldCompanyRevenue:
+		m.ClearCompanyRevenue()
+		return nil
+	case lead.FieldLinkedinURL:
+		m.ClearLinkedinURL()
+		return nil
+	case lead.FieldTwitterURL:
+		m.ClearTwitterURL()
+		return nil
+	case lead.FieldFacebookURL:
+		m.ClearFacebookURL()
+		return nil
+	case lead.FieldEnrichedAt:
+		m.ClearEnrichedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown Lead nullable field %s", name)
@@ -10487,6 +11113,33 @@ func (m *LeadMutation) ResetField(name string) error {
 		return nil
 	case lead.FieldTattooStyle:
 		m.ResetTattooStyle()
+		return nil
+	case lead.FieldCompanyDescription:
+		m.ResetCompanyDescription()
+		return nil
+	case lead.FieldEmployeeCount:
+		m.ResetEmployeeCount()
+		return nil
+	case lead.FieldCompanyRevenue:
+		m.ResetCompanyRevenue()
+		return nil
+	case lead.FieldLinkedinURL:
+		m.ResetLinkedinURL()
+		return nil
+	case lead.FieldTwitterURL:
+		m.ResetTwitterURL()
+		return nil
+	case lead.FieldFacebookURL:
+		m.ResetFacebookURL()
+		return nil
+	case lead.FieldIsEnriched:
+		m.ResetIsEnriched()
+		return nil
+	case lead.FieldEnrichedAt:
+		m.ResetEnrichedAt()
+		return nil
+	case lead.FieldEmailValidated:
+		m.ResetEmailValidated()
 		return nil
 	case lead.FieldCreatedAt:
 		m.ResetCreatedAt()

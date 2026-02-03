@@ -67,6 +67,24 @@ type Lead struct {
 	SportType string `json:"sport_type,omitempty"`
 	// For tattoos: style type (traditional, japanese, watercolor)
 	TattooStyle string `json:"tattoo_style,omitempty"`
+	// Enriched company description
+	CompanyDescription string `json:"company_description,omitempty"`
+	// Enriched employee count
+	EmployeeCount int `json:"employee_count,omitempty"`
+	// Enriched company revenue range
+	CompanyRevenue string `json:"company_revenue,omitempty"`
+	// Enriched LinkedIn URL
+	LinkedinURL string `json:"linkedin_url,omitempty"`
+	// Enriched Twitter URL
+	TwitterURL string `json:"twitter_url,omitempty"`
+	// Enriched Facebook URL
+	FacebookURL string `json:"facebook_url,omitempty"`
+	// Whether the lead has been enriched
+	IsEnriched bool `json:"is_enriched,omitempty"`
+	// When the lead was enriched
+	EnrichedAt *time.Time `json:"enriched_at,omitempty"`
+	// Whether the email has been validated
+	EmailValidated bool `json:"email_validated,omitempty"`
 	// Creation timestamp
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Last update timestamp
@@ -160,15 +178,15 @@ func (*Lead) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case lead.FieldSocialMedia, lead.FieldCustomFields, lead.FieldMetadata, lead.FieldSpecialties:
 			values[i] = new([]byte)
-		case lead.FieldVerified:
+		case lead.FieldVerified, lead.FieldIsEnriched, lead.FieldEmailValidated:
 			values[i] = new(sql.NullBool)
 		case lead.FieldLatitude, lead.FieldLongitude:
 			values[i] = new(sql.NullFloat64)
-		case lead.FieldID, lead.FieldQualityScore:
+		case lead.FieldID, lead.FieldQualityScore, lead.FieldEmployeeCount:
 			values[i] = new(sql.NullInt64)
-		case lead.FieldName, lead.FieldIndustry, lead.FieldCountry, lead.FieldCity, lead.FieldAddress, lead.FieldPostalCode, lead.FieldPhone, lead.FieldEmail, lead.FieldWebsite, lead.FieldStatus, lead.FieldOsmID, lead.FieldSubNiche, lead.FieldCuisineType, lead.FieldSportType, lead.FieldTattooStyle:
+		case lead.FieldName, lead.FieldIndustry, lead.FieldCountry, lead.FieldCity, lead.FieldAddress, lead.FieldPostalCode, lead.FieldPhone, lead.FieldEmail, lead.FieldWebsite, lead.FieldStatus, lead.FieldOsmID, lead.FieldSubNiche, lead.FieldCuisineType, lead.FieldSportType, lead.FieldTattooStyle, lead.FieldCompanyDescription, lead.FieldCompanyRevenue, lead.FieldLinkedinURL, lead.FieldTwitterURL, lead.FieldFacebookURL:
 			values[i] = new(sql.NullString)
-		case lead.FieldStatusChangedAt, lead.FieldCreatedAt, lead.FieldUpdatedAt:
+		case lead.FieldStatusChangedAt, lead.FieldEnrichedAt, lead.FieldCreatedAt, lead.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		case lead.ForeignKeys[0]: // territory_leads
 			values[i] = new(sql.NullInt64)
@@ -345,6 +363,61 @@ func (_m *Lead) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.TattooStyle = value.String
 			}
+		case lead.FieldCompanyDescription:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field company_description", values[i])
+			} else if value.Valid {
+				_m.CompanyDescription = value.String
+			}
+		case lead.FieldEmployeeCount:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field employee_count", values[i])
+			} else if value.Valid {
+				_m.EmployeeCount = int(value.Int64)
+			}
+		case lead.FieldCompanyRevenue:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field company_revenue", values[i])
+			} else if value.Valid {
+				_m.CompanyRevenue = value.String
+			}
+		case lead.FieldLinkedinURL:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field linkedin_url", values[i])
+			} else if value.Valid {
+				_m.LinkedinURL = value.String
+			}
+		case lead.FieldTwitterURL:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field twitter_url", values[i])
+			} else if value.Valid {
+				_m.TwitterURL = value.String
+			}
+		case lead.FieldFacebookURL:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field facebook_url", values[i])
+			} else if value.Valid {
+				_m.FacebookURL = value.String
+			}
+		case lead.FieldIsEnriched:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_enriched", values[i])
+			} else if value.Valid {
+				_m.IsEnriched = value.Bool
+			}
+		case lead.FieldEnrichedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field enriched_at", values[i])
+			} else if value.Valid {
+				_m.EnrichedAt = new(time.Time)
+				*_m.EnrichedAt = value.Time
+			}
+		case lead.FieldEmailValidated:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field email_validated", values[i])
+			} else if value.Valid {
+				_m.EmailValidated = value.Bool
+			}
 		case lead.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
@@ -501,6 +574,35 @@ func (_m *Lead) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("tattoo_style=")
 	builder.WriteString(_m.TattooStyle)
+	builder.WriteString(", ")
+	builder.WriteString("company_description=")
+	builder.WriteString(_m.CompanyDescription)
+	builder.WriteString(", ")
+	builder.WriteString("employee_count=")
+	builder.WriteString(fmt.Sprintf("%v", _m.EmployeeCount))
+	builder.WriteString(", ")
+	builder.WriteString("company_revenue=")
+	builder.WriteString(_m.CompanyRevenue)
+	builder.WriteString(", ")
+	builder.WriteString("linkedin_url=")
+	builder.WriteString(_m.LinkedinURL)
+	builder.WriteString(", ")
+	builder.WriteString("twitter_url=")
+	builder.WriteString(_m.TwitterURL)
+	builder.WriteString(", ")
+	builder.WriteString("facebook_url=")
+	builder.WriteString(_m.FacebookURL)
+	builder.WriteString(", ")
+	builder.WriteString("is_enriched=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsEnriched))
+	builder.WriteString(", ")
+	if v := _m.EnrichedAt; v != nil {
+		builder.WriteString("enriched_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("email_validated=")
+	builder.WriteString(fmt.Sprintf("%v", _m.EmailValidated))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))

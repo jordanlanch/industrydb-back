@@ -449,6 +449,15 @@ var (
 		{Name: "cuisine_type", Type: field.TypeString, Nullable: true},
 		{Name: "sport_type", Type: field.TypeString, Nullable: true},
 		{Name: "tattoo_style", Type: field.TypeString, Nullable: true},
+		{Name: "company_description", Type: field.TypeString, Nullable: true},
+		{Name: "employee_count", Type: field.TypeInt, Nullable: true},
+		{Name: "company_revenue", Type: field.TypeString, Nullable: true},
+		{Name: "linkedin_url", Type: field.TypeString, Nullable: true},
+		{Name: "twitter_url", Type: field.TypeString, Nullable: true},
+		{Name: "facebook_url", Type: field.TypeString, Nullable: true},
+		{Name: "is_enriched", Type: field.TypeBool, Default: false},
+		{Name: "enriched_at", Type: field.TypeTime, Nullable: true},
+		{Name: "email_validated", Type: field.TypeBool, Default: false},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "territory_leads", Type: field.TypeInt, Nullable: true},
@@ -461,7 +470,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "leads_territories_leads",
-				Columns:    []*schema.Column{LeadsColumns[27]},
+				Columns:    []*schema.Column{LeadsColumns[36]},
 				RefColumns: []*schema.Column{TerritoriesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -545,7 +554,7 @@ var (
 			{
 				Name:    "lead_created_at",
 				Unique:  false,
-				Columns: []*schema.Column{LeadsColumns[25]},
+				Columns: []*schema.Column{LeadsColumns[34]},
 			},
 		},
 	}

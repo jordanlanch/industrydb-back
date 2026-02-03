@@ -48,6 +48,7 @@ import (
 	"github.com/jordanlanch/industrydb/pkg/billing"
 	"github.com/jordanlanch/industrydb/pkg/cache"
 	"github.com/jordanlanch/industrydb/pkg/database"
+	"github.com/jordanlanch/industrydb/pkg/enrichment"
 	"github.com/jordanlanch/industrydb/pkg/email"
 	"github.com/jordanlanch/industrydb/pkg/export"
 	"github.com/jordanlanch/industrydb/pkg/industries"
@@ -64,6 +65,18 @@ import (
 	echoSwagger "github.com/swaggo/echo-swagger"
 	_ "github.com/jordanlanch/industrydb/docs" // Swagger docs (generated)
 )
+
+// stubEnrichmentProvider is a placeholder provider for development
+// Replace with real enrichment provider (Clearbit, FullContact, etc.) in production
+type stubEnrichmentProvider struct{}
+
+func (s *stubEnrichmentProvider) EnrichCompany(ctx context.Context, domain string) (*enrichment.CompanyData, error) {
+	return nil, fmt.Errorf("enrichment provider not configured - please configure a real provider (Clearbit, FullContact, etc.)")
+}
+
+func (s *stubEnrichmentProvider) ValidateEmail(ctx context.Context, email string) (*enrichment.EmailValidation, error) {
+	return nil, fmt.Errorf("enrichment provider not configured - please configure a real provider (Clearbit, FullContact, etc.)")
+}
 
 func main() {
 	// Load configuration
@@ -362,6 +375,12 @@ func main() {
 	cohortHandler := handlers.NewCohortHandler(db.Ent)
 	revenueHandler := handlers.NewRevenueHandler(db.Ent)
 	referralHandler := handlers.NewReferralHandler(db.Ent)
+
+	// Enrichment provider (stub for development - configure with real API in production)
+	// TODO: Replace with real provider (Clearbit, FullContact, etc.) in production
+	// Example: enrichmentProvider := clearbit.NewProvider(cfg.ClearbitAPIKey)
+	enrichmentProvider := &stubEnrichmentProvider{}
+	enrichmentHandler := handlers.NewEnrichmentHandler(db.Ent, enrichmentProvider)
 	log.Printf("✅ Webhook and batch handlers initialized")
 
 	// Backup handler (admin only, if enabled)
@@ -542,6 +561,15 @@ func main() {
 
 		// Referral validation (public - no auth required)
 		v1.GET("/referrals/validate", referralHandler.ValidateReferralCode)
+
+		// Enrichment routes (protected - requires auth)
+		enrichmentGroup := protected.Group("/enrichment")
+		{
+			enrichmentGroup.GET("/stats", enrichmentHandler.GetEnrichmentStats)
+		}
+		protected.POST("/leads/:id/enrich", enrichmentHandler.EnrichLead)
+		protected.GET("/leads/:id/validate-email", enrichmentHandler.ValidateLeadEmail)
+		protected.POST("/leads/bulk-enrich", enrichmentHandler.BulkEnrichLeads)
 
 		// Export routes (require email verification)
 		exportsGroup := protected.Group("/exports")

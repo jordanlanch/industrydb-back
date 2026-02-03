@@ -137,6 +137,36 @@ func (Lead) Fields() []ent.Field {
 			Optional().
 			Comment("For tattoos: style type (traditional, japanese, watercolor)"),
 
+		// Enrichment fields
+		field.String("company_description").
+			Optional().
+			Comment("Enriched company description"),
+		field.Int("employee_count").
+			Optional().
+			Comment("Enriched employee count"),
+		field.String("company_revenue").
+			Optional().
+			Comment("Enriched company revenue range"),
+		field.String("linkedin_url").
+			Optional().
+			Comment("Enriched LinkedIn URL"),
+		field.String("twitter_url").
+			Optional().
+			Comment("Enriched Twitter URL"),
+		field.String("facebook_url").
+			Optional().
+			Comment("Enriched Facebook URL"),
+		field.Bool("is_enriched").
+			Default(false).
+			Comment("Whether the lead has been enriched"),
+		field.Time("enriched_at").
+			Optional().
+			Nillable().
+			Comment("When the lead was enriched"),
+		field.Bool("email_validated").
+			Default(false).
+			Comment("Whether the email has been validated"),
+
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable().
