@@ -355,6 +355,7 @@ func main() {
 	customFieldsHandler := handlers.NewCustomFieldsHandler(db.Ent)
 	phoneHandler := handlers.NewPhoneHandler()
 	leadAssignmentHandler := handlers.NewLeadAssignmentHandler(db.Ent, auditLogger)
+	leadScoringHandler := handlers.NewLeadScoringHandler(db.Ent)
 	log.Printf("✅ Webhook and batch handlers initialized")
 
 	// Backup handler (admin only, if enabled)
@@ -414,6 +415,13 @@ func main() {
 			leadsGroup.POST("/:id/auto-assign", leadAssignmentHandler.AutoAssignLead)
 			leadsGroup.GET("/:id/assignment-history", leadAssignmentHandler.GetLeadAssignmentHistory)
 			leadsGroup.GET("/:id/current-assignment", leadAssignmentHandler.GetCurrentAssignment)
+
+			// Lead scoring
+			leadsGroup.GET("/:id/score", leadScoringHandler.CalculateScore)
+			leadsGroup.POST("/:id/score", leadScoringHandler.UpdateScore)
+			leadsGroup.GET("/top-scoring", leadScoringHandler.GetTopScoringLeads)
+			leadsGroup.GET("/low-scoring", leadScoringHandler.GetLowScoringLeads)
+			leadsGroup.GET("/score-distribution", leadScoringHandler.GetScoreDistribution)
 		}
 
 		// Lead notes routes (require email verification)
