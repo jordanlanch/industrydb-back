@@ -322,6 +322,106 @@ var (
 			},
 		},
 	}
+	// ExperimentsColumns holds the columns for the "experiments" table.
+	ExperimentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString, Size: 255},
+		{Name: "key", Type: field.TypeString, Unique: true, Size: 100},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"draft", "running", "paused", "completed"}, Default: "draft"},
+		{Name: "variants", Type: field.TypeJSON},
+		{Name: "traffic_split", Type: field.TypeJSON},
+		{Name: "start_date", Type: field.TypeTime, Nullable: true},
+		{Name: "end_date", Type: field.TypeTime, Nullable: true},
+		{Name: "target_metric", Type: field.TypeString, Nullable: true},
+		{Name: "confidence_level", Type: field.TypeFloat64, Default: 0.95},
+		{Name: "min_sample_size", Type: field.TypeInt, Default: 100},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// ExperimentsTable holds the schema information for the "experiments" table.
+	ExperimentsTable = &schema.Table{
+		Name:       "experiments",
+		Columns:    ExperimentsColumns,
+		PrimaryKey: []*schema.Column{ExperimentsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "experiment_key",
+				Unique:  true,
+				Columns: []*schema.Column{ExperimentsColumns[2]},
+			},
+			{
+				Name:    "experiment_status",
+				Unique:  false,
+				Columns: []*schema.Column{ExperimentsColumns[4]},
+			},
+			{
+				Name:    "experiment_start_date",
+				Unique:  false,
+				Columns: []*schema.Column{ExperimentsColumns[7]},
+			},
+			{
+				Name:    "experiment_end_date",
+				Unique:  false,
+				Columns: []*schema.Column{ExperimentsColumns[8]},
+			},
+		},
+	}
+	// ExperimentAssignmentsColumns holds the columns for the "experiment_assignments" table.
+	ExperimentAssignmentsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "variant", Type: field.TypeString},
+		{Name: "exposed", Type: field.TypeBool, Default: false},
+		{Name: "exposed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "converted", Type: field.TypeBool, Default: false},
+		{Name: "converted_at", Type: field.TypeTime, Nullable: true},
+		{Name: "metric_value", Type: field.TypeFloat64, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "experiment_id", Type: field.TypeInt},
+		{Name: "user_id", Type: field.TypeInt},
+	}
+	// ExperimentAssignmentsTable holds the schema information for the "experiment_assignments" table.
+	ExperimentAssignmentsTable = &schema.Table{
+		Name:       "experiment_assignments",
+		Columns:    ExperimentAssignmentsColumns,
+		PrimaryKey: []*schema.Column{ExperimentAssignmentsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "experiment_assignments_experiments_assignments",
+				Columns:    []*schema.Column{ExperimentAssignmentsColumns[8]},
+				RefColumns: []*schema.Column{ExperimentsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "experiment_assignments_users_experiment_assignments",
+				Columns:    []*schema.Column{ExperimentAssignmentsColumns[9]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "experimentassignment_user_id_experiment_id",
+				Unique:  true,
+				Columns: []*schema.Column{ExperimentAssignmentsColumns[9], ExperimentAssignmentsColumns[8]},
+			},
+			{
+				Name:    "experimentassignment_experiment_id_variant",
+				Unique:  false,
+				Columns: []*schema.Column{ExperimentAssignmentsColumns[8], ExperimentAssignmentsColumns[1]},
+			},
+			{
+				Name:    "experimentassignment_exposed",
+				Unique:  false,
+				Columns: []*schema.Column{ExperimentAssignmentsColumns[2]},
+			},
+			{
+				Name:    "experimentassignment_converted",
+				Unique:  false,
+				Columns: []*schema.Column{ExperimentAssignmentsColumns[4]},
+			},
+		},
+	}
 	// ExportsColumns holds the columns for the "exports" table.
 	ExportsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -1219,6 +1319,8 @@ var (
 		EmailSequenceEnrollmentsTable,
 		EmailSequenceSendsTable,
 		EmailSequenceStepsTable,
+		ExperimentsTable,
+		ExperimentAssignmentsTable,
 		ExportsTable,
 		IndustriesTable,
 		LeadsTable,
@@ -1249,6 +1351,8 @@ func init() {
 	EmailSequenceSendsTable.ForeignKeys[1].RefTable = EmailSequenceStepsTable
 	EmailSequenceSendsTable.ForeignKeys[2].RefTable = LeadsTable
 	EmailSequenceStepsTable.ForeignKeys[0].RefTable = EmailSequencesTable
+	ExperimentAssignmentsTable.ForeignKeys[0].RefTable = ExperimentsTable
+	ExperimentAssignmentsTable.ForeignKeys[1].RefTable = UsersTable
 	ExportsTable.ForeignKeys[0].RefTable = OrganizationsTable
 	ExportsTable.ForeignKeys[1].RefTable = UsersTable
 	LeadsTable.ForeignKeys[0].RefTable = TerritoriesTable

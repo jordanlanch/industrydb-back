@@ -21,6 +21,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/emailsequencesend"
 	"github.com/jordanlanch/industrydb/ent/emailsequencestep"
+	"github.com/jordanlanch/industrydb/ent/experiment"
+	"github.com/jordanlanch/industrydb/ent/experimentassignment"
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/industry"
 	"github.com/jordanlanch/industrydb/ent/lead"
@@ -56,6 +58,10 @@ type Client struct {
 	EmailSequenceSend *EmailSequenceSendClient
 	// EmailSequenceStep is the client for interacting with the EmailSequenceStep builders.
 	EmailSequenceStep *EmailSequenceStepClient
+	// Experiment is the client for interacting with the Experiment builders.
+	Experiment *ExperimentClient
+	// ExperimentAssignment is the client for interacting with the ExperimentAssignment builders.
+	ExperimentAssignment *ExperimentAssignmentClient
 	// Export is the client for interacting with the Export builders.
 	Export *ExportClient
 	// Industry is the client for interacting with the Industry builders.
@@ -105,6 +111,8 @@ func (c *Client) init() {
 	c.EmailSequenceEnrollment = NewEmailSequenceEnrollmentClient(c.config)
 	c.EmailSequenceSend = NewEmailSequenceSendClient(c.config)
 	c.EmailSequenceStep = NewEmailSequenceStepClient(c.config)
+	c.Experiment = NewExperimentClient(c.config)
+	c.ExperimentAssignment = NewExperimentAssignmentClient(c.config)
 	c.Export = NewExportClient(c.config)
 	c.Industry = NewIndustryClient(c.config)
 	c.Lead = NewLeadClient(c.config)
@@ -219,6 +227,8 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		EmailSequenceEnrollment: NewEmailSequenceEnrollmentClient(cfg),
 		EmailSequenceSend:       NewEmailSequenceSendClient(cfg),
 		EmailSequenceStep:       NewEmailSequenceStepClient(cfg),
+		Experiment:              NewExperimentClient(cfg),
+		ExperimentAssignment:    NewExperimentAssignmentClient(cfg),
 		Export:                  NewExportClient(cfg),
 		Industry:                NewIndustryClient(cfg),
 		Lead:                    NewLeadClient(cfg),
@@ -260,6 +270,8 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		EmailSequenceEnrollment: NewEmailSequenceEnrollmentClient(cfg),
 		EmailSequenceSend:       NewEmailSequenceSendClient(cfg),
 		EmailSequenceStep:       NewEmailSequenceStepClient(cfg),
+		Experiment:              NewExperimentClient(cfg),
+		ExperimentAssignment:    NewExperimentAssignmentClient(cfg),
 		Export:                  NewExportClient(cfg),
 		Industry:                NewIndustryClient(cfg),
 		Lead:                    NewLeadClient(cfg),
@@ -306,10 +318,11 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.APIKey, c.AuditLog, c.EmailSequence, c.EmailSequenceEnrollment,
-		c.EmailSequenceSend, c.EmailSequenceStep, c.Export, c.Industry, c.Lead,
-		c.LeadAssignment, c.LeadNote, c.LeadStatusHistory, c.Organization,
-		c.OrganizationMember, c.Referral, c.SavedSearch, c.Subscription, c.Territory,
-		c.TerritoryMember, c.UsageLog, c.User, c.Webhook,
+		c.EmailSequenceSend, c.EmailSequenceStep, c.Experiment, c.ExperimentAssignment,
+		c.Export, c.Industry, c.Lead, c.LeadAssignment, c.LeadNote,
+		c.LeadStatusHistory, c.Organization, c.OrganizationMember, c.Referral,
+		c.SavedSearch, c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog,
+		c.User, c.Webhook,
 	} {
 		n.Use(hooks...)
 	}
@@ -320,10 +333,11 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.APIKey, c.AuditLog, c.EmailSequence, c.EmailSequenceEnrollment,
-		c.EmailSequenceSend, c.EmailSequenceStep, c.Export, c.Industry, c.Lead,
-		c.LeadAssignment, c.LeadNote, c.LeadStatusHistory, c.Organization,
-		c.OrganizationMember, c.Referral, c.SavedSearch, c.Subscription, c.Territory,
-		c.TerritoryMember, c.UsageLog, c.User, c.Webhook,
+		c.EmailSequenceSend, c.EmailSequenceStep, c.Experiment, c.ExperimentAssignment,
+		c.Export, c.Industry, c.Lead, c.LeadAssignment, c.LeadNote,
+		c.LeadStatusHistory, c.Organization, c.OrganizationMember, c.Referral,
+		c.SavedSearch, c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog,
+		c.User, c.Webhook,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -344,6 +358,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.EmailSequenceSend.mutate(ctx, m)
 	case *EmailSequenceStepMutation:
 		return c.EmailSequenceStep.mutate(ctx, m)
+	case *ExperimentMutation:
+		return c.Experiment.mutate(ctx, m)
+	case *ExperimentAssignmentMutation:
+		return c.ExperimentAssignment.mutate(ctx, m)
 	case *ExportMutation:
 		return c.Export.mutate(ctx, m)
 	case *IndustryMutation:
@@ -1400,6 +1418,320 @@ func (c *EmailSequenceStepClient) mutate(ctx context.Context, m *EmailSequenceSt
 		return (&EmailSequenceStepDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown EmailSequenceStep mutation op: %q", m.Op())
+	}
+}
+
+// ExperimentClient is a client for the Experiment schema.
+type ExperimentClient struct {
+	config
+}
+
+// NewExperimentClient returns a client for the Experiment from the given config.
+func NewExperimentClient(c config) *ExperimentClient {
+	return &ExperimentClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `experiment.Hooks(f(g(h())))`.
+func (c *ExperimentClient) Use(hooks ...Hook) {
+	c.hooks.Experiment = append(c.hooks.Experiment, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `experiment.Intercept(f(g(h())))`.
+func (c *ExperimentClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Experiment = append(c.inters.Experiment, interceptors...)
+}
+
+// Create returns a builder for creating a Experiment entity.
+func (c *ExperimentClient) Create() *ExperimentCreate {
+	mutation := newExperimentMutation(c.config, OpCreate)
+	return &ExperimentCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Experiment entities.
+func (c *ExperimentClient) CreateBulk(builders ...*ExperimentCreate) *ExperimentCreateBulk {
+	return &ExperimentCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ExperimentClient) MapCreateBulk(slice any, setFunc func(*ExperimentCreate, int)) *ExperimentCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ExperimentCreateBulk{err: fmt.Errorf("calling to ExperimentClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ExperimentCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ExperimentCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Experiment.
+func (c *ExperimentClient) Update() *ExperimentUpdate {
+	mutation := newExperimentMutation(c.config, OpUpdate)
+	return &ExperimentUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ExperimentClient) UpdateOne(_m *Experiment) *ExperimentUpdateOne {
+	mutation := newExperimentMutation(c.config, OpUpdateOne, withExperiment(_m))
+	return &ExperimentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ExperimentClient) UpdateOneID(id int) *ExperimentUpdateOne {
+	mutation := newExperimentMutation(c.config, OpUpdateOne, withExperimentID(id))
+	return &ExperimentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Experiment.
+func (c *ExperimentClient) Delete() *ExperimentDelete {
+	mutation := newExperimentMutation(c.config, OpDelete)
+	return &ExperimentDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ExperimentClient) DeleteOne(_m *Experiment) *ExperimentDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ExperimentClient) DeleteOneID(id int) *ExperimentDeleteOne {
+	builder := c.Delete().Where(experiment.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ExperimentDeleteOne{builder}
+}
+
+// Query returns a query builder for Experiment.
+func (c *ExperimentClient) Query() *ExperimentQuery {
+	return &ExperimentQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeExperiment},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Experiment entity by its id.
+func (c *ExperimentClient) Get(ctx context.Context, id int) (*Experiment, error) {
+	return c.Query().Where(experiment.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ExperimentClient) GetX(ctx context.Context, id int) *Experiment {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryAssignments queries the assignments edge of a Experiment.
+func (c *ExperimentClient) QueryAssignments(_m *Experiment) *ExperimentAssignmentQuery {
+	query := (&ExperimentAssignmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(experiment.Table, experiment.FieldID, id),
+			sqlgraph.To(experimentassignment.Table, experimentassignment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, experiment.AssignmentsTable, experiment.AssignmentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ExperimentClient) Hooks() []Hook {
+	return c.hooks.Experiment
+}
+
+// Interceptors returns the client interceptors.
+func (c *ExperimentClient) Interceptors() []Interceptor {
+	return c.inters.Experiment
+}
+
+func (c *ExperimentClient) mutate(ctx context.Context, m *ExperimentMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ExperimentCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ExperimentUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ExperimentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ExperimentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Experiment mutation op: %q", m.Op())
+	}
+}
+
+// ExperimentAssignmentClient is a client for the ExperimentAssignment schema.
+type ExperimentAssignmentClient struct {
+	config
+}
+
+// NewExperimentAssignmentClient returns a client for the ExperimentAssignment from the given config.
+func NewExperimentAssignmentClient(c config) *ExperimentAssignmentClient {
+	return &ExperimentAssignmentClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `experimentassignment.Hooks(f(g(h())))`.
+func (c *ExperimentAssignmentClient) Use(hooks ...Hook) {
+	c.hooks.ExperimentAssignment = append(c.hooks.ExperimentAssignment, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `experimentassignment.Intercept(f(g(h())))`.
+func (c *ExperimentAssignmentClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ExperimentAssignment = append(c.inters.ExperimentAssignment, interceptors...)
+}
+
+// Create returns a builder for creating a ExperimentAssignment entity.
+func (c *ExperimentAssignmentClient) Create() *ExperimentAssignmentCreate {
+	mutation := newExperimentAssignmentMutation(c.config, OpCreate)
+	return &ExperimentAssignmentCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ExperimentAssignment entities.
+func (c *ExperimentAssignmentClient) CreateBulk(builders ...*ExperimentAssignmentCreate) *ExperimentAssignmentCreateBulk {
+	return &ExperimentAssignmentCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ExperimentAssignmentClient) MapCreateBulk(slice any, setFunc func(*ExperimentAssignmentCreate, int)) *ExperimentAssignmentCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ExperimentAssignmentCreateBulk{err: fmt.Errorf("calling to ExperimentAssignmentClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ExperimentAssignmentCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ExperimentAssignmentCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ExperimentAssignment.
+func (c *ExperimentAssignmentClient) Update() *ExperimentAssignmentUpdate {
+	mutation := newExperimentAssignmentMutation(c.config, OpUpdate)
+	return &ExperimentAssignmentUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ExperimentAssignmentClient) UpdateOne(_m *ExperimentAssignment) *ExperimentAssignmentUpdateOne {
+	mutation := newExperimentAssignmentMutation(c.config, OpUpdateOne, withExperimentAssignment(_m))
+	return &ExperimentAssignmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ExperimentAssignmentClient) UpdateOneID(id int) *ExperimentAssignmentUpdateOne {
+	mutation := newExperimentAssignmentMutation(c.config, OpUpdateOne, withExperimentAssignmentID(id))
+	return &ExperimentAssignmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ExperimentAssignment.
+func (c *ExperimentAssignmentClient) Delete() *ExperimentAssignmentDelete {
+	mutation := newExperimentAssignmentMutation(c.config, OpDelete)
+	return &ExperimentAssignmentDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ExperimentAssignmentClient) DeleteOne(_m *ExperimentAssignment) *ExperimentAssignmentDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ExperimentAssignmentClient) DeleteOneID(id int) *ExperimentAssignmentDeleteOne {
+	builder := c.Delete().Where(experimentassignment.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ExperimentAssignmentDeleteOne{builder}
+}
+
+// Query returns a query builder for ExperimentAssignment.
+func (c *ExperimentAssignmentClient) Query() *ExperimentAssignmentQuery {
+	return &ExperimentAssignmentQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeExperimentAssignment},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ExperimentAssignment entity by its id.
+func (c *ExperimentAssignmentClient) Get(ctx context.Context, id int) (*ExperimentAssignment, error) {
+	return c.Query().Where(experimentassignment.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ExperimentAssignmentClient) GetX(ctx context.Context, id int) *ExperimentAssignment {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryExperiment queries the experiment edge of a ExperimentAssignment.
+func (c *ExperimentAssignmentClient) QueryExperiment(_m *ExperimentAssignment) *ExperimentQuery {
+	query := (&ExperimentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(experimentassignment.Table, experimentassignment.FieldID, id),
+			sqlgraph.To(experiment.Table, experiment.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, experimentassignment.ExperimentTable, experimentassignment.ExperimentColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUser queries the user edge of a ExperimentAssignment.
+func (c *ExperimentAssignmentClient) QueryUser(_m *ExperimentAssignment) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(experimentassignment.Table, experimentassignment.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, experimentassignment.UserTable, experimentassignment.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ExperimentAssignmentClient) Hooks() []Hook {
+	return c.hooks.ExperimentAssignment
+}
+
+// Interceptors returns the client interceptors.
+func (c *ExperimentAssignmentClient) Interceptors() []Interceptor {
+	return c.inters.ExperimentAssignment
+}
+
+func (c *ExperimentAssignmentClient) mutate(ctx context.Context, m *ExperimentAssignmentMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ExperimentAssignmentCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ExperimentAssignmentUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ExperimentAssignmentUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ExperimentAssignmentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ExperimentAssignment mutation op: %q", m.Op())
 	}
 }
 
@@ -4189,6 +4521,22 @@ func (c *UserClient) QueryReceivedReferrals(_m *User) *ReferralQuery {
 	return query
 }
 
+// QueryExperimentAssignments queries the experiment_assignments edge of a User.
+func (c *UserClient) QueryExperimentAssignments(_m *User) *ExperimentAssignmentQuery {
+	query := (&ExperimentAssignmentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(experimentassignment.Table, experimentassignment.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ExperimentAssignmentsTable, user.ExperimentAssignmentsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -4367,15 +4715,16 @@ func (c *WebhookClient) mutate(ctx context.Context, m *WebhookMutation) (Value, 
 type (
 	hooks struct {
 		APIKey, AuditLog, EmailSequence, EmailSequenceEnrollment, EmailSequenceSend,
-		EmailSequenceStep, Export, Industry, Lead, LeadAssignment, LeadNote,
-		LeadStatusHistory, Organization, OrganizationMember, Referral, SavedSearch,
-		Subscription, Territory, TerritoryMember, UsageLog, User, Webhook []ent.Hook
+		EmailSequenceStep, Experiment, ExperimentAssignment, Export, Industry, Lead,
+		LeadAssignment, LeadNote, LeadStatusHistory, Organization, OrganizationMember,
+		Referral, SavedSearch, Subscription, Territory, TerritoryMember, UsageLog,
+		User, Webhook []ent.Hook
 	}
 	inters struct {
 		APIKey, AuditLog, EmailSequence, EmailSequenceEnrollment, EmailSequenceSend,
-		EmailSequenceStep, Export, Industry, Lead, LeadAssignment, LeadNote,
-		LeadStatusHistory, Organization, OrganizationMember, Referral, SavedSearch,
-		Subscription, Territory, TerritoryMember, UsageLog, User,
-		Webhook []ent.Interceptor
+		EmailSequenceStep, Experiment, ExperimentAssignment, Export, Industry, Lead,
+		LeadAssignment, LeadNote, LeadStatusHistory, Organization, OrganizationMember,
+		Referral, SavedSearch, Subscription, Territory, TerritoryMember, UsageLog,
+		User, Webhook []ent.Interceptor
 	}
 )

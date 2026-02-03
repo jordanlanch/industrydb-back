@@ -11,6 +11,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/emailsequencesend"
 	"github.com/jordanlanch/industrydb/ent/emailsequencestep"
+	"github.com/jordanlanch/industrydb/ent/experiment"
+	"github.com/jordanlanch/industrydb/ent/experimentassignment"
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/industry"
 	"github.com/jordanlanch/industrydb/ent/lead"
@@ -216,6 +218,80 @@ func init() {
 	emailsequencestepDescCreatedAt := emailsequencestepFields[5].Descriptor()
 	// emailsequencestep.DefaultCreatedAt holds the default value on creation for the created_at field.
 	emailsequencestep.DefaultCreatedAt = emailsequencestepDescCreatedAt.Default.(func() time.Time)
+	experimentFields := schema.Experiment{}.Fields()
+	_ = experimentFields
+	// experimentDescName is the schema descriptor for name field.
+	experimentDescName := experimentFields[0].Descriptor()
+	// experiment.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	experiment.NameValidator = func() func(string) error {
+		validators := experimentDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// experimentDescKey is the schema descriptor for key field.
+	experimentDescKey := experimentFields[1].Descriptor()
+	// experiment.KeyValidator is a validator for the "key" field. It is called by the builders before save.
+	experiment.KeyValidator = func() func(string) error {
+		validators := experimentDescKey.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(key string) error {
+			for _, fn := range fns {
+				if err := fn(key); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// experimentDescConfidenceLevel is the schema descriptor for confidence_level field.
+	experimentDescConfidenceLevel := experimentFields[9].Descriptor()
+	// experiment.DefaultConfidenceLevel holds the default value on creation for the confidence_level field.
+	experiment.DefaultConfidenceLevel = experimentDescConfidenceLevel.Default.(float64)
+	// experimentDescMinSampleSize is the schema descriptor for min_sample_size field.
+	experimentDescMinSampleSize := experimentFields[10].Descriptor()
+	// experiment.DefaultMinSampleSize holds the default value on creation for the min_sample_size field.
+	experiment.DefaultMinSampleSize = experimentDescMinSampleSize.Default.(int)
+	// experimentDescCreatedAt is the schema descriptor for created_at field.
+	experimentDescCreatedAt := experimentFields[11].Descriptor()
+	// experiment.DefaultCreatedAt holds the default value on creation for the created_at field.
+	experiment.DefaultCreatedAt = experimentDescCreatedAt.Default.(func() time.Time)
+	// experimentDescUpdatedAt is the schema descriptor for updated_at field.
+	experimentDescUpdatedAt := experimentFields[12].Descriptor()
+	// experiment.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	experiment.DefaultUpdatedAt = experimentDescUpdatedAt.Default.(func() time.Time)
+	// experiment.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	experiment.UpdateDefaultUpdatedAt = experimentDescUpdatedAt.UpdateDefault.(func() time.Time)
+	experimentassignmentFields := schema.ExperimentAssignment{}.Fields()
+	_ = experimentassignmentFields
+	// experimentassignmentDescVariant is the schema descriptor for variant field.
+	experimentassignmentDescVariant := experimentassignmentFields[2].Descriptor()
+	// experimentassignment.VariantValidator is a validator for the "variant" field. It is called by the builders before save.
+	experimentassignment.VariantValidator = experimentassignmentDescVariant.Validators[0].(func(string) error)
+	// experimentassignmentDescExposed is the schema descriptor for exposed field.
+	experimentassignmentDescExposed := experimentassignmentFields[3].Descriptor()
+	// experimentassignment.DefaultExposed holds the default value on creation for the exposed field.
+	experimentassignment.DefaultExposed = experimentassignmentDescExposed.Default.(bool)
+	// experimentassignmentDescConverted is the schema descriptor for converted field.
+	experimentassignmentDescConverted := experimentassignmentFields[5].Descriptor()
+	// experimentassignment.DefaultConverted holds the default value on creation for the converted field.
+	experimentassignment.DefaultConverted = experimentassignmentDescConverted.Default.(bool)
+	// experimentassignmentDescCreatedAt is the schema descriptor for created_at field.
+	experimentassignmentDescCreatedAt := experimentassignmentFields[8].Descriptor()
+	// experimentassignment.DefaultCreatedAt holds the default value on creation for the created_at field.
+	experimentassignment.DefaultCreatedAt = experimentassignmentDescCreatedAt.Default.(func() time.Time)
 	exportFields := schema.Export{}.Fields()
 	_ = exportFields
 	// exportDescUserID is the schema descriptor for user_id field.

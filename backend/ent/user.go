@@ -113,9 +113,11 @@ type UserEdges struct {
 	SentReferrals []*Referral `json:"sent_referrals,omitempty"`
 	// Referrals received by this user (how they signed up)
 	ReceivedReferrals []*Referral `json:"received_referrals,omitempty"`
+	// A/B test variant assignments for this user
+	ExperimentAssignments []*ExperimentAssignment `json:"experiment_assignments,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [20]bool
+	loadedTypes [21]bool
 }
 
 // SubscriptionsOrErr returns the Subscriptions value or an error if the edge
@@ -296,6 +298,15 @@ func (e UserEdges) ReceivedReferralsOrErr() ([]*Referral, error) {
 		return e.ReceivedReferrals, nil
 	}
 	return nil, &NotLoadedError{edge: "received_referrals"}
+}
+
+// ExperimentAssignmentsOrErr returns the ExperimentAssignments value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) ExperimentAssignmentsOrErr() ([]*ExperimentAssignment, error) {
+	if e.loadedTypes[20] {
+		return e.ExperimentAssignments, nil
+	}
+	return nil, &NotLoadedError{edge: "experiment_assignments"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -597,6 +608,11 @@ func (_m *User) QuerySentReferrals() *ReferralQuery {
 // QueryReceivedReferrals queries the "received_referrals" edge of the User entity.
 func (_m *User) QueryReceivedReferrals() *ReferralQuery {
 	return NewUserClient(_m.config).QueryReceivedReferrals(_m)
+}
+
+// QueryExperimentAssignments queries the "experiment_assignments" edge of the User entity.
+func (_m *User) QueryExperimentAssignments() *ExperimentAssignmentQuery {
+	return NewUserClient(_m.config).QueryExperimentAssignments(_m)
 }
 
 // Update returns a builder for updating this User.

@@ -24,6 +24,12 @@ type EmailSequenceSend func(*sql.Selector)
 // EmailSequenceStep is the predicate function for emailsequencestep builders.
 type EmailSequenceStep func(*sql.Selector)
 
+// Experiment is the predicate function for experiment builders.
+type Experiment func(*sql.Selector)
+
+// ExperimentAssignment is the predicate function for experimentassignment builders.
+type ExperimentAssignment func(*sql.Selector)
+
 // Export is the predicate function for export builders.
 type Export func(*sql.Selector)
 

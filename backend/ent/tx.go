@@ -24,6 +24,10 @@ type Tx struct {
 	EmailSequenceSend *EmailSequenceSendClient
 	// EmailSequenceStep is the client for interacting with the EmailSequenceStep builders.
 	EmailSequenceStep *EmailSequenceStepClient
+	// Experiment is the client for interacting with the Experiment builders.
+	Experiment *ExperimentClient
+	// ExperimentAssignment is the client for interacting with the ExperimentAssignment builders.
+	ExperimentAssignment *ExperimentAssignmentClient
 	// Export is the client for interacting with the Export builders.
 	Export *ExportClient
 	// Industry is the client for interacting with the Industry builders.
@@ -193,6 +197,8 @@ func (tx *Tx) init() {
 	tx.EmailSequenceEnrollment = NewEmailSequenceEnrollmentClient(tx.config)
 	tx.EmailSequenceSend = NewEmailSequenceSendClient(tx.config)
 	tx.EmailSequenceStep = NewEmailSequenceStepClient(tx.config)
+	tx.Experiment = NewExperimentClient(tx.config)
+	tx.ExperimentAssignment = NewExperimentAssignmentClient(tx.config)
 	tx.Export = NewExportClient(tx.config)
 	tx.Industry = NewIndustryClient(tx.config)
 	tx.Lead = NewLeadClient(tx.config)

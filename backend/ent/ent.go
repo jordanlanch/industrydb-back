@@ -18,6 +18,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/emailsequencesend"
 	"github.com/jordanlanch/industrydb/ent/emailsequencestep"
+	"github.com/jordanlanch/industrydb/ent/experiment"
+	"github.com/jordanlanch/industrydb/ent/experimentassignment"
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/industry"
 	"github.com/jordanlanch/industrydb/ent/lead"
@@ -100,6 +102,8 @@ func checkColumn(t, c string) error {
 			emailsequenceenrollment.Table: emailsequenceenrollment.ValidColumn,
 			emailsequencesend.Table:       emailsequencesend.ValidColumn,
 			emailsequencestep.Table:       emailsequencestep.ValidColumn,
+			experiment.Table:              experiment.ValidColumn,
+			experimentassignment.Table:    experimentassignment.ValidColumn,
 			export.Table:                  export.ValidColumn,
 			industry.Table:                industry.ValidColumn,
 			lead.Table:                    lead.ValidColumn,

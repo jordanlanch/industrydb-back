@@ -15,6 +15,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
+	"github.com/jordanlanch/industrydb/ent/experimentassignment"
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
@@ -740,6 +741,21 @@ func (_u *UserUpdate) AddReceivedReferrals(v ...*Referral) *UserUpdate {
 	return _u.AddReceivedReferralIDs(ids...)
 }
 
+// AddExperimentAssignmentIDs adds the "experiment_assignments" edge to the ExperimentAssignment entity by IDs.
+func (_u *UserUpdate) AddExperimentAssignmentIDs(ids ...int) *UserUpdate {
+	_u.mutation.AddExperimentAssignmentIDs(ids...)
+	return _u
+}
+
+// AddExperimentAssignments adds the "experiment_assignments" edges to the ExperimentAssignment entity.
+func (_u *UserUpdate) AddExperimentAssignments(v ...*ExperimentAssignment) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddExperimentAssignmentIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -1163,6 +1179,27 @@ func (_u *UserUpdate) RemoveReceivedReferrals(v ...*Referral) *UserUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveReceivedReferralIDs(ids...)
+}
+
+// ClearExperimentAssignments clears all "experiment_assignments" edges to the ExperimentAssignment entity.
+func (_u *UserUpdate) ClearExperimentAssignments() *UserUpdate {
+	_u.mutation.ClearExperimentAssignments()
+	return _u
+}
+
+// RemoveExperimentAssignmentIDs removes the "experiment_assignments" edge to ExperimentAssignment entities by IDs.
+func (_u *UserUpdate) RemoveExperimentAssignmentIDs(ids ...int) *UserUpdate {
+	_u.mutation.RemoveExperimentAssignmentIDs(ids...)
+	return _u
+}
+
+// RemoveExperimentAssignments removes "experiment_assignments" edges to ExperimentAssignment entities.
+func (_u *UserUpdate) RemoveExperimentAssignments(v ...*ExperimentAssignment) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveExperimentAssignmentIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -2266,6 +2303,51 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.ExperimentAssignmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ExperimentAssignmentsTable,
+			Columns: []string{user.ExperimentAssignmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(experimentassignment.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedExperimentAssignmentsIDs(); len(nodes) > 0 && !_u.mutation.ExperimentAssignmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ExperimentAssignmentsTable,
+			Columns: []string{user.ExperimentAssignmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(experimentassignment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ExperimentAssignmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ExperimentAssignmentsTable,
+			Columns: []string{user.ExperimentAssignmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(experimentassignment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -2981,6 +3063,21 @@ func (_u *UserUpdateOne) AddReceivedReferrals(v ...*Referral) *UserUpdateOne {
 	return _u.AddReceivedReferralIDs(ids...)
 }
 
+// AddExperimentAssignmentIDs adds the "experiment_assignments" edge to the ExperimentAssignment entity by IDs.
+func (_u *UserUpdateOne) AddExperimentAssignmentIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.AddExperimentAssignmentIDs(ids...)
+	return _u
+}
+
+// AddExperimentAssignments adds the "experiment_assignments" edges to the ExperimentAssignment entity.
+func (_u *UserUpdateOne) AddExperimentAssignments(v ...*ExperimentAssignment) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddExperimentAssignmentIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -3404,6 +3501,27 @@ func (_u *UserUpdateOne) RemoveReceivedReferrals(v ...*Referral) *UserUpdateOne 
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveReceivedReferralIDs(ids...)
+}
+
+// ClearExperimentAssignments clears all "experiment_assignments" edges to the ExperimentAssignment entity.
+func (_u *UserUpdateOne) ClearExperimentAssignments() *UserUpdateOne {
+	_u.mutation.ClearExperimentAssignments()
+	return _u
+}
+
+// RemoveExperimentAssignmentIDs removes the "experiment_assignments" edge to ExperimentAssignment entities by IDs.
+func (_u *UserUpdateOne) RemoveExperimentAssignmentIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.RemoveExperimentAssignmentIDs(ids...)
+	return _u
+}
+
+// RemoveExperimentAssignments removes "experiment_assignments" edges to ExperimentAssignment entities.
+func (_u *UserUpdateOne) RemoveExperimentAssignments(v ...*ExperimentAssignment) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveExperimentAssignmentIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -4530,6 +4648,51 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(referral.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ExperimentAssignmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ExperimentAssignmentsTable,
+			Columns: []string{user.ExperimentAssignmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(experimentassignment.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedExperimentAssignmentsIDs(); len(nodes) > 0 && !_u.mutation.ExperimentAssignmentsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ExperimentAssignmentsTable,
+			Columns: []string{user.ExperimentAssignmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(experimentassignment.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ExperimentAssignmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ExperimentAssignmentsTable,
+			Columns: []string{user.ExperimentAssignmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(experimentassignment.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

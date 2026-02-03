@@ -156,6 +156,8 @@ func (User) Edges() []ent.Edge {
 			Comment("Referrals sent by this user"),
 		edge.To("received_referrals", Referral.Type).
 			Comment("Referrals received by this user (how they signed up)"),
+		edge.To("experiment_assignments", ExperimentAssignment.Type).
+			Comment("A/B test variant assignments for this user"),
 	}
 }
 

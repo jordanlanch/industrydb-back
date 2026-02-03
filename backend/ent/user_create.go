@@ -14,6 +14,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
+	"github.com/jordanlanch/industrydb/ent/experimentassignment"
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
@@ -649,6 +650,21 @@ func (_c *UserCreate) AddReceivedReferrals(v ...*Referral) *UserCreate {
 	return _c.AddReceivedReferralIDs(ids...)
 }
 
+// AddExperimentAssignmentIDs adds the "experiment_assignments" edge to the ExperimentAssignment entity by IDs.
+func (_c *UserCreate) AddExperimentAssignmentIDs(ids ...int) *UserCreate {
+	_c.mutation.AddExperimentAssignmentIDs(ids...)
+	return _c
+}
+
+// AddExperimentAssignments adds the "experiment_assignments" edges to the ExperimentAssignment entity.
+func (_c *UserCreate) AddExperimentAssignments(v ...*ExperimentAssignment) *UserCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddExperimentAssignmentIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_c *UserCreate) Mutation() *UserMutation {
 	return _c.mutation
@@ -1249,6 +1265,22 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(referral.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ExperimentAssignmentsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ExperimentAssignmentsTable,
+			Columns: []string{user.ExperimentAssignmentsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(experimentassignment.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

@@ -103,6 +103,8 @@ const (
 	EdgeSentReferrals = "sent_referrals"
 	// EdgeReceivedReferrals holds the string denoting the received_referrals edge name in mutations.
 	EdgeReceivedReferrals = "received_referrals"
+	// EdgeExperimentAssignments holds the string denoting the experiment_assignments edge name in mutations.
+	EdgeExperimentAssignments = "experiment_assignments"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// SubscriptionsTable is the table that holds the subscriptions relation/edge.
@@ -245,6 +247,13 @@ const (
 	ReceivedReferralsInverseTable = "referrals"
 	// ReceivedReferralsColumn is the table column denoting the received_referrals relation/edge.
 	ReceivedReferralsColumn = "referred_user_id"
+	// ExperimentAssignmentsTable is the table that holds the experiment_assignments relation/edge.
+	ExperimentAssignmentsTable = "experiment_assignments"
+	// ExperimentAssignmentsInverseTable is the table name for the ExperimentAssignment entity.
+	// It exists in this package in order to avoid circular dependency with the "experimentassignment" package.
+	ExperimentAssignmentsInverseTable = "experiment_assignments"
+	// ExperimentAssignmentsColumn is the table column denoting the experiment_assignments relation/edge.
+	ExperimentAssignmentsColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -783,6 +792,20 @@ func ByReceivedReferrals(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption
 		sqlgraph.OrderByNeighborTerms(s, newReceivedReferralsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByExperimentAssignmentsCount orders the results by experiment_assignments count.
+func ByExperimentAssignmentsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newExperimentAssignmentsStep(), opts...)
+	}
+}
+
+// ByExperimentAssignments orders the results by experiment_assignments terms.
+func ByExperimentAssignments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newExperimentAssignmentsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSubscriptionsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -921,5 +944,12 @@ func newReceivedReferralsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ReceivedReferralsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, ReceivedReferralsTable, ReceivedReferralsColumn),
+	)
+}
+func newExperimentAssignmentsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ExperimentAssignmentsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ExperimentAssignmentsTable, ExperimentAssignmentsColumn),
 	)
 }
