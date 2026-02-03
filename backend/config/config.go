@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 )
 
 // Config holds all application configuration
@@ -25,6 +26,12 @@ type Config struct {
 	DBSSLCertPath     string // Path to client certificate
 	DBSSLKeyPath      string // Path to client key
 	DBSSLRootCertPath string // Path to root CA certificate
+
+	// Database Read Replicas
+	DBReadReplicaURLs        []string // List of read replica URLs
+	DBReplicaLoadBalance     string   // Load balancing strategy: random, round-robin
+	DBReplicaFallbackPrimary bool     // Fallback to primary if replicas fail
+	DBReplicaHealthCheck     int      // Health check interval in seconds
 
 	// Redis
 	RedisURL      string
@@ -120,6 +127,12 @@ func Load() *Config {
 		DBSSLCertPath:     getEnv("DB_SSL_CERT_PATH", ""),
 		DBSSLKeyPath:      getEnv("DB_SSL_KEY_PATH", ""),
 		DBSSLRootCertPath: getEnv("DB_SSL_ROOT_CERT_PATH", ""),
+
+		// Database Read Replicas
+		DBReadReplicaURLs:        parseCommaSeparated(getEnv("DB_READ_REPLICA_URLS", "")),
+		DBReplicaLoadBalance:     getEnv("DB_REPLICA_LOAD_BALANCE", "round-robin"),
+		DBReplicaFallbackPrimary: getEnvAsBool("DB_REPLICA_FALLBACK_PRIMARY", true),
+		DBReplicaHealthCheck:     getEnvAsInt("DB_REPLICA_HEALTH_CHECK_SECONDS", 30),
 
 		// Redis
 		RedisURL:      getEnv("REDIS_URL", "redis://localhost:6677"),
@@ -227,4 +240,22 @@ func getEnvAsBool(key string, defaultValue bool) bool {
 	}
 
 	return value
+}
+
+func parseCommaSeparated(value string) []string {
+	if value == "" {
+		return []string{}
+	}
+
+	parts := strings.Split(value, ",")
+	result := make([]string, 0, len(parts))
+
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+
+	return result
 }
