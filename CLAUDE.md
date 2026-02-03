@@ -2126,6 +2126,810 @@ POST /api/v1/batch/execute
 **Implementation:**
 - Handler: `backend/pkg/api/handlers/batch.go`
 
+## CRM Features (Phase 3 & 4)
+
+IndustryDB includes a comprehensive CRM system for managing sales territories, automating lead assignment, tracking lead lifecycle, and nurturing prospects through email sequences.
+
+### Territory Management
+**Implemented:** 2026-02-03
+
+Sales territory management allows organizations to divide their market by geographic regions and industries, assign team members to territories, and automatically route leads to the right sales reps.
+
+**Endpoints:**
+```
+POST   /api/v1/territories              # Create new territory
+PUT    /api/v1/territories/:id          # Update territory
+GET    /api/v1/territories/:id          # Get territory details
+GET    /api/v1/territories              # List all territories
+POST   /api/v1/territories/:id/members  # Add member to territory
+DELETE /api/v1/territories/:id/members/:user_id  # Remove member
+GET    /api/v1/territories/:id/members  # Get territory members
+GET    /api/v1/user/territories         # Get user's territories
+```
+
+**Create Territory:**
+```bash
+POST /api/v1/territories
+{
+  "name": "West Coast Tech",
+  "description": "Technology companies on US West Coast",
+  "countries": ["US"],
+  "regions": ["CA", "WA", "OR"],
+  "cities": ["San Francisco", "Seattle", "Portland"],
+  "industries": ["tattoo", "beauty", "barber"]
+}
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "West Coast Tech",
+  "description": "Technology companies on US West Coast",
+  "countries": ["US"],
+  "regions": ["CA", "WA", "OR"],
+  "cities": ["San Francisco", "Seattle", "Portland"],
+  "industries": ["tattoo", "beauty", "barber"],
+  "created_by_user_id": 123,
+  "active": true,
+  "created_at": "2026-02-03T10:00:00Z",
+  "updated_at": "2026-02-03T10:00:00Z"
+}
+```
+
+**Add Territory Member:**
+```bash
+POST /api/v1/territories/1/members
+{
+  "user_id": 456,
+  "role": "manager"  # or "member"
+}
+```
+
+**Response:**
+```json
+{
+  "id": 10,
+  "territory_id": 1,
+  "user_id": 456,
+  "role": "manager",
+  "added_by_user_id": 123,
+  "joined_at": "2026-02-03T10:05:00Z",
+  "user_name": "Jane Smith",
+  "user_email": "jane@example.com"
+}
+```
+
+**List Territories with Filters:**
+```bash
+# Get only active territories
+GET /api/v1/territories?active=true&limit=50
+```
+
+**Get User's Territories:**
+```bash
+# Returns all territories the authenticated user belongs to
+GET /api/v1/user/territories
+```
+
+**Features:**
+- **Geographic Filtering**: Define territories by countries, regions, and cities
+- **Industry Segmentation**: Assign specific industries to each territory
+- **Role-Based Access**: Territory managers and members with different permissions
+- **Active/Inactive Status**: Enable or disable territories without deletion
+- **Member Management**: Add/remove team members from territories
+- **Lead Assignment**: Automatically route leads to territories based on location and industry
+
+**Use Cases:**
+1. **Regional Sales Teams**: Divide US market into East Coast, West Coast, Midwest territories
+2. **Industry Specialists**: Assign beauty industry expert to all beauty salons nationwide
+3. **Hybrid Territories**: Combine geographic (California) + industry (tattoo) for focused teams
+4. **Multi-Market Coverage**: One user can belong to multiple territories
+
+**Implementation:**
+- Service: `backend/pkg/territory/service.go`
+- Handler: `backend/pkg/api/handlers/territory.go`
+- Schema: `backend/ent/schema/territory.go`, `backend/ent/schema/territorymember.go`
+- Test Coverage: 85.1%
+
+### Email Sequences / Drip Campaigns
+**Implemented:** 2026-02-03
+
+Automated email sequence system for nurturing leads through multi-step drip campaigns. Create sequences with delayed steps, enroll leads, and track progression through the funnel.
+
+**Endpoints:**
+```
+POST   /api/v1/email-sequences                    # Create sequence
+GET    /api/v1/email-sequences/:id                # Get sequence details
+GET    /api/v1/email-sequences                    # List user's sequences
+PUT    /api/v1/email-sequences/:id                # Update sequence
+DELETE /api/v1/email-sequences/:id                # Delete sequence
+POST   /api/v1/email-sequences/:id/steps          # Create sequence step
+GET    /api/v1/email-sequences/:id/steps/:step_id # Get step details
+POST   /api/v1/email-sequences/enroll             # Enroll lead in sequence
+GET    /api/v1/email-sequences/enrollments/:id    # Get enrollment details
+GET    /api/v1/leads/:id/enrollments              # List lead's enrollments
+POST   /api/v1/email-sequences/enrollments/:id/stop  # Stop enrollment
+DELETE /api/v1/email-sequences/enrollments/:id    # Delete enrollment
+```
+
+**Create Email Sequence:**
+```bash
+POST /api/v1/email-sequences
+{
+  "name": "New Lead Welcome Series",
+  "description": "3-email onboarding sequence for new tattoo studio leads",
+  "trigger": "manual"  # or "lead_created", "tag_added"
+}
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "New Lead Welcome Series",
+  "description": "3-email onboarding sequence for new tattoo studio leads",
+  "status": "draft",
+  "trigger": "manual",
+  "created_by": 123,
+  "created_at": "2026-02-03T10:00:00Z",
+  "updated_at": "2026-02-03T10:00:00Z"
+}
+```
+
+**Create Sequence Step:**
+```bash
+POST /api/v1/email-sequences/1/steps
+{
+  "step_order": 1,
+  "delay_days": 0,
+  "subject": "Welcome to IndustryDB, {{name}}!",
+  "body": "Hi {{name}},\n\nThank you for joining IndustryDB...\n\nBest regards,\nThe Team"
+}
+```
+
+**Response:**
+```json
+{
+  "id": 10,
+  "sequence_id": 1,
+  "step_order": 1,
+  "delay_days": 0,
+  "subject": "Welcome to IndustryDB, {{name}}!",
+  "body": "Hi {{name}},\n\nThank you for joining IndustryDB...",
+  "created_at": "2026-02-03T10:05:00Z"
+}
+```
+
+**Enroll Lead in Sequence:**
+```bash
+POST /api/v1/email-sequences/enroll
+{
+  "sequence_id": 1,
+  "lead_id": 5000
+}
+```
+
+**Response:**
+```json
+{
+  "id": 100,
+  "sequence_id": 1,
+  "lead_id": 5000,
+  "status": "active",
+  "current_step": 0,
+  "enrolled_at": "2026-02-03T10:10:00Z",
+  "last_email_sent_at": null,
+  "next_email_scheduled_at": "2026-02-03T10:10:00Z"
+}
+```
+
+**List Lead's Enrollments:**
+```bash
+# Get all sequences a lead is enrolled in
+GET /api/v1/leads/5000/enrollments
+```
+
+**Stop Enrollment:**
+```bash
+# Stop sending emails to a lead (keeps history)
+POST /api/v1/email-sequences/enrollments/100/stop
+```
+
+**Sequence Lifecycle:**
+1. **draft** - Being built, not ready to send
+2. **active** - Can accept new enrollments
+3. **paused** - Temporarily disabled, no new emails sent
+4. **archived** - Completed campaign, read-only
+
+**Sequence Features:**
+- **Multi-Step Campaigns**: Create sequences with 1-20 steps
+- **Delayed Delivery**: Configure delay between steps (0-365 days)
+- **Template Variables**: Use `{{name}}`, `{{email}}`, `{{company}}` placeholders
+- **Manual or Triggered**: Enroll leads manually or automatically on events
+- **Status Tracking**: Monitor active, completed, stopped enrollments
+- **Progress Tracking**: See current step for each enrolled lead
+- **Stop/Resume**: Pause individual enrollments without deleting
+
+**Use Cases:**
+1. **Welcome Series**: 3-email onboarding for new leads (Day 0, 2, 7)
+2. **Re-engagement**: 5-email campaign for cold leads (Week 1, 2, 4, 8, 12)
+3. **Product Education**: 7-email drip explaining features
+4. **Event Promotion**: 4-email countdown to webinar/conference
+5. **Nurture Campaign**: 10-email long-term relationship building
+
+**Example 3-Step Sequence:**
+```
+Step 1 (Day 0): "Welcome to IndustryDB"
+  - Introduce platform
+  - Highlight key features
+
+Step 2 (Day 2): "Getting Started Guide"
+  - Tutorial video
+  - Quick win tips
+
+Step 3 (Day 7): "Premium Features & Upgrade"
+  - Advanced features showcase
+  - Special offer
+```
+
+**Implementation:**
+- Service: `backend/pkg/emailsequence/service.go`
+- Handler: `backend/pkg/api/handlers/emailsequence.go`
+- Schema: `backend/ent/schema/emailsequence.go`, `backend/ent/schema/emailsequencestep.go`, `backend/ent/schema/emailsequenceenrollment.go`
+- Test Coverage: 81.1%
+
+**Note:** Email delivery requires integration with email service provider (SendGrid, AWS SES, or SMTP). Current implementation provides the sequence management infrastructure.
+
+### Lead Assignment Automation
+**Implemented:** 2026-02-03
+
+Automated lead assignment system that routes new leads to the right sales rep based on territories, workload, and round-robin distribution.
+
+**Endpoints:**
+```
+POST /api/v1/leads/:id/assign        # Manually assign lead to user
+POST /api/v1/leads/:id/auto-assign   # Auto-assign using rules
+POST /api/v1/leads/batch-assign      # Batch assign multiple leads
+GET  /api/v1/admin/assignment-stats  # View assignment statistics
+```
+
+**Manual Assignment:**
+```bash
+POST /api/v1/leads/5000/assign
+{
+  "assigned_to_user_id": 456,
+  "reason": "High-value lead requiring senior rep"
+}
+```
+
+**Auto-Assignment:**
+```bash
+# Automatically assign based on territory and workload
+POST /api/v1/leads/5000/auto-assign
+```
+
+**Assignment Logic:**
+1. **Territory Matching**: Find territories matching lead's location and industry
+2. **Member Selection**: Get all active members of matching territories
+3. **Round-Robin Distribution**: Assign to member with fewest active leads
+4. **Fallback**: If no territory match, assign to general pool
+
+**Batch Assignment:**
+```bash
+POST /api/v1/leads/batch-assign
+{
+  "lead_ids": [5000, 5001, 5002, 5003],
+  "strategy": "round_robin"  # or "territory", "random"
+}
+```
+
+**Features:**
+- **Territory-Based Routing**: Automatically route to correct geographic/industry team
+- **Load Balancing**: Distribute leads evenly across team members
+- **Round-Robin**: Fair distribution preventing rep overload
+- **Manual Override**: Managers can reassign leads manually
+- **Batch Operations**: Assign multiple leads at once
+- **Assignment History**: Track all assignment changes with audit log
+
+**Implementation:**
+- Service: `backend/pkg/leads/assignment.go`
+- Handler: `backend/pkg/api/handlers/leadassignment.go`
+
+### Lead Scoring Algorithm
+**Implemented:** 2026-02-03
+
+Automated lead scoring system that ranks leads by quality based on data completeness, engagement, and business signals.
+
+**Scoring Formula:**
+```
+Base Score (60 points max):
+- Has email: +20
+- Has phone: +15
+- Has website: +10
+- Has social media: +10
+- Has complete address: +5
+
+Engagement Score (20 points max):
+- User viewed lead: +5
+- User exported lead: +10
+- Lead opened email: +5
+
+Business Signals (20 points max):
+- High-revenue industry: +10
+- Premium location: +5
+- Verified business: +5
+
+Total: 0-100 points
+```
+
+**Viewing Lead Score:**
+```bash
+GET /api/v1/leads/5000
+```
+
+**Response includes score:**
+```json
+{
+  "id": 5000,
+  "name": "Example Tattoo Studio",
+  "quality_score": 75,
+  "has_email": true,
+  "has_phone": true,
+  "has_website": true,
+  "verified": true,
+  ...
+}
+```
+
+**Filtering by Score:**
+```bash
+# Get high-quality leads (score >= 60)
+GET /api/v1/leads?min_quality_score=60&sort_by=quality_score
+```
+
+**Features:**
+- **Automatic Calculation**: Score computed on lead creation and updates
+- **Real-Time Updates**: Recalculated when data changes
+- **Filtering**: Find only high-quality leads
+- **Sorting**: Prioritize best leads in search results
+- **Transparency**: Clear scoring criteria for sales teams
+
+**Use Cases:**
+1. **Prioritization**: Focus on high-scoring leads first
+2. **Segmentation**: Create campaigns for different score ranges
+3. **Reporting**: Track lead quality trends over time
+4. **Automation**: Trigger actions based on score thresholds
+
+**Implementation:**
+- Service: `backend/pkg/leads/scoring.go`
+- Calculation: Automatic on create/update via Ent hooks
+
+### Lead Lifecycle Tracking
+**Implemented:** 2026-02-03
+
+Track leads through sales stages from initial contact to closed deal, with status history and timeline visualization.
+
+**Lead Statuses:**
+```
+- new           # Just added to system
+- contacted     # Initial outreach sent
+- qualified     # Met qualification criteria
+- proposal      # Proposal/quote sent
+- negotiation   # In price/terms discussion
+- closed_won    # Deal won
+- closed_lost   # Deal lost
+- unresponsive  # No response after follow-ups
+```
+
+**Endpoints:**
+```
+PATCH /api/v1/leads/:id/status       # Update lead status
+GET   /api/v1/leads/:id/history      # Get status change history
+GET   /api/v1/leads/:id/timeline     # Get full activity timeline
+```
+
+**Update Lead Status:**
+```bash
+PATCH /api/v1/leads/5000/status
+{
+  "status": "qualified",
+  "note": "Confirmed budget and decision-making authority"
+}
+```
+
+**Response:**
+```json
+{
+  "id": 5000,
+  "status": "qualified",
+  "previous_status": "contacted",
+  "updated_at": "2026-02-03T14:30:00Z",
+  "updated_by": 123
+}
+```
+
+**Get Status History:**
+```bash
+GET /api/v1/leads/5000/history
+```
+
+**Response:**
+```json
+{
+  "lead_id": 5000,
+  "history": [
+    {
+      "status": "new",
+      "timestamp": "2026-02-01T10:00:00Z",
+      "user_id": 123,
+      "user_name": "John Sales"
+    },
+    {
+      "status": "contacted",
+      "timestamp": "2026-02-02T09:15:00Z",
+      "user_id": 123,
+      "user_name": "John Sales",
+      "note": "Sent intro email"
+    },
+    {
+      "status": "qualified",
+      "timestamp": "2026-02-03T14:30:00Z",
+      "user_id": 123,
+      "user_name": "John Sales",
+      "note": "Confirmed budget and decision-making authority"
+    }
+  ]
+}
+```
+
+**Features:**
+- **Status Transitions**: Track movement through sales stages
+- **Change History**: Complete audit trail of status changes
+- **User Attribution**: Know who changed each status
+- **Notes**: Add context for each status change
+- **Timeline View**: Visualize lead journey
+- **Stage Duration**: Calculate time spent in each stage
+
+**Reporting:**
+```bash
+# Get all leads in specific stage
+GET /api/v1/leads?status=qualified
+
+# Get conversion funnel metrics
+GET /api/v1/analytics/funnel
+```
+
+**Implementation:**
+- Service: `backend/pkg/leads/lifecycle.go`
+- Handler: `backend/pkg/api/handlers/leadlifecycle.go`
+- Schema: Lead status field + history table
+
+### Custom Fields for Leads
+**Implemented:** 2026-02-03
+
+Flexible custom field system allowing users to add industry-specific or company-specific data fields to leads.
+
+**Endpoints:**
+```
+POST   /api/v1/custom-fields          # Create custom field definition
+GET    /api/v1/custom-fields          # List all custom fields
+DELETE /api/v1/custom-fields/:id      # Delete custom field
+PUT    /api/v1/leads/:id/custom       # Set custom field values
+GET    /api/v1/leads/:id/custom       # Get custom field values
+```
+
+**Create Custom Field:**
+```bash
+POST /api/v1/custom-fields
+{
+  "name": "tattoo_style",
+  "label": "Tattoo Style Specialization",
+  "field_type": "select",
+  "options": ["Traditional", "Realism", "Tribal", "Japanese", "Watercolor"],
+  "required": false,
+  "industry": "tattoo"
+}
+```
+
+**Field Types:**
+- `text` - Short text input
+- `textarea` - Long text
+- `number` - Numeric value
+- `select` - Dropdown (single choice)
+- `multiselect` - Multiple choice
+- `date` - Date picker
+- `boolean` - Yes/No checkbox
+- `url` - Website URL
+
+**Set Custom Values:**
+```bash
+PUT /api/v1/leads/5000/custom
+{
+  "tattoo_style": "Japanese",
+  "years_in_business": 8,
+  "accepts_walk_ins": true,
+  "specialty_services": ["Cover-ups", "Custom Design", "Portrait"]
+}
+```
+
+**Get Custom Values:**
+```bash
+GET /api/v1/leads/5000/custom
+```
+
+**Response:**
+```json
+{
+  "lead_id": 5000,
+  "custom_fields": {
+    "tattoo_style": "Japanese",
+    "years_in_business": 8,
+    "accepts_walk_ins": true,
+    "specialty_services": ["Cover-ups", "Custom Design", "Portrait"]
+  }
+}
+```
+
+**Features:**
+- **Industry-Specific Fields**: Different fields for tattoo vs restaurant vs gym
+- **Flexible Schema**: Add fields without database migrations
+- **Type Validation**: Enforce data types (number, date, URL, etc.)
+- **Required Fields**: Mark critical fields as mandatory
+- **Searchable**: Filter leads by custom field values
+- **Bulk Update**: Set custom fields for multiple leads
+
+**Use Cases:**
+1. **Tattoo Studios**: tattoo_style, artist_count, booking_system
+2. **Restaurants**: cuisine_type, seating_capacity, delivery_available
+3. **Gyms**: equipment_types, membership_tiers, personal_training
+4. **Custom CRM Fields**: deal_size, competitor, lead_source
+
+**Implementation:**
+- Service: `backend/pkg/customfields/service.go`
+- Handler: `backend/pkg/api/handlers/customfields.go`
+- Schema: `backend/ent/schema/customfield.go`
+- Storage: JSON field in leads table
+
+### Saved Searches
+**Implemented:** 2026-02-03
+
+Save frequently used search queries for quick access, with private/shared options and notification support.
+
+**Endpoints:**
+```
+POST   /api/v1/saved-searches           # Create saved search
+GET    /api/v1/saved-searches           # List user's saved searches
+GET    /api/v1/saved-searches/:id       # Get saved search details
+PUT    /api/v1/saved-searches/:id       # Update saved search
+DELETE /api/v1/saved-searches/:id       # Delete saved search
+POST   /api/v1/saved-searches/:id/execute  # Execute saved search
+```
+
+**Create Saved Search:**
+```bash
+POST /api/v1/saved-searches
+{
+  "name": "High-Quality Tattoo Studios in California",
+  "description": "Verified tattoo studios with email and website",
+  "query": {
+    "industry": "tattoo",
+    "country": "US",
+    "regions": ["CA"],
+    "has_email": true,
+    "has_website": true,
+    "verified": true,
+    "min_quality_score": 60
+  },
+  "is_public": false,
+  "notify_on_new_results": true
+}
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "High-Quality Tattoo Studios in California",
+  "description": "Verified tattoo studios with email and website",
+  "query": { ... },
+  "is_public": false,
+  "notify_on_new_results": true,
+  "result_count": 45,
+  "created_by": 123,
+  "created_at": "2026-02-03T10:00:00Z",
+  "last_executed_at": null
+}
+```
+
+**Execute Saved Search:**
+```bash
+POST /api/v1/saved-searches/1/execute
+```
+
+**Response:**
+```json
+{
+  "search_id": 1,
+  "results": [ /* array of leads */ ],
+  "total_count": 45,
+  "new_since_last_run": 3,
+  "executed_at": "2026-02-03T15:30:00Z"
+}
+```
+
+**List Saved Searches:**
+```bash
+# Get user's searches
+GET /api/v1/saved-searches
+
+# Include public searches from other users
+GET /api/v1/saved-searches?include_public=true
+```
+
+**Features:**
+- **Complex Query Storage**: Save any combination of filters
+- **Quick Access**: Execute saved searches with one click
+- **Result Tracking**: See count and new results since last run
+- **Notifications**: Get alerts when new matching leads appear
+- **Sharing**: Make searches public for team collaboration
+- **Favorites**: Mark frequently used searches as favorites
+
+**Use Cases:**
+1. **Daily Prospecting**: Save "New high-quality leads in my territory"
+2. **Weekly Reports**: "All closed deals this week"
+3. **Market Research**: "All beauty salons in NYC with Instagram"
+4. **Team Collaboration**: Share "Hot leads - immediate follow-up needed"
+5. **Lead Generation**: "Uncontacted leads with complete data"
+
+**Implementation:**
+- Service: `backend/pkg/savedsearches/service.go`
+- Handler: `backend/pkg/api/handlers/savedsearches.go`
+- Schema: `backend/ent/schema/savedsearch.go`
+
+### CSV Bulk Import
+**Implemented:** 2026-02-03
+
+Import leads from CSV files with validation, duplicate detection, and progress tracking.
+
+**Endpoints:**
+```
+POST /api/v1/leads/import         # Upload CSV file
+GET  /api/v1/leads/import/:job_id # Check import status
+GET  /api/v1/leads/import/history # List import history
+```
+
+**Import CSV:**
+```bash
+POST /api/v1/leads/import
+Content-Type: multipart/form-data
+
+file: leads.csv
+mapping: {
+  "name": "Business Name",
+  "email": "Email Address",
+  "phone": "Phone Number",
+  "address": "Street Address",
+  "city": "City",
+  "country": "Country",
+  "industry": "Industry Type"
+}
+```
+
+**CSV Example:**
+```csv
+Business Name,Email Address,Phone Number,Street Address,City,Country,Industry Type
+Ink Masters Studio,contact@inkmasters.com,+1-555-0100,123 Main St,Los Angeles,US,tattoo
+Beauty Haven,info@beautyhaven.com,+1-555-0101,456 Oak Ave,New York,US,beauty
+```
+
+**Response:**
+```json
+{
+  "job_id": "import-123-456",
+  "status": "processing",
+  "total_rows": 1000,
+  "processed_rows": 0,
+  "successful_imports": 0,
+  "failed_imports": 0,
+  "duplicates_skipped": 0,
+  "started_at": "2026-02-03T10:00:00Z"
+}
+```
+
+**Check Import Status:**
+```bash
+GET /api/v1/leads/import/import-123-456
+```
+
+**Response:**
+```json
+{
+  "job_id": "import-123-456",
+  "status": "completed",
+  "total_rows": 1000,
+  "processed_rows": 1000,
+  "successful_imports": 950,
+  "failed_imports": 25,
+  "duplicates_skipped": 25,
+  "started_at": "2026-02-03T10:00:00Z",
+  "completed_at": "2026-02-03T10:05:00Z",
+  "errors": [
+    {
+      "row": 15,
+      "error": "Invalid email format",
+      "data": { "Email Address": "notanemail" }
+    },
+    {
+      "row": 47,
+      "error": "Missing required field: Business Name"
+    }
+  ]
+}
+```
+
+**Features:**
+- **Flexible Mapping**: Map CSV columns to lead fields
+- **Validation**: Check data types, required fields, formats
+- **Duplicate Detection**: Skip existing leads (match by email or phone)
+- **Progress Tracking**: Real-time status updates
+- **Error Reporting**: Detailed error messages for failed rows
+- **Batch Processing**: Handle large files (10,000+ rows)
+- **Async Processing**: Non-blocking import for large files
+- **Rollback**: Cancel import mid-process
+
+**Supported Fields:**
+- Required: name, industry, country
+- Optional: email, phone, website, address, city, region, postcode
+- Custom: Any custom fields defined in system
+
+**Import Limits:**
+- Max file size: 10 MB
+- Max rows: 10,000 per import
+- Supported formats: CSV, TSV
+- Encoding: UTF-8
+
+**Use Cases:**
+1. **Data Migration**: Import existing CRM data
+2. **Purchased Lists**: Import third-party lead lists
+3. **Event Attendees**: Import trade show contacts
+4. **Web Scraping**: Import scraped business data
+5. **Partner Data**: Import leads from partner integrations
+
+**Implementation:**
+- Service: `backend/pkg/leads/import.go`
+- Handler: `backend/pkg/api/handlers/leadimport.go`
+- Queue: Redis-based job queue for async processing
+
+### Phone Number Validation
+**Implemented:** 2026-02-03
+
+Validate and format phone numbers with international support using libphonenumber.
+
+**Validation:**
+- Automatically validates phone numbers on lead creation/update
+- Supports 200+ countries
+- Formats to E.164 standard (+1234567890)
+- Detects invalid numbers
+
+**Example:**
+```bash
+# Input variations (all valid for US):
+"(555) 123-4567"
+"555-123-4567"
+"555.123.4567"
+"5551234567"
+"+1-555-123-4567"
+
+# All formatted to:
+"+15551234567"
+```
+
+**Implementation:**
+- Library: `github.com/nyaruka/phonenumbers`
+- Validation: Automatic in lead service
+- Error: Returns validation error if invalid
+
 ### Query Parameters for /api/v1/leads
 **Enhanced:** 2026-02-03 - Added website, social media, radius search, sorting, and full-text search
 
