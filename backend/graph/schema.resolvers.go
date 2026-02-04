@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/jordanlanch/industrydb/ent"
+	"github.com/jordanlanch/industrydb/ent/subscription"
 	"github.com/jordanlanch/industrydb/ent/user"
 	"github.com/jordanlanch/industrydb/graph/model"
 	"github.com/jordanlanch/industrydb/pkg/auth"
@@ -105,8 +106,12 @@ func (r *mutationResolver) Logout(ctx context.Context) (*model.GenericResponse, 
 		return nil, fmt.Errorf("unauthorized")
 	}
 
-	// TODO: Add token to blacklist in Redis
-	_ = token
+	// Add token to blacklist in Redis
+	// Token will expire after JWT expiration time
+	expiration := time.Duration(r.Resolver.JWTExpirationHours) * time.Hour
+	if err := r.Resolver.TokenBlacklist.Add(ctx, token, expiration); err != nil {
+		return nil, fmt.Errorf("failed to logout: %w", err)
+	}
 
 	return &model.GenericResponse{
 		Success: true,
@@ -122,12 +127,40 @@ func (r *mutationResolver) ExportLeads(ctx context.Context, input model.LeadSear
 		return nil, fmt.Errorf("unauthorized")
 	}
 
-	// TODO: Implement export via export service
-	_ = userID
+	// Map GraphQL input to lead search filters
+	filters := models.LeadSearchRequest{
+		HasEmail: input.HasEmail,
+		HasPhone: input.HasPhone,
+	}
+	if input.Industry != nil {
+		filters.Industry = *input.Industry
+	}
+	if input.Country != nil {
+		filters.Country = *input.Country
+	}
+	if input.City != nil {
+		filters.City = *input.City
+	}
+	if input.Limit != nil {
+		filters.Limit = *input.Limit
+	}
+
+	// Create export request
+	exportReq := models.ExportRequest{
+		Format:   "csv", // Default to CSV
+		Filters:  filters,
+		MaxLeads: 1000, // Default limit
+	}
+
+	// Create export via service (async processing)
+	_, err := r.Resolver.ExportService.CreateExport(ctx, userID, nil, exportReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create export: %w", err)
+	}
 
 	return &model.GenericResponse{
 		Success: true,
-		Message: "Export queued successfully",
+		Message: "Export queued successfully. Check your exports page for download link.",
 	}, nil
 }
 
@@ -263,13 +296,21 @@ func (r *queryResolver) UsageStats(ctx context.Context) (*model.UsageStats, erro
 	leadsRemaining := u.UsageLimit - u.UsageCount
 	usagePercentage := float64(u.UsageCount) / float64(u.UsageLimit) * 100.0
 
-	// TODO: Get actual search and export counts from usage logs
-	totalSearches := 0
-	totalExports := 0
+	// Get actual search and export counts from usage logs (last 30 days)
+	summary, err := r.Resolver.AnalyticsService.GetUsageSummary(ctx, userID, 30)
+	if err != nil {
+		// If analytics fail, return zeros (non-critical)
+		return &model.UsageStats{
+			TotalSearches:   0,
+			TotalExports:    0,
+			LeadsRemaining:  leadsRemaining,
+			UsagePercentage: usagePercentage,
+		}, nil
+	}
 
 	return &model.UsageStats{
-		TotalSearches:   totalSearches,
-		TotalExports:    totalExports,
+		TotalSearches:   summary.TotalSearches,
+		TotalExports:    summary.TotalExports,
 		LeadsRemaining:  leadsRemaining,
 		UsagePercentage: usagePercentage,
 	}, nil
@@ -277,17 +318,54 @@ func (r *queryResolver) UsageStats(ctx context.Context) (*model.UsageStats, erro
 
 // RevenueMetrics is the resolver for the revenueMetrics field.
 func (r *queryResolver) RevenueMetrics(ctx context.Context, periodStart time.Time, periodEnd time.Time) (*model.RevenueMetrics, error) {
-	// TODO: Implement revenue metrics calculation from subscriptions
-	// For now, return placeholder values
-	_ = periodStart
-	_ = periodEnd
+	// Pricing for each tier (in dollars)
+	tierPricing := map[string]float64{
+		"free":     0,
+		"starter":  49,
+		"pro":      149,
+		"business": 349,
+	}
+
+	// Query all active subscriptions (simplified - actual period filtering can be added later)
+	subscriptions, err := r.Resolver.DB.Subscription.Query().
+		Where(subscription.StatusEQ(subscription.StatusActive)).
+		All(ctx)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to query subscriptions: %w", err)
+	}
+
+	// Calculate metrics
+	paidUsers := 0
+	mrr := 0.0
+
+	for _, sub := range subscriptions {
+		tierStr := string(sub.Tier)
+		if price, exists := tierPricing[tierStr]; exists && price > 0 {
+			mrr += price
+			paidUsers++
+		}
+	}
+
+	// Calculate ARR (Annual Recurring Revenue)
+	arr := mrr * 12
+
+	// Calculate ARPU (Average Revenue Per User)
+	arpu := 0.0
+	if paidUsers > 0 {
+		arpu = mrr / float64(paidUsers)
+	}
+
+	// Calculate revenue growth (compare to previous period)
+	// For simplicity, return 0 for now (requires historical comparison)
+	revenueGrowth := 0.0
 
 	return &model.RevenueMetrics{
-		Mrr:           0.0,
-		Arr:           0.0,
-		RevenueGrowth: 0.0,
-		Arpu:          0.0,
-		PaidUsers:     0,
+		Mrr:           mrr,
+		Arr:           arr,
+		RevenueGrowth: revenueGrowth,
+		Arpu:          arpu,
+		PaidUsers:     paidUsers,
 	}, nil
 }
 

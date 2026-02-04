@@ -5,6 +5,9 @@ import (
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/jordanlanch/industrydb/ent"
 	"github.com/jordanlanch/industrydb/graph"
+	"github.com/jordanlanch/industrydb/pkg/analytics"
+	"github.com/jordanlanch/industrydb/pkg/domain"
+	"github.com/jordanlanch/industrydb/pkg/export"
 	"github.com/jordanlanch/industrydb/pkg/leads"
 	"github.com/labstack/echo/v4"
 )
@@ -15,10 +18,21 @@ type GraphQLHandler struct {
 }
 
 // NewGraphQLHandler creates a new GraphQL handler
-func NewGraphQLHandler(db *ent.Client, leadService *leads.Service, jwtSecret string, jwtExpirationHours int) *GraphQLHandler {
+func NewGraphQLHandler(
+	db *ent.Client,
+	leadService *leads.Service,
+	exportService *export.Service,
+	analyticsService *analytics.Service,
+	tokenBlacklist domain.TokenBlacklist,
+	jwtSecret string,
+	jwtExpirationHours int,
+) *GraphQLHandler {
 	resolver := &graph.Resolver{
 		DB:                 db,
 		LeadService:        leadService,
+		ExportService:      exportService,
+		AnalyticsService:   analyticsService,
+		TokenBlacklist:     tokenBlacklist,
 		JWTSecret:          jwtSecret,
 		JWTExpirationHours: jwtExpirationHours,
 	}

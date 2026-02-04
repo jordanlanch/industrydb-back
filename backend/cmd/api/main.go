@@ -392,7 +392,15 @@ func main() {
 	cohortHandler := handlers.NewCohortHandler(db.Ent)
 	revenueHandler := handlers.NewRevenueHandler(db.Ent)
 	referralHandler := handlers.NewReferralHandler(db.Ent)
-	graphqlHandler := handlers.NewGraphQLHandler(db.Ent, leadService, cfg.JWTSecret, cfg.JWTExpirationHours)
+	graphqlHandler := handlers.NewGraphQLHandler(
+		db.Ent,
+		leadService,
+		exportService,
+		analyticsService,
+		tokenBlacklist,
+		cfg.JWTSecret,
+		cfg.JWTExpirationHours,
+	)
 
 	// Enrichment provider (stub for development - configure with real API in production)
 	// TODO: Replace with real provider (Clearbit, FullContact, etc.) in production
