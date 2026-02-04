@@ -2389,8 +2389,16 @@ POST /api/v1/batch/execute
 
 ### GraphQL API
 **Implemented:** 2026-02-03
+**Resolvers Completed:** 2026-02-04
 
 GraphQL API provides a type-safe, flexible alternative to REST endpoints with cursor-based pagination and introspection.
+
+**Recent Updates (2026-02-04):**
+- ✅ Logout resolver now integrates JWT blacklist (tokens properly revoked)
+- ✅ ExportLeads resolver integrated with export service (async processing)
+- ✅ UsageStats resolver pulls real analytics data (searches/exports counts)
+- ✅ RevenueMetrics resolver calculates MRR/ARR from active subscriptions
+- ✅ All resolvers fully functional with service layer integration
 
 **Endpoints:**
 ```
