@@ -19,6 +19,7 @@ import (
 	"github.com/jordanlanch/industrydb/pkg/cache"
 	"github.com/jordanlanch/industrydb/pkg/email"
 	"github.com/jordanlanch/industrydb/pkg/models"
+	"github.com/jordanlanch/industrydb/pkg/oauth"
 	"github.com/labstack/echo/v4"
 	"github.com/go-playground/validator/v10"
 )
@@ -618,6 +619,155 @@ func generateVerificationToken() (string, error) {
 
 // generatePasswordResetToken generates a random token for password reset
 func generatePasswordResetToken() (string, error) {
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
+}
+
+// OAuthLogin godoc
+// @Summary Initiate OAuth login
+// @Description Redirects to OAuth provider for authentication
+// @Tags auth
+// @Param provider path string true "OAuth Provider" Enums(google, github, microsoft)
+// @Success 302 "Redirect to OAuth provider"
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /auth/oauth/{provider} [get]
+func (h *AuthHandler) OAuthLogin(c echo.Context) error {
+	if !h.config.FeatureSocialLogin {
+		return c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Error:   "feature_disabled",
+			Message: "Social login is disabled",
+		})
+	}
+
+	provider := c.Param("provider")
+	if provider == "" {
+		return c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Error:   "missing_provider",
+			Message: "Provider is required",
+		})
+	}
+
+	// Generate random state token for CSRF protection
+	state, err := generateStateToken()
+	if err != nil {
+		return errors.InternalError(c, err)
+	}
+
+	// Store state in session/cache with expiration (5 minutes)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err = h.cache.Set(ctx, "oauth_state:"+state, provider, 5*time.Minute)
+	if err != nil {
+		return errors.InternalError(c, err)
+	}
+
+	// Get OAuth service
+	oauthService := h.getOAuthService()
+
+	// Get authorization URL
+	authURL, err := oauthService.GetAuthURL(oauth.Provider(provider), state)
+	if err != nil {
+		if err == oauth.ErrInvalidProvider {
+			return c.JSON(http.StatusBadRequest, models.ErrorResponse{
+				Error:   "invalid_provider",
+				Message: "Invalid OAuth provider",
+			})
+		}
+		return errors.InternalError(c, err)
+	}
+
+	return c.Redirect(http.StatusTemporaryRedirect, authURL)
+}
+
+// OAuthCallback godoc
+// @Summary Handle OAuth callback
+// @Description Processes OAuth callback and creates/logs in user
+// @Tags auth
+// @Param provider path string true "OAuth Provider" Enums(google, github, microsoft)
+// @Param code query string true "Authorization code"
+// @Param state query string true "State token"
+// @Success 302 "Redirect to frontend with JWT token"
+// @Failure 400 {object} models.ErrorResponse
+// @Failure 401 {object} models.ErrorResponse
+// @Failure 500 {object} models.ErrorResponse
+// @Router /auth/oauth/callback/{provider} [get]
+func (h *AuthHandler) OAuthCallback(c echo.Context) error {
+	if !h.config.FeatureSocialLogin {
+		return c.JSON(http.StatusBadRequest, models.ErrorResponse{
+			Error:   "feature_disabled",
+			Message: "Social login is disabled",
+		})
+	}
+
+	provider := c.Param("provider")
+	code := c.QueryParam("code")
+	state := c.QueryParam("state")
+
+	if code == "" || state == "" {
+		return c.Redirect(http.StatusTemporaryRedirect, h.config.FrontendURL+"/login?error=oauth_failed")
+	}
+
+	// Verify state token (CSRF protection)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	storedProvider, err := h.cache.Get(ctx, "oauth_state:"+state)
+	if err != nil || storedProvider != provider {
+		return c.Redirect(http.StatusTemporaryRedirect, h.config.FrontendURL+"/login?error=invalid_state")
+	}
+
+	// Delete state token (one-time use)
+	h.cache.Delete(ctx, "oauth_state:"+state)
+
+	// Get OAuth service
+	oauthService := h.getOAuthService()
+
+	// Exchange code for user info
+	userInfo, err := oauthService.HandleCallback(ctx, oauth.Provider(provider), code)
+	if err != nil {
+		if err == oauth.ErrInvalidCode {
+			return c.Redirect(http.StatusTemporaryRedirect, h.config.FrontendURL+"/login?error=invalid_code")
+		}
+		return c.Redirect(http.StatusTemporaryRedirect, h.config.FrontendURL+"/login?error=oauth_failed")
+	}
+
+	// Find or create user
+	user, isNew, err := oauthService.FindOrCreateUser(ctx, userInfo)
+	if err != nil {
+		return c.Redirect(http.StatusTemporaryRedirect, h.config.FrontendURL+"/login?error=user_creation_failed")
+	}
+
+	// Generate JWT token
+	token, err := auth.GenerateJWT(user.ID, user.Email, user.SubscriptionTier.String(), h.config.JWTSecret, h.config.JWTExpirationHours)
+	if err != nil {
+		return c.Redirect(http.StatusTemporaryRedirect, h.config.FrontendURL+"/login?error=token_generation_failed")
+	}
+
+	// Log successful OAuth login
+	go func() {
+		logCtx, logCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer logCancel()
+
+		h.auditLogger.LogUserLogin(logCtx, user.ID, c.RealIP(), c.Request().UserAgent())
+	}()
+
+	// Redirect to frontend with token
+	redirectURL := fmt.Sprintf("%s/auth/callback?token=%s&is_new=%t", h.config.FrontendURL, token, isNew)
+	return c.Redirect(http.StatusTemporaryRedirect, redirectURL)
+}
+
+// Helper method to get OAuth service
+func (h *AuthHandler) getOAuthService() *oauth.Service {
+	return oauth.NewService(h.db, h.config)
+}
+
+// generateStateToken generates a random state token for OAuth CSRF protection
+func generateStateToken() (string, error) {
 	bytes := make([]byte, 32)
 	if _, err := rand.Read(bytes); err != nil {
 		return "", err

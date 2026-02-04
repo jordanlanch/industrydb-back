@@ -93,6 +93,15 @@ type Config struct {
 	// Slack
 	SlackWebhookURL string
 
+	// OAuth Providers
+	GoogleClientID     string
+	GoogleClientSecret string
+	GitHubClientID     string
+	GitHubClientSecret string
+	MicrosoftClientID     string
+	MicrosoftClientSecret string
+	OAuthCallbackURL   string
+
 	// Features
 	FeatureEmailExports bool
 	FeatureAPIAccess    bool
@@ -193,6 +202,15 @@ func Load() *Config {
 
 		// Slack
 		SlackWebhookURL: getEnv("SLACK_WEBHOOK_URL", ""),
+
+		// OAuth Providers
+		GoogleClientID:        getEnv("GOOGLE_CLIENT_ID", ""),
+		GoogleClientSecret:    getEnv("GOOGLE_CLIENT_SECRET", ""),
+		GitHubClientID:        getEnv("GITHUB_CLIENT_ID", ""),
+		GitHubClientSecret:    getEnv("GITHUB_CLIENT_SECRET", ""),
+		MicrosoftClientID:     getEnv("MICROSOFT_CLIENT_ID", ""),
+		MicrosoftClientSecret: getEnv("MICROSOFT_CLIENT_SECRET", ""),
+		OAuthCallbackURL:      getEnv("OAUTH_CALLBACK_URL", "http://localhost:8080/api/v1/auth/oauth/callback"),
 
 		// Features
 		FeatureEmailExports: getEnvAsBool("FEATURE_EMAIL_EXPORTS", true),
