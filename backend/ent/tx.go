@@ -54,6 +54,8 @@ type Tx struct {
 	LeadRecommendation *LeadRecommendationClient
 	// LeadStatusHistory is the client for interacting with the LeadStatusHistory builders.
 	LeadStatusHistory *LeadStatusHistoryClient
+	// MarketReport is the client for interacting with the MarketReport builders.
+	MarketReport *MarketReportClient
 	// Organization is the client for interacting with the Organization builders.
 	Organization *OrganizationClient
 	// OrganizationMember is the client for interacting with the OrganizationMember builders.
@@ -232,6 +234,7 @@ func (tx *Tx) init() {
 	tx.LeadNote = NewLeadNoteClient(tx.config)
 	tx.LeadRecommendation = NewLeadRecommendationClient(tx.config)
 	tx.LeadStatusHistory = NewLeadStatusHistoryClient(tx.config)
+	tx.MarketReport = NewMarketReportClient(tx.config)
 	tx.Organization = NewOrganizationClient(tx.config)
 	tx.OrganizationMember = NewOrganizationMemberClient(tx.config)
 	tx.Referral = NewReferralClient(tx.config)

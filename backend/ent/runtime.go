@@ -26,6 +26,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/leadrecommendation"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
+	"github.com/jordanlanch/industrydb/ent/marketreport"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/referral"
@@ -810,6 +811,56 @@ func init() {
 	leadstatushistoryDescCreatedAt := leadstatushistoryFields[5].Descriptor()
 	// leadstatushistory.DefaultCreatedAt holds the default value on creation for the created_at field.
 	leadstatushistory.DefaultCreatedAt = leadstatushistoryDescCreatedAt.Default.(func() time.Time)
+	marketreportFields := schema.MarketReport{}.Fields()
+	_ = marketreportFields
+	// marketreportDescTitle is the schema descriptor for title field.
+	marketreportDescTitle := marketreportFields[1].Descriptor()
+	// marketreport.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	marketreport.TitleValidator = func() func(string) error {
+		validators := marketreportDescTitle.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(title string) error {
+			for _, fn := range fns {
+				if err := fn(title); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// marketreportDescIndustry is the schema descriptor for industry field.
+	marketreportDescIndustry := marketreportFields[2].Descriptor()
+	// marketreport.IndustryValidator is a validator for the "industry" field. It is called by the builders before save.
+	marketreport.IndustryValidator = func() func(string) error {
+		validators := marketreportDescIndustry.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(industry string) error {
+			for _, fn := range fns {
+				if err := fn(industry); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// marketreportDescCountry is the schema descriptor for country field.
+	marketreportDescCountry := marketreportFields[3].Descriptor()
+	// marketreport.CountryValidator is a validator for the "country" field. It is called by the builders before save.
+	marketreport.CountryValidator = marketreportDescCountry.Validators[0].(func(string) error)
+	// marketreportDescGeneratedAt is the schema descriptor for generated_at field.
+	marketreportDescGeneratedAt := marketreportFields[9].Descriptor()
+	// marketreport.DefaultGeneratedAt holds the default value on creation for the generated_at field.
+	marketreport.DefaultGeneratedAt = marketreportDescGeneratedAt.Default.(func() time.Time)
+	// marketreportDescCreatedAt is the schema descriptor for created_at field.
+	marketreportDescCreatedAt := marketreportFields[11].Descriptor()
+	// marketreport.DefaultCreatedAt holds the default value on creation for the created_at field.
+	marketreport.DefaultCreatedAt = marketreportDescCreatedAt.Default.(func() time.Time)
 	organizationFields := schema.Organization{}.Fields()
 	_ = organizationFields
 	// organizationDescName is the schema descriptor for name field.

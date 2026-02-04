@@ -36,6 +36,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/leadrecommendation"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
+	"github.com/jordanlanch/industrydb/ent/marketreport"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/referral"
@@ -98,6 +99,8 @@ type Client struct {
 	LeadRecommendation *LeadRecommendationClient
 	// LeadStatusHistory is the client for interacting with the LeadStatusHistory builders.
 	LeadStatusHistory *LeadStatusHistoryClient
+	// MarketReport is the client for interacting with the MarketReport builders.
+	MarketReport *MarketReportClient
 	// Organization is the client for interacting with the Organization builders.
 	Organization *OrganizationClient
 	// OrganizationMember is the client for interacting with the OrganizationMember builders.
@@ -156,6 +159,7 @@ func (c *Client) init() {
 	c.LeadNote = NewLeadNoteClient(c.config)
 	c.LeadRecommendation = NewLeadRecommendationClient(c.config)
 	c.LeadStatusHistory = NewLeadStatusHistoryClient(c.config)
+	c.MarketReport = NewMarketReportClient(c.config)
 	c.Organization = NewOrganizationClient(c.config)
 	c.OrganizationMember = NewOrganizationMemberClient(c.config)
 	c.Referral = NewReferralClient(c.config)
@@ -282,6 +286,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		LeadNote:                NewLeadNoteClient(cfg),
 		LeadRecommendation:      NewLeadRecommendationClient(cfg),
 		LeadStatusHistory:       NewLeadStatusHistoryClient(cfg),
+		MarketReport:            NewMarketReportClient(cfg),
 		Organization:            NewOrganizationClient(cfg),
 		OrganizationMember:      NewOrganizationMemberClient(cfg),
 		Referral:                NewReferralClient(cfg),
@@ -335,6 +340,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		LeadNote:                NewLeadNoteClient(cfg),
 		LeadRecommendation:      NewLeadRecommendationClient(cfg),
 		LeadStatusHistory:       NewLeadStatusHistoryClient(cfg),
+		MarketReport:            NewMarketReportClient(cfg),
 		Organization:            NewOrganizationClient(cfg),
 		OrganizationMember:      NewOrganizationMemberClient(cfg),
 		Referral:                NewReferralClient(cfg),
@@ -382,9 +388,9 @@ func (c *Client) Use(hooks ...Hook) {
 		c.EmailSequenceEnrollment, c.EmailSequenceSend, c.EmailSequenceStep,
 		c.Experiment, c.ExperimentAssignment, c.Export, c.Industry, c.Lead,
 		c.LeadAssignment, c.LeadNote, c.LeadRecommendation, c.LeadStatusHistory,
-		c.Organization, c.OrganizationMember, c.Referral, c.SMSCampaign, c.SMSMessage,
-		c.SavedSearch, c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog,
-		c.User, c.UserBehavior, c.Webhook,
+		c.MarketReport, c.Organization, c.OrganizationMember, c.Referral,
+		c.SMSCampaign, c.SMSMessage, c.SavedSearch, c.Subscription, c.Territory,
+		c.TerritoryMember, c.UsageLog, c.User, c.UserBehavior, c.Webhook,
 	} {
 		n.Use(hooks...)
 	}
@@ -399,9 +405,9 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.EmailSequenceEnrollment, c.EmailSequenceSend, c.EmailSequenceStep,
 		c.Experiment, c.ExperimentAssignment, c.Export, c.Industry, c.Lead,
 		c.LeadAssignment, c.LeadNote, c.LeadRecommendation, c.LeadStatusHistory,
-		c.Organization, c.OrganizationMember, c.Referral, c.SMSCampaign, c.SMSMessage,
-		c.SavedSearch, c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog,
-		c.User, c.UserBehavior, c.Webhook,
+		c.MarketReport, c.Organization, c.OrganizationMember, c.Referral,
+		c.SMSCampaign, c.SMSMessage, c.SavedSearch, c.Subscription, c.Territory,
+		c.TerritoryMember, c.UsageLog, c.User, c.UserBehavior, c.Webhook,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -452,6 +458,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.LeadRecommendation.mutate(ctx, m)
 	case *LeadStatusHistoryMutation:
 		return c.LeadStatusHistory.mutate(ctx, m)
+	case *MarketReportMutation:
+		return c.MarketReport.mutate(ctx, m)
 	case *OrganizationMutation:
 		return c.Organization.mutate(ctx, m)
 	case *OrganizationMemberMutation:
@@ -4044,6 +4052,155 @@ func (c *LeadStatusHistoryClient) mutate(ctx context.Context, m *LeadStatusHisto
 	}
 }
 
+// MarketReportClient is a client for the MarketReport schema.
+type MarketReportClient struct {
+	config
+}
+
+// NewMarketReportClient returns a client for the MarketReport from the given config.
+func NewMarketReportClient(c config) *MarketReportClient {
+	return &MarketReportClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `marketreport.Hooks(f(g(h())))`.
+func (c *MarketReportClient) Use(hooks ...Hook) {
+	c.hooks.MarketReport = append(c.hooks.MarketReport, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `marketreport.Intercept(f(g(h())))`.
+func (c *MarketReportClient) Intercept(interceptors ...Interceptor) {
+	c.inters.MarketReport = append(c.inters.MarketReport, interceptors...)
+}
+
+// Create returns a builder for creating a MarketReport entity.
+func (c *MarketReportClient) Create() *MarketReportCreate {
+	mutation := newMarketReportMutation(c.config, OpCreate)
+	return &MarketReportCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of MarketReport entities.
+func (c *MarketReportClient) CreateBulk(builders ...*MarketReportCreate) *MarketReportCreateBulk {
+	return &MarketReportCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MarketReportClient) MapCreateBulk(slice any, setFunc func(*MarketReportCreate, int)) *MarketReportCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MarketReportCreateBulk{err: fmt.Errorf("calling to MarketReportClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MarketReportCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MarketReportCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for MarketReport.
+func (c *MarketReportClient) Update() *MarketReportUpdate {
+	mutation := newMarketReportMutation(c.config, OpUpdate)
+	return &MarketReportUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MarketReportClient) UpdateOne(_m *MarketReport) *MarketReportUpdateOne {
+	mutation := newMarketReportMutation(c.config, OpUpdateOne, withMarketReport(_m))
+	return &MarketReportUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MarketReportClient) UpdateOneID(id int) *MarketReportUpdateOne {
+	mutation := newMarketReportMutation(c.config, OpUpdateOne, withMarketReportID(id))
+	return &MarketReportUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for MarketReport.
+func (c *MarketReportClient) Delete() *MarketReportDelete {
+	mutation := newMarketReportMutation(c.config, OpDelete)
+	return &MarketReportDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MarketReportClient) DeleteOne(_m *MarketReport) *MarketReportDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MarketReportClient) DeleteOneID(id int) *MarketReportDeleteOne {
+	builder := c.Delete().Where(marketreport.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MarketReportDeleteOne{builder}
+}
+
+// Query returns a query builder for MarketReport.
+func (c *MarketReportClient) Query() *MarketReportQuery {
+	return &MarketReportQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMarketReport},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a MarketReport entity by its id.
+func (c *MarketReportClient) Get(ctx context.Context, id int) (*MarketReport, error) {
+	return c.Query().Where(marketreport.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MarketReportClient) GetX(ctx context.Context, id int) *MarketReport {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a MarketReport.
+func (c *MarketReportClient) QueryUser(_m *MarketReport) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(marketreport.Table, marketreport.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, marketreport.UserTable, marketreport.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *MarketReportClient) Hooks() []Hook {
+	return c.hooks.MarketReport
+}
+
+// Interceptors returns the client interceptors.
+func (c *MarketReportClient) Interceptors() []Interceptor {
+	return c.inters.MarketReport
+}
+
+func (c *MarketReportClient) mutate(ctx context.Context, m *MarketReportMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MarketReportCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MarketReportUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MarketReportUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MarketReportDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown MarketReport mutation op: %q", m.Op())
+	}
+}
+
 // OrganizationClient is a client for the Organization schema.
 type OrganizationClient struct {
 	config
@@ -6250,6 +6407,22 @@ func (c *UserClient) QueryBehaviors(_m *User) *UserBehaviorQuery {
 	return query
 }
 
+// QueryMarketReports queries the market_reports edge of a User.
+func (c *UserClient) QueryMarketReports(_m *User) *MarketReportQuery {
+	query := (&MarketReportClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(marketreport.Table, marketreport.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.MarketReportsTable, user.MarketReportsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -6580,17 +6753,17 @@ type (
 		CompetitorMetric, CompetitorProfile, EmailSequence, EmailSequenceEnrollment,
 		EmailSequenceSend, EmailSequenceStep, Experiment, ExperimentAssignment, Export,
 		Industry, Lead, LeadAssignment, LeadNote, LeadRecommendation,
-		LeadStatusHistory, Organization, OrganizationMember, Referral, SMSCampaign,
-		SMSMessage, SavedSearch, Subscription, Territory, TerritoryMember, UsageLog,
-		User, UserBehavior, Webhook []ent.Hook
+		LeadStatusHistory, MarketReport, Organization, OrganizationMember, Referral,
+		SMSCampaign, SMSMessage, SavedSearch, Subscription, Territory, TerritoryMember,
+		UsageLog, User, UserBehavior, Webhook []ent.Hook
 	}
 	inters struct {
 		APIKey, Affiliate, AffiliateClick, AffiliateConversion, AuditLog, CallLog,
 		CompetitorMetric, CompetitorProfile, EmailSequence, EmailSequenceEnrollment,
 		EmailSequenceSend, EmailSequenceStep, Experiment, ExperimentAssignment, Export,
 		Industry, Lead, LeadAssignment, LeadNote, LeadRecommendation,
-		LeadStatusHistory, Organization, OrganizationMember, Referral, SMSCampaign,
-		SMSMessage, SavedSearch, Subscription, Territory, TerritoryMember, UsageLog,
-		User, UserBehavior, Webhook []ent.Interceptor
+		LeadStatusHistory, MarketReport, Organization, OrganizationMember, Referral,
+		SMSCampaign, SMSMessage, SavedSearch, Subscription, Territory, TerritoryMember,
+		UsageLog, User, UserBehavior, Webhook []ent.Interceptor
 	}
 )

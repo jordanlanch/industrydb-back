@@ -173,6 +173,8 @@ func (User) Edges() []ent.Edge {
 			Comment("Lead recommendations for this user"),
 		edge.To("behaviors", UserBehavior.Type).
 			Comment("User behavior tracking for recommendations"),
+		edge.To("market_reports", MarketReport.Type).
+			Comment("Market intelligence reports generated for this user"),
 	}
 }
 

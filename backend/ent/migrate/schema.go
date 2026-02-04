@@ -1244,6 +1244,68 @@ var (
 			},
 		},
 	}
+	// MarketReportsColumns holds the columns for the "market_reports" table.
+	MarketReportsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "title", Type: field.TypeString, Size: 200},
+		{Name: "industry", Type: field.TypeString, Size: 50},
+		{Name: "country", Type: field.TypeString, Nullable: true, Size: 2},
+		{Name: "report_type", Type: field.TypeEnum, Enums: []string{"competitive_analysis", "market_trends", "industry_snapshot", "growth_analysis"}},
+		{Name: "data", Type: field.TypeJSON},
+		{Name: "metadata", Type: field.TypeJSON, Nullable: true},
+		{Name: "period_start", Type: field.TypeTime},
+		{Name: "period_end", Type: field.TypeTime},
+		{Name: "generated_at", Type: field.TypeTime},
+		{Name: "expires_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "user_id", Type: field.TypeInt},
+	}
+	// MarketReportsTable holds the schema information for the "market_reports" table.
+	MarketReportsTable = &schema.Table{
+		Name:       "market_reports",
+		Columns:    MarketReportsColumns,
+		PrimaryKey: []*schema.Column{MarketReportsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "market_reports_users_market_reports",
+				Columns:    []*schema.Column{MarketReportsColumns[12]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "marketreport_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{MarketReportsColumns[12]},
+			},
+			{
+				Name:    "marketreport_industry",
+				Unique:  false,
+				Columns: []*schema.Column{MarketReportsColumns[2]},
+			},
+			{
+				Name:    "marketreport_country",
+				Unique:  false,
+				Columns: []*schema.Column{MarketReportsColumns[3]},
+			},
+			{
+				Name:    "marketreport_report_type",
+				Unique:  false,
+				Columns: []*schema.Column{MarketReportsColumns[4]},
+			},
+			{
+				Name:    "marketreport_generated_at",
+				Unique:  false,
+				Columns: []*schema.Column{MarketReportsColumns[9]},
+			},
+			{
+				Name:    "marketreport_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{MarketReportsColumns[11]},
+			},
+		},
+	}
 	// OrganizationsColumns holds the columns for the "organizations" table.
 	OrganizationsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -1943,6 +2005,7 @@ var (
 		LeadNotesTable,
 		LeadRecommendationsTable,
 		LeadStatusHistoriesTable,
+		MarketReportsTable,
 		OrganizationsTable,
 		OrganizationMembersTable,
 		ReferralsTable,
@@ -1992,6 +2055,7 @@ func init() {
 	LeadRecommendationsTable.ForeignKeys[1].RefTable = UsersTable
 	LeadStatusHistoriesTable.ForeignKeys[0].RefTable = LeadsTable
 	LeadStatusHistoriesTable.ForeignKeys[1].RefTable = UsersTable
+	MarketReportsTable.ForeignKeys[0].RefTable = UsersTable
 	OrganizationsTable.ForeignKeys[0].RefTable = UsersTable
 	OrganizationMembersTable.ForeignKeys[0].RefTable = OrganizationsTable
 	OrganizationMembersTable.ForeignKeys[1].RefTable = UsersTable

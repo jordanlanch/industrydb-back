@@ -24,6 +24,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/leadrecommendation"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
+	"github.com/jordanlanch/industrydb/ent/marketreport"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/referral"
@@ -781,6 +782,21 @@ func (_c *UserCreate) AddBehaviors(v ...*UserBehavior) *UserCreate {
 	return _c.AddBehaviorIDs(ids...)
 }
 
+// AddMarketReportIDs adds the "market_reports" edge to the MarketReport entity by IDs.
+func (_c *UserCreate) AddMarketReportIDs(ids ...int) *UserCreate {
+	_c.mutation.AddMarketReportIDs(ids...)
+	return _c
+}
+
+// AddMarketReports adds the "market_reports" edges to the MarketReport entity.
+func (_c *UserCreate) AddMarketReports(v ...*MarketReport) *UserCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddMarketReportIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_c *UserCreate) Mutation() *UserMutation {
 	return _c.mutation
@@ -1509,6 +1525,22 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(userbehavior.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.MarketReportsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.MarketReportsTable,
+			Columns: []string{user.MarketReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(marketreport.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

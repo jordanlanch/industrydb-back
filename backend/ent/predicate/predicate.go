@@ -69,6 +69,9 @@ type LeadRecommendation func(*sql.Selector)
 // LeadStatusHistory is the predicate function for leadstatushistory builders.
 type LeadStatusHistory func(*sql.Selector)
 
+// MarketReport is the predicate function for marketreport builders.
+type MarketReport func(*sql.Selector)
+
 // Organization is the predicate function for organization builders.
 type Organization func(*sql.Selector)
 

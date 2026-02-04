@@ -32,6 +32,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/leadrecommendation"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
+	"github.com/jordanlanch/industrydb/ent/marketreport"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/predicate"
@@ -78,6 +79,7 @@ const (
 	TypeLeadNote                = "LeadNote"
 	TypeLeadRecommendation      = "LeadRecommendation"
 	TypeLeadStatusHistory       = "LeadStatusHistory"
+	TypeMarketReport            = "MarketReport"
 	TypeOrganization            = "Organization"
 	TypeOrganizationMember      = "OrganizationMember"
 	TypeReferral                = "Referral"
@@ -25336,6 +25338,1043 @@ func (m *LeadStatusHistoryMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown LeadStatusHistory edge %s", name)
 }
 
+// MarketReportMutation represents an operation that mutates the MarketReport nodes in the graph.
+type MarketReportMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	title         *string
+	industry      *string
+	country       *string
+	report_type   *marketreport.ReportType
+	data          *map[string]interface{}
+	metadata      *map[string]interface{}
+	period_start  *time.Time
+	period_end    *time.Time
+	generated_at  *time.Time
+	expires_at    *time.Time
+	created_at    *time.Time
+	clearedFields map[string]struct{}
+	user          *int
+	cleareduser   bool
+	done          bool
+	oldValue      func(context.Context) (*MarketReport, error)
+	predicates    []predicate.MarketReport
+}
+
+var _ ent.Mutation = (*MarketReportMutation)(nil)
+
+// marketreportOption allows management of the mutation configuration using functional options.
+type marketreportOption func(*MarketReportMutation)
+
+// newMarketReportMutation creates new mutation for the MarketReport entity.
+func newMarketReportMutation(c config, op Op, opts ...marketreportOption) *MarketReportMutation {
+	m := &MarketReportMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeMarketReport,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withMarketReportID sets the ID field of the mutation.
+func withMarketReportID(id int) marketreportOption {
+	return func(m *MarketReportMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *MarketReport
+		)
+		m.oldValue = func(ctx context.Context) (*MarketReport, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().MarketReport.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withMarketReport sets the old MarketReport of the mutation.
+func withMarketReport(node *MarketReport) marketreportOption {
+	return func(m *MarketReportMutation) {
+		m.oldValue = func(context.Context) (*MarketReport, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m MarketReportMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m MarketReportMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *MarketReportMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *MarketReportMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().MarketReport.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetUserID sets the "user_id" field.
+func (m *MarketReportMutation) SetUserID(i int) {
+	m.user = &i
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *MarketReportMutation) UserID() (r int, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the MarketReport entity.
+// If the MarketReport object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MarketReportMutation) OldUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *MarketReportMutation) ResetUserID() {
+	m.user = nil
+}
+
+// SetTitle sets the "title" field.
+func (m *MarketReportMutation) SetTitle(s string) {
+	m.title = &s
+}
+
+// Title returns the value of the "title" field in the mutation.
+func (m *MarketReportMutation) Title() (r string, exists bool) {
+	v := m.title
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTitle returns the old "title" field's value of the MarketReport entity.
+// If the MarketReport object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MarketReportMutation) OldTitle(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTitle is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTitle requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTitle: %w", err)
+	}
+	return oldValue.Title, nil
+}
+
+// ResetTitle resets all changes to the "title" field.
+func (m *MarketReportMutation) ResetTitle() {
+	m.title = nil
+}
+
+// SetIndustry sets the "industry" field.
+func (m *MarketReportMutation) SetIndustry(s string) {
+	m.industry = &s
+}
+
+// Industry returns the value of the "industry" field in the mutation.
+func (m *MarketReportMutation) Industry() (r string, exists bool) {
+	v := m.industry
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIndustry returns the old "industry" field's value of the MarketReport entity.
+// If the MarketReport object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MarketReportMutation) OldIndustry(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIndustry is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIndustry requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIndustry: %w", err)
+	}
+	return oldValue.Industry, nil
+}
+
+// ResetIndustry resets all changes to the "industry" field.
+func (m *MarketReportMutation) ResetIndustry() {
+	m.industry = nil
+}
+
+// SetCountry sets the "country" field.
+func (m *MarketReportMutation) SetCountry(s string) {
+	m.country = &s
+}
+
+// Country returns the value of the "country" field in the mutation.
+func (m *MarketReportMutation) Country() (r string, exists bool) {
+	v := m.country
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCountry returns the old "country" field's value of the MarketReport entity.
+// If the MarketReport object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MarketReportMutation) OldCountry(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCountry is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCountry requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCountry: %w", err)
+	}
+	return oldValue.Country, nil
+}
+
+// ClearCountry clears the value of the "country" field.
+func (m *MarketReportMutation) ClearCountry() {
+	m.country = nil
+	m.clearedFields[marketreport.FieldCountry] = struct{}{}
+}
+
+// CountryCleared returns if the "country" field was cleared in this mutation.
+func (m *MarketReportMutation) CountryCleared() bool {
+	_, ok := m.clearedFields[marketreport.FieldCountry]
+	return ok
+}
+
+// ResetCountry resets all changes to the "country" field.
+func (m *MarketReportMutation) ResetCountry() {
+	m.country = nil
+	delete(m.clearedFields, marketreport.FieldCountry)
+}
+
+// SetReportType sets the "report_type" field.
+func (m *MarketReportMutation) SetReportType(mt marketreport.ReportType) {
+	m.report_type = &mt
+}
+
+// ReportType returns the value of the "report_type" field in the mutation.
+func (m *MarketReportMutation) ReportType() (r marketreport.ReportType, exists bool) {
+	v := m.report_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReportType returns the old "report_type" field's value of the MarketReport entity.
+// If the MarketReport object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MarketReportMutation) OldReportType(ctx context.Context) (v marketreport.ReportType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReportType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReportType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReportType: %w", err)
+	}
+	return oldValue.ReportType, nil
+}
+
+// ResetReportType resets all changes to the "report_type" field.
+func (m *MarketReportMutation) ResetReportType() {
+	m.report_type = nil
+}
+
+// SetData sets the "data" field.
+func (m *MarketReportMutation) SetData(value map[string]interface{}) {
+	m.data = &value
+}
+
+// Data returns the value of the "data" field in the mutation.
+func (m *MarketReportMutation) Data() (r map[string]interface{}, exists bool) {
+	v := m.data
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldData returns the old "data" field's value of the MarketReport entity.
+// If the MarketReport object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MarketReportMutation) OldData(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldData is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldData requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldData: %w", err)
+	}
+	return oldValue.Data, nil
+}
+
+// ResetData resets all changes to the "data" field.
+func (m *MarketReportMutation) ResetData() {
+	m.data = nil
+}
+
+// SetMetadata sets the "metadata" field.
+func (m *MarketReportMutation) SetMetadata(value map[string]interface{}) {
+	m.metadata = &value
+}
+
+// Metadata returns the value of the "metadata" field in the mutation.
+func (m *MarketReportMutation) Metadata() (r map[string]interface{}, exists bool) {
+	v := m.metadata
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMetadata returns the old "metadata" field's value of the MarketReport entity.
+// If the MarketReport object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MarketReportMutation) OldMetadata(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMetadata is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMetadata requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMetadata: %w", err)
+	}
+	return oldValue.Metadata, nil
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (m *MarketReportMutation) ClearMetadata() {
+	m.metadata = nil
+	m.clearedFields[marketreport.FieldMetadata] = struct{}{}
+}
+
+// MetadataCleared returns if the "metadata" field was cleared in this mutation.
+func (m *MarketReportMutation) MetadataCleared() bool {
+	_, ok := m.clearedFields[marketreport.FieldMetadata]
+	return ok
+}
+
+// ResetMetadata resets all changes to the "metadata" field.
+func (m *MarketReportMutation) ResetMetadata() {
+	m.metadata = nil
+	delete(m.clearedFields, marketreport.FieldMetadata)
+}
+
+// SetPeriodStart sets the "period_start" field.
+func (m *MarketReportMutation) SetPeriodStart(t time.Time) {
+	m.period_start = &t
+}
+
+// PeriodStart returns the value of the "period_start" field in the mutation.
+func (m *MarketReportMutation) PeriodStart() (r time.Time, exists bool) {
+	v := m.period_start
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPeriodStart returns the old "period_start" field's value of the MarketReport entity.
+// If the MarketReport object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MarketReportMutation) OldPeriodStart(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPeriodStart is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPeriodStart requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPeriodStart: %w", err)
+	}
+	return oldValue.PeriodStart, nil
+}
+
+// ResetPeriodStart resets all changes to the "period_start" field.
+func (m *MarketReportMutation) ResetPeriodStart() {
+	m.period_start = nil
+}
+
+// SetPeriodEnd sets the "period_end" field.
+func (m *MarketReportMutation) SetPeriodEnd(t time.Time) {
+	m.period_end = &t
+}
+
+// PeriodEnd returns the value of the "period_end" field in the mutation.
+func (m *MarketReportMutation) PeriodEnd() (r time.Time, exists bool) {
+	v := m.period_end
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPeriodEnd returns the old "period_end" field's value of the MarketReport entity.
+// If the MarketReport object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MarketReportMutation) OldPeriodEnd(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPeriodEnd is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPeriodEnd requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPeriodEnd: %w", err)
+	}
+	return oldValue.PeriodEnd, nil
+}
+
+// ResetPeriodEnd resets all changes to the "period_end" field.
+func (m *MarketReportMutation) ResetPeriodEnd() {
+	m.period_end = nil
+}
+
+// SetGeneratedAt sets the "generated_at" field.
+func (m *MarketReportMutation) SetGeneratedAt(t time.Time) {
+	m.generated_at = &t
+}
+
+// GeneratedAt returns the value of the "generated_at" field in the mutation.
+func (m *MarketReportMutation) GeneratedAt() (r time.Time, exists bool) {
+	v := m.generated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGeneratedAt returns the old "generated_at" field's value of the MarketReport entity.
+// If the MarketReport object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MarketReportMutation) OldGeneratedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldGeneratedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldGeneratedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGeneratedAt: %w", err)
+	}
+	return oldValue.GeneratedAt, nil
+}
+
+// ResetGeneratedAt resets all changes to the "generated_at" field.
+func (m *MarketReportMutation) ResetGeneratedAt() {
+	m.generated_at = nil
+}
+
+// SetExpiresAt sets the "expires_at" field.
+func (m *MarketReportMutation) SetExpiresAt(t time.Time) {
+	m.expires_at = &t
+}
+
+// ExpiresAt returns the value of the "expires_at" field in the mutation.
+func (m *MarketReportMutation) ExpiresAt() (r time.Time, exists bool) {
+	v := m.expires_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExpiresAt returns the old "expires_at" field's value of the MarketReport entity.
+// If the MarketReport object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MarketReportMutation) OldExpiresAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExpiresAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExpiresAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExpiresAt: %w", err)
+	}
+	return oldValue.ExpiresAt, nil
+}
+
+// ClearExpiresAt clears the value of the "expires_at" field.
+func (m *MarketReportMutation) ClearExpiresAt() {
+	m.expires_at = nil
+	m.clearedFields[marketreport.FieldExpiresAt] = struct{}{}
+}
+
+// ExpiresAtCleared returns if the "expires_at" field was cleared in this mutation.
+func (m *MarketReportMutation) ExpiresAtCleared() bool {
+	_, ok := m.clearedFields[marketreport.FieldExpiresAt]
+	return ok
+}
+
+// ResetExpiresAt resets all changes to the "expires_at" field.
+func (m *MarketReportMutation) ResetExpiresAt() {
+	m.expires_at = nil
+	delete(m.clearedFields, marketreport.FieldExpiresAt)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *MarketReportMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *MarketReportMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the MarketReport entity.
+// If the MarketReport object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MarketReportMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *MarketReportMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (m *MarketReportMutation) ClearUser() {
+	m.cleareduser = true
+	m.clearedFields[marketreport.FieldUserID] = struct{}{}
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *MarketReportMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *MarketReportMutation) UserIDs() (ids []int) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *MarketReportMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
+// Where appends a list predicates to the MarketReportMutation builder.
+func (m *MarketReportMutation) Where(ps ...predicate.MarketReport) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the MarketReportMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *MarketReportMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.MarketReport, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *MarketReportMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *MarketReportMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (MarketReport).
+func (m *MarketReportMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *MarketReportMutation) Fields() []string {
+	fields := make([]string, 0, 12)
+	if m.user != nil {
+		fields = append(fields, marketreport.FieldUserID)
+	}
+	if m.title != nil {
+		fields = append(fields, marketreport.FieldTitle)
+	}
+	if m.industry != nil {
+		fields = append(fields, marketreport.FieldIndustry)
+	}
+	if m.country != nil {
+		fields = append(fields, marketreport.FieldCountry)
+	}
+	if m.report_type != nil {
+		fields = append(fields, marketreport.FieldReportType)
+	}
+	if m.data != nil {
+		fields = append(fields, marketreport.FieldData)
+	}
+	if m.metadata != nil {
+		fields = append(fields, marketreport.FieldMetadata)
+	}
+	if m.period_start != nil {
+		fields = append(fields, marketreport.FieldPeriodStart)
+	}
+	if m.period_end != nil {
+		fields = append(fields, marketreport.FieldPeriodEnd)
+	}
+	if m.generated_at != nil {
+		fields = append(fields, marketreport.FieldGeneratedAt)
+	}
+	if m.expires_at != nil {
+		fields = append(fields, marketreport.FieldExpiresAt)
+	}
+	if m.created_at != nil {
+		fields = append(fields, marketreport.FieldCreatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *MarketReportMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case marketreport.FieldUserID:
+		return m.UserID()
+	case marketreport.FieldTitle:
+		return m.Title()
+	case marketreport.FieldIndustry:
+		return m.Industry()
+	case marketreport.FieldCountry:
+		return m.Country()
+	case marketreport.FieldReportType:
+		return m.ReportType()
+	case marketreport.FieldData:
+		return m.Data()
+	case marketreport.FieldMetadata:
+		return m.Metadata()
+	case marketreport.FieldPeriodStart:
+		return m.PeriodStart()
+	case marketreport.FieldPeriodEnd:
+		return m.PeriodEnd()
+	case marketreport.FieldGeneratedAt:
+		return m.GeneratedAt()
+	case marketreport.FieldExpiresAt:
+		return m.ExpiresAt()
+	case marketreport.FieldCreatedAt:
+		return m.CreatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *MarketReportMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case marketreport.FieldUserID:
+		return m.OldUserID(ctx)
+	case marketreport.FieldTitle:
+		return m.OldTitle(ctx)
+	case marketreport.FieldIndustry:
+		return m.OldIndustry(ctx)
+	case marketreport.FieldCountry:
+		return m.OldCountry(ctx)
+	case marketreport.FieldReportType:
+		return m.OldReportType(ctx)
+	case marketreport.FieldData:
+		return m.OldData(ctx)
+	case marketreport.FieldMetadata:
+		return m.OldMetadata(ctx)
+	case marketreport.FieldPeriodStart:
+		return m.OldPeriodStart(ctx)
+	case marketreport.FieldPeriodEnd:
+		return m.OldPeriodEnd(ctx)
+	case marketreport.FieldGeneratedAt:
+		return m.OldGeneratedAt(ctx)
+	case marketreport.FieldExpiresAt:
+		return m.OldExpiresAt(ctx)
+	case marketreport.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown MarketReport field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MarketReportMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case marketreport.FieldUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case marketreport.FieldTitle:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTitle(v)
+		return nil
+	case marketreport.FieldIndustry:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIndustry(v)
+		return nil
+	case marketreport.FieldCountry:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCountry(v)
+		return nil
+	case marketreport.FieldReportType:
+		v, ok := value.(marketreport.ReportType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReportType(v)
+		return nil
+	case marketreport.FieldData:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetData(v)
+		return nil
+	case marketreport.FieldMetadata:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMetadata(v)
+		return nil
+	case marketreport.FieldPeriodStart:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPeriodStart(v)
+		return nil
+	case marketreport.FieldPeriodEnd:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPeriodEnd(v)
+		return nil
+	case marketreport.FieldGeneratedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGeneratedAt(v)
+		return nil
+	case marketreport.FieldExpiresAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExpiresAt(v)
+		return nil
+	case marketreport.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown MarketReport field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *MarketReportMutation) AddedFields() []string {
+	var fields []string
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *MarketReportMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MarketReportMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown MarketReport numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *MarketReportMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(marketreport.FieldCountry) {
+		fields = append(fields, marketreport.FieldCountry)
+	}
+	if m.FieldCleared(marketreport.FieldMetadata) {
+		fields = append(fields, marketreport.FieldMetadata)
+	}
+	if m.FieldCleared(marketreport.FieldExpiresAt) {
+		fields = append(fields, marketreport.FieldExpiresAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *MarketReportMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *MarketReportMutation) ClearField(name string) error {
+	switch name {
+	case marketreport.FieldCountry:
+		m.ClearCountry()
+		return nil
+	case marketreport.FieldMetadata:
+		m.ClearMetadata()
+		return nil
+	case marketreport.FieldExpiresAt:
+		m.ClearExpiresAt()
+		return nil
+	}
+	return fmt.Errorf("unknown MarketReport nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *MarketReportMutation) ResetField(name string) error {
+	switch name {
+	case marketreport.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case marketreport.FieldTitle:
+		m.ResetTitle()
+		return nil
+	case marketreport.FieldIndustry:
+		m.ResetIndustry()
+		return nil
+	case marketreport.FieldCountry:
+		m.ResetCountry()
+		return nil
+	case marketreport.FieldReportType:
+		m.ResetReportType()
+		return nil
+	case marketreport.FieldData:
+		m.ResetData()
+		return nil
+	case marketreport.FieldMetadata:
+		m.ResetMetadata()
+		return nil
+	case marketreport.FieldPeriodStart:
+		m.ResetPeriodStart()
+		return nil
+	case marketreport.FieldPeriodEnd:
+		m.ResetPeriodEnd()
+		return nil
+	case marketreport.FieldGeneratedAt:
+		m.ResetGeneratedAt()
+		return nil
+	case marketreport.FieldExpiresAt:
+		m.ResetExpiresAt()
+		return nil
+	case marketreport.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown MarketReport field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *MarketReportMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.user != nil {
+		edges = append(edges, marketreport.EdgeUser)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *MarketReportMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case marketreport.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *MarketReportMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *MarketReportMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *MarketReportMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.cleareduser {
+		edges = append(edges, marketreport.EdgeUser)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *MarketReportMutation) EdgeCleared(name string) bool {
+	switch name {
+	case marketreport.EdgeUser:
+		return m.cleareduser
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *MarketReportMutation) ClearEdge(name string) error {
+	switch name {
+	case marketreport.EdgeUser:
+		m.ClearUser()
+		return nil
+	}
+	return fmt.Errorf("unknown MarketReport unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *MarketReportMutation) ResetEdge(name string) error {
+	switch name {
+	case marketreport.EdgeUser:
+		m.ResetUser()
+		return nil
+	}
+	return fmt.Errorf("unknown MarketReport edge %s", name)
+}
+
 // OrganizationMutation represents an operation that mutates the Organization nodes in the graph.
 type OrganizationMutation struct {
 	config
@@ -35635,6 +36674,9 @@ type UserMutation struct {
 	behaviors                              map[int]struct{}
 	removedbehaviors                       map[int]struct{}
 	clearedbehaviors                       bool
+	market_reports                         map[int]struct{}
+	removedmarket_reports                  map[int]struct{}
+	clearedmarket_reports                  bool
 	done                                   bool
 	oldValue                               func(context.Context) (*User, error)
 	predicates                             []predicate.User
@@ -38289,6 +39331,60 @@ func (m *UserMutation) ResetBehaviors() {
 	m.removedbehaviors = nil
 }
 
+// AddMarketReportIDs adds the "market_reports" edge to the MarketReport entity by ids.
+func (m *UserMutation) AddMarketReportIDs(ids ...int) {
+	if m.market_reports == nil {
+		m.market_reports = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.market_reports[ids[i]] = struct{}{}
+	}
+}
+
+// ClearMarketReports clears the "market_reports" edge to the MarketReport entity.
+func (m *UserMutation) ClearMarketReports() {
+	m.clearedmarket_reports = true
+}
+
+// MarketReportsCleared reports if the "market_reports" edge to the MarketReport entity was cleared.
+func (m *UserMutation) MarketReportsCleared() bool {
+	return m.clearedmarket_reports
+}
+
+// RemoveMarketReportIDs removes the "market_reports" edge to the MarketReport entity by IDs.
+func (m *UserMutation) RemoveMarketReportIDs(ids ...int) {
+	if m.removedmarket_reports == nil {
+		m.removedmarket_reports = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.market_reports, ids[i])
+		m.removedmarket_reports[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedMarketReports returns the removed IDs of the "market_reports" edge to the MarketReport entity.
+func (m *UserMutation) RemovedMarketReportsIDs() (ids []int) {
+	for id := range m.removedmarket_reports {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// MarketReportsIDs returns the "market_reports" edge IDs in the mutation.
+func (m *UserMutation) MarketReportsIDs() (ids []int) {
+	for id := range m.market_reports {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetMarketReports resets all changes to the "market_reports" edge.
+func (m *UserMutation) ResetMarketReports() {
+	m.market_reports = nil
+	m.clearedmarket_reports = false
+	m.removedmarket_reports = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -38915,7 +40011,7 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 28)
+	edges := make([]string, 0, 29)
 	if m.subscriptions != nil {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -38999,6 +40095,9 @@ func (m *UserMutation) AddedEdges() []string {
 	}
 	if m.behaviors != nil {
 		edges = append(edges, user.EdgeBehaviors)
+	}
+	if m.market_reports != nil {
+		edges = append(edges, user.EdgeMarketReports)
 	}
 	return edges
 }
@@ -39173,13 +40272,19 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeMarketReports:
+		ids := make([]ent.Value, 0, len(m.market_reports))
+		for id := range m.market_reports {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 28)
+	edges := make([]string, 0, 29)
 	if m.removedsubscriptions != nil {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -39260,6 +40365,9 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedbehaviors != nil {
 		edges = append(edges, user.EdgeBehaviors)
+	}
+	if m.removedmarket_reports != nil {
+		edges = append(edges, user.EdgeMarketReports)
 	}
 	return edges
 }
@@ -39430,13 +40538,19 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeMarketReports:
+		ids := make([]ent.Value, 0, len(m.removedmarket_reports))
+		for id := range m.removedmarket_reports {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 28)
+	edges := make([]string, 0, 29)
 	if m.clearedsubscriptions {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -39521,6 +40635,9 @@ func (m *UserMutation) ClearedEdges() []string {
 	if m.clearedbehaviors {
 		edges = append(edges, user.EdgeBehaviors)
 	}
+	if m.clearedmarket_reports {
+		edges = append(edges, user.EdgeMarketReports)
+	}
 	return edges
 }
 
@@ -39584,6 +40701,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedlead_recommendations
 	case user.EdgeBehaviors:
 		return m.clearedbehaviors
+	case user.EdgeMarketReports:
+		return m.clearedmarket_reports
 	}
 	return false
 }
@@ -39686,6 +40805,9 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgeBehaviors:
 		m.ResetBehaviors()
+		return nil
+	case user.EdgeMarketReports:
+		m.ResetMarketReports()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

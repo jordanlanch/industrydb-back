@@ -25,6 +25,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/leadnote"
 	"github.com/jordanlanch/industrydb/ent/leadrecommendation"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
+	"github.com/jordanlanch/industrydb/ent/marketreport"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
 	"github.com/jordanlanch/industrydb/ent/predicate"
@@ -872,6 +873,21 @@ func (_u *UserUpdate) AddBehaviors(v ...*UserBehavior) *UserUpdate {
 	return _u.AddBehaviorIDs(ids...)
 }
 
+// AddMarketReportIDs adds the "market_reports" edge to the MarketReport entity by IDs.
+func (_u *UserUpdate) AddMarketReportIDs(ids ...int) *UserUpdate {
+	_u.mutation.AddMarketReportIDs(ids...)
+	return _u
+}
+
+// AddMarketReports adds the "market_reports" edges to the MarketReport entity.
+func (_u *UserUpdate) AddMarketReports(v ...*MarketReport) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddMarketReportIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -1448,6 +1464,27 @@ func (_u *UserUpdate) RemoveBehaviors(v ...*UserBehavior) *UserUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveBehaviorIDs(ids...)
+}
+
+// ClearMarketReports clears all "market_reports" edges to the MarketReport entity.
+func (_u *UserUpdate) ClearMarketReports() *UserUpdate {
+	_u.mutation.ClearMarketReports()
+	return _u
+}
+
+// RemoveMarketReportIDs removes the "market_reports" edge to MarketReport entities by IDs.
+func (_u *UserUpdate) RemoveMarketReportIDs(ids ...int) *UserUpdate {
+	_u.mutation.RemoveMarketReportIDs(ids...)
+	return _u
+}
+
+// RemoveMarketReports removes "market_reports" edges to MarketReport entities.
+func (_u *UserUpdate) RemoveMarketReports(v ...*MarketReport) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveMarketReportIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -2895,6 +2932,51 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.MarketReportsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.MarketReportsTable,
+			Columns: []string{user.MarketReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(marketreport.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedMarketReportsIDs(); len(nodes) > 0 && !_u.mutation.MarketReportsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.MarketReportsTable,
+			Columns: []string{user.MarketReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(marketreport.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.MarketReportsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.MarketReportsTable,
+			Columns: []string{user.MarketReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(marketreport.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -3734,6 +3816,21 @@ func (_u *UserUpdateOne) AddBehaviors(v ...*UserBehavior) *UserUpdateOne {
 	return _u.AddBehaviorIDs(ids...)
 }
 
+// AddMarketReportIDs adds the "market_reports" edge to the MarketReport entity by IDs.
+func (_u *UserUpdateOne) AddMarketReportIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.AddMarketReportIDs(ids...)
+	return _u
+}
+
+// AddMarketReports adds the "market_reports" edges to the MarketReport entity.
+func (_u *UserUpdateOne) AddMarketReports(v ...*MarketReport) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddMarketReportIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -4310,6 +4407,27 @@ func (_u *UserUpdateOne) RemoveBehaviors(v ...*UserBehavior) *UserUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveBehaviorIDs(ids...)
+}
+
+// ClearMarketReports clears all "market_reports" edges to the MarketReport entity.
+func (_u *UserUpdateOne) ClearMarketReports() *UserUpdateOne {
+	_u.mutation.ClearMarketReports()
+	return _u
+}
+
+// RemoveMarketReportIDs removes the "market_reports" edge to MarketReport entities by IDs.
+func (_u *UserUpdateOne) RemoveMarketReportIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.RemoveMarketReportIDs(ids...)
+	return _u
+}
+
+// RemoveMarketReports removes "market_reports" edges to MarketReport entities.
+func (_u *UserUpdateOne) RemoveMarketReports(v ...*MarketReport) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveMarketReportIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -5780,6 +5898,51 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(userbehavior.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.MarketReportsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.MarketReportsTable,
+			Columns: []string{user.MarketReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(marketreport.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedMarketReportsIDs(); len(nodes) > 0 && !_u.mutation.MarketReportsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.MarketReportsTable,
+			Columns: []string{user.MarketReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(marketreport.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.MarketReportsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.MarketReportsTable,
+			Columns: []string{user.MarketReportsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(marketreport.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

@@ -119,6 +119,8 @@ const (
 	EdgeLeadRecommendations = "lead_recommendations"
 	// EdgeBehaviors holds the string denoting the behaviors edge name in mutations.
 	EdgeBehaviors = "behaviors"
+	// EdgeMarketReports holds the string denoting the market_reports edge name in mutations.
+	EdgeMarketReports = "market_reports"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// SubscriptionsTable is the table that holds the subscriptions relation/edge.
@@ -317,6 +319,13 @@ const (
 	BehaviorsInverseTable = "user_behaviors"
 	// BehaviorsColumn is the table column denoting the behaviors relation/edge.
 	BehaviorsColumn = "user_id"
+	// MarketReportsTable is the table that holds the market_reports relation/edge.
+	MarketReportsTable = "market_reports"
+	// MarketReportsInverseTable is the table name for the MarketReport entity.
+	// It exists in this package in order to avoid circular dependency with the "marketreport" package.
+	MarketReportsInverseTable = "market_reports"
+	// MarketReportsColumn is the table column denoting the market_reports relation/edge.
+	MarketReportsColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -960,6 +969,20 @@ func ByBehaviors(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newBehaviorsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByMarketReportsCount orders the results by market_reports count.
+func ByMarketReportsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newMarketReportsStep(), opts...)
+	}
+}
+
+// ByMarketReports orders the results by market_reports terms.
+func ByMarketReports(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newMarketReportsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSubscriptionsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -1154,5 +1177,12 @@ func newBehaviorsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(BehaviorsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, BehaviorsTable, BehaviorsColumn),
+	)
+}
+func newMarketReportsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(MarketReportsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, MarketReportsTable, MarketReportsColumn),
 	)
 }

@@ -130,9 +130,11 @@ type UserEdges struct {
 	LeadRecommendations []*LeadRecommendation `json:"lead_recommendations,omitempty"`
 	// User behavior tracking for recommendations
 	Behaviors []*UserBehavior `json:"behaviors,omitempty"`
+	// Market intelligence reports generated for this user
+	MarketReports []*MarketReport `json:"market_reports,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [28]bool
+	loadedTypes [29]bool
 }
 
 // SubscriptionsOrErr returns the Subscriptions value or an error if the edge
@@ -387,6 +389,15 @@ func (e UserEdges) BehaviorsOrErr() ([]*UserBehavior, error) {
 		return e.Behaviors, nil
 	}
 	return nil, &NotLoadedError{edge: "behaviors"}
+}
+
+// MarketReportsOrErr returns the MarketReports value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) MarketReportsOrErr() ([]*MarketReport, error) {
+	if e.loadedTypes[28] {
+		return e.MarketReports, nil
+	}
+	return nil, &NotLoadedError{edge: "market_reports"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -728,6 +739,11 @@ func (_m *User) QueryLeadRecommendations() *LeadRecommendationQuery {
 // QueryBehaviors queries the "behaviors" edge of the User entity.
 func (_m *User) QueryBehaviors() *UserBehaviorQuery {
 	return NewUserClient(_m.config).QueryBehaviors(_m)
+}
+
+// QueryMarketReports queries the "market_reports" edge of the User entity.
+func (_m *User) QueryMarketReports() *MarketReportQuery {
+	return NewUserClient(_m.config).QueryMarketReports(_m)
 }
 
 // Update returns a builder for updating this User.

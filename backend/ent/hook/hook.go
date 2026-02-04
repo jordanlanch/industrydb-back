@@ -261,6 +261,18 @@ func (f LeadStatusHistoryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.LeadStatusHistoryMutation", m)
 }
 
+// The MarketReportFunc type is an adapter to allow the use of ordinary
+// function as MarketReport mutator.
+type MarketReportFunc func(context.Context, *ent.MarketReportMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f MarketReportFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.MarketReportMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.MarketReportMutation", m)
+}
+
 // The OrganizationFunc type is an adapter to allow the use of ordinary
 // function as Organization mutator.
 type OrganizationFunc func(context.Context, *ent.OrganizationMutation) (ent.Value, error)
