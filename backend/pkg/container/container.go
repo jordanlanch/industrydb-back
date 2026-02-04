@@ -203,6 +203,7 @@ func (c *Container) initHandlers() {
 		c.DB.Ent,
 		c.LeadService,
 		c.AuditLogger,
+		c.BillingService,
 	)
 
 	c.ExportHandler = handlers.NewExportHandler(

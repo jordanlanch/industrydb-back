@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/jordanlanch/industrydb/pkg/api/errors"
 	"github.com/jordanlanch/industrydb/pkg/audit"
 	"github.com/jordanlanch/industrydb/pkg/auth"
+	"github.com/jordanlanch/industrydb/pkg/billing"
 	"github.com/jordanlanch/industrydb/pkg/leads"
 	"github.com/jordanlanch/industrydb/pkg/models"
 	"github.com/labstack/echo/v4"
@@ -21,19 +23,22 @@ import (
 
 // UserHandler handles user endpoints
 type UserHandler struct {
-	db          *ent.Client
-	leadService *leads.Service
-	auditLogger *audit.Service
-	validator   *validator.Validate
+	db             *ent.Client
+	leadService    *leads.Service
+	auditLogger    *audit.Service
+	billingService *billing.Service
+	validator      *validator.Validate
 }
 
 // NewUserHandler creates a new user handler
-func NewUserHandler(db *ent.Client, leadService *leads.Service, auditLogger *audit.Service) *UserHandler {
+// billingService is optional for backward compatibility
+func NewUserHandler(db *ent.Client, leadService *leads.Service, auditLogger *audit.Service, billingService *billing.Service) *UserHandler {
 	return &UserHandler{
-		db:          db,
-		leadService: leadService,
-		auditLogger: auditLogger,
-		validator:   validator.New(),
+		db:             db,
+		leadService:    leadService,
+		auditLogger:    auditLogger,
+		billingService: billingService,
+		validator:      validator.New(),
 	}
 }
 
@@ -324,12 +329,15 @@ func (h *UserHandler) DeleteAccount(c echo.Context) error {
 	ipAddress, userAgent := audit.GetRequestContext(c)
 	go h.auditLogger.LogAccountDelete(context.Background(), userID, ipAddress, userAgent)
 
-	// Cancel Stripe subscription if exists
-	// Note: This requires Stripe integration
-	// TODO: Implement Stripe cancellation
-	// if userData.StripeCustomerID != nil {
-	//     stripe.Customer.Delete(*userData.StripeCustomerID, nil)
-	// }
+	// Cancel Stripe subscriptions if billing service is available (GDPR compliance)
+	if h.billingService != nil {
+		err := h.billingService.CancelUserSubscriptions(ctx, userID)
+		if err != nil {
+			log.Printf("⚠️  Failed to cancel Stripe subscriptions for user %d: %v", userID, err)
+			// Continue with account deletion even if Stripe cancellation fails
+			// The webhook will eventually mark subscriptions as canceled
+		}
+	}
 
 	return c.JSON(http.StatusOK, map[string]string{
 		"message": "Account deleted successfully",

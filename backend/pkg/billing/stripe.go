@@ -17,6 +17,7 @@ import (
 	billingportalsession "github.com/stripe/stripe-go/v76/billingportal/session"
 	checkoutsession "github.com/stripe/stripe-go/v76/checkout/session"
 	"github.com/stripe/stripe-go/v76/customer"
+	stripesubscription "github.com/stripe/stripe-go/v76/subscription"
 	"github.com/stripe/stripe-go/v76/webhook"
 )
 
@@ -538,4 +539,61 @@ func (s *Service) GetPricing() *models.PricingResponse {
 			},
 		},
 	}
+}
+
+// CancelUserSubscriptions cancels all active Stripe subscriptions for a user
+// This is called when a user deletes their account (GDPR compliance)
+func (s *Service) CancelUserSubscriptions(ctx context.Context, userID int) error {
+	// Find all active subscriptions for this user in database
+	subscriptions, err := s.db.Subscription.Query().
+		Where(
+			subscription.UserIDEQ(userID),
+			subscription.StatusIn(
+				subscription.StatusActive,
+				subscription.StatusTrialing,
+			),
+		).
+		All(ctx)
+
+	if err != nil {
+		return fmt.Errorf("failed to query subscriptions: %w", err)
+	}
+
+	if len(subscriptions) == 0 {
+		return nil // No active subscriptions to cancel
+	}
+
+	// Cancel each subscription in Stripe
+	for _, sub := range subscriptions {
+		if sub.StripeSubscriptionID == "" {
+			continue // No Stripe subscription ID
+		}
+
+		// Cancel subscription in Stripe immediately using subscription package
+		params := &stripe.SubscriptionCancelParams{
+			InvoiceNow: stripe.Bool(false), // Don't create final invoice
+			Prorate:    stripe.Bool(false), // No prorating on cancellation
+		}
+
+		_, err := stripesubscription.Cancel(sub.StripeSubscriptionID, params)
+		if err != nil {
+			log.Printf("❌ Failed to cancel Stripe subscription %s: %v", sub.StripeSubscriptionID, err)
+			// Continue canceling other subscriptions even if one fails
+			continue
+		}
+
+		// Update subscription status in database
+		_, err = sub.Update().
+			SetStatus(subscription.StatusCanceled).
+			SetCanceledAt(time.Now()).
+			Save(ctx)
+
+		if err != nil {
+			log.Printf("⚠️  Failed to update subscription status in database: %v", err)
+		}
+
+		log.Printf("✅ Canceled Stripe subscription %s for deleted account", sub.StripeSubscriptionID)
+	}
+
+	return nil
 }

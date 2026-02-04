@@ -30,8 +30,8 @@ func setupTestHandler(t *testing.T) (*UserHandler, *ent.Client, func()) {
 	leadService := leads.NewService(client, nil) // nil cache for testing
 	auditLogger := audit.NewService(client)
 
-	// Create handler
-	handler := NewUserHandler(client, leadService, auditLogger)
+	// Create handler (nil billingService for tests)
+	handler := NewUserHandler(client, leadService, auditLogger, nil)
 
 	// Return cleanup function
 	cleanup := func() {

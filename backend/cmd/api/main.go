@@ -367,7 +367,7 @@ func main() {
 	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(db.Ent, cfg, tokenBlacklist, redisClient, auditLogger, emailService)
 	leadHandler := handlers.NewLeadHandler(leadService, analyticsService)
-	userHandler := handlers.NewUserHandler(db.Ent, leadService, auditLogger)
+	userHandler := handlers.NewUserHandler(db.Ent, leadService, auditLogger, billingService)
 	exportHandler := handlers.NewExportHandler(exportService, analyticsService)
 	billingHandler := handlers.NewBillingHandler(billingService)
 	auditHandler := handlers.NewAuditHandler(auditLogger)
