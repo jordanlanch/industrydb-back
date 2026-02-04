@@ -252,3 +252,9 @@ docs/api/generated/
 TODO.local.md
 notes.txt
 scratch/
+
+# Compiled Go binaries (root level)
+api
+seed-all
+seed
+*.a
