@@ -72,11 +72,13 @@ func (m *mockCache) Exists(ctx context.Context, key string) (bool, error) {
 }
 
 // Delete implements domain.CacheRepository
-func (m *mockCache) Delete(ctx context.Context, key string) error {
+func (m *mockCache) Delete(ctx context.Context, keys ...string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	delete(m.data, key)
+	for _, key := range keys {
+		delete(m.data, key)
+	}
 	return nil
 }
 

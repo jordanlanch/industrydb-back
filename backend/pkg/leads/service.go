@@ -8,7 +8,7 @@ import (
 
 	"github.com/jordanlanch/industrydb/ent"
 	"github.com/jordanlanch/industrydb/ent/lead"
-	"github.com/jordanlanch/industrydb/pkg/cache"
+	"github.com/jordanlanch/industrydb/pkg/domain"
 	"github.com/jordanlanch/industrydb/pkg/models"
 	"entgo.io/ent/dialect/sql"
 )
@@ -16,11 +16,11 @@ import (
 // Service handles lead business logic
 type Service struct {
 	db    *ent.Client
-	cache *cache.Client
+	cache domain.CacheRepository
 }
 
 // NewService creates a new lead service
-func NewService(db *ent.Client, cache *cache.Client) *Service {
+func NewService(db *ent.Client, cache domain.CacheRepository) *Service {
 	return &Service{
 		db:    db,
 		cache: cache,
