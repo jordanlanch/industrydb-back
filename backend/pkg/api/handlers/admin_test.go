@@ -24,7 +24,7 @@ func setupTestAdmin(t *testing.T) (*ent.Client, *ent.User, *ent.User) {
 	admin, err := client.User.Create().
 		SetEmail("admin@test.com").
 		SetName("Admin User").
-		SetPassword("hashed_password").
+		SetPasswordHash("hashed_password").
 		SetRole(user.RoleSuperadmin).
 		SetSubscriptionTier(user.SubscriptionTierFree).
 		SetUsageCount(0).

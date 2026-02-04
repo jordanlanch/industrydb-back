@@ -154,9 +154,9 @@ func testIndustry(analyst *agents.AnalystAgent, industry string) TestResult {
 
 func printSummary(results map[string]TestResult, totalDuration time.Duration) {
 	fmt.Println()
-	fmt.Println("==========================================================)
+	fmt.Println("==========================================================")
 	fmt.Println("📊 TEST SUMMARY")
-	fmt.Println("==========================================================)
+	fmt.Println("==========================================================")
 	fmt.Println()
 
 	successCount := 0

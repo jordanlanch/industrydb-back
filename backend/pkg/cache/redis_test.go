@@ -139,14 +139,15 @@ func TestClient_GetMulti(t *testing.T) {
 	_ = client.Set(ctx, "test:key3", "value3", 1*time.Hour)
 
 	// Get multiple keys
-	values, err := client.GetMulti(ctx, "test:key1", "test:key2", "test:key3", "test:nonexistent")
+	keys := []string{"test:key1", "test:key2", "test:key3", "test:nonexistent"}
+	values, err := client.GetMulti(ctx, keys)
 	require.NoError(t, err)
 	require.Len(t, values, 4)
 
-	assert.Equal(t, "value1", values[0])
-	assert.Equal(t, "value2", values[1])
-	assert.Equal(t, "value3", values[2])
-	assert.Equal(t, "", values[3]) // Nonexistent key returns empty string
+	assert.Equal(t, "value1", values["test:key1"])
+	assert.Equal(t, "value2", values["test:key2"])
+	assert.Equal(t, "value3", values["test:key3"])
+	assert.Equal(t, "", values["test:nonexistent"]) // Nonexistent key returns empty string
 }
 
 func TestClient_SetMulti(t *testing.T) {
@@ -243,7 +244,7 @@ func TestClient_GetMulti_EmptyKeys(t *testing.T) {
 	ctx := context.Background()
 
 	// Call with no keys
-	values, err := client.GetMulti(ctx)
+	values, err := client.GetMulti(ctx, []string{})
 	require.NoError(t, err)
 	assert.Empty(t, values)
 }
