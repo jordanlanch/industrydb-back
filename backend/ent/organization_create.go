@@ -167,6 +167,76 @@ func (_c *OrganizationCreate) SetNillableUpdatedAt(v *time.Time) *OrganizationCr
 	return _c
 }
 
+// SetSamlEnabled sets the "saml_enabled" field.
+func (_c *OrganizationCreate) SetSamlEnabled(v bool) *OrganizationCreate {
+	_c.mutation.SetSamlEnabled(v)
+	return _c
+}
+
+// SetNillableSamlEnabled sets the "saml_enabled" field if the given value is not nil.
+func (_c *OrganizationCreate) SetNillableSamlEnabled(v *bool) *OrganizationCreate {
+	if v != nil {
+		_c.SetSamlEnabled(*v)
+	}
+	return _c
+}
+
+// SetSamlIdpMetadataURL sets the "saml_idp_metadata_url" field.
+func (_c *OrganizationCreate) SetSamlIdpMetadataURL(v string) *OrganizationCreate {
+	_c.mutation.SetSamlIdpMetadataURL(v)
+	return _c
+}
+
+// SetNillableSamlIdpMetadataURL sets the "saml_idp_metadata_url" field if the given value is not nil.
+func (_c *OrganizationCreate) SetNillableSamlIdpMetadataURL(v *string) *OrganizationCreate {
+	if v != nil {
+		_c.SetSamlIdpMetadataURL(*v)
+	}
+	return _c
+}
+
+// SetSamlIdpEntityID sets the "saml_idp_entity_id" field.
+func (_c *OrganizationCreate) SetSamlIdpEntityID(v string) *OrganizationCreate {
+	_c.mutation.SetSamlIdpEntityID(v)
+	return _c
+}
+
+// SetNillableSamlIdpEntityID sets the "saml_idp_entity_id" field if the given value is not nil.
+func (_c *OrganizationCreate) SetNillableSamlIdpEntityID(v *string) *OrganizationCreate {
+	if v != nil {
+		_c.SetSamlIdpEntityID(*v)
+	}
+	return _c
+}
+
+// SetSamlCertificate sets the "saml_certificate" field.
+func (_c *OrganizationCreate) SetSamlCertificate(v string) *OrganizationCreate {
+	_c.mutation.SetSamlCertificate(v)
+	return _c
+}
+
+// SetNillableSamlCertificate sets the "saml_certificate" field if the given value is not nil.
+func (_c *OrganizationCreate) SetNillableSamlCertificate(v *string) *OrganizationCreate {
+	if v != nil {
+		_c.SetSamlCertificate(*v)
+	}
+	return _c
+}
+
+// SetSamlPrivateKey sets the "saml_private_key" field.
+func (_c *OrganizationCreate) SetSamlPrivateKey(v string) *OrganizationCreate {
+	_c.mutation.SetSamlPrivateKey(v)
+	return _c
+}
+
+// SetNillableSamlPrivateKey sets the "saml_private_key" field if the given value is not nil.
+func (_c *OrganizationCreate) SetNillableSamlPrivateKey(v *string) *OrganizationCreate {
+	if v != nil {
+		_c.SetSamlPrivateKey(*v)
+	}
+	return _c
+}
+
 // SetOwner sets the "owner" edge to the User entity.
 func (_c *OrganizationCreate) SetOwner(v *User) *OrganizationCreate {
 	return _c.SetOwnerID(v.ID)
@@ -265,6 +335,10 @@ func (_c *OrganizationCreate) defaults() {
 		v := organization.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.SamlEnabled(); !ok {
+		v := organization.DefaultSamlEnabled
+		_c.mutation.SetSamlEnabled(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -323,6 +397,9 @@ func (_c *OrganizationCreate) check() error {
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Organization.updated_at"`)}
+	}
+	if _, ok := _c.mutation.SamlEnabled(); !ok {
+		return &ValidationError{Name: "saml_enabled", err: errors.New(`ent: missing required field "Organization.saml_enabled"`)}
 	}
 	if len(_c.mutation.OwnerIDs()) == 0 {
 		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Organization.owner"`)}
@@ -396,6 +473,26 @@ func (_c *OrganizationCreate) createSpec() (*Organization, *sqlgraph.CreateSpec)
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(organization.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := _c.mutation.SamlEnabled(); ok {
+		_spec.SetField(organization.FieldSamlEnabled, field.TypeBool, value)
+		_node.SamlEnabled = value
+	}
+	if value, ok := _c.mutation.SamlIdpMetadataURL(); ok {
+		_spec.SetField(organization.FieldSamlIdpMetadataURL, field.TypeString, value)
+		_node.SamlIdpMetadataURL = &value
+	}
+	if value, ok := _c.mutation.SamlIdpEntityID(); ok {
+		_spec.SetField(organization.FieldSamlIdpEntityID, field.TypeString, value)
+		_node.SamlIdpEntityID = &value
+	}
+	if value, ok := _c.mutation.SamlCertificate(); ok {
+		_spec.SetField(organization.FieldSamlCertificate, field.TypeString, value)
+		_node.SamlCertificate = &value
+	}
+	if value, ok := _c.mutation.SamlPrivateKey(); ok {
+		_spec.SetField(organization.FieldSamlPrivateKey, field.TypeString, value)
+		_node.SamlPrivateKey = &value
 	}
 	if nodes := _c.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

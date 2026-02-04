@@ -901,6 +901,10 @@ func init() {
 	organization.DefaultUpdatedAt = organizationDescUpdatedAt.Default.(func() time.Time)
 	// organization.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	organization.UpdateDefaultUpdatedAt = organizationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// organizationDescSamlEnabled is the schema descriptor for saml_enabled field.
+	organizationDescSamlEnabled := organizationFields[12].Descriptor()
+	// organization.DefaultSamlEnabled holds the default value on creation for the saml_enabled field.
+	organization.DefaultSamlEnabled = organizationDescSamlEnabled.Default.(bool)
 	organizationmemberFields := schema.OrganizationMember{}.Fields()
 	_ = organizationmemberFields
 	// organizationmemberDescJoinedAt is the schema descriptor for joined_at field.

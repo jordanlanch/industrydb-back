@@ -42,6 +42,16 @@ type Organization struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Last update timestamp
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// Whether SAML SSO is enabled for this organization
+	SamlEnabled bool `json:"saml_enabled,omitempty"`
+	// Identity Provider metadata URL for SAML
+	SamlIdpMetadataURL *string `json:"saml_idp_metadata_url,omitempty"`
+	// Identity Provider entity ID
+	SamlIdpEntityID *string `json:"saml_idp_entity_id,omitempty"`
+	// PEM-encoded X.509 certificate for SAML
+	SamlCertificate *string `json:"saml_certificate,omitempty"`
+	// PEM-encoded private key for SAML (sensitive)
+	SamlPrivateKey *string `json:"-"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the OrganizationQuery when eager-loading is set.
 	Edges        OrganizationEdges `json:"edges"`
@@ -95,11 +105,11 @@ func (*Organization) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case organization.FieldActive:
+		case organization.FieldActive, organization.FieldSamlEnabled:
 			values[i] = new(sql.NullBool)
 		case organization.FieldID, organization.FieldOwnerID, organization.FieldUsageLimit, organization.FieldUsageCount:
 			values[i] = new(sql.NullInt64)
-		case organization.FieldName, organization.FieldSlug, organization.FieldSubscriptionTier, organization.FieldStripeCustomerID, organization.FieldBillingEmail:
+		case organization.FieldName, organization.FieldSlug, organization.FieldSubscriptionTier, organization.FieldStripeCustomerID, organization.FieldBillingEmail, organization.FieldSamlIdpMetadataURL, organization.FieldSamlIdpEntityID, organization.FieldSamlCertificate, organization.FieldSamlPrivateKey:
 			values[i] = new(sql.NullString)
 		case organization.FieldLastResetAt, organization.FieldCreatedAt, organization.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -198,6 +208,40 @@ func (_m *Organization) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
+		case organization.FieldSamlEnabled:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field saml_enabled", values[i])
+			} else if value.Valid {
+				_m.SamlEnabled = value.Bool
+			}
+		case organization.FieldSamlIdpMetadataURL:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field saml_idp_metadata_url", values[i])
+			} else if value.Valid {
+				_m.SamlIdpMetadataURL = new(string)
+				*_m.SamlIdpMetadataURL = value.String
+			}
+		case organization.FieldSamlIdpEntityID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field saml_idp_entity_id", values[i])
+			} else if value.Valid {
+				_m.SamlIdpEntityID = new(string)
+				*_m.SamlIdpEntityID = value.String
+			}
+		case organization.FieldSamlCertificate:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field saml_certificate", values[i])
+			} else if value.Valid {
+				_m.SamlCertificate = new(string)
+				*_m.SamlCertificate = value.String
+			}
+		case organization.FieldSamlPrivateKey:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field saml_private_key", values[i])
+			} else if value.Valid {
+				_m.SamlPrivateKey = new(string)
+				*_m.SamlPrivateKey = value.String
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -288,6 +332,26 @@ func (_m *Organization) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("saml_enabled=")
+	builder.WriteString(fmt.Sprintf("%v", _m.SamlEnabled))
+	builder.WriteString(", ")
+	if v := _m.SamlIdpMetadataURL; v != nil {
+		builder.WriteString("saml_idp_metadata_url=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.SamlIdpEntityID; v != nil {
+		builder.WriteString("saml_idp_entity_id=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.SamlCertificate; v != nil {
+		builder.WriteString("saml_certificate=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	builder.WriteString("saml_private_key=<sensitive>")
 	builder.WriteByte(')')
 	return builder.String()
 }

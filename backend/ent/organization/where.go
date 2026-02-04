@@ -110,6 +110,31 @@ func UpdatedAt(v time.Time) predicate.Organization {
 	return predicate.Organization(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
+// SamlEnabled applies equality check predicate on the "saml_enabled" field. It's identical to SamlEnabledEQ.
+func SamlEnabled(v bool) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldSamlEnabled, v))
+}
+
+// SamlIdpMetadataURL applies equality check predicate on the "saml_idp_metadata_url" field. It's identical to SamlIdpMetadataURLEQ.
+func SamlIdpMetadataURL(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldSamlIdpMetadataURL, v))
+}
+
+// SamlIdpEntityID applies equality check predicate on the "saml_idp_entity_id" field. It's identical to SamlIdpEntityIDEQ.
+func SamlIdpEntityID(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldSamlIdpEntityID, v))
+}
+
+// SamlCertificate applies equality check predicate on the "saml_certificate" field. It's identical to SamlCertificateEQ.
+func SamlCertificate(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldSamlCertificate, v))
+}
+
+// SamlPrivateKey applies equality check predicate on the "saml_private_key" field. It's identical to SamlPrivateKeyEQ.
+func SamlPrivateKey(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldSamlPrivateKey, v))
+}
+
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.Organization {
 	return predicate.Organization(sql.FieldEQ(FieldName, v))
@@ -638,6 +663,316 @@ func UpdatedAtLT(v time.Time) predicate.Organization {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.Organization {
 	return predicate.Organization(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// SamlEnabledEQ applies the EQ predicate on the "saml_enabled" field.
+func SamlEnabledEQ(v bool) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldSamlEnabled, v))
+}
+
+// SamlEnabledNEQ applies the NEQ predicate on the "saml_enabled" field.
+func SamlEnabledNEQ(v bool) predicate.Organization {
+	return predicate.Organization(sql.FieldNEQ(FieldSamlEnabled, v))
+}
+
+// SamlIdpMetadataURLEQ applies the EQ predicate on the "saml_idp_metadata_url" field.
+func SamlIdpMetadataURLEQ(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldSamlIdpMetadataURL, v))
+}
+
+// SamlIdpMetadataURLNEQ applies the NEQ predicate on the "saml_idp_metadata_url" field.
+func SamlIdpMetadataURLNEQ(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldNEQ(FieldSamlIdpMetadataURL, v))
+}
+
+// SamlIdpMetadataURLIn applies the In predicate on the "saml_idp_metadata_url" field.
+func SamlIdpMetadataURLIn(vs ...string) predicate.Organization {
+	return predicate.Organization(sql.FieldIn(FieldSamlIdpMetadataURL, vs...))
+}
+
+// SamlIdpMetadataURLNotIn applies the NotIn predicate on the "saml_idp_metadata_url" field.
+func SamlIdpMetadataURLNotIn(vs ...string) predicate.Organization {
+	return predicate.Organization(sql.FieldNotIn(FieldSamlIdpMetadataURL, vs...))
+}
+
+// SamlIdpMetadataURLGT applies the GT predicate on the "saml_idp_metadata_url" field.
+func SamlIdpMetadataURLGT(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldGT(FieldSamlIdpMetadataURL, v))
+}
+
+// SamlIdpMetadataURLGTE applies the GTE predicate on the "saml_idp_metadata_url" field.
+func SamlIdpMetadataURLGTE(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldGTE(FieldSamlIdpMetadataURL, v))
+}
+
+// SamlIdpMetadataURLLT applies the LT predicate on the "saml_idp_metadata_url" field.
+func SamlIdpMetadataURLLT(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldLT(FieldSamlIdpMetadataURL, v))
+}
+
+// SamlIdpMetadataURLLTE applies the LTE predicate on the "saml_idp_metadata_url" field.
+func SamlIdpMetadataURLLTE(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldLTE(FieldSamlIdpMetadataURL, v))
+}
+
+// SamlIdpMetadataURLContains applies the Contains predicate on the "saml_idp_metadata_url" field.
+func SamlIdpMetadataURLContains(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldContains(FieldSamlIdpMetadataURL, v))
+}
+
+// SamlIdpMetadataURLHasPrefix applies the HasPrefix predicate on the "saml_idp_metadata_url" field.
+func SamlIdpMetadataURLHasPrefix(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldHasPrefix(FieldSamlIdpMetadataURL, v))
+}
+
+// SamlIdpMetadataURLHasSuffix applies the HasSuffix predicate on the "saml_idp_metadata_url" field.
+func SamlIdpMetadataURLHasSuffix(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldHasSuffix(FieldSamlIdpMetadataURL, v))
+}
+
+// SamlIdpMetadataURLIsNil applies the IsNil predicate on the "saml_idp_metadata_url" field.
+func SamlIdpMetadataURLIsNil() predicate.Organization {
+	return predicate.Organization(sql.FieldIsNull(FieldSamlIdpMetadataURL))
+}
+
+// SamlIdpMetadataURLNotNil applies the NotNil predicate on the "saml_idp_metadata_url" field.
+func SamlIdpMetadataURLNotNil() predicate.Organization {
+	return predicate.Organization(sql.FieldNotNull(FieldSamlIdpMetadataURL))
+}
+
+// SamlIdpMetadataURLEqualFold applies the EqualFold predicate on the "saml_idp_metadata_url" field.
+func SamlIdpMetadataURLEqualFold(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldEqualFold(FieldSamlIdpMetadataURL, v))
+}
+
+// SamlIdpMetadataURLContainsFold applies the ContainsFold predicate on the "saml_idp_metadata_url" field.
+func SamlIdpMetadataURLContainsFold(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldContainsFold(FieldSamlIdpMetadataURL, v))
+}
+
+// SamlIdpEntityIDEQ applies the EQ predicate on the "saml_idp_entity_id" field.
+func SamlIdpEntityIDEQ(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldSamlIdpEntityID, v))
+}
+
+// SamlIdpEntityIDNEQ applies the NEQ predicate on the "saml_idp_entity_id" field.
+func SamlIdpEntityIDNEQ(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldNEQ(FieldSamlIdpEntityID, v))
+}
+
+// SamlIdpEntityIDIn applies the In predicate on the "saml_idp_entity_id" field.
+func SamlIdpEntityIDIn(vs ...string) predicate.Organization {
+	return predicate.Organization(sql.FieldIn(FieldSamlIdpEntityID, vs...))
+}
+
+// SamlIdpEntityIDNotIn applies the NotIn predicate on the "saml_idp_entity_id" field.
+func SamlIdpEntityIDNotIn(vs ...string) predicate.Organization {
+	return predicate.Organization(sql.FieldNotIn(FieldSamlIdpEntityID, vs...))
+}
+
+// SamlIdpEntityIDGT applies the GT predicate on the "saml_idp_entity_id" field.
+func SamlIdpEntityIDGT(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldGT(FieldSamlIdpEntityID, v))
+}
+
+// SamlIdpEntityIDGTE applies the GTE predicate on the "saml_idp_entity_id" field.
+func SamlIdpEntityIDGTE(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldGTE(FieldSamlIdpEntityID, v))
+}
+
+// SamlIdpEntityIDLT applies the LT predicate on the "saml_idp_entity_id" field.
+func SamlIdpEntityIDLT(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldLT(FieldSamlIdpEntityID, v))
+}
+
+// SamlIdpEntityIDLTE applies the LTE predicate on the "saml_idp_entity_id" field.
+func SamlIdpEntityIDLTE(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldLTE(FieldSamlIdpEntityID, v))
+}
+
+// SamlIdpEntityIDContains applies the Contains predicate on the "saml_idp_entity_id" field.
+func SamlIdpEntityIDContains(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldContains(FieldSamlIdpEntityID, v))
+}
+
+// SamlIdpEntityIDHasPrefix applies the HasPrefix predicate on the "saml_idp_entity_id" field.
+func SamlIdpEntityIDHasPrefix(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldHasPrefix(FieldSamlIdpEntityID, v))
+}
+
+// SamlIdpEntityIDHasSuffix applies the HasSuffix predicate on the "saml_idp_entity_id" field.
+func SamlIdpEntityIDHasSuffix(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldHasSuffix(FieldSamlIdpEntityID, v))
+}
+
+// SamlIdpEntityIDIsNil applies the IsNil predicate on the "saml_idp_entity_id" field.
+func SamlIdpEntityIDIsNil() predicate.Organization {
+	return predicate.Organization(sql.FieldIsNull(FieldSamlIdpEntityID))
+}
+
+// SamlIdpEntityIDNotNil applies the NotNil predicate on the "saml_idp_entity_id" field.
+func SamlIdpEntityIDNotNil() predicate.Organization {
+	return predicate.Organization(sql.FieldNotNull(FieldSamlIdpEntityID))
+}
+
+// SamlIdpEntityIDEqualFold applies the EqualFold predicate on the "saml_idp_entity_id" field.
+func SamlIdpEntityIDEqualFold(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldEqualFold(FieldSamlIdpEntityID, v))
+}
+
+// SamlIdpEntityIDContainsFold applies the ContainsFold predicate on the "saml_idp_entity_id" field.
+func SamlIdpEntityIDContainsFold(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldContainsFold(FieldSamlIdpEntityID, v))
+}
+
+// SamlCertificateEQ applies the EQ predicate on the "saml_certificate" field.
+func SamlCertificateEQ(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldSamlCertificate, v))
+}
+
+// SamlCertificateNEQ applies the NEQ predicate on the "saml_certificate" field.
+func SamlCertificateNEQ(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldNEQ(FieldSamlCertificate, v))
+}
+
+// SamlCertificateIn applies the In predicate on the "saml_certificate" field.
+func SamlCertificateIn(vs ...string) predicate.Organization {
+	return predicate.Organization(sql.FieldIn(FieldSamlCertificate, vs...))
+}
+
+// SamlCertificateNotIn applies the NotIn predicate on the "saml_certificate" field.
+func SamlCertificateNotIn(vs ...string) predicate.Organization {
+	return predicate.Organization(sql.FieldNotIn(FieldSamlCertificate, vs...))
+}
+
+// SamlCertificateGT applies the GT predicate on the "saml_certificate" field.
+func SamlCertificateGT(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldGT(FieldSamlCertificate, v))
+}
+
+// SamlCertificateGTE applies the GTE predicate on the "saml_certificate" field.
+func SamlCertificateGTE(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldGTE(FieldSamlCertificate, v))
+}
+
+// SamlCertificateLT applies the LT predicate on the "saml_certificate" field.
+func SamlCertificateLT(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldLT(FieldSamlCertificate, v))
+}
+
+// SamlCertificateLTE applies the LTE predicate on the "saml_certificate" field.
+func SamlCertificateLTE(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldLTE(FieldSamlCertificate, v))
+}
+
+// SamlCertificateContains applies the Contains predicate on the "saml_certificate" field.
+func SamlCertificateContains(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldContains(FieldSamlCertificate, v))
+}
+
+// SamlCertificateHasPrefix applies the HasPrefix predicate on the "saml_certificate" field.
+func SamlCertificateHasPrefix(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldHasPrefix(FieldSamlCertificate, v))
+}
+
+// SamlCertificateHasSuffix applies the HasSuffix predicate on the "saml_certificate" field.
+func SamlCertificateHasSuffix(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldHasSuffix(FieldSamlCertificate, v))
+}
+
+// SamlCertificateIsNil applies the IsNil predicate on the "saml_certificate" field.
+func SamlCertificateIsNil() predicate.Organization {
+	return predicate.Organization(sql.FieldIsNull(FieldSamlCertificate))
+}
+
+// SamlCertificateNotNil applies the NotNil predicate on the "saml_certificate" field.
+func SamlCertificateNotNil() predicate.Organization {
+	return predicate.Organization(sql.FieldNotNull(FieldSamlCertificate))
+}
+
+// SamlCertificateEqualFold applies the EqualFold predicate on the "saml_certificate" field.
+func SamlCertificateEqualFold(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldEqualFold(FieldSamlCertificate, v))
+}
+
+// SamlCertificateContainsFold applies the ContainsFold predicate on the "saml_certificate" field.
+func SamlCertificateContainsFold(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldContainsFold(FieldSamlCertificate, v))
+}
+
+// SamlPrivateKeyEQ applies the EQ predicate on the "saml_private_key" field.
+func SamlPrivateKeyEQ(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldEQ(FieldSamlPrivateKey, v))
+}
+
+// SamlPrivateKeyNEQ applies the NEQ predicate on the "saml_private_key" field.
+func SamlPrivateKeyNEQ(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldNEQ(FieldSamlPrivateKey, v))
+}
+
+// SamlPrivateKeyIn applies the In predicate on the "saml_private_key" field.
+func SamlPrivateKeyIn(vs ...string) predicate.Organization {
+	return predicate.Organization(sql.FieldIn(FieldSamlPrivateKey, vs...))
+}
+
+// SamlPrivateKeyNotIn applies the NotIn predicate on the "saml_private_key" field.
+func SamlPrivateKeyNotIn(vs ...string) predicate.Organization {
+	return predicate.Organization(sql.FieldNotIn(FieldSamlPrivateKey, vs...))
+}
+
+// SamlPrivateKeyGT applies the GT predicate on the "saml_private_key" field.
+func SamlPrivateKeyGT(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldGT(FieldSamlPrivateKey, v))
+}
+
+// SamlPrivateKeyGTE applies the GTE predicate on the "saml_private_key" field.
+func SamlPrivateKeyGTE(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldGTE(FieldSamlPrivateKey, v))
+}
+
+// SamlPrivateKeyLT applies the LT predicate on the "saml_private_key" field.
+func SamlPrivateKeyLT(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldLT(FieldSamlPrivateKey, v))
+}
+
+// SamlPrivateKeyLTE applies the LTE predicate on the "saml_private_key" field.
+func SamlPrivateKeyLTE(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldLTE(FieldSamlPrivateKey, v))
+}
+
+// SamlPrivateKeyContains applies the Contains predicate on the "saml_private_key" field.
+func SamlPrivateKeyContains(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldContains(FieldSamlPrivateKey, v))
+}
+
+// SamlPrivateKeyHasPrefix applies the HasPrefix predicate on the "saml_private_key" field.
+func SamlPrivateKeyHasPrefix(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldHasPrefix(FieldSamlPrivateKey, v))
+}
+
+// SamlPrivateKeyHasSuffix applies the HasSuffix predicate on the "saml_private_key" field.
+func SamlPrivateKeyHasSuffix(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldHasSuffix(FieldSamlPrivateKey, v))
+}
+
+// SamlPrivateKeyIsNil applies the IsNil predicate on the "saml_private_key" field.
+func SamlPrivateKeyIsNil() predicate.Organization {
+	return predicate.Organization(sql.FieldIsNull(FieldSamlPrivateKey))
+}
+
+// SamlPrivateKeyNotNil applies the NotNil predicate on the "saml_private_key" field.
+func SamlPrivateKeyNotNil() predicate.Organization {
+	return predicate.Organization(sql.FieldNotNull(FieldSamlPrivateKey))
+}
+
+// SamlPrivateKeyEqualFold applies the EqualFold predicate on the "saml_private_key" field.
+func SamlPrivateKeyEqualFold(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldEqualFold(FieldSamlPrivateKey, v))
+}
+
+// SamlPrivateKeyContainsFold applies the ContainsFold predicate on the "saml_private_key" field.
+func SamlPrivateKeyContainsFold(v string) predicate.Organization {
+	return predicate.Organization(sql.FieldContainsFold(FieldSamlPrivateKey, v))
 }
 
 // HasOwner applies the HasEdge predicate on the "owner" edge.

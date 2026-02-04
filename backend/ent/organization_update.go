@@ -203,6 +203,100 @@ func (_u *OrganizationUpdate) SetUpdatedAt(v time.Time) *OrganizationUpdate {
 	return _u
 }
 
+// SetSamlEnabled sets the "saml_enabled" field.
+func (_u *OrganizationUpdate) SetSamlEnabled(v bool) *OrganizationUpdate {
+	_u.mutation.SetSamlEnabled(v)
+	return _u
+}
+
+// SetNillableSamlEnabled sets the "saml_enabled" field if the given value is not nil.
+func (_u *OrganizationUpdate) SetNillableSamlEnabled(v *bool) *OrganizationUpdate {
+	if v != nil {
+		_u.SetSamlEnabled(*v)
+	}
+	return _u
+}
+
+// SetSamlIdpMetadataURL sets the "saml_idp_metadata_url" field.
+func (_u *OrganizationUpdate) SetSamlIdpMetadataURL(v string) *OrganizationUpdate {
+	_u.mutation.SetSamlIdpMetadataURL(v)
+	return _u
+}
+
+// SetNillableSamlIdpMetadataURL sets the "saml_idp_metadata_url" field if the given value is not nil.
+func (_u *OrganizationUpdate) SetNillableSamlIdpMetadataURL(v *string) *OrganizationUpdate {
+	if v != nil {
+		_u.SetSamlIdpMetadataURL(*v)
+	}
+	return _u
+}
+
+// ClearSamlIdpMetadataURL clears the value of the "saml_idp_metadata_url" field.
+func (_u *OrganizationUpdate) ClearSamlIdpMetadataURL() *OrganizationUpdate {
+	_u.mutation.ClearSamlIdpMetadataURL()
+	return _u
+}
+
+// SetSamlIdpEntityID sets the "saml_idp_entity_id" field.
+func (_u *OrganizationUpdate) SetSamlIdpEntityID(v string) *OrganizationUpdate {
+	_u.mutation.SetSamlIdpEntityID(v)
+	return _u
+}
+
+// SetNillableSamlIdpEntityID sets the "saml_idp_entity_id" field if the given value is not nil.
+func (_u *OrganizationUpdate) SetNillableSamlIdpEntityID(v *string) *OrganizationUpdate {
+	if v != nil {
+		_u.SetSamlIdpEntityID(*v)
+	}
+	return _u
+}
+
+// ClearSamlIdpEntityID clears the value of the "saml_idp_entity_id" field.
+func (_u *OrganizationUpdate) ClearSamlIdpEntityID() *OrganizationUpdate {
+	_u.mutation.ClearSamlIdpEntityID()
+	return _u
+}
+
+// SetSamlCertificate sets the "saml_certificate" field.
+func (_u *OrganizationUpdate) SetSamlCertificate(v string) *OrganizationUpdate {
+	_u.mutation.SetSamlCertificate(v)
+	return _u
+}
+
+// SetNillableSamlCertificate sets the "saml_certificate" field if the given value is not nil.
+func (_u *OrganizationUpdate) SetNillableSamlCertificate(v *string) *OrganizationUpdate {
+	if v != nil {
+		_u.SetSamlCertificate(*v)
+	}
+	return _u
+}
+
+// ClearSamlCertificate clears the value of the "saml_certificate" field.
+func (_u *OrganizationUpdate) ClearSamlCertificate() *OrganizationUpdate {
+	_u.mutation.ClearSamlCertificate()
+	return _u
+}
+
+// SetSamlPrivateKey sets the "saml_private_key" field.
+func (_u *OrganizationUpdate) SetSamlPrivateKey(v string) *OrganizationUpdate {
+	_u.mutation.SetSamlPrivateKey(v)
+	return _u
+}
+
+// SetNillableSamlPrivateKey sets the "saml_private_key" field if the given value is not nil.
+func (_u *OrganizationUpdate) SetNillableSamlPrivateKey(v *string) *OrganizationUpdate {
+	if v != nil {
+		_u.SetSamlPrivateKey(*v)
+	}
+	return _u
+}
+
+// ClearSamlPrivateKey clears the value of the "saml_private_key" field.
+func (_u *OrganizationUpdate) ClearSamlPrivateKey() *OrganizationUpdate {
+	_u.mutation.ClearSamlPrivateKey()
+	return _u
+}
+
 // SetOwner sets the "owner" edge to the User entity.
 func (_u *OrganizationUpdate) SetOwner(v *User) *OrganizationUpdate {
 	return _u.SetOwnerID(v.ID)
@@ -413,6 +507,33 @@ func (_u *OrganizationUpdate) sqlSave(ctx context.Context) (_node int, err error
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(organization.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.SamlEnabled(); ok {
+		_spec.SetField(organization.FieldSamlEnabled, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.SamlIdpMetadataURL(); ok {
+		_spec.SetField(organization.FieldSamlIdpMetadataURL, field.TypeString, value)
+	}
+	if _u.mutation.SamlIdpMetadataURLCleared() {
+		_spec.ClearField(organization.FieldSamlIdpMetadataURL, field.TypeString)
+	}
+	if value, ok := _u.mutation.SamlIdpEntityID(); ok {
+		_spec.SetField(organization.FieldSamlIdpEntityID, field.TypeString, value)
+	}
+	if _u.mutation.SamlIdpEntityIDCleared() {
+		_spec.ClearField(organization.FieldSamlIdpEntityID, field.TypeString)
+	}
+	if value, ok := _u.mutation.SamlCertificate(); ok {
+		_spec.SetField(organization.FieldSamlCertificate, field.TypeString, value)
+	}
+	if _u.mutation.SamlCertificateCleared() {
+		_spec.ClearField(organization.FieldSamlCertificate, field.TypeString)
+	}
+	if value, ok := _u.mutation.SamlPrivateKey(); ok {
+		_spec.SetField(organization.FieldSamlPrivateKey, field.TypeString, value)
+	}
+	if _u.mutation.SamlPrivateKeyCleared() {
+		_spec.ClearField(organization.FieldSamlPrivateKey, field.TypeString)
 	}
 	if _u.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -725,6 +846,100 @@ func (_u *OrganizationUpdateOne) SetUpdatedAt(v time.Time) *OrganizationUpdateOn
 	return _u
 }
 
+// SetSamlEnabled sets the "saml_enabled" field.
+func (_u *OrganizationUpdateOne) SetSamlEnabled(v bool) *OrganizationUpdateOne {
+	_u.mutation.SetSamlEnabled(v)
+	return _u
+}
+
+// SetNillableSamlEnabled sets the "saml_enabled" field if the given value is not nil.
+func (_u *OrganizationUpdateOne) SetNillableSamlEnabled(v *bool) *OrganizationUpdateOne {
+	if v != nil {
+		_u.SetSamlEnabled(*v)
+	}
+	return _u
+}
+
+// SetSamlIdpMetadataURL sets the "saml_idp_metadata_url" field.
+func (_u *OrganizationUpdateOne) SetSamlIdpMetadataURL(v string) *OrganizationUpdateOne {
+	_u.mutation.SetSamlIdpMetadataURL(v)
+	return _u
+}
+
+// SetNillableSamlIdpMetadataURL sets the "saml_idp_metadata_url" field if the given value is not nil.
+func (_u *OrganizationUpdateOne) SetNillableSamlIdpMetadataURL(v *string) *OrganizationUpdateOne {
+	if v != nil {
+		_u.SetSamlIdpMetadataURL(*v)
+	}
+	return _u
+}
+
+// ClearSamlIdpMetadataURL clears the value of the "saml_idp_metadata_url" field.
+func (_u *OrganizationUpdateOne) ClearSamlIdpMetadataURL() *OrganizationUpdateOne {
+	_u.mutation.ClearSamlIdpMetadataURL()
+	return _u
+}
+
+// SetSamlIdpEntityID sets the "saml_idp_entity_id" field.
+func (_u *OrganizationUpdateOne) SetSamlIdpEntityID(v string) *OrganizationUpdateOne {
+	_u.mutation.SetSamlIdpEntityID(v)
+	return _u
+}
+
+// SetNillableSamlIdpEntityID sets the "saml_idp_entity_id" field if the given value is not nil.
+func (_u *OrganizationUpdateOne) SetNillableSamlIdpEntityID(v *string) *OrganizationUpdateOne {
+	if v != nil {
+		_u.SetSamlIdpEntityID(*v)
+	}
+	return _u
+}
+
+// ClearSamlIdpEntityID clears the value of the "saml_idp_entity_id" field.
+func (_u *OrganizationUpdateOne) ClearSamlIdpEntityID() *OrganizationUpdateOne {
+	_u.mutation.ClearSamlIdpEntityID()
+	return _u
+}
+
+// SetSamlCertificate sets the "saml_certificate" field.
+func (_u *OrganizationUpdateOne) SetSamlCertificate(v string) *OrganizationUpdateOne {
+	_u.mutation.SetSamlCertificate(v)
+	return _u
+}
+
+// SetNillableSamlCertificate sets the "saml_certificate" field if the given value is not nil.
+func (_u *OrganizationUpdateOne) SetNillableSamlCertificate(v *string) *OrganizationUpdateOne {
+	if v != nil {
+		_u.SetSamlCertificate(*v)
+	}
+	return _u
+}
+
+// ClearSamlCertificate clears the value of the "saml_certificate" field.
+func (_u *OrganizationUpdateOne) ClearSamlCertificate() *OrganizationUpdateOne {
+	_u.mutation.ClearSamlCertificate()
+	return _u
+}
+
+// SetSamlPrivateKey sets the "saml_private_key" field.
+func (_u *OrganizationUpdateOne) SetSamlPrivateKey(v string) *OrganizationUpdateOne {
+	_u.mutation.SetSamlPrivateKey(v)
+	return _u
+}
+
+// SetNillableSamlPrivateKey sets the "saml_private_key" field if the given value is not nil.
+func (_u *OrganizationUpdateOne) SetNillableSamlPrivateKey(v *string) *OrganizationUpdateOne {
+	if v != nil {
+		_u.SetSamlPrivateKey(*v)
+	}
+	return _u
+}
+
+// ClearSamlPrivateKey clears the value of the "saml_private_key" field.
+func (_u *OrganizationUpdateOne) ClearSamlPrivateKey() *OrganizationUpdateOne {
+	_u.mutation.ClearSamlPrivateKey()
+	return _u
+}
+
 // SetOwner sets the "owner" edge to the User entity.
 func (_u *OrganizationUpdateOne) SetOwner(v *User) *OrganizationUpdateOne {
 	return _u.SetOwnerID(v.ID)
@@ -965,6 +1180,33 @@ func (_u *OrganizationUpdateOne) sqlSave(ctx context.Context) (_node *Organizati
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(organization.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := _u.mutation.SamlEnabled(); ok {
+		_spec.SetField(organization.FieldSamlEnabled, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.SamlIdpMetadataURL(); ok {
+		_spec.SetField(organization.FieldSamlIdpMetadataURL, field.TypeString, value)
+	}
+	if _u.mutation.SamlIdpMetadataURLCleared() {
+		_spec.ClearField(organization.FieldSamlIdpMetadataURL, field.TypeString)
+	}
+	if value, ok := _u.mutation.SamlIdpEntityID(); ok {
+		_spec.SetField(organization.FieldSamlIdpEntityID, field.TypeString, value)
+	}
+	if _u.mutation.SamlIdpEntityIDCleared() {
+		_spec.ClearField(organization.FieldSamlIdpEntityID, field.TypeString)
+	}
+	if value, ok := _u.mutation.SamlCertificate(); ok {
+		_spec.SetField(organization.FieldSamlCertificate, field.TypeString, value)
+	}
+	if _u.mutation.SamlCertificateCleared() {
+		_spec.ClearField(organization.FieldSamlCertificate, field.TypeString)
+	}
+	if value, ok := _u.mutation.SamlPrivateKey(); ok {
+		_spec.SetField(organization.FieldSamlPrivateKey, field.TypeString, value)
+	}
+	if _u.mutation.SamlPrivateKeyCleared() {
+		_spec.ClearField(organization.FieldSamlPrivateKey, field.TypeString)
 	}
 	if _u.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{

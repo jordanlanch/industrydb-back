@@ -26378,34 +26378,39 @@ func (m *MarketReportMutation) ResetEdge(name string) error {
 // OrganizationMutation represents an operation that mutates the Organization nodes in the graph.
 type OrganizationMutation struct {
 	config
-	op                 Op
-	typ                string
-	id                 *int
-	name               *string
-	slug               *string
-	subscription_tier  *organization.SubscriptionTier
-	usage_limit        *int
-	addusage_limit     *int
-	usage_count        *int
-	addusage_count     *int
-	last_reset_at      *time.Time
-	stripe_customer_id *string
-	billing_email      *string
-	active             *bool
-	created_at         *time.Time
-	updated_at         *time.Time
-	clearedFields      map[string]struct{}
-	owner              *int
-	clearedowner       bool
-	members            map[int]struct{}
-	removedmembers     map[int]struct{}
-	clearedmembers     bool
-	exports            map[int]struct{}
-	removedexports     map[int]struct{}
-	clearedexports     bool
-	done               bool
-	oldValue           func(context.Context) (*Organization, error)
-	predicates         []predicate.Organization
+	op                    Op
+	typ                   string
+	id                    *int
+	name                  *string
+	slug                  *string
+	subscription_tier     *organization.SubscriptionTier
+	usage_limit           *int
+	addusage_limit        *int
+	usage_count           *int
+	addusage_count        *int
+	last_reset_at         *time.Time
+	stripe_customer_id    *string
+	billing_email         *string
+	active                *bool
+	created_at            *time.Time
+	updated_at            *time.Time
+	saml_enabled          *bool
+	saml_idp_metadata_url *string
+	saml_idp_entity_id    *string
+	saml_certificate      *string
+	saml_private_key      *string
+	clearedFields         map[string]struct{}
+	owner                 *int
+	clearedowner          bool
+	members               map[int]struct{}
+	removedmembers        map[int]struct{}
+	clearedmembers        bool
+	exports               map[int]struct{}
+	removedexports        map[int]struct{}
+	clearedexports        bool
+	done                  bool
+	oldValue              func(context.Context) (*Organization, error)
+	predicates            []predicate.Organization
 }
 
 var _ ent.Mutation = (*OrganizationMutation)(nil)
@@ -27004,6 +27009,238 @@ func (m *OrganizationMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
+// SetSamlEnabled sets the "saml_enabled" field.
+func (m *OrganizationMutation) SetSamlEnabled(b bool) {
+	m.saml_enabled = &b
+}
+
+// SamlEnabled returns the value of the "saml_enabled" field in the mutation.
+func (m *OrganizationMutation) SamlEnabled() (r bool, exists bool) {
+	v := m.saml_enabled
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSamlEnabled returns the old "saml_enabled" field's value of the Organization entity.
+// If the Organization object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrganizationMutation) OldSamlEnabled(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSamlEnabled is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSamlEnabled requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSamlEnabled: %w", err)
+	}
+	return oldValue.SamlEnabled, nil
+}
+
+// ResetSamlEnabled resets all changes to the "saml_enabled" field.
+func (m *OrganizationMutation) ResetSamlEnabled() {
+	m.saml_enabled = nil
+}
+
+// SetSamlIdpMetadataURL sets the "saml_idp_metadata_url" field.
+func (m *OrganizationMutation) SetSamlIdpMetadataURL(s string) {
+	m.saml_idp_metadata_url = &s
+}
+
+// SamlIdpMetadataURL returns the value of the "saml_idp_metadata_url" field in the mutation.
+func (m *OrganizationMutation) SamlIdpMetadataURL() (r string, exists bool) {
+	v := m.saml_idp_metadata_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSamlIdpMetadataURL returns the old "saml_idp_metadata_url" field's value of the Organization entity.
+// If the Organization object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrganizationMutation) OldSamlIdpMetadataURL(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSamlIdpMetadataURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSamlIdpMetadataURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSamlIdpMetadataURL: %w", err)
+	}
+	return oldValue.SamlIdpMetadataURL, nil
+}
+
+// ClearSamlIdpMetadataURL clears the value of the "saml_idp_metadata_url" field.
+func (m *OrganizationMutation) ClearSamlIdpMetadataURL() {
+	m.saml_idp_metadata_url = nil
+	m.clearedFields[organization.FieldSamlIdpMetadataURL] = struct{}{}
+}
+
+// SamlIdpMetadataURLCleared returns if the "saml_idp_metadata_url" field was cleared in this mutation.
+func (m *OrganizationMutation) SamlIdpMetadataURLCleared() bool {
+	_, ok := m.clearedFields[organization.FieldSamlIdpMetadataURL]
+	return ok
+}
+
+// ResetSamlIdpMetadataURL resets all changes to the "saml_idp_metadata_url" field.
+func (m *OrganizationMutation) ResetSamlIdpMetadataURL() {
+	m.saml_idp_metadata_url = nil
+	delete(m.clearedFields, organization.FieldSamlIdpMetadataURL)
+}
+
+// SetSamlIdpEntityID sets the "saml_idp_entity_id" field.
+func (m *OrganizationMutation) SetSamlIdpEntityID(s string) {
+	m.saml_idp_entity_id = &s
+}
+
+// SamlIdpEntityID returns the value of the "saml_idp_entity_id" field in the mutation.
+func (m *OrganizationMutation) SamlIdpEntityID() (r string, exists bool) {
+	v := m.saml_idp_entity_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSamlIdpEntityID returns the old "saml_idp_entity_id" field's value of the Organization entity.
+// If the Organization object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrganizationMutation) OldSamlIdpEntityID(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSamlIdpEntityID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSamlIdpEntityID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSamlIdpEntityID: %w", err)
+	}
+	return oldValue.SamlIdpEntityID, nil
+}
+
+// ClearSamlIdpEntityID clears the value of the "saml_idp_entity_id" field.
+func (m *OrganizationMutation) ClearSamlIdpEntityID() {
+	m.saml_idp_entity_id = nil
+	m.clearedFields[organization.FieldSamlIdpEntityID] = struct{}{}
+}
+
+// SamlIdpEntityIDCleared returns if the "saml_idp_entity_id" field was cleared in this mutation.
+func (m *OrganizationMutation) SamlIdpEntityIDCleared() bool {
+	_, ok := m.clearedFields[organization.FieldSamlIdpEntityID]
+	return ok
+}
+
+// ResetSamlIdpEntityID resets all changes to the "saml_idp_entity_id" field.
+func (m *OrganizationMutation) ResetSamlIdpEntityID() {
+	m.saml_idp_entity_id = nil
+	delete(m.clearedFields, organization.FieldSamlIdpEntityID)
+}
+
+// SetSamlCertificate sets the "saml_certificate" field.
+func (m *OrganizationMutation) SetSamlCertificate(s string) {
+	m.saml_certificate = &s
+}
+
+// SamlCertificate returns the value of the "saml_certificate" field in the mutation.
+func (m *OrganizationMutation) SamlCertificate() (r string, exists bool) {
+	v := m.saml_certificate
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSamlCertificate returns the old "saml_certificate" field's value of the Organization entity.
+// If the Organization object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrganizationMutation) OldSamlCertificate(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSamlCertificate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSamlCertificate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSamlCertificate: %w", err)
+	}
+	return oldValue.SamlCertificate, nil
+}
+
+// ClearSamlCertificate clears the value of the "saml_certificate" field.
+func (m *OrganizationMutation) ClearSamlCertificate() {
+	m.saml_certificate = nil
+	m.clearedFields[organization.FieldSamlCertificate] = struct{}{}
+}
+
+// SamlCertificateCleared returns if the "saml_certificate" field was cleared in this mutation.
+func (m *OrganizationMutation) SamlCertificateCleared() bool {
+	_, ok := m.clearedFields[organization.FieldSamlCertificate]
+	return ok
+}
+
+// ResetSamlCertificate resets all changes to the "saml_certificate" field.
+func (m *OrganizationMutation) ResetSamlCertificate() {
+	m.saml_certificate = nil
+	delete(m.clearedFields, organization.FieldSamlCertificate)
+}
+
+// SetSamlPrivateKey sets the "saml_private_key" field.
+func (m *OrganizationMutation) SetSamlPrivateKey(s string) {
+	m.saml_private_key = &s
+}
+
+// SamlPrivateKey returns the value of the "saml_private_key" field in the mutation.
+func (m *OrganizationMutation) SamlPrivateKey() (r string, exists bool) {
+	v := m.saml_private_key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSamlPrivateKey returns the old "saml_private_key" field's value of the Organization entity.
+// If the Organization object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *OrganizationMutation) OldSamlPrivateKey(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSamlPrivateKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSamlPrivateKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSamlPrivateKey: %w", err)
+	}
+	return oldValue.SamlPrivateKey, nil
+}
+
+// ClearSamlPrivateKey clears the value of the "saml_private_key" field.
+func (m *OrganizationMutation) ClearSamlPrivateKey() {
+	m.saml_private_key = nil
+	m.clearedFields[organization.FieldSamlPrivateKey] = struct{}{}
+}
+
+// SamlPrivateKeyCleared returns if the "saml_private_key" field was cleared in this mutation.
+func (m *OrganizationMutation) SamlPrivateKeyCleared() bool {
+	_, ok := m.clearedFields[organization.FieldSamlPrivateKey]
+	return ok
+}
+
+// ResetSamlPrivateKey resets all changes to the "saml_private_key" field.
+func (m *OrganizationMutation) ResetSamlPrivateKey() {
+	m.saml_private_key = nil
+	delete(m.clearedFields, organization.FieldSamlPrivateKey)
+}
+
 // ClearOwner clears the "owner" edge to the User entity.
 func (m *OrganizationMutation) ClearOwner() {
 	m.clearedowner = true
@@ -27173,7 +27410,7 @@ func (m *OrganizationMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *OrganizationMutation) Fields() []string {
-	fields := make([]string, 0, 12)
+	fields := make([]string, 0, 17)
 	if m.name != nil {
 		fields = append(fields, organization.FieldName)
 	}
@@ -27210,6 +27447,21 @@ func (m *OrganizationMutation) Fields() []string {
 	if m.updated_at != nil {
 		fields = append(fields, organization.FieldUpdatedAt)
 	}
+	if m.saml_enabled != nil {
+		fields = append(fields, organization.FieldSamlEnabled)
+	}
+	if m.saml_idp_metadata_url != nil {
+		fields = append(fields, organization.FieldSamlIdpMetadataURL)
+	}
+	if m.saml_idp_entity_id != nil {
+		fields = append(fields, organization.FieldSamlIdpEntityID)
+	}
+	if m.saml_certificate != nil {
+		fields = append(fields, organization.FieldSamlCertificate)
+	}
+	if m.saml_private_key != nil {
+		fields = append(fields, organization.FieldSamlPrivateKey)
+	}
 	return fields
 }
 
@@ -27242,6 +27494,16 @@ func (m *OrganizationMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case organization.FieldUpdatedAt:
 		return m.UpdatedAt()
+	case organization.FieldSamlEnabled:
+		return m.SamlEnabled()
+	case organization.FieldSamlIdpMetadataURL:
+		return m.SamlIdpMetadataURL()
+	case organization.FieldSamlIdpEntityID:
+		return m.SamlIdpEntityID()
+	case organization.FieldSamlCertificate:
+		return m.SamlCertificate()
+	case organization.FieldSamlPrivateKey:
+		return m.SamlPrivateKey()
 	}
 	return nil, false
 }
@@ -27275,6 +27537,16 @@ func (m *OrganizationMutation) OldField(ctx context.Context, name string) (ent.V
 		return m.OldCreatedAt(ctx)
 	case organization.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
+	case organization.FieldSamlEnabled:
+		return m.OldSamlEnabled(ctx)
+	case organization.FieldSamlIdpMetadataURL:
+		return m.OldSamlIdpMetadataURL(ctx)
+	case organization.FieldSamlIdpEntityID:
+		return m.OldSamlIdpEntityID(ctx)
+	case organization.FieldSamlCertificate:
+		return m.OldSamlCertificate(ctx)
+	case organization.FieldSamlPrivateKey:
+		return m.OldSamlPrivateKey(ctx)
 	}
 	return nil, fmt.Errorf("unknown Organization field %s", name)
 }
@@ -27368,6 +27640,41 @@ func (m *OrganizationMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
+	case organization.FieldSamlEnabled:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSamlEnabled(v)
+		return nil
+	case organization.FieldSamlIdpMetadataURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSamlIdpMetadataURL(v)
+		return nil
+	case organization.FieldSamlIdpEntityID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSamlIdpEntityID(v)
+		return nil
+	case organization.FieldSamlCertificate:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSamlCertificate(v)
+		return nil
+	case organization.FieldSamlPrivateKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSamlPrivateKey(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Organization field %s", name)
 }
@@ -27431,6 +27738,18 @@ func (m *OrganizationMutation) ClearedFields() []string {
 	if m.FieldCleared(organization.FieldBillingEmail) {
 		fields = append(fields, organization.FieldBillingEmail)
 	}
+	if m.FieldCleared(organization.FieldSamlIdpMetadataURL) {
+		fields = append(fields, organization.FieldSamlIdpMetadataURL)
+	}
+	if m.FieldCleared(organization.FieldSamlIdpEntityID) {
+		fields = append(fields, organization.FieldSamlIdpEntityID)
+	}
+	if m.FieldCleared(organization.FieldSamlCertificate) {
+		fields = append(fields, organization.FieldSamlCertificate)
+	}
+	if m.FieldCleared(organization.FieldSamlPrivateKey) {
+		fields = append(fields, organization.FieldSamlPrivateKey)
+	}
 	return fields
 }
 
@@ -27450,6 +27769,18 @@ func (m *OrganizationMutation) ClearField(name string) error {
 		return nil
 	case organization.FieldBillingEmail:
 		m.ClearBillingEmail()
+		return nil
+	case organization.FieldSamlIdpMetadataURL:
+		m.ClearSamlIdpMetadataURL()
+		return nil
+	case organization.FieldSamlIdpEntityID:
+		m.ClearSamlIdpEntityID()
+		return nil
+	case organization.FieldSamlCertificate:
+		m.ClearSamlCertificate()
+		return nil
+	case organization.FieldSamlPrivateKey:
+		m.ClearSamlPrivateKey()
 		return nil
 	}
 	return fmt.Errorf("unknown Organization nullable field %s", name)
@@ -27494,6 +27825,21 @@ func (m *OrganizationMutation) ResetField(name string) error {
 		return nil
 	case organization.FieldUpdatedAt:
 		m.ResetUpdatedAt()
+		return nil
+	case organization.FieldSamlEnabled:
+		m.ResetSamlEnabled()
+		return nil
+	case organization.FieldSamlIdpMetadataURL:
+		m.ResetSamlIdpMetadataURL()
+		return nil
+	case organization.FieldSamlIdpEntityID:
+		m.ResetSamlIdpEntityID()
+		return nil
+	case organization.FieldSamlCertificate:
+		m.ResetSamlCertificate()
+		return nil
+	case organization.FieldSamlPrivateKey:
+		m.ResetSamlPrivateKey()
 		return nil
 	}
 	return fmt.Errorf("unknown Organization field %s", name)

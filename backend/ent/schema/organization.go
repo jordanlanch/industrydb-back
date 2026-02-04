@@ -60,6 +60,28 @@ func (Organization) Fields() []ent.Field {
 			Default(time.Now).
 			UpdateDefault(time.Now).
 			Comment("Last update timestamp"),
+
+		// SAML SSO fields
+		field.Bool("saml_enabled").
+			Default(false).
+			Comment("Whether SAML SSO is enabled for this organization"),
+		field.Text("saml_idp_metadata_url").
+			Optional().
+			Nillable().
+			Comment("Identity Provider metadata URL for SAML"),
+		field.Text("saml_idp_entity_id").
+			Optional().
+			Nillable().
+			Comment("Identity Provider entity ID"),
+		field.Text("saml_certificate").
+			Optional().
+			Nillable().
+			Comment("PEM-encoded X.509 certificate for SAML"),
+		field.Text("saml_private_key").
+			Optional().
+			Nillable().
+			Sensitive().
+			Comment("PEM-encoded private key for SAML (sensitive)"),
 	}
 }
 

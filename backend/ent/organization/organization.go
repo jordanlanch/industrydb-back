@@ -39,6 +39,16 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
+	// FieldSamlEnabled holds the string denoting the saml_enabled field in the database.
+	FieldSamlEnabled = "saml_enabled"
+	// FieldSamlIdpMetadataURL holds the string denoting the saml_idp_metadata_url field in the database.
+	FieldSamlIdpMetadataURL = "saml_idp_metadata_url"
+	// FieldSamlIdpEntityID holds the string denoting the saml_idp_entity_id field in the database.
+	FieldSamlIdpEntityID = "saml_idp_entity_id"
+	// FieldSamlCertificate holds the string denoting the saml_certificate field in the database.
+	FieldSamlCertificate = "saml_certificate"
+	// FieldSamlPrivateKey holds the string denoting the saml_private_key field in the database.
+	FieldSamlPrivateKey = "saml_private_key"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
 	EdgeOwner = "owner"
 	// EdgeMembers holds the string denoting the members edge name in mutations.
@@ -85,6 +95,11 @@ var Columns = []string{
 	FieldActive,
 	FieldCreatedAt,
 	FieldUpdatedAt,
+	FieldSamlEnabled,
+	FieldSamlIdpMetadataURL,
+	FieldSamlIdpEntityID,
+	FieldSamlCertificate,
+	FieldSamlPrivateKey,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -120,6 +135,8 @@ var (
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
+	// DefaultSamlEnabled holds the default value on creation for the "saml_enabled" field.
+	DefaultSamlEnabled bool
 )
 
 // SubscriptionTier defines the type for the "subscription_tier" enum field.
@@ -216,6 +233,31 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// BySamlEnabled orders the results by the saml_enabled field.
+func BySamlEnabled(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSamlEnabled, opts...).ToFunc()
+}
+
+// BySamlIdpMetadataURL orders the results by the saml_idp_metadata_url field.
+func BySamlIdpMetadataURL(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSamlIdpMetadataURL, opts...).ToFunc()
+}
+
+// BySamlIdpEntityID orders the results by the saml_idp_entity_id field.
+func BySamlIdpEntityID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSamlIdpEntityID, opts...).ToFunc()
+}
+
+// BySamlCertificate orders the results by the saml_certificate field.
+func BySamlCertificate(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSamlCertificate, opts...).ToFunc()
+}
+
+// BySamlPrivateKey orders the results by the saml_private_key field.
+func BySamlPrivateKey(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSamlPrivateKey, opts...).ToFunc()
 }
 
 // ByOwnerField orders the results by owner field.
