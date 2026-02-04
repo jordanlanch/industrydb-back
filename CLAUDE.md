@@ -2387,6 +2387,448 @@ POST /api/v1/batch/execute
 **Implementation:**
 - Handler: `backend/pkg/api/handlers/batch.go`
 
+### GraphQL API
+**Implemented:** 2026-02-03
+
+GraphQL API provides a type-safe, flexible alternative to REST endpoints with cursor-based pagination and introspection.
+
+**Endpoints:**
+```
+POST /api/v1/graphql            # GraphQL API endpoint (requires JWT)
+GET  /api/v1/graphql/playground # GraphQL Playground (development UI)
+```
+
+**Authentication:**
+- Requires JWT token in `Authorization: Bearer <token>` header
+- Same authentication middleware as REST API
+- User context available in all resolvers
+
+**Schema:**
+
+**Types:**
+```graphql
+type User {
+  id: ID!
+  email: String!
+  name: String!
+  subscriptionTier: String!
+  usageCount: Int!
+  usageLimit: Int!
+  emailVerified: Boolean!
+  createdAt: Time!
+}
+
+type Lead {
+  id: ID!
+  name: String!
+  industry: String!
+  country: String!
+  city: String
+  email: String
+  phone: String
+  website: String
+  verified: Boolean!
+  qualityScore: Int!
+  createdAt: Time!
+}
+
+type LeadConnection {
+  edges: [LeadEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+```
+
+**Queries:**
+```graphql
+type Query {
+  # Current user info
+  me: User!
+
+  # Single lead by ID
+  lead(id: ID!): Lead
+
+  # Search leads with filters and pagination
+  leads(input: LeadSearchInput!): LeadConnection!
+
+  # User usage statistics
+  usageStats: UsageStats!
+
+  # Revenue metrics (admin only)
+  revenueMetrics(periodStart: Time!, periodEnd: Time!): RevenueMetrics!
+}
+```
+
+**Mutations:**
+```graphql
+type Mutation {
+  # User registration
+  register(input: RegisterInput!): AuthResponse!
+
+  # User login
+  login(input: LoginInput!): AuthResponse!
+
+  # User logout
+  logout: GenericResponse!
+
+  # Queue lead export
+  exportLeads(input: LeadSearchInput!): GenericResponse!
+}
+```
+
+**Example Queries:**
+
+**Get Current User:**
+```graphql
+query {
+  me {
+    id
+    email
+    name
+    subscriptionTier
+    usageCount
+    usageLimit
+    emailVerified
+  }
+}
+```
+
+**Search Leads with Pagination:**
+```graphql
+query SearchLeads {
+  leads(input: {
+    industry: "tattoo"
+    country: "US"
+    city: "New York"
+    limit: 10
+    offset: 0
+  }) {
+    edges {
+      cursor
+      node {
+        id
+        name
+        industry
+        country
+        email
+        phone
+        website
+        qualityScore
+      }
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+```
+
+**Register New User:**
+```graphql
+mutation RegisterUser {
+  register(input: {
+    email: "user@example.com"
+    password: "SecurePassword123!"
+    name: "John Doe"
+  }) {
+    token
+    user {
+      id
+      email
+      name
+      subscriptionTier
+    }
+  }
+}
+```
+
+**Login:**
+```graphql
+mutation LoginUser {
+  login(input: {
+    email: "user@example.com"
+    password: "SecurePassword123!"
+  }) {
+    token
+    user {
+      id
+      email
+      subscriptionTier
+      usageCount
+      usageLimit
+    }
+  }
+}
+```
+
+**GraphQL Playground:**
+- Development UI for testing queries
+- Auto-complete and schema exploration
+- Request history and variables editor
+- Access at: `http://localhost:7890/api/v1/graphql/playground`
+
+**Features:**
+- Type-safe queries with auto-generated schema
+- Cursor-based pagination (Relay specification)
+- Introspection for schema discovery
+- Nested queries to fetch related data
+- Field-level permissions (future enhancement)
+- Query complexity analysis (future enhancement)
+
+**Implementation:**
+- Schema: `backend/graph/schema.graphql`
+- Resolvers: `backend/graph/schema.resolvers.go`
+- Handler: `backend/pkg/api/handlers/graphql.go`
+- Configuration: `backend/gqlgen.yml`
+- Generated code: `backend/graph/generated.go` (7000+ lines)
+
+**Dependencies:**
+- `github.com/99designs/gqlgen@v0.17.86` - GraphQL server library
+- `github.com/gorilla/websocket` - WebSocket support (for subscriptions)
+- `github.com/hashicorp/golang-lru/v2` - LRU cache for query optimization
+
+### SAML SSO (Enterprise Single Sign-On)
+**Implemented:** 2026-02-03
+
+SAML 2.0 single sign-on allows enterprise customers to authenticate users through their identity provider (IdP) like Okta, Azure AD, or OneLogin.
+
+**Endpoints:**
+```
+GET  /api/v1/auth/saml/metadata/:org_id        # Service Provider metadata
+GET  /api/v1/auth/saml/login/:org_id           # Initiate SAML login
+POST /api/v1/auth/saml/acs/:org_id             # Assertion Consumer Service
+```
+
+**Database Schema:**
+
+Organization SAML configuration fields:
+```go
+saml_enabled             bool      // Enable/disable SAML for organization
+saml_idp_metadata_url    string    // IdP metadata URL
+saml_idp_entity_id       string    // IdP entity ID
+saml_certificate         text      // PEM-encoded X.509 certificate
+saml_private_key         text      // PEM-encoded private key (sensitive)
+```
+
+**SAML Flow:**
+1. User clicks "Sign in with SSO" for their organization
+2. Frontend redirects to `/api/v1/auth/saml/login/:org_id`
+3. Backend generates SAML authentication request
+4. User redirected to IdP (Okta, Azure AD, etc.)
+5. User authenticates at IdP
+6. IdP sends SAML response to ACS endpoint
+7. Backend validates SAML assertion and signature
+8. Backend finds or creates user account
+9. Backend generates JWT token
+10. User redirected to dashboard with token
+
+**Configuration Per Organization:**
+- Each organization can have its own SAML configuration
+- Unique metadata URL, entity ID, and certificates
+- Supports multiple IdP providers simultaneously
+- Allow IdP-initiated login
+
+**Security Features:**
+- SAML assertion signature validation
+- Certificate-based authentication
+- Replay attack prevention
+- Time-bound assertions
+- Encrypted assertions (optional)
+
+**Implementation:**
+- Schema: `backend/ent/schema/organization.go` (SAML fields)
+- Service: `backend/pkg/saml/service.go`
+- Handler: `backend/pkg/api/handlers/saml.go`
+- Library: `github.com/crewjam/saml` - SAML 2.0 library
+
+**Status:**
+- ✅ Database schema complete
+- ✅ Service layer foundation
+- ✅ Handler stubs created
+- ⏳ IdP integration (requires configuration)
+- ⏳ Certificate generation (manual setup required)
+- ⏳ Full SAML flow testing (needs IdP access)
+
+**Future Work:**
+- Automatic certificate generation
+- IdP metadata auto-configuration
+- SAML assertion attribute mapping
+- Group-based role assignment
+- Multi-organization SAML support
+
+### Email Marketing Integration
+**Implemented:** 2026-02-03
+
+Email marketing system for creating and managing drip campaigns, newsletters, and transactional emails via SendGrid.
+
+**Database Schemas:**
+
+**EmailCampaign:**
+```go
+name                 string      // Campaign name
+subject              string      // Email subject line
+content_html         text        // HTML email content
+content_text         text        // Plain text fallback
+sender_name          string      // From name
+sender_email         string      // From email
+status               enum        // draft, scheduled, sending, sent, paused, failed
+scheduled_at         time        // When to send (NULL for immediate)
+sent_at              time        // When campaign was sent
+recipients_count     int         // Total recipients
+sent_count           int         // Successfully sent
+opened_count         int         // Emails opened
+clicked_count        int         // Links clicked
+bounced_count        int         // Bounced emails
+unsubscribed_count   int         // Unsubscribes
+sendgrid_batch_id    string      // SendGrid batch ID
+```
+
+**EmailCampaignRecipient:**
+```go
+campaign_id          int         // Campaign ID
+email                string      // Recipient email
+name                 string      // Recipient name
+status               enum        // pending, sent, failed, opened, clicked, unsubscribed
+sent_at              time        // When sent to recipient
+opened_at            time        // When recipient opened email
+clicked_at           time        // When recipient clicked link
+unsubscribed_at      time        // When recipient unsubscribed
+sendgrid_message_id  string      // SendGrid message ID
+error_message        string      // Error if failed
+```
+
+**Features:**
+- **Campaign Management**: Create, schedule, and send email campaigns
+- **Engagement Tracking**: Track opens, clicks, bounces, unsubscribes
+- **Personalization**: Template variables for dynamic content
+- **Segmentation**: Target specific user groups
+- **A/B Testing**: Test subject lines and content (future)
+- **SendGrid Integration**: Bulk email delivery via SendGrid API
+
+**Engagement Metrics:**
+- Open rate tracking (pixel tracking)
+- Click tracking (link wrapping)
+- Bounce detection
+- Unsubscribe handling
+- Spam report tracking
+
+**Implementation:**
+- Schemas: `backend/ent/schema/emailcampaign.go`, `emailcampaignrecipient.go`
+- Service: Foundation created (full implementation pending)
+- Edge: `User.email_campaigns` relationship
+
+**Status:**
+- ✅ Database schema complete
+- ✅ Recipient tracking schema
+- ✅ User relationship edge
+- ⏳ Campaign service (to be implemented)
+- ⏳ SendGrid API integration (requires API key)
+- ⏳ Engagement webhook handlers (SendGrid webhooks)
+- ⏳ Campaign scheduling (cron jobs)
+
+**Future Work:**
+- Campaign creation API endpoints
+- SendGrid template integration
+- Email list segmentation
+- Campaign analytics dashboard
+- A/B testing framework
+- Drip campaign automation
+
+### CRM Integrations
+**Implemented:** 2026-02-03
+
+Multi-provider CRM integration system for syncing leads to Salesforce, HubSpot, Pipedrive, and Zoho CRM.
+
+**Database Schemas:**
+
+**CRMIntegration:**
+```go
+user_id                 int       // Integration owner
+provider                enum      // salesforce, hubspot, pipedrive, zoho
+enabled                 bool      // Active/inactive
+access_token            string    // OAuth access token (encrypted, sensitive)
+refresh_token           string    // OAuth refresh token (encrypted, sensitive)
+token_expires_at        time      // Token expiration
+instance_url            string    // CRM instance URL (Salesforce)
+api_key                 string    // API key (sensitive, for API key auth)
+settings                json      // Provider-specific settings
+sync_direction          enum      // bidirectional, to_crm, from_crm
+auto_sync               bool      // Automatic sync enabled
+sync_interval_minutes   int       // Sync frequency (15 min default)
+last_sync_at            time      // Last successful sync
+last_sync_error         string    // Last error message
+synced_leads_count      int       // Total leads synced
+```
+
+**CRMLeadSync:**
+```go
+integration_id     int       // CRM integration ID
+lead_id            int       // IndustryDB lead ID
+crm_lead_id        string    // Lead ID in external CRM
+sync_status        enum      // pending, synced, failed, deleted
+sync_direction     enum      // to_crm, from_crm
+synced_at          time      // Last sync timestamp
+sync_error         string    // Error message
+crm_data           json      // CRM-specific data (custom fields)
+auto_update        bool      // Auto-update on changes
+```
+
+**Supported CRM Providers:**
+1. **Salesforce** - Enterprise CRM with OAuth 2.0
+2. **HubSpot** - Marketing & sales CRM with API key or OAuth
+3. **Pipedrive** - Sales pipeline CRM with API token
+4. **Zoho CRM** - Cloud CRM with OAuth 2.0
+
+**Features:**
+- **Multi-Provider Support**: Connect to multiple CRMs simultaneously
+- **OAuth Authentication**: Secure token-based auth with refresh
+- **Bidirectional Sync**: Push leads to CRM or pull from CRM
+- **Automatic Sync**: Schedule periodic syncs (15 min intervals)
+- **Manual Sync**: On-demand sync for specific leads
+- **Conflict Resolution**: Handle duplicate and updated leads
+- **Custom Field Mapping**: Map IndustryDB fields to CRM fields
+
+**Sync Modes:**
+- `to_crm`: Only push IndustryDB leads to CRM
+- `from_crm`: Only pull CRM leads to IndustryDB
+- `bidirectional`: Two-way sync with conflict resolution
+
+**Unique Constraints:**
+- One integration per user per provider (enforced at database level)
+- One sync record per integration per lead (prevents duplicates)
+
+**Implementation:**
+- Schemas: `backend/ent/schema/crmintegration.go`, `crmleadsync.go`
+- Service: Foundation created (provider-specific clients pending)
+- Edges: `User.crm_integrations`, `CRMIntegration.synced_leads`
+- Indexes: user_id, provider, enabled, last_sync_at
+
+**Status:**
+- ✅ Database schema complete
+- ✅ Multi-provider enum support
+- ✅ OAuth token management fields
+- ✅ Bidirectional sync configuration
+- ✅ Sync tracking per lead
+- ⏳ Provider-specific API clients (Salesforce, HubSpot, Pipedrive, Zoho)
+- ⏳ OAuth flow handlers
+- ⏳ Sync service implementation
+- ⏳ Webhook handlers for CRM events
+- ⏳ Conflict resolution logic
+
+**Future Work:**
+- OAuth authorization flow endpoints
+- Provider-specific API client libraries
+- Sync queue and job processing
+- Real-time sync via webhooks
+- Custom field mapping UI
+- Sync conflict resolution strategies
+- CRM webhook event handlers
+- Analytics: sync success rates, error tracking
+
 ## CRM Features (Phase 3 & 4)
 
 IndustryDB includes a comprehensive CRM system for managing sales territories, automating lead assignment, tracking lead lifecycle, and nurturing prospects through email sequences.
