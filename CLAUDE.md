@@ -1470,6 +1470,93 @@ POST /api/v1/auth/login       # Login, get JWT
 GET  /api/v1/auth/me          # Get current user
 ```
 
+### OAuth SSO (Social Login)
+**Implemented:** 2026-02-03
+
+Single Sign-On with Google, GitHub, and Microsoft. Provides passwordless authentication with automatic account linking.
+
+**Endpoints:**
+```
+GET  /api/v1/auth/oauth/:provider          # Initiate OAuth flow (redirects to provider)
+GET  /api/v1/auth/oauth/callback/:provider # OAuth callback handler
+```
+
+**Supported Providers:**
+- `google` - Google OAuth 2.0
+- `github` - GitHub OAuth
+- `microsoft` - Microsoft OAuth (Azure AD)
+
+**OAuth Flow:**
+1. User clicks "Sign in with Google" button
+2. Frontend redirects to `GET /api/v1/auth/oauth/google`
+3. Backend generates CSRF state token (stored in Redis, 5min TTL)
+4. Backend redirects user to Google authorization URL
+5. User authorizes on Google
+6. Google redirects back to `GET /api/v1/auth/oauth/callback/google?code=...&state=...`
+7. Backend validates state token (CSRF protection)
+8. Backend exchanges code for access token
+9. Backend fetches user info from Google API
+10. Backend finds or creates user account
+11. Backend generates JWT token
+12. Backend redirects to frontend with token
+
+**Account Linking:**
+- If user exists with same email → Link OAuth account to existing user
+- If user doesn't exist → Create new user with OAuth provider
+- OAuth users don't have password (stored as `"oauth-user-no-password"`)
+- Email is auto-verified for OAuth users
+- Terms accepted automatically during OAuth signup
+
+**Security Features:**
+- CSRF protection via state tokens (random 32 bytes)
+- State tokens expire after 5 minutes
+- State tokens are one-time use (deleted after validation)
+- OAuth provider validation (only allowed providers accepted)
+- Secure redirect to frontend with token
+
+**Frontend Integration:**
+```typescript
+// Initiate OAuth flow
+window.location.href = `${API_URL}/api/v1/auth/oauth/google`;
+
+// Handle callback (frontend route: /auth/callback)
+const params = new URLSearchParams(window.location.search);
+const token = params.get('token');
+const isNew = params.get('is_new') === 'true';
+
+if (token) {
+  localStorage.setItem('authToken', token);
+  router.push('/dashboard');
+}
+```
+
+**Configuration:**
+```env
+# OAuth Providers
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+MICROSOFT_CLIENT_ID=your-microsoft-client-id
+MICROSOFT_CLIENT_SECRET=your-microsoft-client-secret
+OAUTH_CALLBACK_URL=http://localhost:8080/api/v1/auth/oauth/callback
+
+# Feature Toggle
+FEATURE_SOCIAL_LOGIN=true
+```
+
+**Implementation:**
+- Service: `backend/pkg/oauth/service.go`
+- Handler: `backend/pkg/api/handlers/auth.go` (OAuthLogin, OAuthCallback)
+- Provider implementations: Google, GitHub, Microsoft APIs
+- User model: `oauth_provider`, `oauth_id` fields
+
+**Error Handling:**
+- Invalid provider → 400 Bad Request
+- Invalid state token → Redirect to `/login?error=invalid_state`
+- OAuth API error → Redirect to `/login?error=oauth_failed`
+- Feature disabled → 400 Bad Request with "feature_disabled" error
+
 ### Leads
 ```
 GET  /api/v1/leads            # Search leads (with filters)
@@ -1900,6 +1987,180 @@ GET /api/v1/user/analytics/daily?days=30
 # Get 90-day summary
 GET /api/v1/user/analytics/summary?days=90
 ```
+
+### Advanced Analytics Dashboard (Business Intelligence)
+**Implemented:** 2026-02-03
+
+Comprehensive business intelligence dashboard for SaaS metrics. Provides revenue, churn, growth, subscription, and usage analytics.
+
+**Endpoints:**
+```
+GET /api/v1/analytics/dashboard/revenue       # Revenue metrics (MRR, ARR, ARPU, growth)
+GET /api/v1/analytics/dashboard/churn         # Churn and retention metrics
+GET /api/v1/analytics/dashboard/growth        # User growth and activation metrics
+GET /api/v1/analytics/dashboard/subscription  # Subscription distribution by tier
+GET /api/v1/analytics/dashboard/usage         # Usage patterns and peak hours
+GET /api/v1/analytics/dashboard/overview      # Complete dashboard overview (all metrics)
+```
+
+**Query Parameters:**
+- `period_start` (required) - Start date for analysis (ISO 8601 format)
+- `period_end` (required) - End date for analysis (ISO 8601 format)
+
+**Example:**
+```bash
+# Get revenue metrics for last 30 days
+GET /api/v1/analytics/dashboard/revenue?period_start=2026-01-04T00:00:00Z&period_end=2026-02-03T23:59:59Z
+
+# Get complete dashboard overview
+GET /api/v1/analytics/dashboard/overview?period_start=2026-01-04T00:00:00Z&period_end=2026-02-03T23:59:59Z
+```
+
+**Revenue Metrics Response:**
+```json
+{
+  "mrr": 547.0,
+  "arr": 6564.0,
+  "revenue_growth": 15.2,
+  "arpu": 182.33,
+  "total_revenue": 547.0,
+  "paid_users": 3,
+  "period_start": "2026-01-04T00:00:00Z",
+  "period_end": "2026-02-03T23:59:59Z"
+}
+```
+
+**Churn Metrics Response:**
+```json
+{
+  "churn_rate": 8.5,
+  "retention_rate": 91.5,
+  "churned_users": 12,
+  "retained_users": 129,
+  "total_users": 141,
+  "period_start": "2026-01-04T00:00:00Z",
+  "period_end": "2026-02-03T23:59:59Z"
+}
+```
+
+**Growth Metrics Response:**
+```json
+{
+  "user_growth": 23.4,
+  "new_users": 35,
+  "total_users": 185,
+  "active_users": 142,
+  "activation_rate": 76.8,
+  "period_start": "2026-01-04T00:00:00Z",
+  "period_end": "2026-02-03T23:59:59Z"
+}
+```
+
+**Subscription Metrics Response:**
+```json
+{
+  "by_tier": {
+    "free": 89,
+    "starter": 42,
+    "pro": 38,
+    "business": 16
+  },
+  "by_tier_revenue": {
+    "starter": 2058.0,
+    "pro": 5662.0,
+    "business": 5584.0
+  },
+  "total_active": 185,
+  "total_canceled": 23,
+  "average_lifetime": 287.5
+}
+```
+
+**Usage Metrics Response:**
+```json
+{
+  "total_actions": 8542,
+  "actions_by_type": {
+    "search": 4823,
+    "export": 2156,
+    "view": 1563
+  },
+  "average_per_user": 60.15,
+  "active_users": 142,
+  "peak_usage_hour": 14,
+  "period_start": "2026-01-04T00:00:00Z",
+  "period_end": "2026-02-03T23:59:59Z"
+}
+```
+
+**Dashboard Overview Response:**
+```json
+{
+  "revenue": { /* Revenue metrics */ },
+  "churn": { /* Churn metrics */ },
+  "growth": { /* Growth metrics */ },
+  "subscription": { /* Subscription metrics */ },
+  "usage": { /* Usage metrics */ },
+  "generated_at": "2026-02-03T15:30:00Z"
+}
+```
+
+**Metrics Explained:**
+
+**Revenue Metrics:**
+- **MRR** (Monthly Recurring Revenue): Total monthly revenue from paid subscriptions
+- **ARR** (Annual Recurring Revenue): MRR × 12
+- **Revenue Growth**: Month-over-month MRR growth percentage
+- **ARPU** (Average Revenue Per User): MRR ÷ paid users
+- **Total Revenue**: Total revenue in period
+- **Paid Users**: Number of users on paid tiers (excludes free)
+
+**Churn Metrics:**
+- **Churn Rate**: Percentage of users who canceled in period
+- **Retention Rate**: Percentage of users who stayed (100% - churn rate)
+- **Churned Users**: Number of users who canceled
+- **Retained Users**: Number of users who stayed
+- **Total Users**: Total paying users at start of period
+
+**Growth Metrics:**
+- **User Growth**: Percentage growth in user count
+- **New Users**: Users created during period
+- **Total Users**: Total users at end of period
+- **Active Users**: Users with usage logs in period
+- **Activation Rate**: Active users ÷ new users × 100
+
+**Subscription Metrics:**
+- **By Tier**: Count of active subscriptions per tier
+- **By Tier Revenue**: MRR generated per tier
+- **Total Active**: Total active subscriptions
+- **Total Canceled**: Total canceled subscriptions
+- **Average Lifetime**: Average subscription duration (days)
+
+**Usage Metrics:**
+- **Total Actions**: All actions in period (searches, exports, views)
+- **Actions By Type**: Breakdown by action type
+- **Average Per User**: Total actions ÷ active users
+- **Active Users**: Users with any activity in period
+- **Peak Usage Hour**: Hour with most activity (0-23)
+
+**Tier Pricing:**
+- Free: $0/month
+- Starter: $49/month
+- Pro: $149/month
+- Business: $349/month
+
+**Implementation:**
+- Service: `backend/pkg/analytics/dashboard.go`
+- Tests: `backend/pkg/analytics/dashboard_test.go` (72.5% coverage)
+- Handler: `backend/pkg/api/handlers/analytics.go`
+- Database queries optimized with indexes on user, subscription, usage_log tables
+
+**Use Cases:**
+- Executive dashboard (revenue, growth, churn at a glance)
+- Investor reporting (ARR, MRR, user growth)
+- Product decisions (activation rate, usage patterns)
+- Sales forecasting (revenue growth trends)
+- Customer success (churn prevention, retention tracking)
 
 ### API Keys (Business Tier Feature)
 **Implemented:** 2026-01-27
