@@ -54,7 +54,7 @@ func main() {
 		log.Printf("Admin user already exists (ID: %d), updating...", existingAdmin.ID)
 
 		_, err = existingAdmin.Update().
-			SetPassword(string(hashedPassword)).
+			SetPasswordHash(string(hashedPassword)).
 			SetRole(user.RoleSuperadmin).
 			SetUpdatedAt(time.Now()).
 			Save(ctx)
@@ -78,7 +78,7 @@ func main() {
 	admin, err := client.User.Create().
 		SetEmail("admin@industrydb.io").
 		SetName("Admin User").
-		SetPassword(string(hashedPassword)).
+		SetPasswordHash(string(hashedPassword)).
 		SetRole(user.RoleSuperadmin).
 		SetSubscriptionTier(user.SubscriptionTierBusiness). // Give admin business tier
 		SetUsageCount(0).
@@ -101,7 +101,7 @@ func main() {
 		testAdmin, err := client.User.Create().
 			SetEmail("test-admin@industrydb.io").
 			SetName("Test Admin").
-			SetPassword(string(hashedPassword)).
+			SetPasswordHash(string(hashedPassword)).
 			SetRole(user.RoleAdmin). // Regular admin (not superadmin)
 			SetSubscriptionTier(user.SubscriptionTierPro).
 			SetUsageCount(0).

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -11,15 +12,17 @@ import (
 	"github.com/jordanlanch/industrydb/ent"
 	"github.com/jordanlanch/industrydb/ent/enttest"
 	"github.com/jordanlanch/industrydb/ent/user"
+	"github.com/jordanlanch/industrydb/pkg/audit"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 // setupTestAdmin creates test database with admin user
-func setupTestAdmin(t *testing.T) (*ent.Client, *ent.User, *ent.User) {
+func setupTestAdmin(t *testing.T) (*ent.Client, *ent.User, *ent.User, *audit.Service) {
 	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
-	
+	ctx := context.Background()
+
 	// Create superadmin user
 	admin, err := client.User.Create().
 		SetEmail("admin@test.com").
@@ -38,7 +41,7 @@ func setupTestAdmin(t *testing.T) (*ent.Client, *ent.User, *ent.User) {
 	regularUser, err := client.User.Create().
 		SetEmail("user@test.com").
 		SetName("Regular User").
-		SetPassword("hashed_password").
+		SetPasswordHash("hashed_password").
 		SetRole(user.RoleUser).
 		SetSubscriptionTier(user.SubscriptionTierStarter).
 		SetUsageCount(10).
@@ -48,11 +51,14 @@ func setupTestAdmin(t *testing.T) (*ent.Client, *ent.User, *ent.User) {
 		t.Fatalf("failed creating user: %v", err)
 	}
 
-	return client, admin, regularUser
+	// Create audit service
+	auditService := audit.NewService(client)
+
+	return client, admin, regularUser, auditService
 }
 
 func TestListUsers(t *testing.T) {
-	client, admin, _ := setupTestAdmin(t)
+	client, admin, _, auditService := setupTestAdmin(t)
 	defer client.Close()
 
 	e := echo.New()
@@ -63,7 +69,7 @@ func TestListUsers(t *testing.T) {
 	// Set admin user in context
 	c.Set("user", admin)
 
-	handler := NewAdminHandler(client)
+	handler := NewAdminHandler(client, auditService)
 	
 	// Test
 	err := handler.ListUsers(c)
@@ -85,7 +91,7 @@ func TestListUsers(t *testing.T) {
 }
 
 func TestListUsersWithFilters(t *testing.T) {
-	client, admin, _ := setupTestAdmin(t)
+	client, admin, _, auditService := setupTestAdmin(t)
 	defer client.Close()
 
 	e := echo.New()
@@ -94,7 +100,7 @@ func TestListUsersWithFilters(t *testing.T) {
 	c := e.NewContext(req, rec)
 	c.Set("user", admin)
 
-	handler := NewAdminHandler(client)
+	handler := NewAdminHandler(client, auditService)
 	err := handler.ListUsers(c)
 
 	assert.NoError(t, err)
@@ -111,7 +117,7 @@ func TestListUsersWithFilters(t *testing.T) {
 }
 
 func TestGetUser(t *testing.T) {
-	client, admin, regularUser := setupTestAdmin(t)
+	client, admin, regularUser, auditService := setupTestAdmin(t)
 	defer client.Close()
 
 	e := echo.New()
@@ -122,7 +128,7 @@ func TestGetUser(t *testing.T) {
 	c.SetParamValues("2")
 	c.Set("user", admin)
 
-	handler := NewAdminHandler(client)
+	handler := NewAdminHandler(client, auditService)
 	err := handler.GetUser(c)
 
 	assert.NoError(t, err)
@@ -137,7 +143,7 @@ func TestGetUser(t *testing.T) {
 }
 
 func TestGetUserNotFound(t *testing.T) {
-	client, admin, _ := setupTestAdmin(t)
+	client, admin, _, auditService := setupTestAdmin(t)
 	defer client.Close()
 
 	e := echo.New()
@@ -148,7 +154,7 @@ func TestGetUserNotFound(t *testing.T) {
 	c.SetParamValues("999")
 	c.Set("user", admin)
 
-	handler := NewAdminHandler(client)
+	handler := NewAdminHandler(client, auditService)
 	err := handler.GetUser(c)
 
 	assert.Error(t, err)
@@ -158,16 +164,17 @@ func TestGetUserNotFound(t *testing.T) {
 }
 
 func TestUpdateUser(t *testing.T) {
-	client, admin, regularUser := setupTestAdmin(t)
+	client, admin, regularUser, auditService := setupTestAdmin(t)
 	defer client.Close()
 
+	ctx := context.Background()
 	e := echo.New()
-	
+
 	updateJSON := `{
 		"subscription_tier": "pro",
 		"usage_limit": 2000
 	}`
-	
+
 	req := httptest.NewRequest(http.MethodPatch, "/api/v1/admin/users/2", strings.NewReader(updateJSON))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -176,7 +183,7 @@ func TestUpdateUser(t *testing.T) {
 	c.SetParamValues("2")
 	c.Set("user", admin)
 
-	handler := NewAdminHandler(client)
+	handler := NewAdminHandler(client, auditService)
 	err := handler.UpdateUser(c)
 
 	assert.NoError(t, err)
@@ -196,15 +203,16 @@ func TestUpdateUser(t *testing.T) {
 }
 
 func TestUpdateUserRole(t *testing.T) {
-	client, admin, regularUser := setupTestAdmin(t)
+	client, admin, regularUser, auditService := setupTestAdmin(t)
 	defer client.Close()
 
+	ctx := context.Background()
 	e := echo.New()
-	
+
 	updateJSON := `{
 		"role": "admin"
 	}`
-	
+
 	req := httptest.NewRequest(http.MethodPatch, "/api/v1/admin/users/2", strings.NewReader(updateJSON))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
@@ -213,7 +221,7 @@ func TestUpdateUserRole(t *testing.T) {
 	c.SetParamValues("2")
 	c.Set("user", admin)
 
-	handler := NewAdminHandler(client)
+	handler := NewAdminHandler(client, auditService)
 	err := handler.UpdateUser(c)
 
 	assert.NoError(t, err)
@@ -226,9 +234,10 @@ func TestUpdateUserRole(t *testing.T) {
 }
 
 func TestSuspendUser(t *testing.T) {
-	client, admin, regularUser := setupTestAdmin(t)
+	client, admin, regularUser, auditService := setupTestAdmin(t)
 	defer client.Close()
 
+	ctx := context.Background()
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodDelete, "/api/v1/admin/users/2", nil)
 	rec := httptest.NewRecorder()
@@ -237,7 +246,7 @@ func TestSuspendUser(t *testing.T) {
 	c.SetParamValues("2")
 	c.Set("user", admin)
 
-	handler := NewAdminHandler(client)
+	handler := NewAdminHandler(client, auditService)
 	err := handler.SuspendUser(c)
 
 	assert.NoError(t, err)
@@ -255,14 +264,16 @@ func TestSuspendUser(t *testing.T) {
 }
 
 func TestGetStats(t *testing.T) {
-	client, admin, _ := setupTestAdmin(t)
+	client, admin, _, auditService := setupTestAdmin(t)
 	defer client.Close()
+
+	ctx := context.Background()
 
 	// Create more test users with different tiers
 	client.User.Create().
 		SetEmail("starter@test.com").
 		SetName("Starter User").
-		SetPassword("pass").
+		SetPasswordHash("pass").
 		SetRole(user.RoleUser).
 		SetSubscriptionTier(user.SubscriptionTierStarter).
 		SetUsageCount(50).
@@ -273,7 +284,7 @@ func TestGetStats(t *testing.T) {
 	client.User.Create().
 		SetEmail("pro@test.com").
 		SetName("Pro User").
-		SetPassword("pass").
+		SetPasswordHash("pass").
 		SetRole(user.RoleUser).
 		SetSubscriptionTier(user.SubscriptionTierPro).
 		SetUsageCount(100).
@@ -287,7 +298,7 @@ func TestGetStats(t *testing.T) {
 	c := e.NewContext(req, rec)
 	c.Set("user", admin)
 
-	handler := NewAdminHandler(client)
+	handler := NewAdminHandler(client, auditService)
 	err := handler.GetStats(c)
 
 	assert.NoError(t, err)
@@ -310,7 +321,7 @@ func TestGetStats(t *testing.T) {
 }
 
 func TestListUsersRequiresAdmin(t *testing.T) {
-	client, _, regularUser := setupTestAdmin(t)
+	client, _, regularUser, auditService := setupTestAdmin(t)
 	defer client.Close()
 
 	e := echo.New()
@@ -319,7 +330,7 @@ func TestListUsersRequiresAdmin(t *testing.T) {
 	c := e.NewContext(req, rec)
 	c.Set("user", regularUser) // Regular user, not admin
 
-	handler := NewAdminHandler(client)
+	handler := NewAdminHandler(client, auditService)
 	
 	// Should be blocked by RequireAdmin middleware
 	// In actual implementation, middleware returns error before handler
