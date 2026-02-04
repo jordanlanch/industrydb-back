@@ -121,6 +121,8 @@ const (
 	EdgeBehaviors = "behaviors"
 	// EdgeMarketReports holds the string denoting the market_reports edge name in mutations.
 	EdgeMarketReports = "market_reports"
+	// EdgeEmailCampaigns holds the string denoting the email_campaigns edge name in mutations.
+	EdgeEmailCampaigns = "email_campaigns"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// SubscriptionsTable is the table that holds the subscriptions relation/edge.
@@ -326,6 +328,13 @@ const (
 	MarketReportsInverseTable = "market_reports"
 	// MarketReportsColumn is the table column denoting the market_reports relation/edge.
 	MarketReportsColumn = "user_id"
+	// EmailCampaignsTable is the table that holds the email_campaigns relation/edge.
+	EmailCampaignsTable = "email_campaigns"
+	// EmailCampaignsInverseTable is the table name for the EmailCampaign entity.
+	// It exists in this package in order to avoid circular dependency with the "emailcampaign" package.
+	EmailCampaignsInverseTable = "email_campaigns"
+	// EmailCampaignsColumn is the table column denoting the email_campaigns relation/edge.
+	EmailCampaignsColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -983,6 +992,20 @@ func ByMarketReports(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newMarketReportsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByEmailCampaignsCount orders the results by email_campaigns count.
+func ByEmailCampaignsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newEmailCampaignsStep(), opts...)
+	}
+}
+
+// ByEmailCampaigns orders the results by email_campaigns terms.
+func ByEmailCampaigns(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newEmailCampaignsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSubscriptionsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -1184,5 +1207,12 @@ func newMarketReportsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(MarketReportsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, MarketReportsTable, MarketReportsColumn),
+	)
+}
+func newEmailCampaignsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(EmailCampaignsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, EmailCampaignsTable, EmailCampaignsColumn),
 	)
 }

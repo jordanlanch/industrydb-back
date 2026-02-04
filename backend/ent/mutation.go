@@ -19,6 +19,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/calllog"
 	"github.com/jordanlanch/industrydb/ent/competitormetric"
 	"github.com/jordanlanch/industrydb/ent/competitorprofile"
+	"github.com/jordanlanch/industrydb/ent/emailcampaign"
+	"github.com/jordanlanch/industrydb/ent/emailcampaignrecipient"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/emailsequencesend"
@@ -66,6 +68,8 @@ const (
 	TypeCallLog                 = "CallLog"
 	TypeCompetitorMetric        = "CompetitorMetric"
 	TypeCompetitorProfile       = "CompetitorProfile"
+	TypeEmailCampaign           = "EmailCampaign"
+	TypeEmailCampaignRecipient  = "EmailCampaignRecipient"
 	TypeEmailSequence           = "EmailSequence"
 	TypeEmailSequenceEnrollment = "EmailSequenceEnrollment"
 	TypeEmailSequenceSend       = "EmailSequenceSend"
@@ -10372,6 +10376,2999 @@ func (m *CompetitorProfileMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown CompetitorProfile edge %s", name)
+}
+
+// EmailCampaignMutation represents an operation that mutates the EmailCampaign nodes in the graph.
+type EmailCampaignMutation struct {
+	config
+	op                    Op
+	typ                   string
+	id                    *int
+	name                  *string
+	subject               *string
+	content_html          *string
+	content_text          *string
+	status                *emailcampaign.Status
+	from_email            *string
+	from_name             *string
+	reply_to              *string
+	scheduled_at          *time.Time
+	sent_at               *time.Time
+	recipients_count      *int
+	addrecipients_count   *int
+	sent_count            *int
+	addsent_count         *int
+	failed_count          *int
+	addfailed_count       *int
+	opened_count          *int
+	addopened_count       *int
+	clicked_count         *int
+	addclicked_count      *int
+	unsubscribed_count    *int
+	addunsubscribed_count *int
+	tags                  *[]string
+	appendtags            []string
+	sendgrid_batch_id     *string
+	created_at            *time.Time
+	updated_at            *time.Time
+	clearedFields         map[string]struct{}
+	user                  *int
+	cleareduser           bool
+	recipients            map[int]struct{}
+	removedrecipients     map[int]struct{}
+	clearedrecipients     bool
+	done                  bool
+	oldValue              func(context.Context) (*EmailCampaign, error)
+	predicates            []predicate.EmailCampaign
+}
+
+var _ ent.Mutation = (*EmailCampaignMutation)(nil)
+
+// emailcampaignOption allows management of the mutation configuration using functional options.
+type emailcampaignOption func(*EmailCampaignMutation)
+
+// newEmailCampaignMutation creates new mutation for the EmailCampaign entity.
+func newEmailCampaignMutation(c config, op Op, opts ...emailcampaignOption) *EmailCampaignMutation {
+	m := &EmailCampaignMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeEmailCampaign,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withEmailCampaignID sets the ID field of the mutation.
+func withEmailCampaignID(id int) emailcampaignOption {
+	return func(m *EmailCampaignMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *EmailCampaign
+		)
+		m.oldValue = func(ctx context.Context) (*EmailCampaign, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().EmailCampaign.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withEmailCampaign sets the old EmailCampaign of the mutation.
+func withEmailCampaign(node *EmailCampaign) emailcampaignOption {
+	return func(m *EmailCampaignMutation) {
+		m.oldValue = func(context.Context) (*EmailCampaign, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m EmailCampaignMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m EmailCampaignMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *EmailCampaignMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *EmailCampaignMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().EmailCampaign.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetName sets the "name" field.
+func (m *EmailCampaignMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *EmailCampaignMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *EmailCampaignMutation) ResetName() {
+	m.name = nil
+}
+
+// SetSubject sets the "subject" field.
+func (m *EmailCampaignMutation) SetSubject(s string) {
+	m.subject = &s
+}
+
+// Subject returns the value of the "subject" field in the mutation.
+func (m *EmailCampaignMutation) Subject() (r string, exists bool) {
+	v := m.subject
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSubject returns the old "subject" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldSubject(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSubject is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSubject requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSubject: %w", err)
+	}
+	return oldValue.Subject, nil
+}
+
+// ResetSubject resets all changes to the "subject" field.
+func (m *EmailCampaignMutation) ResetSubject() {
+	m.subject = nil
+}
+
+// SetContentHTML sets the "content_html" field.
+func (m *EmailCampaignMutation) SetContentHTML(s string) {
+	m.content_html = &s
+}
+
+// ContentHTML returns the value of the "content_html" field in the mutation.
+func (m *EmailCampaignMutation) ContentHTML() (r string, exists bool) {
+	v := m.content_html
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContentHTML returns the old "content_html" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldContentHTML(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContentHTML is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContentHTML requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContentHTML: %w", err)
+	}
+	return oldValue.ContentHTML, nil
+}
+
+// ResetContentHTML resets all changes to the "content_html" field.
+func (m *EmailCampaignMutation) ResetContentHTML() {
+	m.content_html = nil
+}
+
+// SetContentText sets the "content_text" field.
+func (m *EmailCampaignMutation) SetContentText(s string) {
+	m.content_text = &s
+}
+
+// ContentText returns the value of the "content_text" field in the mutation.
+func (m *EmailCampaignMutation) ContentText() (r string, exists bool) {
+	v := m.content_text
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContentText returns the old "content_text" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldContentText(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContentText is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContentText requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContentText: %w", err)
+	}
+	return oldValue.ContentText, nil
+}
+
+// ClearContentText clears the value of the "content_text" field.
+func (m *EmailCampaignMutation) ClearContentText() {
+	m.content_text = nil
+	m.clearedFields[emailcampaign.FieldContentText] = struct{}{}
+}
+
+// ContentTextCleared returns if the "content_text" field was cleared in this mutation.
+func (m *EmailCampaignMutation) ContentTextCleared() bool {
+	_, ok := m.clearedFields[emailcampaign.FieldContentText]
+	return ok
+}
+
+// ResetContentText resets all changes to the "content_text" field.
+func (m *EmailCampaignMutation) ResetContentText() {
+	m.content_text = nil
+	delete(m.clearedFields, emailcampaign.FieldContentText)
+}
+
+// SetStatus sets the "status" field.
+func (m *EmailCampaignMutation) SetStatus(e emailcampaign.Status) {
+	m.status = &e
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *EmailCampaignMutation) Status() (r emailcampaign.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldStatus(ctx context.Context) (v emailcampaign.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *EmailCampaignMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *EmailCampaignMutation) SetUserID(i int) {
+	m.user = &i
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *EmailCampaignMutation) UserID() (r int, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *EmailCampaignMutation) ResetUserID() {
+	m.user = nil
+}
+
+// SetFromEmail sets the "from_email" field.
+func (m *EmailCampaignMutation) SetFromEmail(s string) {
+	m.from_email = &s
+}
+
+// FromEmail returns the value of the "from_email" field in the mutation.
+func (m *EmailCampaignMutation) FromEmail() (r string, exists bool) {
+	v := m.from_email
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFromEmail returns the old "from_email" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldFromEmail(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFromEmail is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFromEmail requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFromEmail: %w", err)
+	}
+	return oldValue.FromEmail, nil
+}
+
+// ResetFromEmail resets all changes to the "from_email" field.
+func (m *EmailCampaignMutation) ResetFromEmail() {
+	m.from_email = nil
+}
+
+// SetFromName sets the "from_name" field.
+func (m *EmailCampaignMutation) SetFromName(s string) {
+	m.from_name = &s
+}
+
+// FromName returns the value of the "from_name" field in the mutation.
+func (m *EmailCampaignMutation) FromName() (r string, exists bool) {
+	v := m.from_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFromName returns the old "from_name" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldFromName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFromName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFromName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFromName: %w", err)
+	}
+	return oldValue.FromName, nil
+}
+
+// ResetFromName resets all changes to the "from_name" field.
+func (m *EmailCampaignMutation) ResetFromName() {
+	m.from_name = nil
+}
+
+// SetReplyTo sets the "reply_to" field.
+func (m *EmailCampaignMutation) SetReplyTo(s string) {
+	m.reply_to = &s
+}
+
+// ReplyTo returns the value of the "reply_to" field in the mutation.
+func (m *EmailCampaignMutation) ReplyTo() (r string, exists bool) {
+	v := m.reply_to
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReplyTo returns the old "reply_to" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldReplyTo(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReplyTo is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReplyTo requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReplyTo: %w", err)
+	}
+	return oldValue.ReplyTo, nil
+}
+
+// ClearReplyTo clears the value of the "reply_to" field.
+func (m *EmailCampaignMutation) ClearReplyTo() {
+	m.reply_to = nil
+	m.clearedFields[emailcampaign.FieldReplyTo] = struct{}{}
+}
+
+// ReplyToCleared returns if the "reply_to" field was cleared in this mutation.
+func (m *EmailCampaignMutation) ReplyToCleared() bool {
+	_, ok := m.clearedFields[emailcampaign.FieldReplyTo]
+	return ok
+}
+
+// ResetReplyTo resets all changes to the "reply_to" field.
+func (m *EmailCampaignMutation) ResetReplyTo() {
+	m.reply_to = nil
+	delete(m.clearedFields, emailcampaign.FieldReplyTo)
+}
+
+// SetScheduledAt sets the "scheduled_at" field.
+func (m *EmailCampaignMutation) SetScheduledAt(t time.Time) {
+	m.scheduled_at = &t
+}
+
+// ScheduledAt returns the value of the "scheduled_at" field in the mutation.
+func (m *EmailCampaignMutation) ScheduledAt() (r time.Time, exists bool) {
+	v := m.scheduled_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldScheduledAt returns the old "scheduled_at" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldScheduledAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldScheduledAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldScheduledAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldScheduledAt: %w", err)
+	}
+	return oldValue.ScheduledAt, nil
+}
+
+// ClearScheduledAt clears the value of the "scheduled_at" field.
+func (m *EmailCampaignMutation) ClearScheduledAt() {
+	m.scheduled_at = nil
+	m.clearedFields[emailcampaign.FieldScheduledAt] = struct{}{}
+}
+
+// ScheduledAtCleared returns if the "scheduled_at" field was cleared in this mutation.
+func (m *EmailCampaignMutation) ScheduledAtCleared() bool {
+	_, ok := m.clearedFields[emailcampaign.FieldScheduledAt]
+	return ok
+}
+
+// ResetScheduledAt resets all changes to the "scheduled_at" field.
+func (m *EmailCampaignMutation) ResetScheduledAt() {
+	m.scheduled_at = nil
+	delete(m.clearedFields, emailcampaign.FieldScheduledAt)
+}
+
+// SetSentAt sets the "sent_at" field.
+func (m *EmailCampaignMutation) SetSentAt(t time.Time) {
+	m.sent_at = &t
+}
+
+// SentAt returns the value of the "sent_at" field in the mutation.
+func (m *EmailCampaignMutation) SentAt() (r time.Time, exists bool) {
+	v := m.sent_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSentAt returns the old "sent_at" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldSentAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSentAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSentAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSentAt: %w", err)
+	}
+	return oldValue.SentAt, nil
+}
+
+// ClearSentAt clears the value of the "sent_at" field.
+func (m *EmailCampaignMutation) ClearSentAt() {
+	m.sent_at = nil
+	m.clearedFields[emailcampaign.FieldSentAt] = struct{}{}
+}
+
+// SentAtCleared returns if the "sent_at" field was cleared in this mutation.
+func (m *EmailCampaignMutation) SentAtCleared() bool {
+	_, ok := m.clearedFields[emailcampaign.FieldSentAt]
+	return ok
+}
+
+// ResetSentAt resets all changes to the "sent_at" field.
+func (m *EmailCampaignMutation) ResetSentAt() {
+	m.sent_at = nil
+	delete(m.clearedFields, emailcampaign.FieldSentAt)
+}
+
+// SetRecipientsCount sets the "recipients_count" field.
+func (m *EmailCampaignMutation) SetRecipientsCount(i int) {
+	m.recipients_count = &i
+	m.addrecipients_count = nil
+}
+
+// RecipientsCount returns the value of the "recipients_count" field in the mutation.
+func (m *EmailCampaignMutation) RecipientsCount() (r int, exists bool) {
+	v := m.recipients_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRecipientsCount returns the old "recipients_count" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldRecipientsCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRecipientsCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRecipientsCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRecipientsCount: %w", err)
+	}
+	return oldValue.RecipientsCount, nil
+}
+
+// AddRecipientsCount adds i to the "recipients_count" field.
+func (m *EmailCampaignMutation) AddRecipientsCount(i int) {
+	if m.addrecipients_count != nil {
+		*m.addrecipients_count += i
+	} else {
+		m.addrecipients_count = &i
+	}
+}
+
+// AddedRecipientsCount returns the value that was added to the "recipients_count" field in this mutation.
+func (m *EmailCampaignMutation) AddedRecipientsCount() (r int, exists bool) {
+	v := m.addrecipients_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRecipientsCount resets all changes to the "recipients_count" field.
+func (m *EmailCampaignMutation) ResetRecipientsCount() {
+	m.recipients_count = nil
+	m.addrecipients_count = nil
+}
+
+// SetSentCount sets the "sent_count" field.
+func (m *EmailCampaignMutation) SetSentCount(i int) {
+	m.sent_count = &i
+	m.addsent_count = nil
+}
+
+// SentCount returns the value of the "sent_count" field in the mutation.
+func (m *EmailCampaignMutation) SentCount() (r int, exists bool) {
+	v := m.sent_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSentCount returns the old "sent_count" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldSentCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSentCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSentCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSentCount: %w", err)
+	}
+	return oldValue.SentCount, nil
+}
+
+// AddSentCount adds i to the "sent_count" field.
+func (m *EmailCampaignMutation) AddSentCount(i int) {
+	if m.addsent_count != nil {
+		*m.addsent_count += i
+	} else {
+		m.addsent_count = &i
+	}
+}
+
+// AddedSentCount returns the value that was added to the "sent_count" field in this mutation.
+func (m *EmailCampaignMutation) AddedSentCount() (r int, exists bool) {
+	v := m.addsent_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetSentCount resets all changes to the "sent_count" field.
+func (m *EmailCampaignMutation) ResetSentCount() {
+	m.sent_count = nil
+	m.addsent_count = nil
+}
+
+// SetFailedCount sets the "failed_count" field.
+func (m *EmailCampaignMutation) SetFailedCount(i int) {
+	m.failed_count = &i
+	m.addfailed_count = nil
+}
+
+// FailedCount returns the value of the "failed_count" field in the mutation.
+func (m *EmailCampaignMutation) FailedCount() (r int, exists bool) {
+	v := m.failed_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFailedCount returns the old "failed_count" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldFailedCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFailedCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFailedCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFailedCount: %w", err)
+	}
+	return oldValue.FailedCount, nil
+}
+
+// AddFailedCount adds i to the "failed_count" field.
+func (m *EmailCampaignMutation) AddFailedCount(i int) {
+	if m.addfailed_count != nil {
+		*m.addfailed_count += i
+	} else {
+		m.addfailed_count = &i
+	}
+}
+
+// AddedFailedCount returns the value that was added to the "failed_count" field in this mutation.
+func (m *EmailCampaignMutation) AddedFailedCount() (r int, exists bool) {
+	v := m.addfailed_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetFailedCount resets all changes to the "failed_count" field.
+func (m *EmailCampaignMutation) ResetFailedCount() {
+	m.failed_count = nil
+	m.addfailed_count = nil
+}
+
+// SetOpenedCount sets the "opened_count" field.
+func (m *EmailCampaignMutation) SetOpenedCount(i int) {
+	m.opened_count = &i
+	m.addopened_count = nil
+}
+
+// OpenedCount returns the value of the "opened_count" field in the mutation.
+func (m *EmailCampaignMutation) OpenedCount() (r int, exists bool) {
+	v := m.opened_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOpenedCount returns the old "opened_count" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldOpenedCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOpenedCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOpenedCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOpenedCount: %w", err)
+	}
+	return oldValue.OpenedCount, nil
+}
+
+// AddOpenedCount adds i to the "opened_count" field.
+func (m *EmailCampaignMutation) AddOpenedCount(i int) {
+	if m.addopened_count != nil {
+		*m.addopened_count += i
+	} else {
+		m.addopened_count = &i
+	}
+}
+
+// AddedOpenedCount returns the value that was added to the "opened_count" field in this mutation.
+func (m *EmailCampaignMutation) AddedOpenedCount() (r int, exists bool) {
+	v := m.addopened_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetOpenedCount resets all changes to the "opened_count" field.
+func (m *EmailCampaignMutation) ResetOpenedCount() {
+	m.opened_count = nil
+	m.addopened_count = nil
+}
+
+// SetClickedCount sets the "clicked_count" field.
+func (m *EmailCampaignMutation) SetClickedCount(i int) {
+	m.clicked_count = &i
+	m.addclicked_count = nil
+}
+
+// ClickedCount returns the value of the "clicked_count" field in the mutation.
+func (m *EmailCampaignMutation) ClickedCount() (r int, exists bool) {
+	v := m.clicked_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldClickedCount returns the old "clicked_count" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldClickedCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldClickedCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldClickedCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldClickedCount: %w", err)
+	}
+	return oldValue.ClickedCount, nil
+}
+
+// AddClickedCount adds i to the "clicked_count" field.
+func (m *EmailCampaignMutation) AddClickedCount(i int) {
+	if m.addclicked_count != nil {
+		*m.addclicked_count += i
+	} else {
+		m.addclicked_count = &i
+	}
+}
+
+// AddedClickedCount returns the value that was added to the "clicked_count" field in this mutation.
+func (m *EmailCampaignMutation) AddedClickedCount() (r int, exists bool) {
+	v := m.addclicked_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetClickedCount resets all changes to the "clicked_count" field.
+func (m *EmailCampaignMutation) ResetClickedCount() {
+	m.clicked_count = nil
+	m.addclicked_count = nil
+}
+
+// SetUnsubscribedCount sets the "unsubscribed_count" field.
+func (m *EmailCampaignMutation) SetUnsubscribedCount(i int) {
+	m.unsubscribed_count = &i
+	m.addunsubscribed_count = nil
+}
+
+// UnsubscribedCount returns the value of the "unsubscribed_count" field in the mutation.
+func (m *EmailCampaignMutation) UnsubscribedCount() (r int, exists bool) {
+	v := m.unsubscribed_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUnsubscribedCount returns the old "unsubscribed_count" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldUnsubscribedCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUnsubscribedCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUnsubscribedCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUnsubscribedCount: %w", err)
+	}
+	return oldValue.UnsubscribedCount, nil
+}
+
+// AddUnsubscribedCount adds i to the "unsubscribed_count" field.
+func (m *EmailCampaignMutation) AddUnsubscribedCount(i int) {
+	if m.addunsubscribed_count != nil {
+		*m.addunsubscribed_count += i
+	} else {
+		m.addunsubscribed_count = &i
+	}
+}
+
+// AddedUnsubscribedCount returns the value that was added to the "unsubscribed_count" field in this mutation.
+func (m *EmailCampaignMutation) AddedUnsubscribedCount() (r int, exists bool) {
+	v := m.addunsubscribed_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetUnsubscribedCount resets all changes to the "unsubscribed_count" field.
+func (m *EmailCampaignMutation) ResetUnsubscribedCount() {
+	m.unsubscribed_count = nil
+	m.addunsubscribed_count = nil
+}
+
+// SetTags sets the "tags" field.
+func (m *EmailCampaignMutation) SetTags(s []string) {
+	m.tags = &s
+	m.appendtags = nil
+}
+
+// Tags returns the value of the "tags" field in the mutation.
+func (m *EmailCampaignMutation) Tags() (r []string, exists bool) {
+	v := m.tags
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTags returns the old "tags" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldTags(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTags is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTags requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTags: %w", err)
+	}
+	return oldValue.Tags, nil
+}
+
+// AppendTags adds s to the "tags" field.
+func (m *EmailCampaignMutation) AppendTags(s []string) {
+	m.appendtags = append(m.appendtags, s...)
+}
+
+// AppendedTags returns the list of values that were appended to the "tags" field in this mutation.
+func (m *EmailCampaignMutation) AppendedTags() ([]string, bool) {
+	if len(m.appendtags) == 0 {
+		return nil, false
+	}
+	return m.appendtags, true
+}
+
+// ClearTags clears the value of the "tags" field.
+func (m *EmailCampaignMutation) ClearTags() {
+	m.tags = nil
+	m.appendtags = nil
+	m.clearedFields[emailcampaign.FieldTags] = struct{}{}
+}
+
+// TagsCleared returns if the "tags" field was cleared in this mutation.
+func (m *EmailCampaignMutation) TagsCleared() bool {
+	_, ok := m.clearedFields[emailcampaign.FieldTags]
+	return ok
+}
+
+// ResetTags resets all changes to the "tags" field.
+func (m *EmailCampaignMutation) ResetTags() {
+	m.tags = nil
+	m.appendtags = nil
+	delete(m.clearedFields, emailcampaign.FieldTags)
+}
+
+// SetSendgridBatchID sets the "sendgrid_batch_id" field.
+func (m *EmailCampaignMutation) SetSendgridBatchID(s string) {
+	m.sendgrid_batch_id = &s
+}
+
+// SendgridBatchID returns the value of the "sendgrid_batch_id" field in the mutation.
+func (m *EmailCampaignMutation) SendgridBatchID() (r string, exists bool) {
+	v := m.sendgrid_batch_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSendgridBatchID returns the old "sendgrid_batch_id" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldSendgridBatchID(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSendgridBatchID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSendgridBatchID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSendgridBatchID: %w", err)
+	}
+	return oldValue.SendgridBatchID, nil
+}
+
+// ClearSendgridBatchID clears the value of the "sendgrid_batch_id" field.
+func (m *EmailCampaignMutation) ClearSendgridBatchID() {
+	m.sendgrid_batch_id = nil
+	m.clearedFields[emailcampaign.FieldSendgridBatchID] = struct{}{}
+}
+
+// SendgridBatchIDCleared returns if the "sendgrid_batch_id" field was cleared in this mutation.
+func (m *EmailCampaignMutation) SendgridBatchIDCleared() bool {
+	_, ok := m.clearedFields[emailcampaign.FieldSendgridBatchID]
+	return ok
+}
+
+// ResetSendgridBatchID resets all changes to the "sendgrid_batch_id" field.
+func (m *EmailCampaignMutation) ResetSendgridBatchID() {
+	m.sendgrid_batch_id = nil
+	delete(m.clearedFields, emailcampaign.FieldSendgridBatchID)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *EmailCampaignMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *EmailCampaignMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *EmailCampaignMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *EmailCampaignMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *EmailCampaignMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the EmailCampaign entity.
+// If the EmailCampaign object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *EmailCampaignMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (m *EmailCampaignMutation) ClearUser() {
+	m.cleareduser = true
+	m.clearedFields[emailcampaign.FieldUserID] = struct{}{}
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *EmailCampaignMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *EmailCampaignMutation) UserIDs() (ids []int) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *EmailCampaignMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
+// AddRecipientIDs adds the "recipients" edge to the EmailCampaignRecipient entity by ids.
+func (m *EmailCampaignMutation) AddRecipientIDs(ids ...int) {
+	if m.recipients == nil {
+		m.recipients = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.recipients[ids[i]] = struct{}{}
+	}
+}
+
+// ClearRecipients clears the "recipients" edge to the EmailCampaignRecipient entity.
+func (m *EmailCampaignMutation) ClearRecipients() {
+	m.clearedrecipients = true
+}
+
+// RecipientsCleared reports if the "recipients" edge to the EmailCampaignRecipient entity was cleared.
+func (m *EmailCampaignMutation) RecipientsCleared() bool {
+	return m.clearedrecipients
+}
+
+// RemoveRecipientIDs removes the "recipients" edge to the EmailCampaignRecipient entity by IDs.
+func (m *EmailCampaignMutation) RemoveRecipientIDs(ids ...int) {
+	if m.removedrecipients == nil {
+		m.removedrecipients = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.recipients, ids[i])
+		m.removedrecipients[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedRecipients returns the removed IDs of the "recipients" edge to the EmailCampaignRecipient entity.
+func (m *EmailCampaignMutation) RemovedRecipientsIDs() (ids []int) {
+	for id := range m.removedrecipients {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// RecipientsIDs returns the "recipients" edge IDs in the mutation.
+func (m *EmailCampaignMutation) RecipientsIDs() (ids []int) {
+	for id := range m.recipients {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetRecipients resets all changes to the "recipients" edge.
+func (m *EmailCampaignMutation) ResetRecipients() {
+	m.recipients = nil
+	m.clearedrecipients = false
+	m.removedrecipients = nil
+}
+
+// Where appends a list predicates to the EmailCampaignMutation builder.
+func (m *EmailCampaignMutation) Where(ps ...predicate.EmailCampaign) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the EmailCampaignMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *EmailCampaignMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.EmailCampaign, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *EmailCampaignMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *EmailCampaignMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (EmailCampaign).
+func (m *EmailCampaignMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *EmailCampaignMutation) Fields() []string {
+	fields := make([]string, 0, 21)
+	if m.name != nil {
+		fields = append(fields, emailcampaign.FieldName)
+	}
+	if m.subject != nil {
+		fields = append(fields, emailcampaign.FieldSubject)
+	}
+	if m.content_html != nil {
+		fields = append(fields, emailcampaign.FieldContentHTML)
+	}
+	if m.content_text != nil {
+		fields = append(fields, emailcampaign.FieldContentText)
+	}
+	if m.status != nil {
+		fields = append(fields, emailcampaign.FieldStatus)
+	}
+	if m.user != nil {
+		fields = append(fields, emailcampaign.FieldUserID)
+	}
+	if m.from_email != nil {
+		fields = append(fields, emailcampaign.FieldFromEmail)
+	}
+	if m.from_name != nil {
+		fields = append(fields, emailcampaign.FieldFromName)
+	}
+	if m.reply_to != nil {
+		fields = append(fields, emailcampaign.FieldReplyTo)
+	}
+	if m.scheduled_at != nil {
+		fields = append(fields, emailcampaign.FieldScheduledAt)
+	}
+	if m.sent_at != nil {
+		fields = append(fields, emailcampaign.FieldSentAt)
+	}
+	if m.recipients_count != nil {
+		fields = append(fields, emailcampaign.FieldRecipientsCount)
+	}
+	if m.sent_count != nil {
+		fields = append(fields, emailcampaign.FieldSentCount)
+	}
+	if m.failed_count != nil {
+		fields = append(fields, emailcampaign.FieldFailedCount)
+	}
+	if m.opened_count != nil {
+		fields = append(fields, emailcampaign.FieldOpenedCount)
+	}
+	if m.clicked_count != nil {
+		fields = append(fields, emailcampaign.FieldClickedCount)
+	}
+	if m.unsubscribed_count != nil {
+		fields = append(fields, emailcampaign.FieldUnsubscribedCount)
+	}
+	if m.tags != nil {
+		fields = append(fields, emailcampaign.FieldTags)
+	}
+	if m.sendgrid_batch_id != nil {
+		fields = append(fields, emailcampaign.FieldSendgridBatchID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, emailcampaign.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, emailcampaign.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *EmailCampaignMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case emailcampaign.FieldName:
+		return m.Name()
+	case emailcampaign.FieldSubject:
+		return m.Subject()
+	case emailcampaign.FieldContentHTML:
+		return m.ContentHTML()
+	case emailcampaign.FieldContentText:
+		return m.ContentText()
+	case emailcampaign.FieldStatus:
+		return m.Status()
+	case emailcampaign.FieldUserID:
+		return m.UserID()
+	case emailcampaign.FieldFromEmail:
+		return m.FromEmail()
+	case emailcampaign.FieldFromName:
+		return m.FromName()
+	case emailcampaign.FieldReplyTo:
+		return m.ReplyTo()
+	case emailcampaign.FieldScheduledAt:
+		return m.ScheduledAt()
+	case emailcampaign.FieldSentAt:
+		return m.SentAt()
+	case emailcampaign.FieldRecipientsCount:
+		return m.RecipientsCount()
+	case emailcampaign.FieldSentCount:
+		return m.SentCount()
+	case emailcampaign.FieldFailedCount:
+		return m.FailedCount()
+	case emailcampaign.FieldOpenedCount:
+		return m.OpenedCount()
+	case emailcampaign.FieldClickedCount:
+		return m.ClickedCount()
+	case emailcampaign.FieldUnsubscribedCount:
+		return m.UnsubscribedCount()
+	case emailcampaign.FieldTags:
+		return m.Tags()
+	case emailcampaign.FieldSendgridBatchID:
+		return m.SendgridBatchID()
+	case emailcampaign.FieldCreatedAt:
+		return m.CreatedAt()
+	case emailcampaign.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *EmailCampaignMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case emailcampaign.FieldName:
+		return m.OldName(ctx)
+	case emailcampaign.FieldSubject:
+		return m.OldSubject(ctx)
+	case emailcampaign.FieldContentHTML:
+		return m.OldContentHTML(ctx)
+	case emailcampaign.FieldContentText:
+		return m.OldContentText(ctx)
+	case emailcampaign.FieldStatus:
+		return m.OldStatus(ctx)
+	case emailcampaign.FieldUserID:
+		return m.OldUserID(ctx)
+	case emailcampaign.FieldFromEmail:
+		return m.OldFromEmail(ctx)
+	case emailcampaign.FieldFromName:
+		return m.OldFromName(ctx)
+	case emailcampaign.FieldReplyTo:
+		return m.OldReplyTo(ctx)
+	case emailcampaign.FieldScheduledAt:
+		return m.OldScheduledAt(ctx)
+	case emailcampaign.FieldSentAt:
+		return m.OldSentAt(ctx)
+	case emailcampaign.FieldRecipientsCount:
+		return m.OldRecipientsCount(ctx)
+	case emailcampaign.FieldSentCount:
+		return m.OldSentCount(ctx)
+	case emailcampaign.FieldFailedCount:
+		return m.OldFailedCount(ctx)
+	case emailcampaign.FieldOpenedCount:
+		return m.OldOpenedCount(ctx)
+	case emailcampaign.FieldClickedCount:
+		return m.OldClickedCount(ctx)
+	case emailcampaign.FieldUnsubscribedCount:
+		return m.OldUnsubscribedCount(ctx)
+	case emailcampaign.FieldTags:
+		return m.OldTags(ctx)
+	case emailcampaign.FieldSendgridBatchID:
+		return m.OldSendgridBatchID(ctx)
+	case emailcampaign.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case emailcampaign.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown EmailCampaign field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EmailCampaignMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case emailcampaign.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case emailcampaign.FieldSubject:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSubject(v)
+		return nil
+	case emailcampaign.FieldContentHTML:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContentHTML(v)
+		return nil
+	case emailcampaign.FieldContentText:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContentText(v)
+		return nil
+	case emailcampaign.FieldStatus:
+		v, ok := value.(emailcampaign.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case emailcampaign.FieldUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case emailcampaign.FieldFromEmail:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFromEmail(v)
+		return nil
+	case emailcampaign.FieldFromName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFromName(v)
+		return nil
+	case emailcampaign.FieldReplyTo:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReplyTo(v)
+		return nil
+	case emailcampaign.FieldScheduledAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetScheduledAt(v)
+		return nil
+	case emailcampaign.FieldSentAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSentAt(v)
+		return nil
+	case emailcampaign.FieldRecipientsCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRecipientsCount(v)
+		return nil
+	case emailcampaign.FieldSentCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSentCount(v)
+		return nil
+	case emailcampaign.FieldFailedCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFailedCount(v)
+		return nil
+	case emailcampaign.FieldOpenedCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOpenedCount(v)
+		return nil
+	case emailcampaign.FieldClickedCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetClickedCount(v)
+		return nil
+	case emailcampaign.FieldUnsubscribedCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUnsubscribedCount(v)
+		return nil
+	case emailcampaign.FieldTags:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTags(v)
+		return nil
+	case emailcampaign.FieldSendgridBatchID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSendgridBatchID(v)
+		return nil
+	case emailcampaign.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case emailcampaign.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown EmailCampaign field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *EmailCampaignMutation) AddedFields() []string {
+	var fields []string
+	if m.addrecipients_count != nil {
+		fields = append(fields, emailcampaign.FieldRecipientsCount)
+	}
+	if m.addsent_count != nil {
+		fields = append(fields, emailcampaign.FieldSentCount)
+	}
+	if m.addfailed_count != nil {
+		fields = append(fields, emailcampaign.FieldFailedCount)
+	}
+	if m.addopened_count != nil {
+		fields = append(fields, emailcampaign.FieldOpenedCount)
+	}
+	if m.addclicked_count != nil {
+		fields = append(fields, emailcampaign.FieldClickedCount)
+	}
+	if m.addunsubscribed_count != nil {
+		fields = append(fields, emailcampaign.FieldUnsubscribedCount)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *EmailCampaignMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case emailcampaign.FieldRecipientsCount:
+		return m.AddedRecipientsCount()
+	case emailcampaign.FieldSentCount:
+		return m.AddedSentCount()
+	case emailcampaign.FieldFailedCount:
+		return m.AddedFailedCount()
+	case emailcampaign.FieldOpenedCount:
+		return m.AddedOpenedCount()
+	case emailcampaign.FieldClickedCount:
+		return m.AddedClickedCount()
+	case emailcampaign.FieldUnsubscribedCount:
+		return m.AddedUnsubscribedCount()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EmailCampaignMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case emailcampaign.FieldRecipientsCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRecipientsCount(v)
+		return nil
+	case emailcampaign.FieldSentCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSentCount(v)
+		return nil
+	case emailcampaign.FieldFailedCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddFailedCount(v)
+		return nil
+	case emailcampaign.FieldOpenedCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddOpenedCount(v)
+		return nil
+	case emailcampaign.FieldClickedCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddClickedCount(v)
+		return nil
+	case emailcampaign.FieldUnsubscribedCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddUnsubscribedCount(v)
+		return nil
+	}
+	return fmt.Errorf("unknown EmailCampaign numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *EmailCampaignMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(emailcampaign.FieldContentText) {
+		fields = append(fields, emailcampaign.FieldContentText)
+	}
+	if m.FieldCleared(emailcampaign.FieldReplyTo) {
+		fields = append(fields, emailcampaign.FieldReplyTo)
+	}
+	if m.FieldCleared(emailcampaign.FieldScheduledAt) {
+		fields = append(fields, emailcampaign.FieldScheduledAt)
+	}
+	if m.FieldCleared(emailcampaign.FieldSentAt) {
+		fields = append(fields, emailcampaign.FieldSentAt)
+	}
+	if m.FieldCleared(emailcampaign.FieldTags) {
+		fields = append(fields, emailcampaign.FieldTags)
+	}
+	if m.FieldCleared(emailcampaign.FieldSendgridBatchID) {
+		fields = append(fields, emailcampaign.FieldSendgridBatchID)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *EmailCampaignMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *EmailCampaignMutation) ClearField(name string) error {
+	switch name {
+	case emailcampaign.FieldContentText:
+		m.ClearContentText()
+		return nil
+	case emailcampaign.FieldReplyTo:
+		m.ClearReplyTo()
+		return nil
+	case emailcampaign.FieldScheduledAt:
+		m.ClearScheduledAt()
+		return nil
+	case emailcampaign.FieldSentAt:
+		m.ClearSentAt()
+		return nil
+	case emailcampaign.FieldTags:
+		m.ClearTags()
+		return nil
+	case emailcampaign.FieldSendgridBatchID:
+		m.ClearSendgridBatchID()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailCampaign nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *EmailCampaignMutation) ResetField(name string) error {
+	switch name {
+	case emailcampaign.FieldName:
+		m.ResetName()
+		return nil
+	case emailcampaign.FieldSubject:
+		m.ResetSubject()
+		return nil
+	case emailcampaign.FieldContentHTML:
+		m.ResetContentHTML()
+		return nil
+	case emailcampaign.FieldContentText:
+		m.ResetContentText()
+		return nil
+	case emailcampaign.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case emailcampaign.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case emailcampaign.FieldFromEmail:
+		m.ResetFromEmail()
+		return nil
+	case emailcampaign.FieldFromName:
+		m.ResetFromName()
+		return nil
+	case emailcampaign.FieldReplyTo:
+		m.ResetReplyTo()
+		return nil
+	case emailcampaign.FieldScheduledAt:
+		m.ResetScheduledAt()
+		return nil
+	case emailcampaign.FieldSentAt:
+		m.ResetSentAt()
+		return nil
+	case emailcampaign.FieldRecipientsCount:
+		m.ResetRecipientsCount()
+		return nil
+	case emailcampaign.FieldSentCount:
+		m.ResetSentCount()
+		return nil
+	case emailcampaign.FieldFailedCount:
+		m.ResetFailedCount()
+		return nil
+	case emailcampaign.FieldOpenedCount:
+		m.ResetOpenedCount()
+		return nil
+	case emailcampaign.FieldClickedCount:
+		m.ResetClickedCount()
+		return nil
+	case emailcampaign.FieldUnsubscribedCount:
+		m.ResetUnsubscribedCount()
+		return nil
+	case emailcampaign.FieldTags:
+		m.ResetTags()
+		return nil
+	case emailcampaign.FieldSendgridBatchID:
+		m.ResetSendgridBatchID()
+		return nil
+	case emailcampaign.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case emailcampaign.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailCampaign field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *EmailCampaignMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.user != nil {
+		edges = append(edges, emailcampaign.EdgeUser)
+	}
+	if m.recipients != nil {
+		edges = append(edges, emailcampaign.EdgeRecipients)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *EmailCampaignMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case emailcampaign.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	case emailcampaign.EdgeRecipients:
+		ids := make([]ent.Value, 0, len(m.recipients))
+		for id := range m.recipients {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *EmailCampaignMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.removedrecipients != nil {
+		edges = append(edges, emailcampaign.EdgeRecipients)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *EmailCampaignMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case emailcampaign.EdgeRecipients:
+		ids := make([]ent.Value, 0, len(m.removedrecipients))
+		for id := range m.removedrecipients {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *EmailCampaignMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.cleareduser {
+		edges = append(edges, emailcampaign.EdgeUser)
+	}
+	if m.clearedrecipients {
+		edges = append(edges, emailcampaign.EdgeRecipients)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *EmailCampaignMutation) EdgeCleared(name string) bool {
+	switch name {
+	case emailcampaign.EdgeUser:
+		return m.cleareduser
+	case emailcampaign.EdgeRecipients:
+		return m.clearedrecipients
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *EmailCampaignMutation) ClearEdge(name string) error {
+	switch name {
+	case emailcampaign.EdgeUser:
+		m.ClearUser()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailCampaign unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *EmailCampaignMutation) ResetEdge(name string) error {
+	switch name {
+	case emailcampaign.EdgeUser:
+		m.ResetUser()
+		return nil
+	case emailcampaign.EdgeRecipients:
+		m.ResetRecipients()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailCampaign edge %s", name)
+}
+
+// EmailCampaignRecipientMutation represents an operation that mutates the EmailCampaignRecipient nodes in the graph.
+type EmailCampaignRecipientMutation struct {
+	config
+	op                  Op
+	typ                 string
+	id                  *int
+	email               *string
+	name                *string
+	status              *emailcampaignrecipient.Status
+	sent_at             *time.Time
+	opened_at           *time.Time
+	clicked_at          *time.Time
+	unsubscribed_at     *time.Time
+	failure_reason      *string
+	sendgrid_message_id *string
+	created_at          *time.Time
+	updated_at          *time.Time
+	clearedFields       map[string]struct{}
+	campaign            *int
+	clearedcampaign     bool
+	done                bool
+	oldValue            func(context.Context) (*EmailCampaignRecipient, error)
+	predicates          []predicate.EmailCampaignRecipient
+}
+
+var _ ent.Mutation = (*EmailCampaignRecipientMutation)(nil)
+
+// emailcampaignrecipientOption allows management of the mutation configuration using functional options.
+type emailcampaignrecipientOption func(*EmailCampaignRecipientMutation)
+
+// newEmailCampaignRecipientMutation creates new mutation for the EmailCampaignRecipient entity.
+func newEmailCampaignRecipientMutation(c config, op Op, opts ...emailcampaignrecipientOption) *EmailCampaignRecipientMutation {
+	m := &EmailCampaignRecipientMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeEmailCampaignRecipient,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withEmailCampaignRecipientID sets the ID field of the mutation.
+func withEmailCampaignRecipientID(id int) emailcampaignrecipientOption {
+	return func(m *EmailCampaignRecipientMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *EmailCampaignRecipient
+		)
+		m.oldValue = func(ctx context.Context) (*EmailCampaignRecipient, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().EmailCampaignRecipient.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withEmailCampaignRecipient sets the old EmailCampaignRecipient of the mutation.
+func withEmailCampaignRecipient(node *EmailCampaignRecipient) emailcampaignrecipientOption {
+	return func(m *EmailCampaignRecipientMutation) {
+		m.oldValue = func(context.Context) (*EmailCampaignRecipient, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m EmailCampaignRecipientMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m EmailCampaignRecipientMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *EmailCampaignRecipientMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *EmailCampaignRecipientMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().EmailCampaignRecipient.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCampaignID sets the "campaign_id" field.
+func (m *EmailCampaignRecipientMutation) SetCampaignID(i int) {
+	m.campaign = &i
+}
+
+// CampaignID returns the value of the "campaign_id" field in the mutation.
+func (m *EmailCampaignRecipientMutation) CampaignID() (r int, exists bool) {
+	v := m.campaign
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCampaignID returns the old "campaign_id" field's value of the EmailCampaignRecipient entity.
+// If the EmailCampaignRecipient object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignRecipientMutation) OldCampaignID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCampaignID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCampaignID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCampaignID: %w", err)
+	}
+	return oldValue.CampaignID, nil
+}
+
+// ResetCampaignID resets all changes to the "campaign_id" field.
+func (m *EmailCampaignRecipientMutation) ResetCampaignID() {
+	m.campaign = nil
+}
+
+// SetEmail sets the "email" field.
+func (m *EmailCampaignRecipientMutation) SetEmail(s string) {
+	m.email = &s
+}
+
+// Email returns the value of the "email" field in the mutation.
+func (m *EmailCampaignRecipientMutation) Email() (r string, exists bool) {
+	v := m.email
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEmail returns the old "email" field's value of the EmailCampaignRecipient entity.
+// If the EmailCampaignRecipient object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignRecipientMutation) OldEmail(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEmail is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEmail requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEmail: %w", err)
+	}
+	return oldValue.Email, nil
+}
+
+// ResetEmail resets all changes to the "email" field.
+func (m *EmailCampaignRecipientMutation) ResetEmail() {
+	m.email = nil
+}
+
+// SetName sets the "name" field.
+func (m *EmailCampaignRecipientMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *EmailCampaignRecipientMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the EmailCampaignRecipient entity.
+// If the EmailCampaignRecipient object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignRecipientMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ClearName clears the value of the "name" field.
+func (m *EmailCampaignRecipientMutation) ClearName() {
+	m.name = nil
+	m.clearedFields[emailcampaignrecipient.FieldName] = struct{}{}
+}
+
+// NameCleared returns if the "name" field was cleared in this mutation.
+func (m *EmailCampaignRecipientMutation) NameCleared() bool {
+	_, ok := m.clearedFields[emailcampaignrecipient.FieldName]
+	return ok
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *EmailCampaignRecipientMutation) ResetName() {
+	m.name = nil
+	delete(m.clearedFields, emailcampaignrecipient.FieldName)
+}
+
+// SetStatus sets the "status" field.
+func (m *EmailCampaignRecipientMutation) SetStatus(e emailcampaignrecipient.Status) {
+	m.status = &e
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *EmailCampaignRecipientMutation) Status() (r emailcampaignrecipient.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the EmailCampaignRecipient entity.
+// If the EmailCampaignRecipient object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignRecipientMutation) OldStatus(ctx context.Context) (v emailcampaignrecipient.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *EmailCampaignRecipientMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetSentAt sets the "sent_at" field.
+func (m *EmailCampaignRecipientMutation) SetSentAt(t time.Time) {
+	m.sent_at = &t
+}
+
+// SentAt returns the value of the "sent_at" field in the mutation.
+func (m *EmailCampaignRecipientMutation) SentAt() (r time.Time, exists bool) {
+	v := m.sent_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSentAt returns the old "sent_at" field's value of the EmailCampaignRecipient entity.
+// If the EmailCampaignRecipient object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignRecipientMutation) OldSentAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSentAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSentAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSentAt: %w", err)
+	}
+	return oldValue.SentAt, nil
+}
+
+// ClearSentAt clears the value of the "sent_at" field.
+func (m *EmailCampaignRecipientMutation) ClearSentAt() {
+	m.sent_at = nil
+	m.clearedFields[emailcampaignrecipient.FieldSentAt] = struct{}{}
+}
+
+// SentAtCleared returns if the "sent_at" field was cleared in this mutation.
+func (m *EmailCampaignRecipientMutation) SentAtCleared() bool {
+	_, ok := m.clearedFields[emailcampaignrecipient.FieldSentAt]
+	return ok
+}
+
+// ResetSentAt resets all changes to the "sent_at" field.
+func (m *EmailCampaignRecipientMutation) ResetSentAt() {
+	m.sent_at = nil
+	delete(m.clearedFields, emailcampaignrecipient.FieldSentAt)
+}
+
+// SetOpenedAt sets the "opened_at" field.
+func (m *EmailCampaignRecipientMutation) SetOpenedAt(t time.Time) {
+	m.opened_at = &t
+}
+
+// OpenedAt returns the value of the "opened_at" field in the mutation.
+func (m *EmailCampaignRecipientMutation) OpenedAt() (r time.Time, exists bool) {
+	v := m.opened_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOpenedAt returns the old "opened_at" field's value of the EmailCampaignRecipient entity.
+// If the EmailCampaignRecipient object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignRecipientMutation) OldOpenedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOpenedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOpenedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOpenedAt: %w", err)
+	}
+	return oldValue.OpenedAt, nil
+}
+
+// ClearOpenedAt clears the value of the "opened_at" field.
+func (m *EmailCampaignRecipientMutation) ClearOpenedAt() {
+	m.opened_at = nil
+	m.clearedFields[emailcampaignrecipient.FieldOpenedAt] = struct{}{}
+}
+
+// OpenedAtCleared returns if the "opened_at" field was cleared in this mutation.
+func (m *EmailCampaignRecipientMutation) OpenedAtCleared() bool {
+	_, ok := m.clearedFields[emailcampaignrecipient.FieldOpenedAt]
+	return ok
+}
+
+// ResetOpenedAt resets all changes to the "opened_at" field.
+func (m *EmailCampaignRecipientMutation) ResetOpenedAt() {
+	m.opened_at = nil
+	delete(m.clearedFields, emailcampaignrecipient.FieldOpenedAt)
+}
+
+// SetClickedAt sets the "clicked_at" field.
+func (m *EmailCampaignRecipientMutation) SetClickedAt(t time.Time) {
+	m.clicked_at = &t
+}
+
+// ClickedAt returns the value of the "clicked_at" field in the mutation.
+func (m *EmailCampaignRecipientMutation) ClickedAt() (r time.Time, exists bool) {
+	v := m.clicked_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldClickedAt returns the old "clicked_at" field's value of the EmailCampaignRecipient entity.
+// If the EmailCampaignRecipient object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignRecipientMutation) OldClickedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldClickedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldClickedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldClickedAt: %w", err)
+	}
+	return oldValue.ClickedAt, nil
+}
+
+// ClearClickedAt clears the value of the "clicked_at" field.
+func (m *EmailCampaignRecipientMutation) ClearClickedAt() {
+	m.clicked_at = nil
+	m.clearedFields[emailcampaignrecipient.FieldClickedAt] = struct{}{}
+}
+
+// ClickedAtCleared returns if the "clicked_at" field was cleared in this mutation.
+func (m *EmailCampaignRecipientMutation) ClickedAtCleared() bool {
+	_, ok := m.clearedFields[emailcampaignrecipient.FieldClickedAt]
+	return ok
+}
+
+// ResetClickedAt resets all changes to the "clicked_at" field.
+func (m *EmailCampaignRecipientMutation) ResetClickedAt() {
+	m.clicked_at = nil
+	delete(m.clearedFields, emailcampaignrecipient.FieldClickedAt)
+}
+
+// SetUnsubscribedAt sets the "unsubscribed_at" field.
+func (m *EmailCampaignRecipientMutation) SetUnsubscribedAt(t time.Time) {
+	m.unsubscribed_at = &t
+}
+
+// UnsubscribedAt returns the value of the "unsubscribed_at" field in the mutation.
+func (m *EmailCampaignRecipientMutation) UnsubscribedAt() (r time.Time, exists bool) {
+	v := m.unsubscribed_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUnsubscribedAt returns the old "unsubscribed_at" field's value of the EmailCampaignRecipient entity.
+// If the EmailCampaignRecipient object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignRecipientMutation) OldUnsubscribedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUnsubscribedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUnsubscribedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUnsubscribedAt: %w", err)
+	}
+	return oldValue.UnsubscribedAt, nil
+}
+
+// ClearUnsubscribedAt clears the value of the "unsubscribed_at" field.
+func (m *EmailCampaignRecipientMutation) ClearUnsubscribedAt() {
+	m.unsubscribed_at = nil
+	m.clearedFields[emailcampaignrecipient.FieldUnsubscribedAt] = struct{}{}
+}
+
+// UnsubscribedAtCleared returns if the "unsubscribed_at" field was cleared in this mutation.
+func (m *EmailCampaignRecipientMutation) UnsubscribedAtCleared() bool {
+	_, ok := m.clearedFields[emailcampaignrecipient.FieldUnsubscribedAt]
+	return ok
+}
+
+// ResetUnsubscribedAt resets all changes to the "unsubscribed_at" field.
+func (m *EmailCampaignRecipientMutation) ResetUnsubscribedAt() {
+	m.unsubscribed_at = nil
+	delete(m.clearedFields, emailcampaignrecipient.FieldUnsubscribedAt)
+}
+
+// SetFailureReason sets the "failure_reason" field.
+func (m *EmailCampaignRecipientMutation) SetFailureReason(s string) {
+	m.failure_reason = &s
+}
+
+// FailureReason returns the value of the "failure_reason" field in the mutation.
+func (m *EmailCampaignRecipientMutation) FailureReason() (r string, exists bool) {
+	v := m.failure_reason
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFailureReason returns the old "failure_reason" field's value of the EmailCampaignRecipient entity.
+// If the EmailCampaignRecipient object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignRecipientMutation) OldFailureReason(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFailureReason is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFailureReason requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFailureReason: %w", err)
+	}
+	return oldValue.FailureReason, nil
+}
+
+// ClearFailureReason clears the value of the "failure_reason" field.
+func (m *EmailCampaignRecipientMutation) ClearFailureReason() {
+	m.failure_reason = nil
+	m.clearedFields[emailcampaignrecipient.FieldFailureReason] = struct{}{}
+}
+
+// FailureReasonCleared returns if the "failure_reason" field was cleared in this mutation.
+func (m *EmailCampaignRecipientMutation) FailureReasonCleared() bool {
+	_, ok := m.clearedFields[emailcampaignrecipient.FieldFailureReason]
+	return ok
+}
+
+// ResetFailureReason resets all changes to the "failure_reason" field.
+func (m *EmailCampaignRecipientMutation) ResetFailureReason() {
+	m.failure_reason = nil
+	delete(m.clearedFields, emailcampaignrecipient.FieldFailureReason)
+}
+
+// SetSendgridMessageID sets the "sendgrid_message_id" field.
+func (m *EmailCampaignRecipientMutation) SetSendgridMessageID(s string) {
+	m.sendgrid_message_id = &s
+}
+
+// SendgridMessageID returns the value of the "sendgrid_message_id" field in the mutation.
+func (m *EmailCampaignRecipientMutation) SendgridMessageID() (r string, exists bool) {
+	v := m.sendgrid_message_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSendgridMessageID returns the old "sendgrid_message_id" field's value of the EmailCampaignRecipient entity.
+// If the EmailCampaignRecipient object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignRecipientMutation) OldSendgridMessageID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSendgridMessageID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSendgridMessageID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSendgridMessageID: %w", err)
+	}
+	return oldValue.SendgridMessageID, nil
+}
+
+// ClearSendgridMessageID clears the value of the "sendgrid_message_id" field.
+func (m *EmailCampaignRecipientMutation) ClearSendgridMessageID() {
+	m.sendgrid_message_id = nil
+	m.clearedFields[emailcampaignrecipient.FieldSendgridMessageID] = struct{}{}
+}
+
+// SendgridMessageIDCleared returns if the "sendgrid_message_id" field was cleared in this mutation.
+func (m *EmailCampaignRecipientMutation) SendgridMessageIDCleared() bool {
+	_, ok := m.clearedFields[emailcampaignrecipient.FieldSendgridMessageID]
+	return ok
+}
+
+// ResetSendgridMessageID resets all changes to the "sendgrid_message_id" field.
+func (m *EmailCampaignRecipientMutation) ResetSendgridMessageID() {
+	m.sendgrid_message_id = nil
+	delete(m.clearedFields, emailcampaignrecipient.FieldSendgridMessageID)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *EmailCampaignRecipientMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *EmailCampaignRecipientMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the EmailCampaignRecipient entity.
+// If the EmailCampaignRecipient object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignRecipientMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *EmailCampaignRecipientMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *EmailCampaignRecipientMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *EmailCampaignRecipientMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the EmailCampaignRecipient entity.
+// If the EmailCampaignRecipient object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailCampaignRecipientMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *EmailCampaignRecipientMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearCampaign clears the "campaign" edge to the EmailCampaign entity.
+func (m *EmailCampaignRecipientMutation) ClearCampaign() {
+	m.clearedcampaign = true
+	m.clearedFields[emailcampaignrecipient.FieldCampaignID] = struct{}{}
+}
+
+// CampaignCleared reports if the "campaign" edge to the EmailCampaign entity was cleared.
+func (m *EmailCampaignRecipientMutation) CampaignCleared() bool {
+	return m.clearedcampaign
+}
+
+// CampaignIDs returns the "campaign" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// CampaignID instead. It exists only for internal usage by the builders.
+func (m *EmailCampaignRecipientMutation) CampaignIDs() (ids []int) {
+	if id := m.campaign; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetCampaign resets all changes to the "campaign" edge.
+func (m *EmailCampaignRecipientMutation) ResetCampaign() {
+	m.campaign = nil
+	m.clearedcampaign = false
+}
+
+// Where appends a list predicates to the EmailCampaignRecipientMutation builder.
+func (m *EmailCampaignRecipientMutation) Where(ps ...predicate.EmailCampaignRecipient) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the EmailCampaignRecipientMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *EmailCampaignRecipientMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.EmailCampaignRecipient, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *EmailCampaignRecipientMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *EmailCampaignRecipientMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (EmailCampaignRecipient).
+func (m *EmailCampaignRecipientMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *EmailCampaignRecipientMutation) Fields() []string {
+	fields := make([]string, 0, 12)
+	if m.campaign != nil {
+		fields = append(fields, emailcampaignrecipient.FieldCampaignID)
+	}
+	if m.email != nil {
+		fields = append(fields, emailcampaignrecipient.FieldEmail)
+	}
+	if m.name != nil {
+		fields = append(fields, emailcampaignrecipient.FieldName)
+	}
+	if m.status != nil {
+		fields = append(fields, emailcampaignrecipient.FieldStatus)
+	}
+	if m.sent_at != nil {
+		fields = append(fields, emailcampaignrecipient.FieldSentAt)
+	}
+	if m.opened_at != nil {
+		fields = append(fields, emailcampaignrecipient.FieldOpenedAt)
+	}
+	if m.clicked_at != nil {
+		fields = append(fields, emailcampaignrecipient.FieldClickedAt)
+	}
+	if m.unsubscribed_at != nil {
+		fields = append(fields, emailcampaignrecipient.FieldUnsubscribedAt)
+	}
+	if m.failure_reason != nil {
+		fields = append(fields, emailcampaignrecipient.FieldFailureReason)
+	}
+	if m.sendgrid_message_id != nil {
+		fields = append(fields, emailcampaignrecipient.FieldSendgridMessageID)
+	}
+	if m.created_at != nil {
+		fields = append(fields, emailcampaignrecipient.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, emailcampaignrecipient.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *EmailCampaignRecipientMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case emailcampaignrecipient.FieldCampaignID:
+		return m.CampaignID()
+	case emailcampaignrecipient.FieldEmail:
+		return m.Email()
+	case emailcampaignrecipient.FieldName:
+		return m.Name()
+	case emailcampaignrecipient.FieldStatus:
+		return m.Status()
+	case emailcampaignrecipient.FieldSentAt:
+		return m.SentAt()
+	case emailcampaignrecipient.FieldOpenedAt:
+		return m.OpenedAt()
+	case emailcampaignrecipient.FieldClickedAt:
+		return m.ClickedAt()
+	case emailcampaignrecipient.FieldUnsubscribedAt:
+		return m.UnsubscribedAt()
+	case emailcampaignrecipient.FieldFailureReason:
+		return m.FailureReason()
+	case emailcampaignrecipient.FieldSendgridMessageID:
+		return m.SendgridMessageID()
+	case emailcampaignrecipient.FieldCreatedAt:
+		return m.CreatedAt()
+	case emailcampaignrecipient.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *EmailCampaignRecipientMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case emailcampaignrecipient.FieldCampaignID:
+		return m.OldCampaignID(ctx)
+	case emailcampaignrecipient.FieldEmail:
+		return m.OldEmail(ctx)
+	case emailcampaignrecipient.FieldName:
+		return m.OldName(ctx)
+	case emailcampaignrecipient.FieldStatus:
+		return m.OldStatus(ctx)
+	case emailcampaignrecipient.FieldSentAt:
+		return m.OldSentAt(ctx)
+	case emailcampaignrecipient.FieldOpenedAt:
+		return m.OldOpenedAt(ctx)
+	case emailcampaignrecipient.FieldClickedAt:
+		return m.OldClickedAt(ctx)
+	case emailcampaignrecipient.FieldUnsubscribedAt:
+		return m.OldUnsubscribedAt(ctx)
+	case emailcampaignrecipient.FieldFailureReason:
+		return m.OldFailureReason(ctx)
+	case emailcampaignrecipient.FieldSendgridMessageID:
+		return m.OldSendgridMessageID(ctx)
+	case emailcampaignrecipient.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case emailcampaignrecipient.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown EmailCampaignRecipient field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EmailCampaignRecipientMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case emailcampaignrecipient.FieldCampaignID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCampaignID(v)
+		return nil
+	case emailcampaignrecipient.FieldEmail:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEmail(v)
+		return nil
+	case emailcampaignrecipient.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case emailcampaignrecipient.FieldStatus:
+		v, ok := value.(emailcampaignrecipient.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case emailcampaignrecipient.FieldSentAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSentAt(v)
+		return nil
+	case emailcampaignrecipient.FieldOpenedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOpenedAt(v)
+		return nil
+	case emailcampaignrecipient.FieldClickedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetClickedAt(v)
+		return nil
+	case emailcampaignrecipient.FieldUnsubscribedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUnsubscribedAt(v)
+		return nil
+	case emailcampaignrecipient.FieldFailureReason:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFailureReason(v)
+		return nil
+	case emailcampaignrecipient.FieldSendgridMessageID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSendgridMessageID(v)
+		return nil
+	case emailcampaignrecipient.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case emailcampaignrecipient.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown EmailCampaignRecipient field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *EmailCampaignRecipientMutation) AddedFields() []string {
+	var fields []string
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *EmailCampaignRecipientMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EmailCampaignRecipientMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown EmailCampaignRecipient numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *EmailCampaignRecipientMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(emailcampaignrecipient.FieldName) {
+		fields = append(fields, emailcampaignrecipient.FieldName)
+	}
+	if m.FieldCleared(emailcampaignrecipient.FieldSentAt) {
+		fields = append(fields, emailcampaignrecipient.FieldSentAt)
+	}
+	if m.FieldCleared(emailcampaignrecipient.FieldOpenedAt) {
+		fields = append(fields, emailcampaignrecipient.FieldOpenedAt)
+	}
+	if m.FieldCleared(emailcampaignrecipient.FieldClickedAt) {
+		fields = append(fields, emailcampaignrecipient.FieldClickedAt)
+	}
+	if m.FieldCleared(emailcampaignrecipient.FieldUnsubscribedAt) {
+		fields = append(fields, emailcampaignrecipient.FieldUnsubscribedAt)
+	}
+	if m.FieldCleared(emailcampaignrecipient.FieldFailureReason) {
+		fields = append(fields, emailcampaignrecipient.FieldFailureReason)
+	}
+	if m.FieldCleared(emailcampaignrecipient.FieldSendgridMessageID) {
+		fields = append(fields, emailcampaignrecipient.FieldSendgridMessageID)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *EmailCampaignRecipientMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *EmailCampaignRecipientMutation) ClearField(name string) error {
+	switch name {
+	case emailcampaignrecipient.FieldName:
+		m.ClearName()
+		return nil
+	case emailcampaignrecipient.FieldSentAt:
+		m.ClearSentAt()
+		return nil
+	case emailcampaignrecipient.FieldOpenedAt:
+		m.ClearOpenedAt()
+		return nil
+	case emailcampaignrecipient.FieldClickedAt:
+		m.ClearClickedAt()
+		return nil
+	case emailcampaignrecipient.FieldUnsubscribedAt:
+		m.ClearUnsubscribedAt()
+		return nil
+	case emailcampaignrecipient.FieldFailureReason:
+		m.ClearFailureReason()
+		return nil
+	case emailcampaignrecipient.FieldSendgridMessageID:
+		m.ClearSendgridMessageID()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailCampaignRecipient nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *EmailCampaignRecipientMutation) ResetField(name string) error {
+	switch name {
+	case emailcampaignrecipient.FieldCampaignID:
+		m.ResetCampaignID()
+		return nil
+	case emailcampaignrecipient.FieldEmail:
+		m.ResetEmail()
+		return nil
+	case emailcampaignrecipient.FieldName:
+		m.ResetName()
+		return nil
+	case emailcampaignrecipient.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case emailcampaignrecipient.FieldSentAt:
+		m.ResetSentAt()
+		return nil
+	case emailcampaignrecipient.FieldOpenedAt:
+		m.ResetOpenedAt()
+		return nil
+	case emailcampaignrecipient.FieldClickedAt:
+		m.ResetClickedAt()
+		return nil
+	case emailcampaignrecipient.FieldUnsubscribedAt:
+		m.ResetUnsubscribedAt()
+		return nil
+	case emailcampaignrecipient.FieldFailureReason:
+		m.ResetFailureReason()
+		return nil
+	case emailcampaignrecipient.FieldSendgridMessageID:
+		m.ResetSendgridMessageID()
+		return nil
+	case emailcampaignrecipient.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case emailcampaignrecipient.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailCampaignRecipient field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *EmailCampaignRecipientMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.campaign != nil {
+		edges = append(edges, emailcampaignrecipient.EdgeCampaign)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *EmailCampaignRecipientMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case emailcampaignrecipient.EdgeCampaign:
+		if id := m.campaign; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *EmailCampaignRecipientMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *EmailCampaignRecipientMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *EmailCampaignRecipientMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedcampaign {
+		edges = append(edges, emailcampaignrecipient.EdgeCampaign)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *EmailCampaignRecipientMutation) EdgeCleared(name string) bool {
+	switch name {
+	case emailcampaignrecipient.EdgeCampaign:
+		return m.clearedcampaign
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *EmailCampaignRecipientMutation) ClearEdge(name string) error {
+	switch name {
+	case emailcampaignrecipient.EdgeCampaign:
+		m.ClearCampaign()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailCampaignRecipient unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *EmailCampaignRecipientMutation) ResetEdge(name string) error {
+	switch name {
+	case emailcampaignrecipient.EdgeCampaign:
+		m.ResetCampaign()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailCampaignRecipient edge %s", name)
 }
 
 // EmailSequenceMutation represents an operation that mutates the EmailSequence nodes in the graph.
@@ -37023,6 +40020,9 @@ type UserMutation struct {
 	market_reports                         map[int]struct{}
 	removedmarket_reports                  map[int]struct{}
 	clearedmarket_reports                  bool
+	email_campaigns                        map[int]struct{}
+	removedemail_campaigns                 map[int]struct{}
+	clearedemail_campaigns                 bool
 	done                                   bool
 	oldValue                               func(context.Context) (*User, error)
 	predicates                             []predicate.User
@@ -39731,6 +42731,60 @@ func (m *UserMutation) ResetMarketReports() {
 	m.removedmarket_reports = nil
 }
 
+// AddEmailCampaignIDs adds the "email_campaigns" edge to the EmailCampaign entity by ids.
+func (m *UserMutation) AddEmailCampaignIDs(ids ...int) {
+	if m.email_campaigns == nil {
+		m.email_campaigns = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.email_campaigns[ids[i]] = struct{}{}
+	}
+}
+
+// ClearEmailCampaigns clears the "email_campaigns" edge to the EmailCampaign entity.
+func (m *UserMutation) ClearEmailCampaigns() {
+	m.clearedemail_campaigns = true
+}
+
+// EmailCampaignsCleared reports if the "email_campaigns" edge to the EmailCampaign entity was cleared.
+func (m *UserMutation) EmailCampaignsCleared() bool {
+	return m.clearedemail_campaigns
+}
+
+// RemoveEmailCampaignIDs removes the "email_campaigns" edge to the EmailCampaign entity by IDs.
+func (m *UserMutation) RemoveEmailCampaignIDs(ids ...int) {
+	if m.removedemail_campaigns == nil {
+		m.removedemail_campaigns = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.email_campaigns, ids[i])
+		m.removedemail_campaigns[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedEmailCampaigns returns the removed IDs of the "email_campaigns" edge to the EmailCampaign entity.
+func (m *UserMutation) RemovedEmailCampaignsIDs() (ids []int) {
+	for id := range m.removedemail_campaigns {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// EmailCampaignsIDs returns the "email_campaigns" edge IDs in the mutation.
+func (m *UserMutation) EmailCampaignsIDs() (ids []int) {
+	for id := range m.email_campaigns {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetEmailCampaigns resets all changes to the "email_campaigns" edge.
+func (m *UserMutation) ResetEmailCampaigns() {
+	m.email_campaigns = nil
+	m.clearedemail_campaigns = false
+	m.removedemail_campaigns = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -40357,7 +43411,7 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 29)
+	edges := make([]string, 0, 30)
 	if m.subscriptions != nil {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -40444,6 +43498,9 @@ func (m *UserMutation) AddedEdges() []string {
 	}
 	if m.market_reports != nil {
 		edges = append(edges, user.EdgeMarketReports)
+	}
+	if m.email_campaigns != nil {
+		edges = append(edges, user.EdgeEmailCampaigns)
 	}
 	return edges
 }
@@ -40624,13 +43681,19 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeEmailCampaigns:
+		ids := make([]ent.Value, 0, len(m.email_campaigns))
+		for id := range m.email_campaigns {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 29)
+	edges := make([]string, 0, 30)
 	if m.removedsubscriptions != nil {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -40714,6 +43777,9 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedmarket_reports != nil {
 		edges = append(edges, user.EdgeMarketReports)
+	}
+	if m.removedemail_campaigns != nil {
+		edges = append(edges, user.EdgeEmailCampaigns)
 	}
 	return edges
 }
@@ -40890,13 +43956,19 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeEmailCampaigns:
+		ids := make([]ent.Value, 0, len(m.removedemail_campaigns))
+		for id := range m.removedemail_campaigns {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 29)
+	edges := make([]string, 0, 30)
 	if m.clearedsubscriptions {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -40984,6 +44056,9 @@ func (m *UserMutation) ClearedEdges() []string {
 	if m.clearedmarket_reports {
 		edges = append(edges, user.EdgeMarketReports)
 	}
+	if m.clearedemail_campaigns {
+		edges = append(edges, user.EdgeEmailCampaigns)
+	}
 	return edges
 }
 
@@ -41049,6 +44124,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedbehaviors
 	case user.EdgeMarketReports:
 		return m.clearedmarket_reports
+	case user.EdgeEmailCampaigns:
+		return m.clearedemail_campaigns
 	}
 	return false
 }
@@ -41154,6 +44231,9 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgeMarketReports:
 		m.ResetMarketReports()
+		return nil
+	case user.EdgeEmailCampaigns:
+		m.ResetEmailCampaigns()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

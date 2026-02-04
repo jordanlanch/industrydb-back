@@ -18,6 +18,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/calllog"
 	"github.com/jordanlanch/industrydb/ent/competitorprofile"
+	"github.com/jordanlanch/industrydb/ent/emailcampaign"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/experimentassignment"
@@ -78,6 +79,7 @@ type UserQuery struct {
 	withLeadRecommendations          *LeadRecommendationQuery
 	withBehaviors                    *UserBehaviorQuery
 	withMarketReports                *MarketReportQuery
+	withEmailCampaigns               *EmailCampaignQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -752,6 +754,28 @@ func (_q *UserQuery) QueryMarketReports() *MarketReportQuery {
 	return query
 }
 
+// QueryEmailCampaigns chains the current query on the "email_campaigns" edge.
+func (_q *UserQuery) QueryEmailCampaigns() *EmailCampaignQuery {
+	query := (&EmailCampaignClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(emailcampaign.Table, emailcampaign.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.EmailCampaignsTable, user.EmailCampaignsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first User entity from the query.
 // Returns a *NotFoundError when no User was found.
 func (_q *UserQuery) First(ctx context.Context) (*User, error) {
@@ -973,6 +997,7 @@ func (_q *UserQuery) Clone() *UserQuery {
 		withLeadRecommendations:          _q.withLeadRecommendations.Clone(),
 		withBehaviors:                    _q.withBehaviors.Clone(),
 		withMarketReports:                _q.withMarketReports.Clone(),
+		withEmailCampaigns:               _q.withEmailCampaigns.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -1298,6 +1323,17 @@ func (_q *UserQuery) WithMarketReports(opts ...func(*MarketReportQuery)) *UserQu
 	return _q
 }
 
+// WithEmailCampaigns tells the query-builder to eager-load the nodes that are connected to
+// the "email_campaigns" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithEmailCampaigns(opts ...func(*EmailCampaignQuery)) *UserQuery {
+	query := (&EmailCampaignClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withEmailCampaigns = query
+	return _q
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -1376,7 +1412,7 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
-		loadedTypes = [29]bool{
+		loadedTypes = [30]bool{
 			_q.withSubscriptions != nil,
 			_q.withExports != nil,
 			_q.withAPIKeys != nil,
@@ -1406,6 +1442,7 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			_q.withLeadRecommendations != nil,
 			_q.withBehaviors != nil,
 			_q.withMarketReports != nil,
+			_q.withEmailCampaigns != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -1643,6 +1680,13 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := _q.loadMarketReports(ctx, query, nodes,
 			func(n *User) { n.Edges.MarketReports = []*MarketReport{} },
 			func(n *User, e *MarketReport) { n.Edges.MarketReports = append(n.Edges.MarketReports, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withEmailCampaigns; query != nil {
+		if err := _q.loadEmailCampaigns(ctx, query, nodes,
+			func(n *User) { n.Edges.EmailCampaigns = []*EmailCampaign{} },
+			func(n *User, e *EmailCampaign) { n.Edges.EmailCampaigns = append(n.Edges.EmailCampaigns, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -2511,6 +2555,36 @@ func (_q *UserQuery) loadMarketReports(ctx context.Context, query *MarketReportQ
 	}
 	query.Where(predicate.MarketReport(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(user.MarketReportsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.UserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadEmailCampaigns(ctx context.Context, query *EmailCampaignQuery, nodes []*User, init func(*User), assign func(*User, *EmailCampaign)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(emailcampaign.FieldUserID)
+	}
+	query.Where(predicate.EmailCampaign(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.EmailCampaignsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

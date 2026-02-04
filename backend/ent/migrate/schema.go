@@ -481,6 +481,134 @@ var (
 			},
 		},
 	}
+	// EmailCampaignsColumns holds the columns for the "email_campaigns" table.
+	EmailCampaignsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "subject", Type: field.TypeString},
+		{Name: "content_html", Type: field.TypeString, Size: 2147483647},
+		{Name: "content_text", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"draft", "scheduled", "sending", "sent", "paused", "failed"}, Default: "draft"},
+		{Name: "from_email", Type: field.TypeString},
+		{Name: "from_name", Type: field.TypeString},
+		{Name: "reply_to", Type: field.TypeString, Nullable: true},
+		{Name: "scheduled_at", Type: field.TypeTime, Nullable: true},
+		{Name: "sent_at", Type: field.TypeTime, Nullable: true},
+		{Name: "recipients_count", Type: field.TypeInt, Default: 0},
+		{Name: "sent_count", Type: field.TypeInt, Default: 0},
+		{Name: "failed_count", Type: field.TypeInt, Default: 0},
+		{Name: "opened_count", Type: field.TypeInt, Default: 0},
+		{Name: "clicked_count", Type: field.TypeInt, Default: 0},
+		{Name: "unsubscribed_count", Type: field.TypeInt, Default: 0},
+		{Name: "tags", Type: field.TypeJSON, Nullable: true},
+		{Name: "sendgrid_batch_id", Type: field.TypeString, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "user_id", Type: field.TypeInt},
+	}
+	// EmailCampaignsTable holds the schema information for the "email_campaigns" table.
+	EmailCampaignsTable = &schema.Table{
+		Name:       "email_campaigns",
+		Columns:    EmailCampaignsColumns,
+		PrimaryKey: []*schema.Column{EmailCampaignsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "email_campaigns_users_email_campaigns",
+				Columns:    []*schema.Column{EmailCampaignsColumns[21]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "emailcampaign_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{EmailCampaignsColumns[21]},
+			},
+			{
+				Name:    "emailcampaign_status",
+				Unique:  false,
+				Columns: []*schema.Column{EmailCampaignsColumns[5]},
+			},
+			{
+				Name:    "emailcampaign_scheduled_at",
+				Unique:  false,
+				Columns: []*schema.Column{EmailCampaignsColumns[9]},
+			},
+			{
+				Name:    "emailcampaign_sent_at",
+				Unique:  false,
+				Columns: []*schema.Column{EmailCampaignsColumns[10]},
+			},
+			{
+				Name:    "emailcampaign_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{EmailCampaignsColumns[19]},
+			},
+		},
+	}
+	// EmailCampaignRecipientsColumns holds the columns for the "email_campaign_recipients" table.
+	EmailCampaignRecipientsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "email", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "sent", "failed", "opened", "clicked", "unsubscribed"}, Default: "pending"},
+		{Name: "sent_at", Type: field.TypeTime, Nullable: true},
+		{Name: "opened_at", Type: field.TypeTime, Nullable: true},
+		{Name: "clicked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "unsubscribed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "failure_reason", Type: field.TypeString, Nullable: true},
+		{Name: "sendgrid_message_id", Type: field.TypeString, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "campaign_id", Type: field.TypeInt},
+	}
+	// EmailCampaignRecipientsTable holds the schema information for the "email_campaign_recipients" table.
+	EmailCampaignRecipientsTable = &schema.Table{
+		Name:       "email_campaign_recipients",
+		Columns:    EmailCampaignRecipientsColumns,
+		PrimaryKey: []*schema.Column{EmailCampaignRecipientsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "email_campaign_recipients_email_campaigns_recipients",
+				Columns:    []*schema.Column{EmailCampaignRecipientsColumns[12]},
+				RefColumns: []*schema.Column{EmailCampaignsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "emailcampaignrecipient_campaign_id",
+				Unique:  false,
+				Columns: []*schema.Column{EmailCampaignRecipientsColumns[12]},
+			},
+			{
+				Name:    "emailcampaignrecipient_email",
+				Unique:  false,
+				Columns: []*schema.Column{EmailCampaignRecipientsColumns[1]},
+			},
+			{
+				Name:    "emailcampaignrecipient_status",
+				Unique:  false,
+				Columns: []*schema.Column{EmailCampaignRecipientsColumns[3]},
+			},
+			{
+				Name:    "emailcampaignrecipient_sent_at",
+				Unique:  false,
+				Columns: []*schema.Column{EmailCampaignRecipientsColumns[4]},
+			},
+			{
+				Name:    "emailcampaignrecipient_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{EmailCampaignRecipientsColumns[10]},
+			},
+			{
+				Name:    "emailcampaignrecipient_campaign_id_email",
+				Unique:  true,
+				Columns: []*schema.Column{EmailCampaignRecipientsColumns[12], EmailCampaignRecipientsColumns[1]},
+			},
+		},
+	}
 	// EmailSequencesColumns holds the columns for the "email_sequences" table.
 	EmailSequencesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -1997,6 +2125,8 @@ var (
 		CallLogsTable,
 		CompetitorMetricsTable,
 		CompetitorProfilesTable,
+		EmailCampaignsTable,
+		EmailCampaignRecipientsTable,
 		EmailSequencesTable,
 		EmailSequenceEnrollmentsTable,
 		EmailSequenceSendsTable,
@@ -2038,6 +2168,8 @@ func init() {
 	CallLogsTable.ForeignKeys[1].RefTable = UsersTable
 	CompetitorMetricsTable.ForeignKeys[0].RefTable = CompetitorProfilesTable
 	CompetitorProfilesTable.ForeignKeys[0].RefTable = UsersTable
+	EmailCampaignsTable.ForeignKeys[0].RefTable = UsersTable
+	EmailCampaignRecipientsTable.ForeignKeys[0].RefTable = EmailCampaignsTable
 	EmailSequencesTable.ForeignKeys[0].RefTable = UsersTable
 	EmailSequenceEnrollmentsTable.ForeignKeys[0].RefTable = EmailSequencesTable
 	EmailSequenceEnrollmentsTable.ForeignKeys[1].RefTable = LeadsTable

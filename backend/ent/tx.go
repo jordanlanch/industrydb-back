@@ -28,6 +28,10 @@ type Tx struct {
 	CompetitorMetric *CompetitorMetricClient
 	// CompetitorProfile is the client for interacting with the CompetitorProfile builders.
 	CompetitorProfile *CompetitorProfileClient
+	// EmailCampaign is the client for interacting with the EmailCampaign builders.
+	EmailCampaign *EmailCampaignClient
+	// EmailCampaignRecipient is the client for interacting with the EmailCampaignRecipient builders.
+	EmailCampaignRecipient *EmailCampaignRecipientClient
 	// EmailSequence is the client for interacting with the EmailSequence builders.
 	EmailSequence *EmailSequenceClient
 	// EmailSequenceEnrollment is the client for interacting with the EmailSequenceEnrollment builders.
@@ -221,6 +225,8 @@ func (tx *Tx) init() {
 	tx.CallLog = NewCallLogClient(tx.config)
 	tx.CompetitorMetric = NewCompetitorMetricClient(tx.config)
 	tx.CompetitorProfile = NewCompetitorProfileClient(tx.config)
+	tx.EmailCampaign = NewEmailCampaignClient(tx.config)
+	tx.EmailCampaignRecipient = NewEmailCampaignRecipientClient(tx.config)
 	tx.EmailSequence = NewEmailSequenceClient(tx.config)
 	tx.EmailSequenceEnrollment = NewEmailSequenceEnrollmentClient(tx.config)
 	tx.EmailSequenceSend = NewEmailSequenceSendClient(tx.config)

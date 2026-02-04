@@ -132,9 +132,11 @@ type UserEdges struct {
 	Behaviors []*UserBehavior `json:"behaviors,omitempty"`
 	// Market intelligence reports generated for this user
 	MarketReports []*MarketReport `json:"market_reports,omitempty"`
+	// Email marketing campaigns created by this user
+	EmailCampaigns []*EmailCampaign `json:"email_campaigns,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [29]bool
+	loadedTypes [30]bool
 }
 
 // SubscriptionsOrErr returns the Subscriptions value or an error if the edge
@@ -398,6 +400,15 @@ func (e UserEdges) MarketReportsOrErr() ([]*MarketReport, error) {
 		return e.MarketReports, nil
 	}
 	return nil, &NotLoadedError{edge: "market_reports"}
+}
+
+// EmailCampaignsOrErr returns the EmailCampaigns value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) EmailCampaignsOrErr() ([]*EmailCampaign, error) {
+	if e.loadedTypes[29] {
+		return e.EmailCampaigns, nil
+	}
+	return nil, &NotLoadedError{edge: "email_campaigns"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -744,6 +755,11 @@ func (_m *User) QueryBehaviors() *UserBehaviorQuery {
 // QueryMarketReports queries the "market_reports" edge of the User entity.
 func (_m *User) QueryMarketReports() *MarketReportQuery {
 	return NewUserClient(_m.config).QueryMarketReports(_m)
+}
+
+// QueryEmailCampaigns queries the "email_campaigns" edge of the User entity.
+func (_m *User) QueryEmailCampaigns() *EmailCampaignQuery {
+	return NewUserClient(_m.config).QueryEmailCampaigns(_m)
 }
 
 // Update returns a builder for updating this User.

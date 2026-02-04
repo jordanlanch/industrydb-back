@@ -20,6 +20,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/calllog"
 	"github.com/jordanlanch/industrydb/ent/competitormetric"
 	"github.com/jordanlanch/industrydb/ent/competitorprofile"
+	"github.com/jordanlanch/industrydb/ent/emailcampaign"
+	"github.com/jordanlanch/industrydb/ent/emailcampaignrecipient"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/emailsequencesend"
@@ -115,6 +117,8 @@ func checkColumn(t, c string) error {
 			calllog.Table:                 calllog.ValidColumn,
 			competitormetric.Table:        competitormetric.ValidColumn,
 			competitorprofile.Table:       competitorprofile.ValidColumn,
+			emailcampaign.Table:           emailcampaign.ValidColumn,
+			emailcampaignrecipient.Table:  emailcampaignrecipient.ValidColumn,
 			emailsequence.Table:           emailsequence.ValidColumn,
 			emailsequenceenrollment.Table: emailsequenceenrollment.ValidColumn,
 			emailsequencesend.Table:       emailsequencesend.ValidColumn,

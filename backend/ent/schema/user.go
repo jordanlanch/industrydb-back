@@ -175,6 +175,8 @@ func (User) Edges() []ent.Edge {
 			Comment("User behavior tracking for recommendations"),
 		edge.To("market_reports", MarketReport.Type).
 			Comment("Market intelligence reports generated for this user"),
+		edge.To("email_campaigns", EmailCampaign.Type).
+			Comment("Email marketing campaigns created by this user"),
 	}
 }
 

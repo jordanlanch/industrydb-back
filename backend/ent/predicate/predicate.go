@@ -30,6 +30,12 @@ type CompetitorMetric func(*sql.Selector)
 // CompetitorProfile is the predicate function for competitorprofile builders.
 type CompetitorProfile func(*sql.Selector)
 
+// EmailCampaign is the predicate function for emailcampaign builders.
+type EmailCampaign func(*sql.Selector)
+
+// EmailCampaignRecipient is the predicate function for emailcampaignrecipient builders.
+type EmailCampaignRecipient func(*sql.Selector)
+
 // EmailSequence is the predicate function for emailsequence builders.
 type EmailSequence func(*sql.Selector)
 

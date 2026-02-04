@@ -105,6 +105,30 @@ func (f CompetitorProfileFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CompetitorProfileMutation", m)
 }
 
+// The EmailCampaignFunc type is an adapter to allow the use of ordinary
+// function as EmailCampaign mutator.
+type EmailCampaignFunc func(context.Context, *ent.EmailCampaignMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f EmailCampaignFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.EmailCampaignMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EmailCampaignMutation", m)
+}
+
+// The EmailCampaignRecipientFunc type is an adapter to allow the use of ordinary
+// function as EmailCampaignRecipient mutator.
+type EmailCampaignRecipientFunc func(context.Context, *ent.EmailCampaignRecipientMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f EmailCampaignRecipientFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.EmailCampaignRecipientMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EmailCampaignRecipientMutation", m)
+}
+
 // The EmailSequenceFunc type is an adapter to allow the use of ordinary
 // function as EmailSequence mutator.
 type EmailSequenceFunc func(context.Context, *ent.EmailSequenceMutation) (ent.Value, error)

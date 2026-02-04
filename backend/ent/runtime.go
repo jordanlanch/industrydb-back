@@ -13,6 +13,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/calllog"
 	"github.com/jordanlanch/industrydb/ent/competitormetric"
 	"github.com/jordanlanch/industrydb/ent/competitorprofile"
+	"github.com/jordanlanch/industrydb/ent/emailcampaign"
+	"github.com/jordanlanch/industrydb/ent/emailcampaignrecipient"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/emailsequencesend"
@@ -335,6 +337,86 @@ func init() {
 	competitorprofile.DefaultUpdatedAt = competitorprofileDescUpdatedAt.Default.(func() time.Time)
 	// competitorprofile.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	competitorprofile.UpdateDefaultUpdatedAt = competitorprofileDescUpdatedAt.UpdateDefault.(func() time.Time)
+	emailcampaignFields := schema.EmailCampaign{}.Fields()
+	_ = emailcampaignFields
+	// emailcampaignDescName is the schema descriptor for name field.
+	emailcampaignDescName := emailcampaignFields[0].Descriptor()
+	// emailcampaign.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	emailcampaign.NameValidator = emailcampaignDescName.Validators[0].(func(string) error)
+	// emailcampaignDescSubject is the schema descriptor for subject field.
+	emailcampaignDescSubject := emailcampaignFields[1].Descriptor()
+	// emailcampaign.SubjectValidator is a validator for the "subject" field. It is called by the builders before save.
+	emailcampaign.SubjectValidator = emailcampaignDescSubject.Validators[0].(func(string) error)
+	// emailcampaignDescFromEmail is the schema descriptor for from_email field.
+	emailcampaignDescFromEmail := emailcampaignFields[6].Descriptor()
+	// emailcampaign.FromEmailValidator is a validator for the "from_email" field. It is called by the builders before save.
+	emailcampaign.FromEmailValidator = emailcampaignDescFromEmail.Validators[0].(func(string) error)
+	// emailcampaignDescFromName is the schema descriptor for from_name field.
+	emailcampaignDescFromName := emailcampaignFields[7].Descriptor()
+	// emailcampaign.FromNameValidator is a validator for the "from_name" field. It is called by the builders before save.
+	emailcampaign.FromNameValidator = emailcampaignDescFromName.Validators[0].(func(string) error)
+	// emailcampaignDescRecipientsCount is the schema descriptor for recipients_count field.
+	emailcampaignDescRecipientsCount := emailcampaignFields[11].Descriptor()
+	// emailcampaign.DefaultRecipientsCount holds the default value on creation for the recipients_count field.
+	emailcampaign.DefaultRecipientsCount = emailcampaignDescRecipientsCount.Default.(int)
+	// emailcampaign.RecipientsCountValidator is a validator for the "recipients_count" field. It is called by the builders before save.
+	emailcampaign.RecipientsCountValidator = emailcampaignDescRecipientsCount.Validators[0].(func(int) error)
+	// emailcampaignDescSentCount is the schema descriptor for sent_count field.
+	emailcampaignDescSentCount := emailcampaignFields[12].Descriptor()
+	// emailcampaign.DefaultSentCount holds the default value on creation for the sent_count field.
+	emailcampaign.DefaultSentCount = emailcampaignDescSentCount.Default.(int)
+	// emailcampaign.SentCountValidator is a validator for the "sent_count" field. It is called by the builders before save.
+	emailcampaign.SentCountValidator = emailcampaignDescSentCount.Validators[0].(func(int) error)
+	// emailcampaignDescFailedCount is the schema descriptor for failed_count field.
+	emailcampaignDescFailedCount := emailcampaignFields[13].Descriptor()
+	// emailcampaign.DefaultFailedCount holds the default value on creation for the failed_count field.
+	emailcampaign.DefaultFailedCount = emailcampaignDescFailedCount.Default.(int)
+	// emailcampaign.FailedCountValidator is a validator for the "failed_count" field. It is called by the builders before save.
+	emailcampaign.FailedCountValidator = emailcampaignDescFailedCount.Validators[0].(func(int) error)
+	// emailcampaignDescOpenedCount is the schema descriptor for opened_count field.
+	emailcampaignDescOpenedCount := emailcampaignFields[14].Descriptor()
+	// emailcampaign.DefaultOpenedCount holds the default value on creation for the opened_count field.
+	emailcampaign.DefaultOpenedCount = emailcampaignDescOpenedCount.Default.(int)
+	// emailcampaign.OpenedCountValidator is a validator for the "opened_count" field. It is called by the builders before save.
+	emailcampaign.OpenedCountValidator = emailcampaignDescOpenedCount.Validators[0].(func(int) error)
+	// emailcampaignDescClickedCount is the schema descriptor for clicked_count field.
+	emailcampaignDescClickedCount := emailcampaignFields[15].Descriptor()
+	// emailcampaign.DefaultClickedCount holds the default value on creation for the clicked_count field.
+	emailcampaign.DefaultClickedCount = emailcampaignDescClickedCount.Default.(int)
+	// emailcampaign.ClickedCountValidator is a validator for the "clicked_count" field. It is called by the builders before save.
+	emailcampaign.ClickedCountValidator = emailcampaignDescClickedCount.Validators[0].(func(int) error)
+	// emailcampaignDescUnsubscribedCount is the schema descriptor for unsubscribed_count field.
+	emailcampaignDescUnsubscribedCount := emailcampaignFields[16].Descriptor()
+	// emailcampaign.DefaultUnsubscribedCount holds the default value on creation for the unsubscribed_count field.
+	emailcampaign.DefaultUnsubscribedCount = emailcampaignDescUnsubscribedCount.Default.(int)
+	// emailcampaign.UnsubscribedCountValidator is a validator for the "unsubscribed_count" field. It is called by the builders before save.
+	emailcampaign.UnsubscribedCountValidator = emailcampaignDescUnsubscribedCount.Validators[0].(func(int) error)
+	// emailcampaignDescCreatedAt is the schema descriptor for created_at field.
+	emailcampaignDescCreatedAt := emailcampaignFields[19].Descriptor()
+	// emailcampaign.DefaultCreatedAt holds the default value on creation for the created_at field.
+	emailcampaign.DefaultCreatedAt = emailcampaignDescCreatedAt.Default.(func() time.Time)
+	// emailcampaignDescUpdatedAt is the schema descriptor for updated_at field.
+	emailcampaignDescUpdatedAt := emailcampaignFields[20].Descriptor()
+	// emailcampaign.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	emailcampaign.DefaultUpdatedAt = emailcampaignDescUpdatedAt.Default.(func() time.Time)
+	// emailcampaign.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	emailcampaign.UpdateDefaultUpdatedAt = emailcampaignDescUpdatedAt.UpdateDefault.(func() time.Time)
+	emailcampaignrecipientFields := schema.EmailCampaignRecipient{}.Fields()
+	_ = emailcampaignrecipientFields
+	// emailcampaignrecipientDescEmail is the schema descriptor for email field.
+	emailcampaignrecipientDescEmail := emailcampaignrecipientFields[1].Descriptor()
+	// emailcampaignrecipient.EmailValidator is a validator for the "email" field. It is called by the builders before save.
+	emailcampaignrecipient.EmailValidator = emailcampaignrecipientDescEmail.Validators[0].(func(string) error)
+	// emailcampaignrecipientDescCreatedAt is the schema descriptor for created_at field.
+	emailcampaignrecipientDescCreatedAt := emailcampaignrecipientFields[10].Descriptor()
+	// emailcampaignrecipient.DefaultCreatedAt holds the default value on creation for the created_at field.
+	emailcampaignrecipient.DefaultCreatedAt = emailcampaignrecipientDescCreatedAt.Default.(func() time.Time)
+	// emailcampaignrecipientDescUpdatedAt is the schema descriptor for updated_at field.
+	emailcampaignrecipientDescUpdatedAt := emailcampaignrecipientFields[11].Descriptor()
+	// emailcampaignrecipient.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	emailcampaignrecipient.DefaultUpdatedAt = emailcampaignrecipientDescUpdatedAt.Default.(func() time.Time)
+	// emailcampaignrecipient.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	emailcampaignrecipient.UpdateDefaultUpdatedAt = emailcampaignrecipientDescUpdatedAt.UpdateDefault.(func() time.Time)
 	emailsequenceFields := schema.EmailSequence{}.Fields()
 	_ = emailsequenceFields
 	// emailsequenceDescName is the schema descriptor for name field.

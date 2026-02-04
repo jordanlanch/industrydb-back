@@ -17,6 +17,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/calllog"
 	"github.com/jordanlanch/industrydb/ent/competitorprofile"
+	"github.com/jordanlanch/industrydb/ent/emailcampaign"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/experimentassignment"
@@ -888,6 +889,21 @@ func (_u *UserUpdate) AddMarketReports(v ...*MarketReport) *UserUpdate {
 	return _u.AddMarketReportIDs(ids...)
 }
 
+// AddEmailCampaignIDs adds the "email_campaigns" edge to the EmailCampaign entity by IDs.
+func (_u *UserUpdate) AddEmailCampaignIDs(ids ...int) *UserUpdate {
+	_u.mutation.AddEmailCampaignIDs(ids...)
+	return _u
+}
+
+// AddEmailCampaigns adds the "email_campaigns" edges to the EmailCampaign entity.
+func (_u *UserUpdate) AddEmailCampaigns(v ...*EmailCampaign) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddEmailCampaignIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -1485,6 +1501,27 @@ func (_u *UserUpdate) RemoveMarketReports(v ...*MarketReport) *UserUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveMarketReportIDs(ids...)
+}
+
+// ClearEmailCampaigns clears all "email_campaigns" edges to the EmailCampaign entity.
+func (_u *UserUpdate) ClearEmailCampaigns() *UserUpdate {
+	_u.mutation.ClearEmailCampaigns()
+	return _u
+}
+
+// RemoveEmailCampaignIDs removes the "email_campaigns" edge to EmailCampaign entities by IDs.
+func (_u *UserUpdate) RemoveEmailCampaignIDs(ids ...int) *UserUpdate {
+	_u.mutation.RemoveEmailCampaignIDs(ids...)
+	return _u
+}
+
+// RemoveEmailCampaigns removes "email_campaigns" edges to EmailCampaign entities.
+func (_u *UserUpdate) RemoveEmailCampaigns(v ...*EmailCampaign) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveEmailCampaignIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -2977,6 +3014,51 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.EmailCampaignsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailCampaignsTable,
+			Columns: []string{user.EmailCampaignsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailcampaign.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedEmailCampaignsIDs(); len(nodes) > 0 && !_u.mutation.EmailCampaignsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailCampaignsTable,
+			Columns: []string{user.EmailCampaignsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailcampaign.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.EmailCampaignsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailCampaignsTable,
+			Columns: []string{user.EmailCampaignsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailcampaign.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -3831,6 +3913,21 @@ func (_u *UserUpdateOne) AddMarketReports(v ...*MarketReport) *UserUpdateOne {
 	return _u.AddMarketReportIDs(ids...)
 }
 
+// AddEmailCampaignIDs adds the "email_campaigns" edge to the EmailCampaign entity by IDs.
+func (_u *UserUpdateOne) AddEmailCampaignIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.AddEmailCampaignIDs(ids...)
+	return _u
+}
+
+// AddEmailCampaigns adds the "email_campaigns" edges to the EmailCampaign entity.
+func (_u *UserUpdateOne) AddEmailCampaigns(v ...*EmailCampaign) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddEmailCampaignIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -4428,6 +4525,27 @@ func (_u *UserUpdateOne) RemoveMarketReports(v ...*MarketReport) *UserUpdateOne 
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveMarketReportIDs(ids...)
+}
+
+// ClearEmailCampaigns clears all "email_campaigns" edges to the EmailCampaign entity.
+func (_u *UserUpdateOne) ClearEmailCampaigns() *UserUpdateOne {
+	_u.mutation.ClearEmailCampaigns()
+	return _u
+}
+
+// RemoveEmailCampaignIDs removes the "email_campaigns" edge to EmailCampaign entities by IDs.
+func (_u *UserUpdateOne) RemoveEmailCampaignIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.RemoveEmailCampaignIDs(ids...)
+	return _u
+}
+
+// RemoveEmailCampaigns removes "email_campaigns" edges to EmailCampaign entities.
+func (_u *UserUpdateOne) RemoveEmailCampaigns(v ...*EmailCampaign) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveEmailCampaignIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -5943,6 +6061,51 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(marketreport.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.EmailCampaignsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailCampaignsTable,
+			Columns: []string{user.EmailCampaignsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailcampaign.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedEmailCampaignsIDs(); len(nodes) > 0 && !_u.mutation.EmailCampaignsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailCampaignsTable,
+			Columns: []string{user.EmailCampaignsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailcampaign.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.EmailCampaignsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailCampaignsTable,
+			Columns: []string{user.EmailCampaignsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailcampaign.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

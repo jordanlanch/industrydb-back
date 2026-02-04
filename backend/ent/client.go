@@ -23,6 +23,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/calllog"
 	"github.com/jordanlanch/industrydb/ent/competitormetric"
 	"github.com/jordanlanch/industrydb/ent/competitorprofile"
+	"github.com/jordanlanch/industrydb/ent/emailcampaign"
+	"github.com/jordanlanch/industrydb/ent/emailcampaignrecipient"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/emailsequencesend"
@@ -73,6 +75,10 @@ type Client struct {
 	CompetitorMetric *CompetitorMetricClient
 	// CompetitorProfile is the client for interacting with the CompetitorProfile builders.
 	CompetitorProfile *CompetitorProfileClient
+	// EmailCampaign is the client for interacting with the EmailCampaign builders.
+	EmailCampaign *EmailCampaignClient
+	// EmailCampaignRecipient is the client for interacting with the EmailCampaignRecipient builders.
+	EmailCampaignRecipient *EmailCampaignRecipientClient
 	// EmailSequence is the client for interacting with the EmailSequence builders.
 	EmailSequence *EmailSequenceClient
 	// EmailSequenceEnrollment is the client for interacting with the EmailSequenceEnrollment builders.
@@ -146,6 +152,8 @@ func (c *Client) init() {
 	c.CallLog = NewCallLogClient(c.config)
 	c.CompetitorMetric = NewCompetitorMetricClient(c.config)
 	c.CompetitorProfile = NewCompetitorProfileClient(c.config)
+	c.EmailCampaign = NewEmailCampaignClient(c.config)
+	c.EmailCampaignRecipient = NewEmailCampaignRecipientClient(c.config)
 	c.EmailSequence = NewEmailSequenceClient(c.config)
 	c.EmailSequenceEnrollment = NewEmailSequenceEnrollmentClient(c.config)
 	c.EmailSequenceSend = NewEmailSequenceSendClient(c.config)
@@ -273,6 +281,8 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		CallLog:                 NewCallLogClient(cfg),
 		CompetitorMetric:        NewCompetitorMetricClient(cfg),
 		CompetitorProfile:       NewCompetitorProfileClient(cfg),
+		EmailCampaign:           NewEmailCampaignClient(cfg),
+		EmailCampaignRecipient:  NewEmailCampaignRecipientClient(cfg),
 		EmailSequence:           NewEmailSequenceClient(cfg),
 		EmailSequenceEnrollment: NewEmailSequenceEnrollmentClient(cfg),
 		EmailSequenceSend:       NewEmailSequenceSendClient(cfg),
@@ -327,6 +337,8 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		CallLog:                 NewCallLogClient(cfg),
 		CompetitorMetric:        NewCompetitorMetricClient(cfg),
 		CompetitorProfile:       NewCompetitorProfileClient(cfg),
+		EmailCampaign:           NewEmailCampaignClient(cfg),
+		EmailCampaignRecipient:  NewEmailCampaignRecipientClient(cfg),
 		EmailSequence:           NewEmailSequenceClient(cfg),
 		EmailSequenceEnrollment: NewEmailSequenceEnrollmentClient(cfg),
 		EmailSequenceSend:       NewEmailSequenceSendClient(cfg),
@@ -384,13 +396,14 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.APIKey, c.Affiliate, c.AffiliateClick, c.AffiliateConversion, c.AuditLog,
-		c.CallLog, c.CompetitorMetric, c.CompetitorProfile, c.EmailSequence,
-		c.EmailSequenceEnrollment, c.EmailSequenceSend, c.EmailSequenceStep,
-		c.Experiment, c.ExperimentAssignment, c.Export, c.Industry, c.Lead,
-		c.LeadAssignment, c.LeadNote, c.LeadRecommendation, c.LeadStatusHistory,
-		c.MarketReport, c.Organization, c.OrganizationMember, c.Referral,
-		c.SMSCampaign, c.SMSMessage, c.SavedSearch, c.Subscription, c.Territory,
-		c.TerritoryMember, c.UsageLog, c.User, c.UserBehavior, c.Webhook,
+		c.CallLog, c.CompetitorMetric, c.CompetitorProfile, c.EmailCampaign,
+		c.EmailCampaignRecipient, c.EmailSequence, c.EmailSequenceEnrollment,
+		c.EmailSequenceSend, c.EmailSequenceStep, c.Experiment, c.ExperimentAssignment,
+		c.Export, c.Industry, c.Lead, c.LeadAssignment, c.LeadNote,
+		c.LeadRecommendation, c.LeadStatusHistory, c.MarketReport, c.Organization,
+		c.OrganizationMember, c.Referral, c.SMSCampaign, c.SMSMessage, c.SavedSearch,
+		c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog, c.User,
+		c.UserBehavior, c.Webhook,
 	} {
 		n.Use(hooks...)
 	}
@@ -401,13 +414,14 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.APIKey, c.Affiliate, c.AffiliateClick, c.AffiliateConversion, c.AuditLog,
-		c.CallLog, c.CompetitorMetric, c.CompetitorProfile, c.EmailSequence,
-		c.EmailSequenceEnrollment, c.EmailSequenceSend, c.EmailSequenceStep,
-		c.Experiment, c.ExperimentAssignment, c.Export, c.Industry, c.Lead,
-		c.LeadAssignment, c.LeadNote, c.LeadRecommendation, c.LeadStatusHistory,
-		c.MarketReport, c.Organization, c.OrganizationMember, c.Referral,
-		c.SMSCampaign, c.SMSMessage, c.SavedSearch, c.Subscription, c.Territory,
-		c.TerritoryMember, c.UsageLog, c.User, c.UserBehavior, c.Webhook,
+		c.CallLog, c.CompetitorMetric, c.CompetitorProfile, c.EmailCampaign,
+		c.EmailCampaignRecipient, c.EmailSequence, c.EmailSequenceEnrollment,
+		c.EmailSequenceSend, c.EmailSequenceStep, c.Experiment, c.ExperimentAssignment,
+		c.Export, c.Industry, c.Lead, c.LeadAssignment, c.LeadNote,
+		c.LeadRecommendation, c.LeadStatusHistory, c.MarketReport, c.Organization,
+		c.OrganizationMember, c.Referral, c.SMSCampaign, c.SMSMessage, c.SavedSearch,
+		c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog, c.User,
+		c.UserBehavior, c.Webhook,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -432,6 +446,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.CompetitorMetric.mutate(ctx, m)
 	case *CompetitorProfileMutation:
 		return c.CompetitorProfile.mutate(ctx, m)
+	case *EmailCampaignMutation:
+		return c.EmailCampaign.mutate(ctx, m)
+	case *EmailCampaignRecipientMutation:
+		return c.EmailCampaignRecipient.mutate(ctx, m)
 	case *EmailSequenceMutation:
 		return c.EmailSequence.mutate(ctx, m)
 	case *EmailSequenceEnrollmentMutation:
@@ -1760,6 +1778,320 @@ func (c *CompetitorProfileClient) mutate(ctx context.Context, m *CompetitorProfi
 		return (&CompetitorProfileDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown CompetitorProfile mutation op: %q", m.Op())
+	}
+}
+
+// EmailCampaignClient is a client for the EmailCampaign schema.
+type EmailCampaignClient struct {
+	config
+}
+
+// NewEmailCampaignClient returns a client for the EmailCampaign from the given config.
+func NewEmailCampaignClient(c config) *EmailCampaignClient {
+	return &EmailCampaignClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `emailcampaign.Hooks(f(g(h())))`.
+func (c *EmailCampaignClient) Use(hooks ...Hook) {
+	c.hooks.EmailCampaign = append(c.hooks.EmailCampaign, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `emailcampaign.Intercept(f(g(h())))`.
+func (c *EmailCampaignClient) Intercept(interceptors ...Interceptor) {
+	c.inters.EmailCampaign = append(c.inters.EmailCampaign, interceptors...)
+}
+
+// Create returns a builder for creating a EmailCampaign entity.
+func (c *EmailCampaignClient) Create() *EmailCampaignCreate {
+	mutation := newEmailCampaignMutation(c.config, OpCreate)
+	return &EmailCampaignCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of EmailCampaign entities.
+func (c *EmailCampaignClient) CreateBulk(builders ...*EmailCampaignCreate) *EmailCampaignCreateBulk {
+	return &EmailCampaignCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *EmailCampaignClient) MapCreateBulk(slice any, setFunc func(*EmailCampaignCreate, int)) *EmailCampaignCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &EmailCampaignCreateBulk{err: fmt.Errorf("calling to EmailCampaignClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*EmailCampaignCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &EmailCampaignCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for EmailCampaign.
+func (c *EmailCampaignClient) Update() *EmailCampaignUpdate {
+	mutation := newEmailCampaignMutation(c.config, OpUpdate)
+	return &EmailCampaignUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *EmailCampaignClient) UpdateOne(_m *EmailCampaign) *EmailCampaignUpdateOne {
+	mutation := newEmailCampaignMutation(c.config, OpUpdateOne, withEmailCampaign(_m))
+	return &EmailCampaignUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *EmailCampaignClient) UpdateOneID(id int) *EmailCampaignUpdateOne {
+	mutation := newEmailCampaignMutation(c.config, OpUpdateOne, withEmailCampaignID(id))
+	return &EmailCampaignUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for EmailCampaign.
+func (c *EmailCampaignClient) Delete() *EmailCampaignDelete {
+	mutation := newEmailCampaignMutation(c.config, OpDelete)
+	return &EmailCampaignDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *EmailCampaignClient) DeleteOne(_m *EmailCampaign) *EmailCampaignDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *EmailCampaignClient) DeleteOneID(id int) *EmailCampaignDeleteOne {
+	builder := c.Delete().Where(emailcampaign.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &EmailCampaignDeleteOne{builder}
+}
+
+// Query returns a query builder for EmailCampaign.
+func (c *EmailCampaignClient) Query() *EmailCampaignQuery {
+	return &EmailCampaignQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeEmailCampaign},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a EmailCampaign entity by its id.
+func (c *EmailCampaignClient) Get(ctx context.Context, id int) (*EmailCampaign, error) {
+	return c.Query().Where(emailcampaign.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *EmailCampaignClient) GetX(ctx context.Context, id int) *EmailCampaign {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a EmailCampaign.
+func (c *EmailCampaignClient) QueryUser(_m *EmailCampaign) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(emailcampaign.Table, emailcampaign.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, emailcampaign.UserTable, emailcampaign.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRecipients queries the recipients edge of a EmailCampaign.
+func (c *EmailCampaignClient) QueryRecipients(_m *EmailCampaign) *EmailCampaignRecipientQuery {
+	query := (&EmailCampaignRecipientClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(emailcampaign.Table, emailcampaign.FieldID, id),
+			sqlgraph.To(emailcampaignrecipient.Table, emailcampaignrecipient.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, emailcampaign.RecipientsTable, emailcampaign.RecipientsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *EmailCampaignClient) Hooks() []Hook {
+	return c.hooks.EmailCampaign
+}
+
+// Interceptors returns the client interceptors.
+func (c *EmailCampaignClient) Interceptors() []Interceptor {
+	return c.inters.EmailCampaign
+}
+
+func (c *EmailCampaignClient) mutate(ctx context.Context, m *EmailCampaignMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&EmailCampaignCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&EmailCampaignUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&EmailCampaignUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&EmailCampaignDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown EmailCampaign mutation op: %q", m.Op())
+	}
+}
+
+// EmailCampaignRecipientClient is a client for the EmailCampaignRecipient schema.
+type EmailCampaignRecipientClient struct {
+	config
+}
+
+// NewEmailCampaignRecipientClient returns a client for the EmailCampaignRecipient from the given config.
+func NewEmailCampaignRecipientClient(c config) *EmailCampaignRecipientClient {
+	return &EmailCampaignRecipientClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `emailcampaignrecipient.Hooks(f(g(h())))`.
+func (c *EmailCampaignRecipientClient) Use(hooks ...Hook) {
+	c.hooks.EmailCampaignRecipient = append(c.hooks.EmailCampaignRecipient, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `emailcampaignrecipient.Intercept(f(g(h())))`.
+func (c *EmailCampaignRecipientClient) Intercept(interceptors ...Interceptor) {
+	c.inters.EmailCampaignRecipient = append(c.inters.EmailCampaignRecipient, interceptors...)
+}
+
+// Create returns a builder for creating a EmailCampaignRecipient entity.
+func (c *EmailCampaignRecipientClient) Create() *EmailCampaignRecipientCreate {
+	mutation := newEmailCampaignRecipientMutation(c.config, OpCreate)
+	return &EmailCampaignRecipientCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of EmailCampaignRecipient entities.
+func (c *EmailCampaignRecipientClient) CreateBulk(builders ...*EmailCampaignRecipientCreate) *EmailCampaignRecipientCreateBulk {
+	return &EmailCampaignRecipientCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *EmailCampaignRecipientClient) MapCreateBulk(slice any, setFunc func(*EmailCampaignRecipientCreate, int)) *EmailCampaignRecipientCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &EmailCampaignRecipientCreateBulk{err: fmt.Errorf("calling to EmailCampaignRecipientClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*EmailCampaignRecipientCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &EmailCampaignRecipientCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for EmailCampaignRecipient.
+func (c *EmailCampaignRecipientClient) Update() *EmailCampaignRecipientUpdate {
+	mutation := newEmailCampaignRecipientMutation(c.config, OpUpdate)
+	return &EmailCampaignRecipientUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *EmailCampaignRecipientClient) UpdateOne(_m *EmailCampaignRecipient) *EmailCampaignRecipientUpdateOne {
+	mutation := newEmailCampaignRecipientMutation(c.config, OpUpdateOne, withEmailCampaignRecipient(_m))
+	return &EmailCampaignRecipientUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *EmailCampaignRecipientClient) UpdateOneID(id int) *EmailCampaignRecipientUpdateOne {
+	mutation := newEmailCampaignRecipientMutation(c.config, OpUpdateOne, withEmailCampaignRecipientID(id))
+	return &EmailCampaignRecipientUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for EmailCampaignRecipient.
+func (c *EmailCampaignRecipientClient) Delete() *EmailCampaignRecipientDelete {
+	mutation := newEmailCampaignRecipientMutation(c.config, OpDelete)
+	return &EmailCampaignRecipientDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *EmailCampaignRecipientClient) DeleteOne(_m *EmailCampaignRecipient) *EmailCampaignRecipientDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *EmailCampaignRecipientClient) DeleteOneID(id int) *EmailCampaignRecipientDeleteOne {
+	builder := c.Delete().Where(emailcampaignrecipient.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &EmailCampaignRecipientDeleteOne{builder}
+}
+
+// Query returns a query builder for EmailCampaignRecipient.
+func (c *EmailCampaignRecipientClient) Query() *EmailCampaignRecipientQuery {
+	return &EmailCampaignRecipientQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeEmailCampaignRecipient},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a EmailCampaignRecipient entity by its id.
+func (c *EmailCampaignRecipientClient) Get(ctx context.Context, id int) (*EmailCampaignRecipient, error) {
+	return c.Query().Where(emailcampaignrecipient.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *EmailCampaignRecipientClient) GetX(ctx context.Context, id int) *EmailCampaignRecipient {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryCampaign queries the campaign edge of a EmailCampaignRecipient.
+func (c *EmailCampaignRecipientClient) QueryCampaign(_m *EmailCampaignRecipient) *EmailCampaignQuery {
+	query := (&EmailCampaignClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(emailcampaignrecipient.Table, emailcampaignrecipient.FieldID, id),
+			sqlgraph.To(emailcampaign.Table, emailcampaign.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, emailcampaignrecipient.CampaignTable, emailcampaignrecipient.CampaignColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *EmailCampaignRecipientClient) Hooks() []Hook {
+	return c.hooks.EmailCampaignRecipient
+}
+
+// Interceptors returns the client interceptors.
+func (c *EmailCampaignRecipientClient) Interceptors() []Interceptor {
+	return c.inters.EmailCampaignRecipient
+}
+
+func (c *EmailCampaignRecipientClient) mutate(ctx context.Context, m *EmailCampaignRecipientMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&EmailCampaignRecipientCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&EmailCampaignRecipientUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&EmailCampaignRecipientUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&EmailCampaignRecipientDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown EmailCampaignRecipient mutation op: %q", m.Op())
 	}
 }
 
@@ -6423,6 +6755,22 @@ func (c *UserClient) QueryMarketReports(_m *User) *MarketReportQuery {
 	return query
 }
 
+// QueryEmailCampaigns queries the email_campaigns edge of a User.
+func (c *UserClient) QueryEmailCampaigns(_m *User) *EmailCampaignQuery {
+	query := (&EmailCampaignClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(emailcampaign.Table, emailcampaign.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.EmailCampaignsTable, user.EmailCampaignsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -6750,20 +7098,22 @@ func (c *WebhookClient) mutate(ctx context.Context, m *WebhookMutation) (Value, 
 type (
 	hooks struct {
 		APIKey, Affiliate, AffiliateClick, AffiliateConversion, AuditLog, CallLog,
-		CompetitorMetric, CompetitorProfile, EmailSequence, EmailSequenceEnrollment,
-		EmailSequenceSend, EmailSequenceStep, Experiment, ExperimentAssignment, Export,
-		Industry, Lead, LeadAssignment, LeadNote, LeadRecommendation,
-		LeadStatusHistory, MarketReport, Organization, OrganizationMember, Referral,
-		SMSCampaign, SMSMessage, SavedSearch, Subscription, Territory, TerritoryMember,
-		UsageLog, User, UserBehavior, Webhook []ent.Hook
+		CompetitorMetric, CompetitorProfile, EmailCampaign, EmailCampaignRecipient,
+		EmailSequence, EmailSequenceEnrollment, EmailSequenceSend, EmailSequenceStep,
+		Experiment, ExperimentAssignment, Export, Industry, Lead, LeadAssignment,
+		LeadNote, LeadRecommendation, LeadStatusHistory, MarketReport, Organization,
+		OrganizationMember, Referral, SMSCampaign, SMSMessage, SavedSearch,
+		Subscription, Territory, TerritoryMember, UsageLog, User, UserBehavior,
+		Webhook []ent.Hook
 	}
 	inters struct {
 		APIKey, Affiliate, AffiliateClick, AffiliateConversion, AuditLog, CallLog,
-		CompetitorMetric, CompetitorProfile, EmailSequence, EmailSequenceEnrollment,
-		EmailSequenceSend, EmailSequenceStep, Experiment, ExperimentAssignment, Export,
-		Industry, Lead, LeadAssignment, LeadNote, LeadRecommendation,
-		LeadStatusHistory, MarketReport, Organization, OrganizationMember, Referral,
-		SMSCampaign, SMSMessage, SavedSearch, Subscription, Territory, TerritoryMember,
-		UsageLog, User, UserBehavior, Webhook []ent.Interceptor
+		CompetitorMetric, CompetitorProfile, EmailCampaign, EmailCampaignRecipient,
+		EmailSequence, EmailSequenceEnrollment, EmailSequenceSend, EmailSequenceStep,
+		Experiment, ExperimentAssignment, Export, Industry, Lead, LeadAssignment,
+		LeadNote, LeadRecommendation, LeadStatusHistory, MarketReport, Organization,
+		OrganizationMember, Referral, SMSCampaign, SMSMessage, SavedSearch,
+		Subscription, Territory, TerritoryMember, UsageLog, User, UserBehavior,
+		Webhook []ent.Interceptor
 	}
 )
