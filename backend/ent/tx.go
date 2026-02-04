@@ -22,6 +22,10 @@ type Tx struct {
 	AffiliateConversion *AffiliateConversionClient
 	// AuditLog is the client for interacting with the AuditLog builders.
 	AuditLog *AuditLogClient
+	// CRMIntegration is the client for interacting with the CRMIntegration builders.
+	CRMIntegration *CRMIntegrationClient
+	// CRMLeadSync is the client for interacting with the CRMLeadSync builders.
+	CRMLeadSync *CRMLeadSyncClient
 	// CallLog is the client for interacting with the CallLog builders.
 	CallLog *CallLogClient
 	// CompetitorMetric is the client for interacting with the CompetitorMetric builders.
@@ -222,6 +226,8 @@ func (tx *Tx) init() {
 	tx.AffiliateClick = NewAffiliateClickClient(tx.config)
 	tx.AffiliateConversion = NewAffiliateConversionClient(tx.config)
 	tx.AuditLog = NewAuditLogClient(tx.config)
+	tx.CRMIntegration = NewCRMIntegrationClient(tx.config)
+	tx.CRMLeadSync = NewCRMLeadSyncClient(tx.config)
 	tx.CallLog = NewCallLogClient(tx.config)
 	tx.CompetitorMetric = NewCompetitorMetricClient(tx.config)
 	tx.CompetitorProfile = NewCompetitorProfileClient(tx.config)

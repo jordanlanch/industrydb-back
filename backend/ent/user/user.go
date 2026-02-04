@@ -123,6 +123,8 @@ const (
 	EdgeMarketReports = "market_reports"
 	// EdgeEmailCampaigns holds the string denoting the email_campaigns edge name in mutations.
 	EdgeEmailCampaigns = "email_campaigns"
+	// EdgeCrmIntegrations holds the string denoting the crm_integrations edge name in mutations.
+	EdgeCrmIntegrations = "crm_integrations"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// SubscriptionsTable is the table that holds the subscriptions relation/edge.
@@ -335,6 +337,13 @@ const (
 	EmailCampaignsInverseTable = "email_campaigns"
 	// EmailCampaignsColumn is the table column denoting the email_campaigns relation/edge.
 	EmailCampaignsColumn = "user_id"
+	// CrmIntegrationsTable is the table that holds the crm_integrations relation/edge.
+	CrmIntegrationsTable = "crm_integrations"
+	// CrmIntegrationsInverseTable is the table name for the CRMIntegration entity.
+	// It exists in this package in order to avoid circular dependency with the "crmintegration" package.
+	CrmIntegrationsInverseTable = "crm_integrations"
+	// CrmIntegrationsColumn is the table column denoting the crm_integrations relation/edge.
+	CrmIntegrationsColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -1006,6 +1015,20 @@ func ByEmailCampaigns(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newEmailCampaignsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByCrmIntegrationsCount orders the results by crm_integrations count.
+func ByCrmIntegrationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newCrmIntegrationsStep(), opts...)
+	}
+}
+
+// ByCrmIntegrations orders the results by crm_integrations terms.
+func ByCrmIntegrations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCrmIntegrationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSubscriptionsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -1214,5 +1237,12 @@ func newEmailCampaignsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(EmailCampaignsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, EmailCampaignsTable, EmailCampaignsColumn),
+	)
+}
+func newCrmIntegrationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CrmIntegrationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, CrmIntegrationsTable, CrmIntegrationsColumn),
 	)
 }

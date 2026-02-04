@@ -177,6 +177,8 @@ func (User) Edges() []ent.Edge {
 			Comment("Market intelligence reports generated for this user"),
 		edge.To("email_campaigns", EmailCampaign.Type).
 			Comment("Email marketing campaigns created by this user"),
+		edge.To("crm_integrations", CRMIntegration.Type).
+			Comment("CRM integrations configured by this user"),
 	}
 }
 

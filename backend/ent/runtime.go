@@ -13,6 +13,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/calllog"
 	"github.com/jordanlanch/industrydb/ent/competitormetric"
 	"github.com/jordanlanch/industrydb/ent/competitorprofile"
+	"github.com/jordanlanch/industrydb/ent/crmintegration"
+	"github.com/jordanlanch/industrydb/ent/crmleadsync"
 	"github.com/jordanlanch/industrydb/ent/emailcampaign"
 	"github.com/jordanlanch/industrydb/ent/emailcampaignrecipient"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
@@ -167,6 +169,54 @@ func init() {
 	auditlogDescCreatedAt := auditlogFields[9].Descriptor()
 	// auditlog.DefaultCreatedAt holds the default value on creation for the created_at field.
 	auditlog.DefaultCreatedAt = auditlogDescCreatedAt.Default.(func() time.Time)
+	crmintegrationFields := schema.CRMIntegration{}.Fields()
+	_ = crmintegrationFields
+	// crmintegrationDescEnabled is the schema descriptor for enabled field.
+	crmintegrationDescEnabled := crmintegrationFields[2].Descriptor()
+	// crmintegration.DefaultEnabled holds the default value on creation for the enabled field.
+	crmintegration.DefaultEnabled = crmintegrationDescEnabled.Default.(bool)
+	// crmintegrationDescAutoSync is the schema descriptor for auto_sync field.
+	crmintegrationDescAutoSync := crmintegrationFields[10].Descriptor()
+	// crmintegration.DefaultAutoSync holds the default value on creation for the auto_sync field.
+	crmintegration.DefaultAutoSync = crmintegrationDescAutoSync.Default.(bool)
+	// crmintegrationDescSyncIntervalMinutes is the schema descriptor for sync_interval_minutes field.
+	crmintegrationDescSyncIntervalMinutes := crmintegrationFields[11].Descriptor()
+	// crmintegration.DefaultSyncIntervalMinutes holds the default value on creation for the sync_interval_minutes field.
+	crmintegration.DefaultSyncIntervalMinutes = crmintegrationDescSyncIntervalMinutes.Default.(int)
+	// crmintegration.SyncIntervalMinutesValidator is a validator for the "sync_interval_minutes" field. It is called by the builders before save.
+	crmintegration.SyncIntervalMinutesValidator = crmintegrationDescSyncIntervalMinutes.Validators[0].(func(int) error)
+	// crmintegrationDescSyncedLeadsCount is the schema descriptor for synced_leads_count field.
+	crmintegrationDescSyncedLeadsCount := crmintegrationFields[14].Descriptor()
+	// crmintegration.DefaultSyncedLeadsCount holds the default value on creation for the synced_leads_count field.
+	crmintegration.DefaultSyncedLeadsCount = crmintegrationDescSyncedLeadsCount.Default.(int)
+	// crmintegration.SyncedLeadsCountValidator is a validator for the "synced_leads_count" field. It is called by the builders before save.
+	crmintegration.SyncedLeadsCountValidator = crmintegrationDescSyncedLeadsCount.Validators[0].(func(int) error)
+	// crmintegrationDescCreatedAt is the schema descriptor for created_at field.
+	crmintegrationDescCreatedAt := crmintegrationFields[15].Descriptor()
+	// crmintegration.DefaultCreatedAt holds the default value on creation for the created_at field.
+	crmintegration.DefaultCreatedAt = crmintegrationDescCreatedAt.Default.(func() time.Time)
+	// crmintegrationDescUpdatedAt is the schema descriptor for updated_at field.
+	crmintegrationDescUpdatedAt := crmintegrationFields[16].Descriptor()
+	// crmintegration.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	crmintegration.DefaultUpdatedAt = crmintegrationDescUpdatedAt.Default.(func() time.Time)
+	// crmintegration.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	crmintegration.UpdateDefaultUpdatedAt = crmintegrationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	crmleadsyncFields := schema.CRMLeadSync{}.Fields()
+	_ = crmleadsyncFields
+	// crmleadsyncDescAutoUpdate is the schema descriptor for auto_update field.
+	crmleadsyncDescAutoUpdate := crmleadsyncFields[8].Descriptor()
+	// crmleadsync.DefaultAutoUpdate holds the default value on creation for the auto_update field.
+	crmleadsync.DefaultAutoUpdate = crmleadsyncDescAutoUpdate.Default.(bool)
+	// crmleadsyncDescCreatedAt is the schema descriptor for created_at field.
+	crmleadsyncDescCreatedAt := crmleadsyncFields[9].Descriptor()
+	// crmleadsync.DefaultCreatedAt holds the default value on creation for the created_at field.
+	crmleadsync.DefaultCreatedAt = crmleadsyncDescCreatedAt.Default.(func() time.Time)
+	// crmleadsyncDescUpdatedAt is the schema descriptor for updated_at field.
+	crmleadsyncDescUpdatedAt := crmleadsyncFields[10].Descriptor()
+	// crmleadsync.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	crmleadsync.DefaultUpdatedAt = crmleadsyncDescUpdatedAt.Default.(func() time.Time)
+	// crmleadsync.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	crmleadsync.UpdateDefaultUpdatedAt = crmleadsyncDescUpdatedAt.UpdateDefault.(func() time.Time)
 	calllogFields := schema.CallLog{}.Fields()
 	_ = calllogFields
 	// calllogDescPhoneNumber is the schema descriptor for phone_number field.

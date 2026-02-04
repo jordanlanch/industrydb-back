@@ -134,9 +134,11 @@ type UserEdges struct {
 	MarketReports []*MarketReport `json:"market_reports,omitempty"`
 	// Email marketing campaigns created by this user
 	EmailCampaigns []*EmailCampaign `json:"email_campaigns,omitempty"`
+	// CRM integrations configured by this user
+	CrmIntegrations []*CRMIntegration `json:"crm_integrations,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [30]bool
+	loadedTypes [31]bool
 }
 
 // SubscriptionsOrErr returns the Subscriptions value or an error if the edge
@@ -409,6 +411,15 @@ func (e UserEdges) EmailCampaignsOrErr() ([]*EmailCampaign, error) {
 		return e.EmailCampaigns, nil
 	}
 	return nil, &NotLoadedError{edge: "email_campaigns"}
+}
+
+// CrmIntegrationsOrErr returns the CrmIntegrations value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) CrmIntegrationsOrErr() ([]*CRMIntegration, error) {
+	if e.loadedTypes[30] {
+		return e.CrmIntegrations, nil
+	}
+	return nil, &NotLoadedError{edge: "crm_integrations"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -760,6 +771,11 @@ func (_m *User) QueryMarketReports() *MarketReportQuery {
 // QueryEmailCampaigns queries the "email_campaigns" edge of the User entity.
 func (_m *User) QueryEmailCampaigns() *EmailCampaignQuery {
 	return NewUserClient(_m.config).QueryEmailCampaigns(_m)
+}
+
+// QueryCrmIntegrations queries the "crm_integrations" edge of the User entity.
+func (_m *User) QueryCrmIntegrations() *CRMIntegrationQuery {
+	return NewUserClient(_m.config).QueryCrmIntegrations(_m)
 }
 
 // Update returns a builder for updating this User.

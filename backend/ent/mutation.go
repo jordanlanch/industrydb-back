@@ -19,6 +19,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/calllog"
 	"github.com/jordanlanch/industrydb/ent/competitormetric"
 	"github.com/jordanlanch/industrydb/ent/competitorprofile"
+	"github.com/jordanlanch/industrydb/ent/crmintegration"
+	"github.com/jordanlanch/industrydb/ent/crmleadsync"
 	"github.com/jordanlanch/industrydb/ent/emailcampaign"
 	"github.com/jordanlanch/industrydb/ent/emailcampaignrecipient"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
@@ -65,6 +67,8 @@ const (
 	TypeAffiliateClick          = "AffiliateClick"
 	TypeAffiliateConversion     = "AffiliateConversion"
 	TypeAuditLog                = "AuditLog"
+	TypeCRMIntegration          = "CRMIntegration"
+	TypeCRMLeadSync             = "CRMLeadSync"
 	TypeCallLog                 = "CallLog"
 	TypeCompetitorMetric        = "CompetitorMetric"
 	TypeCompetitorProfile       = "CompetitorProfile"
@@ -5835,6 +5839,2556 @@ func (m *AuditLogMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown AuditLog edge %s", name)
+}
+
+// CRMIntegrationMutation represents an operation that mutates the CRMIntegration nodes in the graph.
+type CRMIntegrationMutation struct {
+	config
+	op                       Op
+	typ                      string
+	id                       *int
+	provider                 *crmintegration.Provider
+	enabled                  *bool
+	access_token             *string
+	refresh_token            *string
+	token_expires_at         *time.Time
+	instance_url             *string
+	api_key                  *string
+	settings                 *map[string]interface{}
+	sync_direction           *crmintegration.SyncDirection
+	auto_sync                *bool
+	sync_interval_minutes    *int
+	addsync_interval_minutes *int
+	last_sync_at             *time.Time
+	last_sync_error          *string
+	synced_leads_count       *int
+	addsynced_leads_count    *int
+	created_at               *time.Time
+	updated_at               *time.Time
+	clearedFields            map[string]struct{}
+	user                     *int
+	cleareduser              bool
+	synced_leads             map[int]struct{}
+	removedsynced_leads      map[int]struct{}
+	clearedsynced_leads      bool
+	done                     bool
+	oldValue                 func(context.Context) (*CRMIntegration, error)
+	predicates               []predicate.CRMIntegration
+}
+
+var _ ent.Mutation = (*CRMIntegrationMutation)(nil)
+
+// crmintegrationOption allows management of the mutation configuration using functional options.
+type crmintegrationOption func(*CRMIntegrationMutation)
+
+// newCRMIntegrationMutation creates new mutation for the CRMIntegration entity.
+func newCRMIntegrationMutation(c config, op Op, opts ...crmintegrationOption) *CRMIntegrationMutation {
+	m := &CRMIntegrationMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCRMIntegration,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCRMIntegrationID sets the ID field of the mutation.
+func withCRMIntegrationID(id int) crmintegrationOption {
+	return func(m *CRMIntegrationMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *CRMIntegration
+		)
+		m.oldValue = func(ctx context.Context) (*CRMIntegration, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().CRMIntegration.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCRMIntegration sets the old CRMIntegration of the mutation.
+func withCRMIntegration(node *CRMIntegration) crmintegrationOption {
+	return func(m *CRMIntegrationMutation) {
+		m.oldValue = func(context.Context) (*CRMIntegration, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CRMIntegrationMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CRMIntegrationMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CRMIntegrationMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CRMIntegrationMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().CRMIntegration.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetUserID sets the "user_id" field.
+func (m *CRMIntegrationMutation) SetUserID(i int) {
+	m.user = &i
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *CRMIntegrationMutation) UserID() (r int, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the CRMIntegration entity.
+// If the CRMIntegration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMIntegrationMutation) OldUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *CRMIntegrationMutation) ResetUserID() {
+	m.user = nil
+}
+
+// SetProvider sets the "provider" field.
+func (m *CRMIntegrationMutation) SetProvider(c crmintegration.Provider) {
+	m.provider = &c
+}
+
+// Provider returns the value of the "provider" field in the mutation.
+func (m *CRMIntegrationMutation) Provider() (r crmintegration.Provider, exists bool) {
+	v := m.provider
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProvider returns the old "provider" field's value of the CRMIntegration entity.
+// If the CRMIntegration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMIntegrationMutation) OldProvider(ctx context.Context) (v crmintegration.Provider, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProvider is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProvider requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProvider: %w", err)
+	}
+	return oldValue.Provider, nil
+}
+
+// ResetProvider resets all changes to the "provider" field.
+func (m *CRMIntegrationMutation) ResetProvider() {
+	m.provider = nil
+}
+
+// SetEnabled sets the "enabled" field.
+func (m *CRMIntegrationMutation) SetEnabled(b bool) {
+	m.enabled = &b
+}
+
+// Enabled returns the value of the "enabled" field in the mutation.
+func (m *CRMIntegrationMutation) Enabled() (r bool, exists bool) {
+	v := m.enabled
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEnabled returns the old "enabled" field's value of the CRMIntegration entity.
+// If the CRMIntegration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMIntegrationMutation) OldEnabled(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEnabled is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEnabled requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEnabled: %w", err)
+	}
+	return oldValue.Enabled, nil
+}
+
+// ResetEnabled resets all changes to the "enabled" field.
+func (m *CRMIntegrationMutation) ResetEnabled() {
+	m.enabled = nil
+}
+
+// SetAccessToken sets the "access_token" field.
+func (m *CRMIntegrationMutation) SetAccessToken(s string) {
+	m.access_token = &s
+}
+
+// AccessToken returns the value of the "access_token" field in the mutation.
+func (m *CRMIntegrationMutation) AccessToken() (r string, exists bool) {
+	v := m.access_token
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAccessToken returns the old "access_token" field's value of the CRMIntegration entity.
+// If the CRMIntegration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMIntegrationMutation) OldAccessToken(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAccessToken is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAccessToken requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAccessToken: %w", err)
+	}
+	return oldValue.AccessToken, nil
+}
+
+// ResetAccessToken resets all changes to the "access_token" field.
+func (m *CRMIntegrationMutation) ResetAccessToken() {
+	m.access_token = nil
+}
+
+// SetRefreshToken sets the "refresh_token" field.
+func (m *CRMIntegrationMutation) SetRefreshToken(s string) {
+	m.refresh_token = &s
+}
+
+// RefreshToken returns the value of the "refresh_token" field in the mutation.
+func (m *CRMIntegrationMutation) RefreshToken() (r string, exists bool) {
+	v := m.refresh_token
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRefreshToken returns the old "refresh_token" field's value of the CRMIntegration entity.
+// If the CRMIntegration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMIntegrationMutation) OldRefreshToken(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRefreshToken is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRefreshToken requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRefreshToken: %w", err)
+	}
+	return oldValue.RefreshToken, nil
+}
+
+// ClearRefreshToken clears the value of the "refresh_token" field.
+func (m *CRMIntegrationMutation) ClearRefreshToken() {
+	m.refresh_token = nil
+	m.clearedFields[crmintegration.FieldRefreshToken] = struct{}{}
+}
+
+// RefreshTokenCleared returns if the "refresh_token" field was cleared in this mutation.
+func (m *CRMIntegrationMutation) RefreshTokenCleared() bool {
+	_, ok := m.clearedFields[crmintegration.FieldRefreshToken]
+	return ok
+}
+
+// ResetRefreshToken resets all changes to the "refresh_token" field.
+func (m *CRMIntegrationMutation) ResetRefreshToken() {
+	m.refresh_token = nil
+	delete(m.clearedFields, crmintegration.FieldRefreshToken)
+}
+
+// SetTokenExpiresAt sets the "token_expires_at" field.
+func (m *CRMIntegrationMutation) SetTokenExpiresAt(t time.Time) {
+	m.token_expires_at = &t
+}
+
+// TokenExpiresAt returns the value of the "token_expires_at" field in the mutation.
+func (m *CRMIntegrationMutation) TokenExpiresAt() (r time.Time, exists bool) {
+	v := m.token_expires_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTokenExpiresAt returns the old "token_expires_at" field's value of the CRMIntegration entity.
+// If the CRMIntegration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMIntegrationMutation) OldTokenExpiresAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTokenExpiresAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTokenExpiresAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTokenExpiresAt: %w", err)
+	}
+	return oldValue.TokenExpiresAt, nil
+}
+
+// ClearTokenExpiresAt clears the value of the "token_expires_at" field.
+func (m *CRMIntegrationMutation) ClearTokenExpiresAt() {
+	m.token_expires_at = nil
+	m.clearedFields[crmintegration.FieldTokenExpiresAt] = struct{}{}
+}
+
+// TokenExpiresAtCleared returns if the "token_expires_at" field was cleared in this mutation.
+func (m *CRMIntegrationMutation) TokenExpiresAtCleared() bool {
+	_, ok := m.clearedFields[crmintegration.FieldTokenExpiresAt]
+	return ok
+}
+
+// ResetTokenExpiresAt resets all changes to the "token_expires_at" field.
+func (m *CRMIntegrationMutation) ResetTokenExpiresAt() {
+	m.token_expires_at = nil
+	delete(m.clearedFields, crmintegration.FieldTokenExpiresAt)
+}
+
+// SetInstanceURL sets the "instance_url" field.
+func (m *CRMIntegrationMutation) SetInstanceURL(s string) {
+	m.instance_url = &s
+}
+
+// InstanceURL returns the value of the "instance_url" field in the mutation.
+func (m *CRMIntegrationMutation) InstanceURL() (r string, exists bool) {
+	v := m.instance_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldInstanceURL returns the old "instance_url" field's value of the CRMIntegration entity.
+// If the CRMIntegration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMIntegrationMutation) OldInstanceURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldInstanceURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldInstanceURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldInstanceURL: %w", err)
+	}
+	return oldValue.InstanceURL, nil
+}
+
+// ClearInstanceURL clears the value of the "instance_url" field.
+func (m *CRMIntegrationMutation) ClearInstanceURL() {
+	m.instance_url = nil
+	m.clearedFields[crmintegration.FieldInstanceURL] = struct{}{}
+}
+
+// InstanceURLCleared returns if the "instance_url" field was cleared in this mutation.
+func (m *CRMIntegrationMutation) InstanceURLCleared() bool {
+	_, ok := m.clearedFields[crmintegration.FieldInstanceURL]
+	return ok
+}
+
+// ResetInstanceURL resets all changes to the "instance_url" field.
+func (m *CRMIntegrationMutation) ResetInstanceURL() {
+	m.instance_url = nil
+	delete(m.clearedFields, crmintegration.FieldInstanceURL)
+}
+
+// SetAPIKey sets the "api_key" field.
+func (m *CRMIntegrationMutation) SetAPIKey(s string) {
+	m.api_key = &s
+}
+
+// APIKey returns the value of the "api_key" field in the mutation.
+func (m *CRMIntegrationMutation) APIKey() (r string, exists bool) {
+	v := m.api_key
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAPIKey returns the old "api_key" field's value of the CRMIntegration entity.
+// If the CRMIntegration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMIntegrationMutation) OldAPIKey(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAPIKey is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAPIKey requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAPIKey: %w", err)
+	}
+	return oldValue.APIKey, nil
+}
+
+// ClearAPIKey clears the value of the "api_key" field.
+func (m *CRMIntegrationMutation) ClearAPIKey() {
+	m.api_key = nil
+	m.clearedFields[crmintegration.FieldAPIKey] = struct{}{}
+}
+
+// APIKeyCleared returns if the "api_key" field was cleared in this mutation.
+func (m *CRMIntegrationMutation) APIKeyCleared() bool {
+	_, ok := m.clearedFields[crmintegration.FieldAPIKey]
+	return ok
+}
+
+// ResetAPIKey resets all changes to the "api_key" field.
+func (m *CRMIntegrationMutation) ResetAPIKey() {
+	m.api_key = nil
+	delete(m.clearedFields, crmintegration.FieldAPIKey)
+}
+
+// SetSettings sets the "settings" field.
+func (m *CRMIntegrationMutation) SetSettings(value map[string]interface{}) {
+	m.settings = &value
+}
+
+// Settings returns the value of the "settings" field in the mutation.
+func (m *CRMIntegrationMutation) Settings() (r map[string]interface{}, exists bool) {
+	v := m.settings
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSettings returns the old "settings" field's value of the CRMIntegration entity.
+// If the CRMIntegration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMIntegrationMutation) OldSettings(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSettings is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSettings requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSettings: %w", err)
+	}
+	return oldValue.Settings, nil
+}
+
+// ClearSettings clears the value of the "settings" field.
+func (m *CRMIntegrationMutation) ClearSettings() {
+	m.settings = nil
+	m.clearedFields[crmintegration.FieldSettings] = struct{}{}
+}
+
+// SettingsCleared returns if the "settings" field was cleared in this mutation.
+func (m *CRMIntegrationMutation) SettingsCleared() bool {
+	_, ok := m.clearedFields[crmintegration.FieldSettings]
+	return ok
+}
+
+// ResetSettings resets all changes to the "settings" field.
+func (m *CRMIntegrationMutation) ResetSettings() {
+	m.settings = nil
+	delete(m.clearedFields, crmintegration.FieldSettings)
+}
+
+// SetSyncDirection sets the "sync_direction" field.
+func (m *CRMIntegrationMutation) SetSyncDirection(cd crmintegration.SyncDirection) {
+	m.sync_direction = &cd
+}
+
+// SyncDirection returns the value of the "sync_direction" field in the mutation.
+func (m *CRMIntegrationMutation) SyncDirection() (r crmintegration.SyncDirection, exists bool) {
+	v := m.sync_direction
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSyncDirection returns the old "sync_direction" field's value of the CRMIntegration entity.
+// If the CRMIntegration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMIntegrationMutation) OldSyncDirection(ctx context.Context) (v crmintegration.SyncDirection, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSyncDirection is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSyncDirection requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSyncDirection: %w", err)
+	}
+	return oldValue.SyncDirection, nil
+}
+
+// ResetSyncDirection resets all changes to the "sync_direction" field.
+func (m *CRMIntegrationMutation) ResetSyncDirection() {
+	m.sync_direction = nil
+}
+
+// SetAutoSync sets the "auto_sync" field.
+func (m *CRMIntegrationMutation) SetAutoSync(b bool) {
+	m.auto_sync = &b
+}
+
+// AutoSync returns the value of the "auto_sync" field in the mutation.
+func (m *CRMIntegrationMutation) AutoSync() (r bool, exists bool) {
+	v := m.auto_sync
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAutoSync returns the old "auto_sync" field's value of the CRMIntegration entity.
+// If the CRMIntegration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMIntegrationMutation) OldAutoSync(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAutoSync is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAutoSync requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAutoSync: %w", err)
+	}
+	return oldValue.AutoSync, nil
+}
+
+// ResetAutoSync resets all changes to the "auto_sync" field.
+func (m *CRMIntegrationMutation) ResetAutoSync() {
+	m.auto_sync = nil
+}
+
+// SetSyncIntervalMinutes sets the "sync_interval_minutes" field.
+func (m *CRMIntegrationMutation) SetSyncIntervalMinutes(i int) {
+	m.sync_interval_minutes = &i
+	m.addsync_interval_minutes = nil
+}
+
+// SyncIntervalMinutes returns the value of the "sync_interval_minutes" field in the mutation.
+func (m *CRMIntegrationMutation) SyncIntervalMinutes() (r int, exists bool) {
+	v := m.sync_interval_minutes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSyncIntervalMinutes returns the old "sync_interval_minutes" field's value of the CRMIntegration entity.
+// If the CRMIntegration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMIntegrationMutation) OldSyncIntervalMinutes(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSyncIntervalMinutes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSyncIntervalMinutes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSyncIntervalMinutes: %w", err)
+	}
+	return oldValue.SyncIntervalMinutes, nil
+}
+
+// AddSyncIntervalMinutes adds i to the "sync_interval_minutes" field.
+func (m *CRMIntegrationMutation) AddSyncIntervalMinutes(i int) {
+	if m.addsync_interval_minutes != nil {
+		*m.addsync_interval_minutes += i
+	} else {
+		m.addsync_interval_minutes = &i
+	}
+}
+
+// AddedSyncIntervalMinutes returns the value that was added to the "sync_interval_minutes" field in this mutation.
+func (m *CRMIntegrationMutation) AddedSyncIntervalMinutes() (r int, exists bool) {
+	v := m.addsync_interval_minutes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetSyncIntervalMinutes resets all changes to the "sync_interval_minutes" field.
+func (m *CRMIntegrationMutation) ResetSyncIntervalMinutes() {
+	m.sync_interval_minutes = nil
+	m.addsync_interval_minutes = nil
+}
+
+// SetLastSyncAt sets the "last_sync_at" field.
+func (m *CRMIntegrationMutation) SetLastSyncAt(t time.Time) {
+	m.last_sync_at = &t
+}
+
+// LastSyncAt returns the value of the "last_sync_at" field in the mutation.
+func (m *CRMIntegrationMutation) LastSyncAt() (r time.Time, exists bool) {
+	v := m.last_sync_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastSyncAt returns the old "last_sync_at" field's value of the CRMIntegration entity.
+// If the CRMIntegration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMIntegrationMutation) OldLastSyncAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastSyncAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastSyncAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastSyncAt: %w", err)
+	}
+	return oldValue.LastSyncAt, nil
+}
+
+// ClearLastSyncAt clears the value of the "last_sync_at" field.
+func (m *CRMIntegrationMutation) ClearLastSyncAt() {
+	m.last_sync_at = nil
+	m.clearedFields[crmintegration.FieldLastSyncAt] = struct{}{}
+}
+
+// LastSyncAtCleared returns if the "last_sync_at" field was cleared in this mutation.
+func (m *CRMIntegrationMutation) LastSyncAtCleared() bool {
+	_, ok := m.clearedFields[crmintegration.FieldLastSyncAt]
+	return ok
+}
+
+// ResetLastSyncAt resets all changes to the "last_sync_at" field.
+func (m *CRMIntegrationMutation) ResetLastSyncAt() {
+	m.last_sync_at = nil
+	delete(m.clearedFields, crmintegration.FieldLastSyncAt)
+}
+
+// SetLastSyncError sets the "last_sync_error" field.
+func (m *CRMIntegrationMutation) SetLastSyncError(s string) {
+	m.last_sync_error = &s
+}
+
+// LastSyncError returns the value of the "last_sync_error" field in the mutation.
+func (m *CRMIntegrationMutation) LastSyncError() (r string, exists bool) {
+	v := m.last_sync_error
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastSyncError returns the old "last_sync_error" field's value of the CRMIntegration entity.
+// If the CRMIntegration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMIntegrationMutation) OldLastSyncError(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastSyncError is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastSyncError requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastSyncError: %w", err)
+	}
+	return oldValue.LastSyncError, nil
+}
+
+// ClearLastSyncError clears the value of the "last_sync_error" field.
+func (m *CRMIntegrationMutation) ClearLastSyncError() {
+	m.last_sync_error = nil
+	m.clearedFields[crmintegration.FieldLastSyncError] = struct{}{}
+}
+
+// LastSyncErrorCleared returns if the "last_sync_error" field was cleared in this mutation.
+func (m *CRMIntegrationMutation) LastSyncErrorCleared() bool {
+	_, ok := m.clearedFields[crmintegration.FieldLastSyncError]
+	return ok
+}
+
+// ResetLastSyncError resets all changes to the "last_sync_error" field.
+func (m *CRMIntegrationMutation) ResetLastSyncError() {
+	m.last_sync_error = nil
+	delete(m.clearedFields, crmintegration.FieldLastSyncError)
+}
+
+// SetSyncedLeadsCount sets the "synced_leads_count" field.
+func (m *CRMIntegrationMutation) SetSyncedLeadsCount(i int) {
+	m.synced_leads_count = &i
+	m.addsynced_leads_count = nil
+}
+
+// SyncedLeadsCount returns the value of the "synced_leads_count" field in the mutation.
+func (m *CRMIntegrationMutation) SyncedLeadsCount() (r int, exists bool) {
+	v := m.synced_leads_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSyncedLeadsCount returns the old "synced_leads_count" field's value of the CRMIntegration entity.
+// If the CRMIntegration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMIntegrationMutation) OldSyncedLeadsCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSyncedLeadsCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSyncedLeadsCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSyncedLeadsCount: %w", err)
+	}
+	return oldValue.SyncedLeadsCount, nil
+}
+
+// AddSyncedLeadsCount adds i to the "synced_leads_count" field.
+func (m *CRMIntegrationMutation) AddSyncedLeadsCount(i int) {
+	if m.addsynced_leads_count != nil {
+		*m.addsynced_leads_count += i
+	} else {
+		m.addsynced_leads_count = &i
+	}
+}
+
+// AddedSyncedLeadsCount returns the value that was added to the "synced_leads_count" field in this mutation.
+func (m *CRMIntegrationMutation) AddedSyncedLeadsCount() (r int, exists bool) {
+	v := m.addsynced_leads_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetSyncedLeadsCount resets all changes to the "synced_leads_count" field.
+func (m *CRMIntegrationMutation) ResetSyncedLeadsCount() {
+	m.synced_leads_count = nil
+	m.addsynced_leads_count = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *CRMIntegrationMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *CRMIntegrationMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the CRMIntegration entity.
+// If the CRMIntegration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMIntegrationMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *CRMIntegrationMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *CRMIntegrationMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *CRMIntegrationMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the CRMIntegration entity.
+// If the CRMIntegration object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMIntegrationMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *CRMIntegrationMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (m *CRMIntegrationMutation) ClearUser() {
+	m.cleareduser = true
+	m.clearedFields[crmintegration.FieldUserID] = struct{}{}
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *CRMIntegrationMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *CRMIntegrationMutation) UserIDs() (ids []int) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *CRMIntegrationMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
+// AddSyncedLeadIDs adds the "synced_leads" edge to the CRMLeadSync entity by ids.
+func (m *CRMIntegrationMutation) AddSyncedLeadIDs(ids ...int) {
+	if m.synced_leads == nil {
+		m.synced_leads = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.synced_leads[ids[i]] = struct{}{}
+	}
+}
+
+// ClearSyncedLeads clears the "synced_leads" edge to the CRMLeadSync entity.
+func (m *CRMIntegrationMutation) ClearSyncedLeads() {
+	m.clearedsynced_leads = true
+}
+
+// SyncedLeadsCleared reports if the "synced_leads" edge to the CRMLeadSync entity was cleared.
+func (m *CRMIntegrationMutation) SyncedLeadsCleared() bool {
+	return m.clearedsynced_leads
+}
+
+// RemoveSyncedLeadIDs removes the "synced_leads" edge to the CRMLeadSync entity by IDs.
+func (m *CRMIntegrationMutation) RemoveSyncedLeadIDs(ids ...int) {
+	if m.removedsynced_leads == nil {
+		m.removedsynced_leads = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.synced_leads, ids[i])
+		m.removedsynced_leads[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedSyncedLeads returns the removed IDs of the "synced_leads" edge to the CRMLeadSync entity.
+func (m *CRMIntegrationMutation) RemovedSyncedLeadsIDs() (ids []int) {
+	for id := range m.removedsynced_leads {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// SyncedLeadsIDs returns the "synced_leads" edge IDs in the mutation.
+func (m *CRMIntegrationMutation) SyncedLeadsIDs() (ids []int) {
+	for id := range m.synced_leads {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetSyncedLeads resets all changes to the "synced_leads" edge.
+func (m *CRMIntegrationMutation) ResetSyncedLeads() {
+	m.synced_leads = nil
+	m.clearedsynced_leads = false
+	m.removedsynced_leads = nil
+}
+
+// Where appends a list predicates to the CRMIntegrationMutation builder.
+func (m *CRMIntegrationMutation) Where(ps ...predicate.CRMIntegration) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CRMIntegrationMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CRMIntegrationMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.CRMIntegration, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CRMIntegrationMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CRMIntegrationMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (CRMIntegration).
+func (m *CRMIntegrationMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CRMIntegrationMutation) Fields() []string {
+	fields := make([]string, 0, 17)
+	if m.user != nil {
+		fields = append(fields, crmintegration.FieldUserID)
+	}
+	if m.provider != nil {
+		fields = append(fields, crmintegration.FieldProvider)
+	}
+	if m.enabled != nil {
+		fields = append(fields, crmintegration.FieldEnabled)
+	}
+	if m.access_token != nil {
+		fields = append(fields, crmintegration.FieldAccessToken)
+	}
+	if m.refresh_token != nil {
+		fields = append(fields, crmintegration.FieldRefreshToken)
+	}
+	if m.token_expires_at != nil {
+		fields = append(fields, crmintegration.FieldTokenExpiresAt)
+	}
+	if m.instance_url != nil {
+		fields = append(fields, crmintegration.FieldInstanceURL)
+	}
+	if m.api_key != nil {
+		fields = append(fields, crmintegration.FieldAPIKey)
+	}
+	if m.settings != nil {
+		fields = append(fields, crmintegration.FieldSettings)
+	}
+	if m.sync_direction != nil {
+		fields = append(fields, crmintegration.FieldSyncDirection)
+	}
+	if m.auto_sync != nil {
+		fields = append(fields, crmintegration.FieldAutoSync)
+	}
+	if m.sync_interval_minutes != nil {
+		fields = append(fields, crmintegration.FieldSyncIntervalMinutes)
+	}
+	if m.last_sync_at != nil {
+		fields = append(fields, crmintegration.FieldLastSyncAt)
+	}
+	if m.last_sync_error != nil {
+		fields = append(fields, crmintegration.FieldLastSyncError)
+	}
+	if m.synced_leads_count != nil {
+		fields = append(fields, crmintegration.FieldSyncedLeadsCount)
+	}
+	if m.created_at != nil {
+		fields = append(fields, crmintegration.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, crmintegration.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CRMIntegrationMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case crmintegration.FieldUserID:
+		return m.UserID()
+	case crmintegration.FieldProvider:
+		return m.Provider()
+	case crmintegration.FieldEnabled:
+		return m.Enabled()
+	case crmintegration.FieldAccessToken:
+		return m.AccessToken()
+	case crmintegration.FieldRefreshToken:
+		return m.RefreshToken()
+	case crmintegration.FieldTokenExpiresAt:
+		return m.TokenExpiresAt()
+	case crmintegration.FieldInstanceURL:
+		return m.InstanceURL()
+	case crmintegration.FieldAPIKey:
+		return m.APIKey()
+	case crmintegration.FieldSettings:
+		return m.Settings()
+	case crmintegration.FieldSyncDirection:
+		return m.SyncDirection()
+	case crmintegration.FieldAutoSync:
+		return m.AutoSync()
+	case crmintegration.FieldSyncIntervalMinutes:
+		return m.SyncIntervalMinutes()
+	case crmintegration.FieldLastSyncAt:
+		return m.LastSyncAt()
+	case crmintegration.FieldLastSyncError:
+		return m.LastSyncError()
+	case crmintegration.FieldSyncedLeadsCount:
+		return m.SyncedLeadsCount()
+	case crmintegration.FieldCreatedAt:
+		return m.CreatedAt()
+	case crmintegration.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CRMIntegrationMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case crmintegration.FieldUserID:
+		return m.OldUserID(ctx)
+	case crmintegration.FieldProvider:
+		return m.OldProvider(ctx)
+	case crmintegration.FieldEnabled:
+		return m.OldEnabled(ctx)
+	case crmintegration.FieldAccessToken:
+		return m.OldAccessToken(ctx)
+	case crmintegration.FieldRefreshToken:
+		return m.OldRefreshToken(ctx)
+	case crmintegration.FieldTokenExpiresAt:
+		return m.OldTokenExpiresAt(ctx)
+	case crmintegration.FieldInstanceURL:
+		return m.OldInstanceURL(ctx)
+	case crmintegration.FieldAPIKey:
+		return m.OldAPIKey(ctx)
+	case crmintegration.FieldSettings:
+		return m.OldSettings(ctx)
+	case crmintegration.FieldSyncDirection:
+		return m.OldSyncDirection(ctx)
+	case crmintegration.FieldAutoSync:
+		return m.OldAutoSync(ctx)
+	case crmintegration.FieldSyncIntervalMinutes:
+		return m.OldSyncIntervalMinutes(ctx)
+	case crmintegration.FieldLastSyncAt:
+		return m.OldLastSyncAt(ctx)
+	case crmintegration.FieldLastSyncError:
+		return m.OldLastSyncError(ctx)
+	case crmintegration.FieldSyncedLeadsCount:
+		return m.OldSyncedLeadsCount(ctx)
+	case crmintegration.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case crmintegration.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown CRMIntegration field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CRMIntegrationMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case crmintegration.FieldUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case crmintegration.FieldProvider:
+		v, ok := value.(crmintegration.Provider)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProvider(v)
+		return nil
+	case crmintegration.FieldEnabled:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEnabled(v)
+		return nil
+	case crmintegration.FieldAccessToken:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAccessToken(v)
+		return nil
+	case crmintegration.FieldRefreshToken:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRefreshToken(v)
+		return nil
+	case crmintegration.FieldTokenExpiresAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTokenExpiresAt(v)
+		return nil
+	case crmintegration.FieldInstanceURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetInstanceURL(v)
+		return nil
+	case crmintegration.FieldAPIKey:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAPIKey(v)
+		return nil
+	case crmintegration.FieldSettings:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSettings(v)
+		return nil
+	case crmintegration.FieldSyncDirection:
+		v, ok := value.(crmintegration.SyncDirection)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSyncDirection(v)
+		return nil
+	case crmintegration.FieldAutoSync:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAutoSync(v)
+		return nil
+	case crmintegration.FieldSyncIntervalMinutes:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSyncIntervalMinutes(v)
+		return nil
+	case crmintegration.FieldLastSyncAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastSyncAt(v)
+		return nil
+	case crmintegration.FieldLastSyncError:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastSyncError(v)
+		return nil
+	case crmintegration.FieldSyncedLeadsCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSyncedLeadsCount(v)
+		return nil
+	case crmintegration.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case crmintegration.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown CRMIntegration field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CRMIntegrationMutation) AddedFields() []string {
+	var fields []string
+	if m.addsync_interval_minutes != nil {
+		fields = append(fields, crmintegration.FieldSyncIntervalMinutes)
+	}
+	if m.addsynced_leads_count != nil {
+		fields = append(fields, crmintegration.FieldSyncedLeadsCount)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CRMIntegrationMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case crmintegration.FieldSyncIntervalMinutes:
+		return m.AddedSyncIntervalMinutes()
+	case crmintegration.FieldSyncedLeadsCount:
+		return m.AddedSyncedLeadsCount()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CRMIntegrationMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case crmintegration.FieldSyncIntervalMinutes:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSyncIntervalMinutes(v)
+		return nil
+	case crmintegration.FieldSyncedLeadsCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSyncedLeadsCount(v)
+		return nil
+	}
+	return fmt.Errorf("unknown CRMIntegration numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CRMIntegrationMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(crmintegration.FieldRefreshToken) {
+		fields = append(fields, crmintegration.FieldRefreshToken)
+	}
+	if m.FieldCleared(crmintegration.FieldTokenExpiresAt) {
+		fields = append(fields, crmintegration.FieldTokenExpiresAt)
+	}
+	if m.FieldCleared(crmintegration.FieldInstanceURL) {
+		fields = append(fields, crmintegration.FieldInstanceURL)
+	}
+	if m.FieldCleared(crmintegration.FieldAPIKey) {
+		fields = append(fields, crmintegration.FieldAPIKey)
+	}
+	if m.FieldCleared(crmintegration.FieldSettings) {
+		fields = append(fields, crmintegration.FieldSettings)
+	}
+	if m.FieldCleared(crmintegration.FieldLastSyncAt) {
+		fields = append(fields, crmintegration.FieldLastSyncAt)
+	}
+	if m.FieldCleared(crmintegration.FieldLastSyncError) {
+		fields = append(fields, crmintegration.FieldLastSyncError)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CRMIntegrationMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CRMIntegrationMutation) ClearField(name string) error {
+	switch name {
+	case crmintegration.FieldRefreshToken:
+		m.ClearRefreshToken()
+		return nil
+	case crmintegration.FieldTokenExpiresAt:
+		m.ClearTokenExpiresAt()
+		return nil
+	case crmintegration.FieldInstanceURL:
+		m.ClearInstanceURL()
+		return nil
+	case crmintegration.FieldAPIKey:
+		m.ClearAPIKey()
+		return nil
+	case crmintegration.FieldSettings:
+		m.ClearSettings()
+		return nil
+	case crmintegration.FieldLastSyncAt:
+		m.ClearLastSyncAt()
+		return nil
+	case crmintegration.FieldLastSyncError:
+		m.ClearLastSyncError()
+		return nil
+	}
+	return fmt.Errorf("unknown CRMIntegration nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CRMIntegrationMutation) ResetField(name string) error {
+	switch name {
+	case crmintegration.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case crmintegration.FieldProvider:
+		m.ResetProvider()
+		return nil
+	case crmintegration.FieldEnabled:
+		m.ResetEnabled()
+		return nil
+	case crmintegration.FieldAccessToken:
+		m.ResetAccessToken()
+		return nil
+	case crmintegration.FieldRefreshToken:
+		m.ResetRefreshToken()
+		return nil
+	case crmintegration.FieldTokenExpiresAt:
+		m.ResetTokenExpiresAt()
+		return nil
+	case crmintegration.FieldInstanceURL:
+		m.ResetInstanceURL()
+		return nil
+	case crmintegration.FieldAPIKey:
+		m.ResetAPIKey()
+		return nil
+	case crmintegration.FieldSettings:
+		m.ResetSettings()
+		return nil
+	case crmintegration.FieldSyncDirection:
+		m.ResetSyncDirection()
+		return nil
+	case crmintegration.FieldAutoSync:
+		m.ResetAutoSync()
+		return nil
+	case crmintegration.FieldSyncIntervalMinutes:
+		m.ResetSyncIntervalMinutes()
+		return nil
+	case crmintegration.FieldLastSyncAt:
+		m.ResetLastSyncAt()
+		return nil
+	case crmintegration.FieldLastSyncError:
+		m.ResetLastSyncError()
+		return nil
+	case crmintegration.FieldSyncedLeadsCount:
+		m.ResetSyncedLeadsCount()
+		return nil
+	case crmintegration.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case crmintegration.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown CRMIntegration field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CRMIntegrationMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.user != nil {
+		edges = append(edges, crmintegration.EdgeUser)
+	}
+	if m.synced_leads != nil {
+		edges = append(edges, crmintegration.EdgeSyncedLeads)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CRMIntegrationMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case crmintegration.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	case crmintegration.EdgeSyncedLeads:
+		ids := make([]ent.Value, 0, len(m.synced_leads))
+		for id := range m.synced_leads {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CRMIntegrationMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.removedsynced_leads != nil {
+		edges = append(edges, crmintegration.EdgeSyncedLeads)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CRMIntegrationMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case crmintegration.EdgeSyncedLeads:
+		ids := make([]ent.Value, 0, len(m.removedsynced_leads))
+		for id := range m.removedsynced_leads {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CRMIntegrationMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.cleareduser {
+		edges = append(edges, crmintegration.EdgeUser)
+	}
+	if m.clearedsynced_leads {
+		edges = append(edges, crmintegration.EdgeSyncedLeads)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CRMIntegrationMutation) EdgeCleared(name string) bool {
+	switch name {
+	case crmintegration.EdgeUser:
+		return m.cleareduser
+	case crmintegration.EdgeSyncedLeads:
+		return m.clearedsynced_leads
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CRMIntegrationMutation) ClearEdge(name string) error {
+	switch name {
+	case crmintegration.EdgeUser:
+		m.ClearUser()
+		return nil
+	}
+	return fmt.Errorf("unknown CRMIntegration unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CRMIntegrationMutation) ResetEdge(name string) error {
+	switch name {
+	case crmintegration.EdgeUser:
+		m.ResetUser()
+		return nil
+	case crmintegration.EdgeSyncedLeads:
+		m.ResetSyncedLeads()
+		return nil
+	}
+	return fmt.Errorf("unknown CRMIntegration edge %s", name)
+}
+
+// CRMLeadSyncMutation represents an operation that mutates the CRMLeadSync nodes in the graph.
+type CRMLeadSyncMutation struct {
+	config
+	op                 Op
+	typ                string
+	id                 *int
+	lead_id            *int
+	addlead_id         *int
+	crm_lead_id        *string
+	sync_status        *crmleadsync.SyncStatus
+	sync_direction     *crmleadsync.SyncDirection
+	synced_at          *time.Time
+	sync_error         *string
+	crm_data           *map[string]interface{}
+	auto_update        *bool
+	created_at         *time.Time
+	updated_at         *time.Time
+	clearedFields      map[string]struct{}
+	integration        *int
+	clearedintegration bool
+	done               bool
+	oldValue           func(context.Context) (*CRMLeadSync, error)
+	predicates         []predicate.CRMLeadSync
+}
+
+var _ ent.Mutation = (*CRMLeadSyncMutation)(nil)
+
+// crmleadsyncOption allows management of the mutation configuration using functional options.
+type crmleadsyncOption func(*CRMLeadSyncMutation)
+
+// newCRMLeadSyncMutation creates new mutation for the CRMLeadSync entity.
+func newCRMLeadSyncMutation(c config, op Op, opts ...crmleadsyncOption) *CRMLeadSyncMutation {
+	m := &CRMLeadSyncMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCRMLeadSync,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCRMLeadSyncID sets the ID field of the mutation.
+func withCRMLeadSyncID(id int) crmleadsyncOption {
+	return func(m *CRMLeadSyncMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *CRMLeadSync
+		)
+		m.oldValue = func(ctx context.Context) (*CRMLeadSync, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().CRMLeadSync.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCRMLeadSync sets the old CRMLeadSync of the mutation.
+func withCRMLeadSync(node *CRMLeadSync) crmleadsyncOption {
+	return func(m *CRMLeadSyncMutation) {
+		m.oldValue = func(context.Context) (*CRMLeadSync, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CRMLeadSyncMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CRMLeadSyncMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CRMLeadSyncMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CRMLeadSyncMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().CRMLeadSync.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetIntegrationID sets the "integration_id" field.
+func (m *CRMLeadSyncMutation) SetIntegrationID(i int) {
+	m.integration = &i
+}
+
+// IntegrationID returns the value of the "integration_id" field in the mutation.
+func (m *CRMLeadSyncMutation) IntegrationID() (r int, exists bool) {
+	v := m.integration
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIntegrationID returns the old "integration_id" field's value of the CRMLeadSync entity.
+// If the CRMLeadSync object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMLeadSyncMutation) OldIntegrationID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIntegrationID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIntegrationID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIntegrationID: %w", err)
+	}
+	return oldValue.IntegrationID, nil
+}
+
+// ResetIntegrationID resets all changes to the "integration_id" field.
+func (m *CRMLeadSyncMutation) ResetIntegrationID() {
+	m.integration = nil
+}
+
+// SetLeadID sets the "lead_id" field.
+func (m *CRMLeadSyncMutation) SetLeadID(i int) {
+	m.lead_id = &i
+	m.addlead_id = nil
+}
+
+// LeadID returns the value of the "lead_id" field in the mutation.
+func (m *CRMLeadSyncMutation) LeadID() (r int, exists bool) {
+	v := m.lead_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLeadID returns the old "lead_id" field's value of the CRMLeadSync entity.
+// If the CRMLeadSync object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMLeadSyncMutation) OldLeadID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLeadID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLeadID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLeadID: %w", err)
+	}
+	return oldValue.LeadID, nil
+}
+
+// AddLeadID adds i to the "lead_id" field.
+func (m *CRMLeadSyncMutation) AddLeadID(i int) {
+	if m.addlead_id != nil {
+		*m.addlead_id += i
+	} else {
+		m.addlead_id = &i
+	}
+}
+
+// AddedLeadID returns the value that was added to the "lead_id" field in this mutation.
+func (m *CRMLeadSyncMutation) AddedLeadID() (r int, exists bool) {
+	v := m.addlead_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetLeadID resets all changes to the "lead_id" field.
+func (m *CRMLeadSyncMutation) ResetLeadID() {
+	m.lead_id = nil
+	m.addlead_id = nil
+}
+
+// SetCrmLeadID sets the "crm_lead_id" field.
+func (m *CRMLeadSyncMutation) SetCrmLeadID(s string) {
+	m.crm_lead_id = &s
+}
+
+// CrmLeadID returns the value of the "crm_lead_id" field in the mutation.
+func (m *CRMLeadSyncMutation) CrmLeadID() (r string, exists bool) {
+	v := m.crm_lead_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCrmLeadID returns the old "crm_lead_id" field's value of the CRMLeadSync entity.
+// If the CRMLeadSync object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMLeadSyncMutation) OldCrmLeadID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCrmLeadID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCrmLeadID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCrmLeadID: %w", err)
+	}
+	return oldValue.CrmLeadID, nil
+}
+
+// ResetCrmLeadID resets all changes to the "crm_lead_id" field.
+func (m *CRMLeadSyncMutation) ResetCrmLeadID() {
+	m.crm_lead_id = nil
+}
+
+// SetSyncStatus sets the "sync_status" field.
+func (m *CRMLeadSyncMutation) SetSyncStatus(cs crmleadsync.SyncStatus) {
+	m.sync_status = &cs
+}
+
+// SyncStatus returns the value of the "sync_status" field in the mutation.
+func (m *CRMLeadSyncMutation) SyncStatus() (r crmleadsync.SyncStatus, exists bool) {
+	v := m.sync_status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSyncStatus returns the old "sync_status" field's value of the CRMLeadSync entity.
+// If the CRMLeadSync object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMLeadSyncMutation) OldSyncStatus(ctx context.Context) (v crmleadsync.SyncStatus, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSyncStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSyncStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSyncStatus: %w", err)
+	}
+	return oldValue.SyncStatus, nil
+}
+
+// ResetSyncStatus resets all changes to the "sync_status" field.
+func (m *CRMLeadSyncMutation) ResetSyncStatus() {
+	m.sync_status = nil
+}
+
+// SetSyncDirection sets the "sync_direction" field.
+func (m *CRMLeadSyncMutation) SetSyncDirection(cd crmleadsync.SyncDirection) {
+	m.sync_direction = &cd
+}
+
+// SyncDirection returns the value of the "sync_direction" field in the mutation.
+func (m *CRMLeadSyncMutation) SyncDirection() (r crmleadsync.SyncDirection, exists bool) {
+	v := m.sync_direction
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSyncDirection returns the old "sync_direction" field's value of the CRMLeadSync entity.
+// If the CRMLeadSync object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMLeadSyncMutation) OldSyncDirection(ctx context.Context) (v crmleadsync.SyncDirection, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSyncDirection is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSyncDirection requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSyncDirection: %w", err)
+	}
+	return oldValue.SyncDirection, nil
+}
+
+// ResetSyncDirection resets all changes to the "sync_direction" field.
+func (m *CRMLeadSyncMutation) ResetSyncDirection() {
+	m.sync_direction = nil
+}
+
+// SetSyncedAt sets the "synced_at" field.
+func (m *CRMLeadSyncMutation) SetSyncedAt(t time.Time) {
+	m.synced_at = &t
+}
+
+// SyncedAt returns the value of the "synced_at" field in the mutation.
+func (m *CRMLeadSyncMutation) SyncedAt() (r time.Time, exists bool) {
+	v := m.synced_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSyncedAt returns the old "synced_at" field's value of the CRMLeadSync entity.
+// If the CRMLeadSync object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMLeadSyncMutation) OldSyncedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSyncedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSyncedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSyncedAt: %w", err)
+	}
+	return oldValue.SyncedAt, nil
+}
+
+// ClearSyncedAt clears the value of the "synced_at" field.
+func (m *CRMLeadSyncMutation) ClearSyncedAt() {
+	m.synced_at = nil
+	m.clearedFields[crmleadsync.FieldSyncedAt] = struct{}{}
+}
+
+// SyncedAtCleared returns if the "synced_at" field was cleared in this mutation.
+func (m *CRMLeadSyncMutation) SyncedAtCleared() bool {
+	_, ok := m.clearedFields[crmleadsync.FieldSyncedAt]
+	return ok
+}
+
+// ResetSyncedAt resets all changes to the "synced_at" field.
+func (m *CRMLeadSyncMutation) ResetSyncedAt() {
+	m.synced_at = nil
+	delete(m.clearedFields, crmleadsync.FieldSyncedAt)
+}
+
+// SetSyncError sets the "sync_error" field.
+func (m *CRMLeadSyncMutation) SetSyncError(s string) {
+	m.sync_error = &s
+}
+
+// SyncError returns the value of the "sync_error" field in the mutation.
+func (m *CRMLeadSyncMutation) SyncError() (r string, exists bool) {
+	v := m.sync_error
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSyncError returns the old "sync_error" field's value of the CRMLeadSync entity.
+// If the CRMLeadSync object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMLeadSyncMutation) OldSyncError(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSyncError is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSyncError requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSyncError: %w", err)
+	}
+	return oldValue.SyncError, nil
+}
+
+// ClearSyncError clears the value of the "sync_error" field.
+func (m *CRMLeadSyncMutation) ClearSyncError() {
+	m.sync_error = nil
+	m.clearedFields[crmleadsync.FieldSyncError] = struct{}{}
+}
+
+// SyncErrorCleared returns if the "sync_error" field was cleared in this mutation.
+func (m *CRMLeadSyncMutation) SyncErrorCleared() bool {
+	_, ok := m.clearedFields[crmleadsync.FieldSyncError]
+	return ok
+}
+
+// ResetSyncError resets all changes to the "sync_error" field.
+func (m *CRMLeadSyncMutation) ResetSyncError() {
+	m.sync_error = nil
+	delete(m.clearedFields, crmleadsync.FieldSyncError)
+}
+
+// SetCrmData sets the "crm_data" field.
+func (m *CRMLeadSyncMutation) SetCrmData(value map[string]interface{}) {
+	m.crm_data = &value
+}
+
+// CrmData returns the value of the "crm_data" field in the mutation.
+func (m *CRMLeadSyncMutation) CrmData() (r map[string]interface{}, exists bool) {
+	v := m.crm_data
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCrmData returns the old "crm_data" field's value of the CRMLeadSync entity.
+// If the CRMLeadSync object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMLeadSyncMutation) OldCrmData(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCrmData is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCrmData requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCrmData: %w", err)
+	}
+	return oldValue.CrmData, nil
+}
+
+// ClearCrmData clears the value of the "crm_data" field.
+func (m *CRMLeadSyncMutation) ClearCrmData() {
+	m.crm_data = nil
+	m.clearedFields[crmleadsync.FieldCrmData] = struct{}{}
+}
+
+// CrmDataCleared returns if the "crm_data" field was cleared in this mutation.
+func (m *CRMLeadSyncMutation) CrmDataCleared() bool {
+	_, ok := m.clearedFields[crmleadsync.FieldCrmData]
+	return ok
+}
+
+// ResetCrmData resets all changes to the "crm_data" field.
+func (m *CRMLeadSyncMutation) ResetCrmData() {
+	m.crm_data = nil
+	delete(m.clearedFields, crmleadsync.FieldCrmData)
+}
+
+// SetAutoUpdate sets the "auto_update" field.
+func (m *CRMLeadSyncMutation) SetAutoUpdate(b bool) {
+	m.auto_update = &b
+}
+
+// AutoUpdate returns the value of the "auto_update" field in the mutation.
+func (m *CRMLeadSyncMutation) AutoUpdate() (r bool, exists bool) {
+	v := m.auto_update
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAutoUpdate returns the old "auto_update" field's value of the CRMLeadSync entity.
+// If the CRMLeadSync object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMLeadSyncMutation) OldAutoUpdate(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAutoUpdate is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAutoUpdate requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAutoUpdate: %w", err)
+	}
+	return oldValue.AutoUpdate, nil
+}
+
+// ResetAutoUpdate resets all changes to the "auto_update" field.
+func (m *CRMLeadSyncMutation) ResetAutoUpdate() {
+	m.auto_update = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *CRMLeadSyncMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *CRMLeadSyncMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the CRMLeadSync entity.
+// If the CRMLeadSync object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMLeadSyncMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *CRMLeadSyncMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *CRMLeadSyncMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *CRMLeadSyncMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the CRMLeadSync entity.
+// If the CRMLeadSync object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CRMLeadSyncMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *CRMLeadSyncMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearIntegration clears the "integration" edge to the CRMIntegration entity.
+func (m *CRMLeadSyncMutation) ClearIntegration() {
+	m.clearedintegration = true
+	m.clearedFields[crmleadsync.FieldIntegrationID] = struct{}{}
+}
+
+// IntegrationCleared reports if the "integration" edge to the CRMIntegration entity was cleared.
+func (m *CRMLeadSyncMutation) IntegrationCleared() bool {
+	return m.clearedintegration
+}
+
+// IntegrationIDs returns the "integration" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// IntegrationID instead. It exists only for internal usage by the builders.
+func (m *CRMLeadSyncMutation) IntegrationIDs() (ids []int) {
+	if id := m.integration; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetIntegration resets all changes to the "integration" edge.
+func (m *CRMLeadSyncMutation) ResetIntegration() {
+	m.integration = nil
+	m.clearedintegration = false
+}
+
+// Where appends a list predicates to the CRMLeadSyncMutation builder.
+func (m *CRMLeadSyncMutation) Where(ps ...predicate.CRMLeadSync) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CRMLeadSyncMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CRMLeadSyncMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.CRMLeadSync, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CRMLeadSyncMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CRMLeadSyncMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (CRMLeadSync).
+func (m *CRMLeadSyncMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CRMLeadSyncMutation) Fields() []string {
+	fields := make([]string, 0, 11)
+	if m.integration != nil {
+		fields = append(fields, crmleadsync.FieldIntegrationID)
+	}
+	if m.lead_id != nil {
+		fields = append(fields, crmleadsync.FieldLeadID)
+	}
+	if m.crm_lead_id != nil {
+		fields = append(fields, crmleadsync.FieldCrmLeadID)
+	}
+	if m.sync_status != nil {
+		fields = append(fields, crmleadsync.FieldSyncStatus)
+	}
+	if m.sync_direction != nil {
+		fields = append(fields, crmleadsync.FieldSyncDirection)
+	}
+	if m.synced_at != nil {
+		fields = append(fields, crmleadsync.FieldSyncedAt)
+	}
+	if m.sync_error != nil {
+		fields = append(fields, crmleadsync.FieldSyncError)
+	}
+	if m.crm_data != nil {
+		fields = append(fields, crmleadsync.FieldCrmData)
+	}
+	if m.auto_update != nil {
+		fields = append(fields, crmleadsync.FieldAutoUpdate)
+	}
+	if m.created_at != nil {
+		fields = append(fields, crmleadsync.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, crmleadsync.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CRMLeadSyncMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case crmleadsync.FieldIntegrationID:
+		return m.IntegrationID()
+	case crmleadsync.FieldLeadID:
+		return m.LeadID()
+	case crmleadsync.FieldCrmLeadID:
+		return m.CrmLeadID()
+	case crmleadsync.FieldSyncStatus:
+		return m.SyncStatus()
+	case crmleadsync.FieldSyncDirection:
+		return m.SyncDirection()
+	case crmleadsync.FieldSyncedAt:
+		return m.SyncedAt()
+	case crmleadsync.FieldSyncError:
+		return m.SyncError()
+	case crmleadsync.FieldCrmData:
+		return m.CrmData()
+	case crmleadsync.FieldAutoUpdate:
+		return m.AutoUpdate()
+	case crmleadsync.FieldCreatedAt:
+		return m.CreatedAt()
+	case crmleadsync.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CRMLeadSyncMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case crmleadsync.FieldIntegrationID:
+		return m.OldIntegrationID(ctx)
+	case crmleadsync.FieldLeadID:
+		return m.OldLeadID(ctx)
+	case crmleadsync.FieldCrmLeadID:
+		return m.OldCrmLeadID(ctx)
+	case crmleadsync.FieldSyncStatus:
+		return m.OldSyncStatus(ctx)
+	case crmleadsync.FieldSyncDirection:
+		return m.OldSyncDirection(ctx)
+	case crmleadsync.FieldSyncedAt:
+		return m.OldSyncedAt(ctx)
+	case crmleadsync.FieldSyncError:
+		return m.OldSyncError(ctx)
+	case crmleadsync.FieldCrmData:
+		return m.OldCrmData(ctx)
+	case crmleadsync.FieldAutoUpdate:
+		return m.OldAutoUpdate(ctx)
+	case crmleadsync.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case crmleadsync.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown CRMLeadSync field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CRMLeadSyncMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case crmleadsync.FieldIntegrationID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIntegrationID(v)
+		return nil
+	case crmleadsync.FieldLeadID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLeadID(v)
+		return nil
+	case crmleadsync.FieldCrmLeadID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCrmLeadID(v)
+		return nil
+	case crmleadsync.FieldSyncStatus:
+		v, ok := value.(crmleadsync.SyncStatus)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSyncStatus(v)
+		return nil
+	case crmleadsync.FieldSyncDirection:
+		v, ok := value.(crmleadsync.SyncDirection)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSyncDirection(v)
+		return nil
+	case crmleadsync.FieldSyncedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSyncedAt(v)
+		return nil
+	case crmleadsync.FieldSyncError:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSyncError(v)
+		return nil
+	case crmleadsync.FieldCrmData:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCrmData(v)
+		return nil
+	case crmleadsync.FieldAutoUpdate:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAutoUpdate(v)
+		return nil
+	case crmleadsync.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case crmleadsync.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown CRMLeadSync field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CRMLeadSyncMutation) AddedFields() []string {
+	var fields []string
+	if m.addlead_id != nil {
+		fields = append(fields, crmleadsync.FieldLeadID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CRMLeadSyncMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case crmleadsync.FieldLeadID:
+		return m.AddedLeadID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CRMLeadSyncMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case crmleadsync.FieldLeadID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddLeadID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown CRMLeadSync numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CRMLeadSyncMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(crmleadsync.FieldSyncedAt) {
+		fields = append(fields, crmleadsync.FieldSyncedAt)
+	}
+	if m.FieldCleared(crmleadsync.FieldSyncError) {
+		fields = append(fields, crmleadsync.FieldSyncError)
+	}
+	if m.FieldCleared(crmleadsync.FieldCrmData) {
+		fields = append(fields, crmleadsync.FieldCrmData)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CRMLeadSyncMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CRMLeadSyncMutation) ClearField(name string) error {
+	switch name {
+	case crmleadsync.FieldSyncedAt:
+		m.ClearSyncedAt()
+		return nil
+	case crmleadsync.FieldSyncError:
+		m.ClearSyncError()
+		return nil
+	case crmleadsync.FieldCrmData:
+		m.ClearCrmData()
+		return nil
+	}
+	return fmt.Errorf("unknown CRMLeadSync nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CRMLeadSyncMutation) ResetField(name string) error {
+	switch name {
+	case crmleadsync.FieldIntegrationID:
+		m.ResetIntegrationID()
+		return nil
+	case crmleadsync.FieldLeadID:
+		m.ResetLeadID()
+		return nil
+	case crmleadsync.FieldCrmLeadID:
+		m.ResetCrmLeadID()
+		return nil
+	case crmleadsync.FieldSyncStatus:
+		m.ResetSyncStatus()
+		return nil
+	case crmleadsync.FieldSyncDirection:
+		m.ResetSyncDirection()
+		return nil
+	case crmleadsync.FieldSyncedAt:
+		m.ResetSyncedAt()
+		return nil
+	case crmleadsync.FieldSyncError:
+		m.ResetSyncError()
+		return nil
+	case crmleadsync.FieldCrmData:
+		m.ResetCrmData()
+		return nil
+	case crmleadsync.FieldAutoUpdate:
+		m.ResetAutoUpdate()
+		return nil
+	case crmleadsync.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case crmleadsync.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown CRMLeadSync field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CRMLeadSyncMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.integration != nil {
+		edges = append(edges, crmleadsync.EdgeIntegration)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CRMLeadSyncMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case crmleadsync.EdgeIntegration:
+		if id := m.integration; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CRMLeadSyncMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CRMLeadSyncMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CRMLeadSyncMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedintegration {
+		edges = append(edges, crmleadsync.EdgeIntegration)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CRMLeadSyncMutation) EdgeCleared(name string) bool {
+	switch name {
+	case crmleadsync.EdgeIntegration:
+		return m.clearedintegration
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CRMLeadSyncMutation) ClearEdge(name string) error {
+	switch name {
+	case crmleadsync.EdgeIntegration:
+		m.ClearIntegration()
+		return nil
+	}
+	return fmt.Errorf("unknown CRMLeadSync unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CRMLeadSyncMutation) ResetEdge(name string) error {
+	switch name {
+	case crmleadsync.EdgeIntegration:
+		m.ResetIntegration()
+		return nil
+	}
+	return fmt.Errorf("unknown CRMLeadSync edge %s", name)
 }
 
 // CallLogMutation represents an operation that mutates the CallLog nodes in the graph.
@@ -40023,6 +42577,9 @@ type UserMutation struct {
 	email_campaigns                        map[int]struct{}
 	removedemail_campaigns                 map[int]struct{}
 	clearedemail_campaigns                 bool
+	crm_integrations                       map[int]struct{}
+	removedcrm_integrations                map[int]struct{}
+	clearedcrm_integrations                bool
 	done                                   bool
 	oldValue                               func(context.Context) (*User, error)
 	predicates                             []predicate.User
@@ -42785,6 +45342,60 @@ func (m *UserMutation) ResetEmailCampaigns() {
 	m.removedemail_campaigns = nil
 }
 
+// AddCrmIntegrationIDs adds the "crm_integrations" edge to the CRMIntegration entity by ids.
+func (m *UserMutation) AddCrmIntegrationIDs(ids ...int) {
+	if m.crm_integrations == nil {
+		m.crm_integrations = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.crm_integrations[ids[i]] = struct{}{}
+	}
+}
+
+// ClearCrmIntegrations clears the "crm_integrations" edge to the CRMIntegration entity.
+func (m *UserMutation) ClearCrmIntegrations() {
+	m.clearedcrm_integrations = true
+}
+
+// CrmIntegrationsCleared reports if the "crm_integrations" edge to the CRMIntegration entity was cleared.
+func (m *UserMutation) CrmIntegrationsCleared() bool {
+	return m.clearedcrm_integrations
+}
+
+// RemoveCrmIntegrationIDs removes the "crm_integrations" edge to the CRMIntegration entity by IDs.
+func (m *UserMutation) RemoveCrmIntegrationIDs(ids ...int) {
+	if m.removedcrm_integrations == nil {
+		m.removedcrm_integrations = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.crm_integrations, ids[i])
+		m.removedcrm_integrations[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedCrmIntegrations returns the removed IDs of the "crm_integrations" edge to the CRMIntegration entity.
+func (m *UserMutation) RemovedCrmIntegrationsIDs() (ids []int) {
+	for id := range m.removedcrm_integrations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// CrmIntegrationsIDs returns the "crm_integrations" edge IDs in the mutation.
+func (m *UserMutation) CrmIntegrationsIDs() (ids []int) {
+	for id := range m.crm_integrations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetCrmIntegrations resets all changes to the "crm_integrations" edge.
+func (m *UserMutation) ResetCrmIntegrations() {
+	m.crm_integrations = nil
+	m.clearedcrm_integrations = false
+	m.removedcrm_integrations = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -43411,7 +46022,7 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 30)
+	edges := make([]string, 0, 31)
 	if m.subscriptions != nil {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -43501,6 +46112,9 @@ func (m *UserMutation) AddedEdges() []string {
 	}
 	if m.email_campaigns != nil {
 		edges = append(edges, user.EdgeEmailCampaigns)
+	}
+	if m.crm_integrations != nil {
+		edges = append(edges, user.EdgeCrmIntegrations)
 	}
 	return edges
 }
@@ -43687,13 +46301,19 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeCrmIntegrations:
+		ids := make([]ent.Value, 0, len(m.crm_integrations))
+		for id := range m.crm_integrations {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 30)
+	edges := make([]string, 0, 31)
 	if m.removedsubscriptions != nil {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -43780,6 +46400,9 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedemail_campaigns != nil {
 		edges = append(edges, user.EdgeEmailCampaigns)
+	}
+	if m.removedcrm_integrations != nil {
+		edges = append(edges, user.EdgeCrmIntegrations)
 	}
 	return edges
 }
@@ -43962,13 +46585,19 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeCrmIntegrations:
+		ids := make([]ent.Value, 0, len(m.removedcrm_integrations))
+		for id := range m.removedcrm_integrations {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 30)
+	edges := make([]string, 0, 31)
 	if m.clearedsubscriptions {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -44059,6 +46688,9 @@ func (m *UserMutation) ClearedEdges() []string {
 	if m.clearedemail_campaigns {
 		edges = append(edges, user.EdgeEmailCampaigns)
 	}
+	if m.clearedcrm_integrations {
+		edges = append(edges, user.EdgeCrmIntegrations)
+	}
 	return edges
 }
 
@@ -44126,6 +46758,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedmarket_reports
 	case user.EdgeEmailCampaigns:
 		return m.clearedemail_campaigns
+	case user.EdgeCrmIntegrations:
+		return m.clearedcrm_integrations
 	}
 	return false
 }
@@ -44234,6 +46868,9 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgeEmailCampaigns:
 		m.ResetEmailCampaigns()
+		return nil
+	case user.EdgeCrmIntegrations:
+		m.ResetCrmIntegrations()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

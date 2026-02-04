@@ -17,6 +17,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/calllog"
 	"github.com/jordanlanch/industrydb/ent/competitorprofile"
+	"github.com/jordanlanch/industrydb/ent/crmintegration"
 	"github.com/jordanlanch/industrydb/ent/emailcampaign"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
@@ -904,6 +905,21 @@ func (_u *UserUpdate) AddEmailCampaigns(v ...*EmailCampaign) *UserUpdate {
 	return _u.AddEmailCampaignIDs(ids...)
 }
 
+// AddCrmIntegrationIDs adds the "crm_integrations" edge to the CRMIntegration entity by IDs.
+func (_u *UserUpdate) AddCrmIntegrationIDs(ids ...int) *UserUpdate {
+	_u.mutation.AddCrmIntegrationIDs(ids...)
+	return _u
+}
+
+// AddCrmIntegrations adds the "crm_integrations" edges to the CRMIntegration entity.
+func (_u *UserUpdate) AddCrmIntegrations(v ...*CRMIntegration) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddCrmIntegrationIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -1522,6 +1538,27 @@ func (_u *UserUpdate) RemoveEmailCampaigns(v ...*EmailCampaign) *UserUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveEmailCampaignIDs(ids...)
+}
+
+// ClearCrmIntegrations clears all "crm_integrations" edges to the CRMIntegration entity.
+func (_u *UserUpdate) ClearCrmIntegrations() *UserUpdate {
+	_u.mutation.ClearCrmIntegrations()
+	return _u
+}
+
+// RemoveCrmIntegrationIDs removes the "crm_integrations" edge to CRMIntegration entities by IDs.
+func (_u *UserUpdate) RemoveCrmIntegrationIDs(ids ...int) *UserUpdate {
+	_u.mutation.RemoveCrmIntegrationIDs(ids...)
+	return _u
+}
+
+// RemoveCrmIntegrations removes "crm_integrations" edges to CRMIntegration entities.
+func (_u *UserUpdate) RemoveCrmIntegrations(v ...*CRMIntegration) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveCrmIntegrationIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -3059,6 +3096,51 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.CrmIntegrationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CrmIntegrationsTable,
+			Columns: []string{user.CrmIntegrationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(crmintegration.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedCrmIntegrationsIDs(); len(nodes) > 0 && !_u.mutation.CrmIntegrationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CrmIntegrationsTable,
+			Columns: []string{user.CrmIntegrationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(crmintegration.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CrmIntegrationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CrmIntegrationsTable,
+			Columns: []string{user.CrmIntegrationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(crmintegration.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -3928,6 +4010,21 @@ func (_u *UserUpdateOne) AddEmailCampaigns(v ...*EmailCampaign) *UserUpdateOne {
 	return _u.AddEmailCampaignIDs(ids...)
 }
 
+// AddCrmIntegrationIDs adds the "crm_integrations" edge to the CRMIntegration entity by IDs.
+func (_u *UserUpdateOne) AddCrmIntegrationIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.AddCrmIntegrationIDs(ids...)
+	return _u
+}
+
+// AddCrmIntegrations adds the "crm_integrations" edges to the CRMIntegration entity.
+func (_u *UserUpdateOne) AddCrmIntegrations(v ...*CRMIntegration) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddCrmIntegrationIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -4546,6 +4643,27 @@ func (_u *UserUpdateOne) RemoveEmailCampaigns(v ...*EmailCampaign) *UserUpdateOn
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveEmailCampaignIDs(ids...)
+}
+
+// ClearCrmIntegrations clears all "crm_integrations" edges to the CRMIntegration entity.
+func (_u *UserUpdateOne) ClearCrmIntegrations() *UserUpdateOne {
+	_u.mutation.ClearCrmIntegrations()
+	return _u
+}
+
+// RemoveCrmIntegrationIDs removes the "crm_integrations" edge to CRMIntegration entities by IDs.
+func (_u *UserUpdateOne) RemoveCrmIntegrationIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.RemoveCrmIntegrationIDs(ids...)
+	return _u
+}
+
+// RemoveCrmIntegrations removes "crm_integrations" edges to CRMIntegration entities.
+func (_u *UserUpdateOne) RemoveCrmIntegrations(v ...*CRMIntegration) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveCrmIntegrationIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -6106,6 +6224,51 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(emailcampaign.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.CrmIntegrationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CrmIntegrationsTable,
+			Columns: []string{user.CrmIntegrationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(crmintegration.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedCrmIntegrationsIDs(); len(nodes) > 0 && !_u.mutation.CrmIntegrationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CrmIntegrationsTable,
+			Columns: []string{user.CrmIntegrationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(crmintegration.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CrmIntegrationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CrmIntegrationsTable,
+			Columns: []string{user.CrmIntegrationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(crmintegration.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

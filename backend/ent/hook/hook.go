@@ -69,6 +69,30 @@ func (f AuditLogFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AuditLogMutation", m)
 }
 
+// The CRMIntegrationFunc type is an adapter to allow the use of ordinary
+// function as CRMIntegration mutator.
+type CRMIntegrationFunc func(context.Context, *ent.CRMIntegrationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CRMIntegrationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CRMIntegrationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CRMIntegrationMutation", m)
+}
+
+// The CRMLeadSyncFunc type is an adapter to allow the use of ordinary
+// function as CRMLeadSync mutator.
+type CRMLeadSyncFunc func(context.Context, *ent.CRMLeadSyncMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CRMLeadSyncFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CRMLeadSyncMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CRMLeadSyncMutation", m)
+}
+
 // The CallLogFunc type is an adapter to allow the use of ordinary
 // function as CallLog mutator.
 type CallLogFunc func(context.Context, *ent.CallLogMutation) (ent.Value, error)

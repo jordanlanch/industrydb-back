@@ -23,6 +23,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/calllog"
 	"github.com/jordanlanch/industrydb/ent/competitormetric"
 	"github.com/jordanlanch/industrydb/ent/competitorprofile"
+	"github.com/jordanlanch/industrydb/ent/crmintegration"
+	"github.com/jordanlanch/industrydb/ent/crmleadsync"
 	"github.com/jordanlanch/industrydb/ent/emailcampaign"
 	"github.com/jordanlanch/industrydb/ent/emailcampaignrecipient"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
@@ -69,6 +71,10 @@ type Client struct {
 	AffiliateConversion *AffiliateConversionClient
 	// AuditLog is the client for interacting with the AuditLog builders.
 	AuditLog *AuditLogClient
+	// CRMIntegration is the client for interacting with the CRMIntegration builders.
+	CRMIntegration *CRMIntegrationClient
+	// CRMLeadSync is the client for interacting with the CRMLeadSync builders.
+	CRMLeadSync *CRMLeadSyncClient
 	// CallLog is the client for interacting with the CallLog builders.
 	CallLog *CallLogClient
 	// CompetitorMetric is the client for interacting with the CompetitorMetric builders.
@@ -149,6 +155,8 @@ func (c *Client) init() {
 	c.AffiliateClick = NewAffiliateClickClient(c.config)
 	c.AffiliateConversion = NewAffiliateConversionClient(c.config)
 	c.AuditLog = NewAuditLogClient(c.config)
+	c.CRMIntegration = NewCRMIntegrationClient(c.config)
+	c.CRMLeadSync = NewCRMLeadSyncClient(c.config)
 	c.CallLog = NewCallLogClient(c.config)
 	c.CompetitorMetric = NewCompetitorMetricClient(c.config)
 	c.CompetitorProfile = NewCompetitorProfileClient(c.config)
@@ -278,6 +286,8 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		AffiliateClick:          NewAffiliateClickClient(cfg),
 		AffiliateConversion:     NewAffiliateConversionClient(cfg),
 		AuditLog:                NewAuditLogClient(cfg),
+		CRMIntegration:          NewCRMIntegrationClient(cfg),
+		CRMLeadSync:             NewCRMLeadSyncClient(cfg),
 		CallLog:                 NewCallLogClient(cfg),
 		CompetitorMetric:        NewCompetitorMetricClient(cfg),
 		CompetitorProfile:       NewCompetitorProfileClient(cfg),
@@ -334,6 +344,8 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		AffiliateClick:          NewAffiliateClickClient(cfg),
 		AffiliateConversion:     NewAffiliateConversionClient(cfg),
 		AuditLog:                NewAuditLogClient(cfg),
+		CRMIntegration:          NewCRMIntegrationClient(cfg),
+		CRMLeadSync:             NewCRMLeadSyncClient(cfg),
 		CallLog:                 NewCallLogClient(cfg),
 		CompetitorMetric:        NewCompetitorMetricClient(cfg),
 		CompetitorProfile:       NewCompetitorProfileClient(cfg),
@@ -396,14 +408,14 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.APIKey, c.Affiliate, c.AffiliateClick, c.AffiliateConversion, c.AuditLog,
-		c.CallLog, c.CompetitorMetric, c.CompetitorProfile, c.EmailCampaign,
-		c.EmailCampaignRecipient, c.EmailSequence, c.EmailSequenceEnrollment,
-		c.EmailSequenceSend, c.EmailSequenceStep, c.Experiment, c.ExperimentAssignment,
-		c.Export, c.Industry, c.Lead, c.LeadAssignment, c.LeadNote,
-		c.LeadRecommendation, c.LeadStatusHistory, c.MarketReport, c.Organization,
-		c.OrganizationMember, c.Referral, c.SMSCampaign, c.SMSMessage, c.SavedSearch,
-		c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog, c.User,
-		c.UserBehavior, c.Webhook,
+		c.CRMIntegration, c.CRMLeadSync, c.CallLog, c.CompetitorMetric,
+		c.CompetitorProfile, c.EmailCampaign, c.EmailCampaignRecipient,
+		c.EmailSequence, c.EmailSequenceEnrollment, c.EmailSequenceSend,
+		c.EmailSequenceStep, c.Experiment, c.ExperimentAssignment, c.Export,
+		c.Industry, c.Lead, c.LeadAssignment, c.LeadNote, c.LeadRecommendation,
+		c.LeadStatusHistory, c.MarketReport, c.Organization, c.OrganizationMember,
+		c.Referral, c.SMSCampaign, c.SMSMessage, c.SavedSearch, c.Subscription,
+		c.Territory, c.TerritoryMember, c.UsageLog, c.User, c.UserBehavior, c.Webhook,
 	} {
 		n.Use(hooks...)
 	}
@@ -414,14 +426,14 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.APIKey, c.Affiliate, c.AffiliateClick, c.AffiliateConversion, c.AuditLog,
-		c.CallLog, c.CompetitorMetric, c.CompetitorProfile, c.EmailCampaign,
-		c.EmailCampaignRecipient, c.EmailSequence, c.EmailSequenceEnrollment,
-		c.EmailSequenceSend, c.EmailSequenceStep, c.Experiment, c.ExperimentAssignment,
-		c.Export, c.Industry, c.Lead, c.LeadAssignment, c.LeadNote,
-		c.LeadRecommendation, c.LeadStatusHistory, c.MarketReport, c.Organization,
-		c.OrganizationMember, c.Referral, c.SMSCampaign, c.SMSMessage, c.SavedSearch,
-		c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog, c.User,
-		c.UserBehavior, c.Webhook,
+		c.CRMIntegration, c.CRMLeadSync, c.CallLog, c.CompetitorMetric,
+		c.CompetitorProfile, c.EmailCampaign, c.EmailCampaignRecipient,
+		c.EmailSequence, c.EmailSequenceEnrollment, c.EmailSequenceSend,
+		c.EmailSequenceStep, c.Experiment, c.ExperimentAssignment, c.Export,
+		c.Industry, c.Lead, c.LeadAssignment, c.LeadNote, c.LeadRecommendation,
+		c.LeadStatusHistory, c.MarketReport, c.Organization, c.OrganizationMember,
+		c.Referral, c.SMSCampaign, c.SMSMessage, c.SavedSearch, c.Subscription,
+		c.Territory, c.TerritoryMember, c.UsageLog, c.User, c.UserBehavior, c.Webhook,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -440,6 +452,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.AffiliateConversion.mutate(ctx, m)
 	case *AuditLogMutation:
 		return c.AuditLog.mutate(ctx, m)
+	case *CRMIntegrationMutation:
+		return c.CRMIntegration.mutate(ctx, m)
+	case *CRMLeadSyncMutation:
+		return c.CRMLeadSync.mutate(ctx, m)
 	case *CallLogMutation:
 		return c.CallLog.mutate(ctx, m)
 	case *CompetitorMetricMutation:
@@ -1299,6 +1315,320 @@ func (c *AuditLogClient) mutate(ctx context.Context, m *AuditLogMutation) (Value
 		return (&AuditLogDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown AuditLog mutation op: %q", m.Op())
+	}
+}
+
+// CRMIntegrationClient is a client for the CRMIntegration schema.
+type CRMIntegrationClient struct {
+	config
+}
+
+// NewCRMIntegrationClient returns a client for the CRMIntegration from the given config.
+func NewCRMIntegrationClient(c config) *CRMIntegrationClient {
+	return &CRMIntegrationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `crmintegration.Hooks(f(g(h())))`.
+func (c *CRMIntegrationClient) Use(hooks ...Hook) {
+	c.hooks.CRMIntegration = append(c.hooks.CRMIntegration, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `crmintegration.Intercept(f(g(h())))`.
+func (c *CRMIntegrationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.CRMIntegration = append(c.inters.CRMIntegration, interceptors...)
+}
+
+// Create returns a builder for creating a CRMIntegration entity.
+func (c *CRMIntegrationClient) Create() *CRMIntegrationCreate {
+	mutation := newCRMIntegrationMutation(c.config, OpCreate)
+	return &CRMIntegrationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of CRMIntegration entities.
+func (c *CRMIntegrationClient) CreateBulk(builders ...*CRMIntegrationCreate) *CRMIntegrationCreateBulk {
+	return &CRMIntegrationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CRMIntegrationClient) MapCreateBulk(slice any, setFunc func(*CRMIntegrationCreate, int)) *CRMIntegrationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CRMIntegrationCreateBulk{err: fmt.Errorf("calling to CRMIntegrationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CRMIntegrationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CRMIntegrationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for CRMIntegration.
+func (c *CRMIntegrationClient) Update() *CRMIntegrationUpdate {
+	mutation := newCRMIntegrationMutation(c.config, OpUpdate)
+	return &CRMIntegrationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CRMIntegrationClient) UpdateOne(_m *CRMIntegration) *CRMIntegrationUpdateOne {
+	mutation := newCRMIntegrationMutation(c.config, OpUpdateOne, withCRMIntegration(_m))
+	return &CRMIntegrationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CRMIntegrationClient) UpdateOneID(id int) *CRMIntegrationUpdateOne {
+	mutation := newCRMIntegrationMutation(c.config, OpUpdateOne, withCRMIntegrationID(id))
+	return &CRMIntegrationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for CRMIntegration.
+func (c *CRMIntegrationClient) Delete() *CRMIntegrationDelete {
+	mutation := newCRMIntegrationMutation(c.config, OpDelete)
+	return &CRMIntegrationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CRMIntegrationClient) DeleteOne(_m *CRMIntegration) *CRMIntegrationDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CRMIntegrationClient) DeleteOneID(id int) *CRMIntegrationDeleteOne {
+	builder := c.Delete().Where(crmintegration.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CRMIntegrationDeleteOne{builder}
+}
+
+// Query returns a query builder for CRMIntegration.
+func (c *CRMIntegrationClient) Query() *CRMIntegrationQuery {
+	return &CRMIntegrationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCRMIntegration},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a CRMIntegration entity by its id.
+func (c *CRMIntegrationClient) Get(ctx context.Context, id int) (*CRMIntegration, error) {
+	return c.Query().Where(crmintegration.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CRMIntegrationClient) GetX(ctx context.Context, id int) *CRMIntegration {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a CRMIntegration.
+func (c *CRMIntegrationClient) QueryUser(_m *CRMIntegration) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(crmintegration.Table, crmintegration.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, crmintegration.UserTable, crmintegration.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySyncedLeads queries the synced_leads edge of a CRMIntegration.
+func (c *CRMIntegrationClient) QuerySyncedLeads(_m *CRMIntegration) *CRMLeadSyncQuery {
+	query := (&CRMLeadSyncClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(crmintegration.Table, crmintegration.FieldID, id),
+			sqlgraph.To(crmleadsync.Table, crmleadsync.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, crmintegration.SyncedLeadsTable, crmintegration.SyncedLeadsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *CRMIntegrationClient) Hooks() []Hook {
+	return c.hooks.CRMIntegration
+}
+
+// Interceptors returns the client interceptors.
+func (c *CRMIntegrationClient) Interceptors() []Interceptor {
+	return c.inters.CRMIntegration
+}
+
+func (c *CRMIntegrationClient) mutate(ctx context.Context, m *CRMIntegrationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CRMIntegrationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CRMIntegrationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CRMIntegrationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CRMIntegrationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown CRMIntegration mutation op: %q", m.Op())
+	}
+}
+
+// CRMLeadSyncClient is a client for the CRMLeadSync schema.
+type CRMLeadSyncClient struct {
+	config
+}
+
+// NewCRMLeadSyncClient returns a client for the CRMLeadSync from the given config.
+func NewCRMLeadSyncClient(c config) *CRMLeadSyncClient {
+	return &CRMLeadSyncClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `crmleadsync.Hooks(f(g(h())))`.
+func (c *CRMLeadSyncClient) Use(hooks ...Hook) {
+	c.hooks.CRMLeadSync = append(c.hooks.CRMLeadSync, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `crmleadsync.Intercept(f(g(h())))`.
+func (c *CRMLeadSyncClient) Intercept(interceptors ...Interceptor) {
+	c.inters.CRMLeadSync = append(c.inters.CRMLeadSync, interceptors...)
+}
+
+// Create returns a builder for creating a CRMLeadSync entity.
+func (c *CRMLeadSyncClient) Create() *CRMLeadSyncCreate {
+	mutation := newCRMLeadSyncMutation(c.config, OpCreate)
+	return &CRMLeadSyncCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of CRMLeadSync entities.
+func (c *CRMLeadSyncClient) CreateBulk(builders ...*CRMLeadSyncCreate) *CRMLeadSyncCreateBulk {
+	return &CRMLeadSyncCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CRMLeadSyncClient) MapCreateBulk(slice any, setFunc func(*CRMLeadSyncCreate, int)) *CRMLeadSyncCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CRMLeadSyncCreateBulk{err: fmt.Errorf("calling to CRMLeadSyncClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CRMLeadSyncCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CRMLeadSyncCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for CRMLeadSync.
+func (c *CRMLeadSyncClient) Update() *CRMLeadSyncUpdate {
+	mutation := newCRMLeadSyncMutation(c.config, OpUpdate)
+	return &CRMLeadSyncUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CRMLeadSyncClient) UpdateOne(_m *CRMLeadSync) *CRMLeadSyncUpdateOne {
+	mutation := newCRMLeadSyncMutation(c.config, OpUpdateOne, withCRMLeadSync(_m))
+	return &CRMLeadSyncUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CRMLeadSyncClient) UpdateOneID(id int) *CRMLeadSyncUpdateOne {
+	mutation := newCRMLeadSyncMutation(c.config, OpUpdateOne, withCRMLeadSyncID(id))
+	return &CRMLeadSyncUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for CRMLeadSync.
+func (c *CRMLeadSyncClient) Delete() *CRMLeadSyncDelete {
+	mutation := newCRMLeadSyncMutation(c.config, OpDelete)
+	return &CRMLeadSyncDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CRMLeadSyncClient) DeleteOne(_m *CRMLeadSync) *CRMLeadSyncDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CRMLeadSyncClient) DeleteOneID(id int) *CRMLeadSyncDeleteOne {
+	builder := c.Delete().Where(crmleadsync.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CRMLeadSyncDeleteOne{builder}
+}
+
+// Query returns a query builder for CRMLeadSync.
+func (c *CRMLeadSyncClient) Query() *CRMLeadSyncQuery {
+	return &CRMLeadSyncQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCRMLeadSync},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a CRMLeadSync entity by its id.
+func (c *CRMLeadSyncClient) Get(ctx context.Context, id int) (*CRMLeadSync, error) {
+	return c.Query().Where(crmleadsync.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CRMLeadSyncClient) GetX(ctx context.Context, id int) *CRMLeadSync {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryIntegration queries the integration edge of a CRMLeadSync.
+func (c *CRMLeadSyncClient) QueryIntegration(_m *CRMLeadSync) *CRMIntegrationQuery {
+	query := (&CRMIntegrationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(crmleadsync.Table, crmleadsync.FieldID, id),
+			sqlgraph.To(crmintegration.Table, crmintegration.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, crmleadsync.IntegrationTable, crmleadsync.IntegrationColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *CRMLeadSyncClient) Hooks() []Hook {
+	return c.hooks.CRMLeadSync
+}
+
+// Interceptors returns the client interceptors.
+func (c *CRMLeadSyncClient) Interceptors() []Interceptor {
+	return c.inters.CRMLeadSync
+}
+
+func (c *CRMLeadSyncClient) mutate(ctx context.Context, m *CRMLeadSyncMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CRMLeadSyncCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CRMLeadSyncUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CRMLeadSyncUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CRMLeadSyncDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown CRMLeadSync mutation op: %q", m.Op())
 	}
 }
 
@@ -6771,6 +7101,22 @@ func (c *UserClient) QueryEmailCampaigns(_m *User) *EmailCampaignQuery {
 	return query
 }
 
+// QueryCrmIntegrations queries the crm_integrations edge of a User.
+func (c *UserClient) QueryCrmIntegrations(_m *User) *CRMIntegrationQuery {
+	query := (&CRMIntegrationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(crmintegration.Table, crmintegration.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.CrmIntegrationsTable, user.CrmIntegrationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -7097,23 +7443,23 @@ func (c *WebhookClient) mutate(ctx context.Context, m *WebhookMutation) (Value, 
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		APIKey, Affiliate, AffiliateClick, AffiliateConversion, AuditLog, CallLog,
-		CompetitorMetric, CompetitorProfile, EmailCampaign, EmailCampaignRecipient,
-		EmailSequence, EmailSequenceEnrollment, EmailSequenceSend, EmailSequenceStep,
-		Experiment, ExperimentAssignment, Export, Industry, Lead, LeadAssignment,
-		LeadNote, LeadRecommendation, LeadStatusHistory, MarketReport, Organization,
-		OrganizationMember, Referral, SMSCampaign, SMSMessage, SavedSearch,
-		Subscription, Territory, TerritoryMember, UsageLog, User, UserBehavior,
-		Webhook []ent.Hook
+		APIKey, Affiliate, AffiliateClick, AffiliateConversion, AuditLog,
+		CRMIntegration, CRMLeadSync, CallLog, CompetitorMetric, CompetitorProfile,
+		EmailCampaign, EmailCampaignRecipient, EmailSequence, EmailSequenceEnrollment,
+		EmailSequenceSend, EmailSequenceStep, Experiment, ExperimentAssignment, Export,
+		Industry, Lead, LeadAssignment, LeadNote, LeadRecommendation,
+		LeadStatusHistory, MarketReport, Organization, OrganizationMember, Referral,
+		SMSCampaign, SMSMessage, SavedSearch, Subscription, Territory, TerritoryMember,
+		UsageLog, User, UserBehavior, Webhook []ent.Hook
 	}
 	inters struct {
-		APIKey, Affiliate, AffiliateClick, AffiliateConversion, AuditLog, CallLog,
-		CompetitorMetric, CompetitorProfile, EmailCampaign, EmailCampaignRecipient,
-		EmailSequence, EmailSequenceEnrollment, EmailSequenceSend, EmailSequenceStep,
-		Experiment, ExperimentAssignment, Export, Industry, Lead, LeadAssignment,
-		LeadNote, LeadRecommendation, LeadStatusHistory, MarketReport, Organization,
-		OrganizationMember, Referral, SMSCampaign, SMSMessage, SavedSearch,
-		Subscription, Territory, TerritoryMember, UsageLog, User, UserBehavior,
-		Webhook []ent.Interceptor
+		APIKey, Affiliate, AffiliateClick, AffiliateConversion, AuditLog,
+		CRMIntegration, CRMLeadSync, CallLog, CompetitorMetric, CompetitorProfile,
+		EmailCampaign, EmailCampaignRecipient, EmailSequence, EmailSequenceEnrollment,
+		EmailSequenceSend, EmailSequenceStep, Experiment, ExperimentAssignment, Export,
+		Industry, Lead, LeadAssignment, LeadNote, LeadRecommendation,
+		LeadStatusHistory, MarketReport, Organization, OrganizationMember, Referral,
+		SMSCampaign, SMSMessage, SavedSearch, Subscription, Territory, TerritoryMember,
+		UsageLog, User, UserBehavior, Webhook []ent.Interceptor
 	}
 )

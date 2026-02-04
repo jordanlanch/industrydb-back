@@ -21,6 +21,12 @@ type AffiliateConversion func(*sql.Selector)
 // AuditLog is the predicate function for auditlog builders.
 type AuditLog func(*sql.Selector)
 
+// CRMIntegration is the predicate function for crmintegration builders.
+type CRMIntegration func(*sql.Selector)
+
+// CRMLeadSync is the predicate function for crmleadsync builders.
+type CRMLeadSync func(*sql.Selector)
+
 // CallLog is the predicate function for calllog builders.
 type CallLog func(*sql.Selector)
 

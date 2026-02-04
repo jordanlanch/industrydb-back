@@ -281,6 +281,129 @@ var (
 			},
 		},
 	}
+	// CrmIntegrationsColumns holds the columns for the "crm_integrations" table.
+	CrmIntegrationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "provider", Type: field.TypeEnum, Enums: []string{"salesforce", "hubspot", "pipedrive", "zoho"}},
+		{Name: "enabled", Type: field.TypeBool, Default: true},
+		{Name: "access_token", Type: field.TypeString},
+		{Name: "refresh_token", Type: field.TypeString, Nullable: true},
+		{Name: "token_expires_at", Type: field.TypeTime, Nullable: true},
+		{Name: "instance_url", Type: field.TypeString, Nullable: true},
+		{Name: "api_key", Type: field.TypeString, Nullable: true},
+		{Name: "settings", Type: field.TypeJSON, Nullable: true},
+		{Name: "sync_direction", Type: field.TypeEnum, Enums: []string{"bidirectional", "to_crm", "from_crm"}, Default: "bidirectional"},
+		{Name: "auto_sync", Type: field.TypeBool, Default: false},
+		{Name: "sync_interval_minutes", Type: field.TypeInt, Default: 15},
+		{Name: "last_sync_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_sync_error", Type: field.TypeString, Nullable: true},
+		{Name: "synced_leads_count", Type: field.TypeInt, Default: 0},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "user_id", Type: field.TypeInt},
+	}
+	// CrmIntegrationsTable holds the schema information for the "crm_integrations" table.
+	CrmIntegrationsTable = &schema.Table{
+		Name:       "crm_integrations",
+		Columns:    CrmIntegrationsColumns,
+		PrimaryKey: []*schema.Column{CrmIntegrationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "crm_integrations_users_crm_integrations",
+				Columns:    []*schema.Column{CrmIntegrationsColumns[17]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "crmintegration_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{CrmIntegrationsColumns[17]},
+			},
+			{
+				Name:    "crmintegration_provider",
+				Unique:  false,
+				Columns: []*schema.Column{CrmIntegrationsColumns[1]},
+			},
+			{
+				Name:    "crmintegration_enabled",
+				Unique:  false,
+				Columns: []*schema.Column{CrmIntegrationsColumns[2]},
+			},
+			{
+				Name:    "crmintegration_last_sync_at",
+				Unique:  false,
+				Columns: []*schema.Column{CrmIntegrationsColumns[12]},
+			},
+			{
+				Name:    "crmintegration_user_id_provider",
+				Unique:  true,
+				Columns: []*schema.Column{CrmIntegrationsColumns[17], CrmIntegrationsColumns[1]},
+			},
+		},
+	}
+	// CrmLeadSyncsColumns holds the columns for the "crm_lead_syncs" table.
+	CrmLeadSyncsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "lead_id", Type: field.TypeInt},
+		{Name: "crm_lead_id", Type: field.TypeString},
+		{Name: "sync_status", Type: field.TypeEnum, Enums: []string{"pending", "synced", "failed", "deleted"}, Default: "pending"},
+		{Name: "sync_direction", Type: field.TypeEnum, Enums: []string{"to_crm", "from_crm"}},
+		{Name: "synced_at", Type: field.TypeTime, Nullable: true},
+		{Name: "sync_error", Type: field.TypeString, Nullable: true},
+		{Name: "crm_data", Type: field.TypeJSON, Nullable: true},
+		{Name: "auto_update", Type: field.TypeBool, Default: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "integration_id", Type: field.TypeInt},
+	}
+	// CrmLeadSyncsTable holds the schema information for the "crm_lead_syncs" table.
+	CrmLeadSyncsTable = &schema.Table{
+		Name:       "crm_lead_syncs",
+		Columns:    CrmLeadSyncsColumns,
+		PrimaryKey: []*schema.Column{CrmLeadSyncsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "crm_lead_syncs_crm_integrations_synced_leads",
+				Columns:    []*schema.Column{CrmLeadSyncsColumns[11]},
+				RefColumns: []*schema.Column{CrmIntegrationsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "crmleadsync_integration_id",
+				Unique:  false,
+				Columns: []*schema.Column{CrmLeadSyncsColumns[11]},
+			},
+			{
+				Name:    "crmleadsync_lead_id",
+				Unique:  false,
+				Columns: []*schema.Column{CrmLeadSyncsColumns[1]},
+			},
+			{
+				Name:    "crmleadsync_crm_lead_id",
+				Unique:  false,
+				Columns: []*schema.Column{CrmLeadSyncsColumns[2]},
+			},
+			{
+				Name:    "crmleadsync_sync_status",
+				Unique:  false,
+				Columns: []*schema.Column{CrmLeadSyncsColumns[3]},
+			},
+			{
+				Name:    "crmleadsync_synced_at",
+				Unique:  false,
+				Columns: []*schema.Column{CrmLeadSyncsColumns[5]},
+			},
+			{
+				Name:    "crmleadsync_integration_id_lead_id",
+				Unique:  true,
+				Columns: []*schema.Column{CrmLeadSyncsColumns[11], CrmLeadSyncsColumns[1]},
+			},
+		},
+	}
 	// CallLogsColumns holds the columns for the "call_logs" table.
 	CallLogsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -2122,6 +2245,8 @@ var (
 		AffiliateClicksTable,
 		AffiliateConversionsTable,
 		AuditLogsTable,
+		CrmIntegrationsTable,
+		CrmLeadSyncsTable,
 		CallLogsTable,
 		CompetitorMetricsTable,
 		CompetitorProfilesTable,
@@ -2164,6 +2289,8 @@ func init() {
 	AffiliateConversionsTable.ForeignKeys[0].RefTable = AffiliatesTable
 	AffiliateConversionsTable.ForeignKeys[1].RefTable = UsersTable
 	AuditLogsTable.ForeignKeys[0].RefTable = UsersTable
+	CrmIntegrationsTable.ForeignKeys[0].RefTable = UsersTable
+	CrmLeadSyncsTable.ForeignKeys[0].RefTable = CrmIntegrationsTable
 	CallLogsTable.ForeignKeys[0].RefTable = LeadsTable
 	CallLogsTable.ForeignKeys[1].RefTable = UsersTable
 	CompetitorMetricsTable.ForeignKeys[0].RefTable = CompetitorProfilesTable
