@@ -1,0 +1,129 @@
+# IndustryDB GraphQL Schema
+
+# Scalar types
+scalar Time
+
+# User type
+type User {
+  id: ID!
+  email: String!
+  name: String!
+  subscriptionTier: String!
+  usageCount: Int!
+  usageLimit: Int!
+  emailVerified: Boolean!
+  createdAt: Time!
+}
+
+# Lead type
+type Lead {
+  id: ID!
+  name: String!
+  industry: String!
+  country: String!
+  city: String
+  email: String
+  phone: String
+  website: String
+  address: String
+  latitude: Float
+  longitude: Float
+  verified: Boolean!
+  qualityScore: Int!
+  createdAt: Time!
+}
+
+# Pagination
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+# Lead connection for pagination
+type LeadEdge {
+  cursor: String!
+  node: Lead!
+}
+
+type LeadConnection {
+  edges: [LeadEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+# Analytics types
+type UsageStats {
+  totalSearches: Int!
+  totalExports: Int!
+  leadsRemaining: Int!
+  usagePercentage: Float!
+}
+
+type RevenueMetrics {
+  mrr: Float!
+  arr: Float!
+  revenueGrowth: Float!
+  arpu: Float!
+  paidUsers: Int!
+}
+
+# Input types
+input LeadSearchInput {
+  industry: String
+  country: String
+  city: String
+  hasEmail: Boolean
+  hasPhone: Boolean
+  minQualityScore: Int
+  limit: Int
+  offset: Int
+}
+
+input RegisterInput {
+  email: String!
+  password: String!
+  name: String!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+# Mutation responses
+type AuthResponse {
+  token: String!
+  user: User!
+}
+
+type GenericResponse {
+  success: Boolean!
+  message: String!
+}
+
+# Queries
+type Query {
+  # Current user
+  me: User!
+
+  # Leads
+  lead(id: ID!): Lead
+  leads(input: LeadSearchInput!): LeadConnection!
+
+  # Analytics
+  usageStats: UsageStats!
+  revenueMetrics(periodStart: Time!, periodEnd: Time!): RevenueMetrics!
+}
+
+# Mutations
+type Mutation {
+  # Authentication
+  register(input: RegisterInput!): AuthResponse!
+  login(input: LoginInput!): AuthResponse!
+  logout: GenericResponse!
+
+  # Lead actions
+  exportLeads(input: LeadSearchInput!): GenericResponse!
+}

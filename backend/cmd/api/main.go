@@ -283,6 +283,9 @@ func main() {
 		})
 	})
 
+	// GraphQL endpoints (placeholder - initialized later with handlers)
+	// Note: graphqlHandler is initialized after services, routes registered below
+
 	// Initialize JWT blacklist
 	tokenBlacklist := auth.NewTokenBlacklist(redisClient)
 
@@ -389,6 +392,7 @@ func main() {
 	cohortHandler := handlers.NewCohortHandler(db.Ent)
 	revenueHandler := handlers.NewRevenueHandler(db.Ent)
 	referralHandler := handlers.NewReferralHandler(db.Ent)
+	graphqlHandler := handlers.NewGraphQLHandler(db.Ent, leadService, cfg.JWTSecret, cfg.JWTExpirationHours)
 
 	// Enrichment provider (stub for development - configure with real API in production)
 	// TODO: Replace with real provider (Clearbit, FullContact, etc.) in production
@@ -421,6 +425,14 @@ func main() {
 		// Password reset (public endpoints)
 		authRoutes.POST("/forgot-password", authHandler.ForgotPassword)
 		authRoutes.POST("/reset-password", authHandler.ResetPassword)
+	}
+
+	// GraphQL endpoints
+	{
+		// GraphQL Playground (public - development only)
+		v1.GET("/graphql/playground", graphqlHandler.Playground)
+		// GraphQL API endpoint (protected - requires JWT)
+		v1.POST("/graphql", graphqlHandler.GraphQLEndpoint, custommw.JWTMiddlewareWithBlacklist(cfg.JWTSecret, tokenBlacklist, db.Ent))
 	}
 
 	// Protected routes (require JWT with blacklist validation)
