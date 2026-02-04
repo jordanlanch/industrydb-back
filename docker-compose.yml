@@ -12,12 +12,14 @@ services:
       POSTGRES_PASSWORD: localdev
       POSTGRES_DB: industrydb
       PGDATA: /var/lib/postgresql/data/pgdata
-    # No exposed ports - internal network only
+    ports:
+      - "5544:5432"  # Exposed for direct access (changed to avoid conflict with external PostgreSQL)
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+      - ../scripts/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     networks:
-      - industrydb-network
+      - backend-network
+      - industrydb-shared
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U industrydb -d industrydb"]
       interval: 10s
@@ -31,11 +33,13 @@ services:
   redis:
     image: redis:7-alpine
     container_name: industrydb-redis
-    # No exposed ports - internal network only
+    ports:
+      - "6677:6379"  # Exposed for direct access (changed to avoid conflict with other services)
     volumes:
       - redis_data:/data
     networks:
-      - industrydb-network
+      - backend-network
+      - industrydb-shared
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -45,64 +49,50 @@ services:
     command: redis-server --appendonly yes
 
   # ================================
-  # Backend API (Go)
+  # Backend API (Go with Air)
   # ================================
   backend:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
       target: development
     container_name: industrydb-backend
     environment:
       - DATABASE_URL=postgres://industrydb:localdev@db:5432/industrydb?sslmode=disable
       - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=${JWT_SECRET:-dev-secret-change-in-production}
+      - JWT_SECRET=${JWT_SECRET:-dev-secret-change-in-production-please}
+      - JWT_EXPIRATION_HOURS=168
+      - API_HOST=0.0.0.0
       - API_PORT=8080
       - API_ENVIRONMENT=development
-      - FRONTEND_URL=http://localhost:5678
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
-      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - FRONTEND_URL=http://localhost:5566
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - STRIPE_PRICE_STARTER=${STRIPE_PRICE_STARTER:-}
+      - STRIPE_PRICE_PRO=${STRIPE_PRICE_PRO:-}
+      - STRIPE_PRICE_BUSINESS=${STRIPE_PRICE_BUSINESS:-}
       - LOG_LEVEL=debug
+      - LOG_FORMAT=text
+      - RATE_LIMIT_REQUESTS_PER_MINUTE=60
+      - RATE_LIMIT_BURST=10
+      - STORAGE_LOCAL_PATH=./data/exports
     ports:
-      - "7890:8080"
+      - "9988:8080"  # Map host 9988 to container 8080 (changed to avoid conflict with orchestrator-ugc)
     volumes:
-      - ./backend:/app
+      - .:/app
       - backend_cache:/go/pkg/mod
+      - /app/tmp  # Air temp directory (don't mount)
     networks:
-      - industrydb-network
+      - backend-network
+      - industrydb-shared
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
     restart: unless-stopped
-    command: air -c .air.toml # Hot reload with Air
-
-  # ================================
-  # Frontend (Next.js)
-  # ================================
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      target: development
-    container_name: industrydb-frontend
-    environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:7890
-      - NODE_ENV=development
-      - WATCHPACK_POLLING=true
-      - CHOKIDAR_USEPOLLING=true
-    ports:
-      - "5678:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    networks:
-      - industrydb-network
-    depends_on:
-      - backend
-    restart: unless-stopped
-    command: npm run dev
+    stdin_open: true
+    tty: true
 
 # ================================
 # Volumes
@@ -119,5 +109,10 @@ volumes:
 # Networks
 # ================================
 networks:
-  industrydb-network:
+  # Internal network for backend services
+  backend-network:
     driver: bridge
+  
+  # Shared network to communicate with frontend
+  industrydb-shared:
+    external: true
