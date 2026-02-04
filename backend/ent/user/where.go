@@ -1893,6 +1893,52 @@ func HasCompetitorProfilesWith(preds ...predicate.CompetitorProfile) predicate.U
 	})
 }
 
+// HasLeadRecommendations applies the HasEdge predicate on the "lead_recommendations" edge.
+func HasLeadRecommendations() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, LeadRecommendationsTable, LeadRecommendationsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasLeadRecommendationsWith applies the HasEdge predicate on the "lead_recommendations" edge with a given conditions (other predicates).
+func HasLeadRecommendationsWith(preds ...predicate.LeadRecommendation) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newLeadRecommendationsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasBehaviors applies the HasEdge predicate on the "behaviors" edge.
+func HasBehaviors() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, BehaviorsTable, BehaviorsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasBehaviorsWith applies the HasEdge predicate on the "behaviors" edge with a given conditions (other predicates).
+func HasBehaviorsWith(preds ...predicate.UserBehavior) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newBehaviorsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.User) predicate.User {
 	return predicate.User(sql.AndPredicates(predicates...))

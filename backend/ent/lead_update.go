@@ -18,6 +18,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/lead"
 	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
+	"github.com/jordanlanch/industrydb/ent/leadrecommendation"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/predicate"
 	"github.com/jordanlanch/industrydb/ent/smsmessage"
@@ -769,6 +770,21 @@ func (_u *LeadUpdate) AddCallLogs(v ...*CallLog) *LeadUpdate {
 	return _u.AddCallLogIDs(ids...)
 }
 
+// AddRecommendationIDs adds the "recommendations" edge to the LeadRecommendation entity by IDs.
+func (_u *LeadUpdate) AddRecommendationIDs(ids ...int) *LeadUpdate {
+	_u.mutation.AddRecommendationIDs(ids...)
+	return _u
+}
+
+// AddRecommendations adds the "recommendations" edges to the LeadRecommendation entity.
+func (_u *LeadUpdate) AddRecommendations(v ...*LeadRecommendation) *LeadUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddRecommendationIDs(ids...)
+}
+
 // Mutation returns the LeadMutation object of the builder.
 func (_u *LeadUpdate) Mutation() *LeadMutation {
 	return _u.mutation
@@ -925,6 +941,27 @@ func (_u *LeadUpdate) RemoveCallLogs(v ...*CallLog) *LeadUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveCallLogIDs(ids...)
+}
+
+// ClearRecommendations clears all "recommendations" edges to the LeadRecommendation entity.
+func (_u *LeadUpdate) ClearRecommendations() *LeadUpdate {
+	_u.mutation.ClearRecommendations()
+	return _u
+}
+
+// RemoveRecommendationIDs removes the "recommendations" edge to LeadRecommendation entities by IDs.
+func (_u *LeadUpdate) RemoveRecommendationIDs(ids ...int) *LeadUpdate {
+	_u.mutation.RemoveRecommendationIDs(ids...)
+	return _u
+}
+
+// RemoveRecommendations removes "recommendations" edges to LeadRecommendation entities.
+func (_u *LeadUpdate) RemoveRecommendations(v ...*LeadRecommendation) *LeadUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveRecommendationIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -1535,6 +1572,51 @@ func (_u *LeadUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(calllog.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.RecommendationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.RecommendationsTable,
+			Columns: []string{lead.RecommendationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadrecommendation.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedRecommendationsIDs(); len(nodes) > 0 && !_u.mutation.RecommendationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.RecommendationsTable,
+			Columns: []string{lead.RecommendationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadrecommendation.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RecommendationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.RecommendationsTable,
+			Columns: []string{lead.RecommendationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadrecommendation.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -2294,6 +2376,21 @@ func (_u *LeadUpdateOne) AddCallLogs(v ...*CallLog) *LeadUpdateOne {
 	return _u.AddCallLogIDs(ids...)
 }
 
+// AddRecommendationIDs adds the "recommendations" edge to the LeadRecommendation entity by IDs.
+func (_u *LeadUpdateOne) AddRecommendationIDs(ids ...int) *LeadUpdateOne {
+	_u.mutation.AddRecommendationIDs(ids...)
+	return _u
+}
+
+// AddRecommendations adds the "recommendations" edges to the LeadRecommendation entity.
+func (_u *LeadUpdateOne) AddRecommendations(v ...*LeadRecommendation) *LeadUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddRecommendationIDs(ids...)
+}
+
 // Mutation returns the LeadMutation object of the builder.
 func (_u *LeadUpdateOne) Mutation() *LeadMutation {
 	return _u.mutation
@@ -2450,6 +2547,27 @@ func (_u *LeadUpdateOne) RemoveCallLogs(v ...*CallLog) *LeadUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveCallLogIDs(ids...)
+}
+
+// ClearRecommendations clears all "recommendations" edges to the LeadRecommendation entity.
+func (_u *LeadUpdateOne) ClearRecommendations() *LeadUpdateOne {
+	_u.mutation.ClearRecommendations()
+	return _u
+}
+
+// RemoveRecommendationIDs removes the "recommendations" edge to LeadRecommendation entities by IDs.
+func (_u *LeadUpdateOne) RemoveRecommendationIDs(ids ...int) *LeadUpdateOne {
+	_u.mutation.RemoveRecommendationIDs(ids...)
+	return _u
+}
+
+// RemoveRecommendations removes "recommendations" edges to LeadRecommendation entities.
+func (_u *LeadUpdateOne) RemoveRecommendations(v ...*LeadRecommendation) *LeadUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveRecommendationIDs(ids...)
 }
 
 // Where appends a list predicates to the LeadUpdate builder.
@@ -3090,6 +3208,51 @@ func (_u *LeadUpdateOne) sqlSave(ctx context.Context) (_node *Lead, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(calllog.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.RecommendationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.RecommendationsTable,
+			Columns: []string{lead.RecommendationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadrecommendation.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedRecommendationsIDs(); len(nodes) > 0 && !_u.mutation.RecommendationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.RecommendationsTable,
+			Columns: []string{lead.RecommendationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadrecommendation.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RecommendationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.RecommendationsTable,
+			Columns: []string{lead.RecommendationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadrecommendation.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

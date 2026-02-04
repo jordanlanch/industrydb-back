@@ -63,6 +63,9 @@ type LeadAssignment func(*sql.Selector)
 // LeadNote is the predicate function for leadnote builders.
 type LeadNote func(*sql.Selector)
 
+// LeadRecommendation is the predicate function for leadrecommendation builders.
+type LeadRecommendation func(*sql.Selector)
+
 // LeadStatusHistory is the predicate function for leadstatushistory builders.
 type LeadStatusHistory func(*sql.Selector)
 
@@ -98,6 +101,9 @@ type UsageLog func(*sql.Selector)
 
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
+
+// UserBehavior is the predicate function for userbehavior builders.
+type UserBehavior func(*sql.Selector)
 
 // Webhook is the predicate function for webhook builders.
 type Webhook func(*sql.Selector)

@@ -31,6 +31,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/lead"
 	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
+	"github.com/jordanlanch/industrydb/ent/leadrecommendation"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
@@ -43,6 +44,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/territorymember"
 	"github.com/jordanlanch/industrydb/ent/usagelog"
 	"github.com/jordanlanch/industrydb/ent/user"
+	"github.com/jordanlanch/industrydb/ent/userbehavior"
 	"github.com/jordanlanch/industrydb/ent/webhook"
 )
 
@@ -123,6 +125,7 @@ func checkColumn(t, c string) error {
 			lead.Table:                    lead.ValidColumn,
 			leadassignment.Table:          leadassignment.ValidColumn,
 			leadnote.Table:                leadnote.ValidColumn,
+			leadrecommendation.Table:      leadrecommendation.ValidColumn,
 			leadstatushistory.Table:       leadstatushistory.ValidColumn,
 			organization.Table:            organization.ValidColumn,
 			organizationmember.Table:      organizationmember.ValidColumn,
@@ -135,6 +138,7 @@ func checkColumn(t, c string) error {
 			territorymember.Table:         territorymember.ValidColumn,
 			usagelog.Table:                usagelog.ValidColumn,
 			user.Table:                    user.ValidColumn,
+			userbehavior.Table:            userbehavior.ValidColumn,
 			webhook.Table:                 webhook.ValidColumn,
 		})
 	})

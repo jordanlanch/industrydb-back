@@ -50,6 +50,8 @@ type Tx struct {
 	LeadAssignment *LeadAssignmentClient
 	// LeadNote is the client for interacting with the LeadNote builders.
 	LeadNote *LeadNoteClient
+	// LeadRecommendation is the client for interacting with the LeadRecommendation builders.
+	LeadRecommendation *LeadRecommendationClient
 	// LeadStatusHistory is the client for interacting with the LeadStatusHistory builders.
 	LeadStatusHistory *LeadStatusHistoryClient
 	// Organization is the client for interacting with the Organization builders.
@@ -74,6 +76,8 @@ type Tx struct {
 	UsageLog *UsageLogClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// UserBehavior is the client for interacting with the UserBehavior builders.
+	UserBehavior *UserBehaviorClient
 	// Webhook is the client for interacting with the Webhook builders.
 	Webhook *WebhookClient
 
@@ -226,6 +230,7 @@ func (tx *Tx) init() {
 	tx.Lead = NewLeadClient(tx.config)
 	tx.LeadAssignment = NewLeadAssignmentClient(tx.config)
 	tx.LeadNote = NewLeadNoteClient(tx.config)
+	tx.LeadRecommendation = NewLeadRecommendationClient(tx.config)
 	tx.LeadStatusHistory = NewLeadStatusHistoryClient(tx.config)
 	tx.Organization = NewOrganizationClient(tx.config)
 	tx.OrganizationMember = NewOrganizationMemberClient(tx.config)
@@ -238,6 +243,7 @@ func (tx *Tx) init() {
 	tx.TerritoryMember = NewTerritoryMemberClient(tx.config)
 	tx.UsageLog = NewUsageLogClient(tx.config)
 	tx.User = NewUserClient(tx.config)
+	tx.UserBehavior = NewUserBehaviorClient(tx.config)
 	tx.Webhook = NewWebhookClient(tx.config)
 }
 

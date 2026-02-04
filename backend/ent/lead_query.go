@@ -18,6 +18,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/lead"
 	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
+	"github.com/jordanlanch/industrydb/ent/leadrecommendation"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/predicate"
 	"github.com/jordanlanch/industrydb/ent/smsmessage"
@@ -39,6 +40,7 @@ type LeadQuery struct {
 	withTerritory                *TerritoryQuery
 	withSmsMessages              *SMSMessageQuery
 	withCallLogs                 *CallLogQuery
+	withRecommendations          *LeadRecommendationQuery
 	withFKs                      bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -252,6 +254,28 @@ func (_q *LeadQuery) QueryCallLogs() *CallLogQuery {
 	return query
 }
 
+// QueryRecommendations chains the current query on the "recommendations" edge.
+func (_q *LeadQuery) QueryRecommendations() *LeadRecommendationQuery {
+	query := (&LeadRecommendationClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(lead.Table, lead.FieldID, selector),
+			sqlgraph.To(leadrecommendation.Table, leadrecommendation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, lead.RecommendationsTable, lead.RecommendationsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first Lead entity from the query.
 // Returns a *NotFoundError when no Lead was found.
 func (_q *LeadQuery) First(ctx context.Context) (*Lead, error) {
@@ -452,6 +476,7 @@ func (_q *LeadQuery) Clone() *LeadQuery {
 		withTerritory:                _q.withTerritory.Clone(),
 		withSmsMessages:              _q.withSmsMessages.Clone(),
 		withCallLogs:                 _q.withCallLogs.Clone(),
+		withRecommendations:          _q.withRecommendations.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -546,6 +571,17 @@ func (_q *LeadQuery) WithCallLogs(opts ...func(*CallLogQuery)) *LeadQuery {
 	return _q
 }
 
+// WithRecommendations tells the query-builder to eager-load the nodes that are connected to
+// the "recommendations" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *LeadQuery) WithRecommendations(opts ...func(*LeadRecommendationQuery)) *LeadQuery {
+	query := (&LeadRecommendationClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withRecommendations = query
+	return _q
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -625,7 +661,7 @@ func (_q *LeadQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Lead, e
 		nodes       = []*Lead{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [8]bool{
+		loadedTypes = [9]bool{
 			_q.withNotes != nil,
 			_q.withStatusHistory != nil,
 			_q.withAssignments != nil,
@@ -634,6 +670,7 @@ func (_q *LeadQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Lead, e
 			_q.withTerritory != nil,
 			_q.withSmsMessages != nil,
 			_q.withCallLogs != nil,
+			_q.withRecommendations != nil,
 		}
 	)
 	if _q.withTerritory != nil {
@@ -716,6 +753,13 @@ func (_q *LeadQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Lead, e
 		if err := _q.loadCallLogs(ctx, query, nodes,
 			func(n *Lead) { n.Edges.CallLogs = []*CallLog{} },
 			func(n *Lead, e *CallLog) { n.Edges.CallLogs = append(n.Edges.CallLogs, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withRecommendations; query != nil {
+		if err := _q.loadRecommendations(ctx, query, nodes,
+			func(n *Lead) { n.Edges.Recommendations = []*LeadRecommendation{} },
+			func(n *Lead, e *LeadRecommendation) { n.Edges.Recommendations = append(n.Edges.Recommendations, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -965,6 +1009,36 @@ func (_q *LeadQuery) loadCallLogs(ctx context.Context, query *CallLogQuery, node
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "lead_id" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *LeadQuery) loadRecommendations(ctx context.Context, query *LeadRecommendationQuery, nodes []*Lead, init func(*Lead), assign func(*Lead, *LeadRecommendation)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*Lead)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(leadrecommendation.FieldLeadID)
+	}
+	query.Where(predicate.LeadRecommendation(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(lead.RecommendationsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.LeadID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "lead_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

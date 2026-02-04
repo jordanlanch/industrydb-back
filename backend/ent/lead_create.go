@@ -16,6 +16,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/lead"
 	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
+	"github.com/jordanlanch/industrydb/ent/leadrecommendation"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/smsmessage"
 	"github.com/jordanlanch/industrydb/ent/territory"
@@ -578,6 +579,21 @@ func (_c *LeadCreate) AddCallLogs(v ...*CallLog) *LeadCreate {
 	return _c.AddCallLogIDs(ids...)
 }
 
+// AddRecommendationIDs adds the "recommendations" edge to the LeadRecommendation entity by IDs.
+func (_c *LeadCreate) AddRecommendationIDs(ids ...int) *LeadCreate {
+	_c.mutation.AddRecommendationIDs(ids...)
+	return _c
+}
+
+// AddRecommendations adds the "recommendations" edges to the LeadRecommendation entity.
+func (_c *LeadCreate) AddRecommendations(v ...*LeadRecommendation) *LeadCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddRecommendationIDs(ids...)
+}
+
 // Mutation returns the LeadMutation object of the builder.
 func (_c *LeadCreate) Mutation() *LeadMutation {
 	return _c.mutation
@@ -1003,6 +1019,22 @@ func (_c *LeadCreate) createSpec() (*Lead, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(calllog.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.RecommendationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   lead.RecommendationsTable,
+			Columns: []string{lead.RecommendationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadrecommendation.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

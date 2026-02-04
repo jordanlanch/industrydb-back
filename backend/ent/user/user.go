@@ -115,6 +115,10 @@ const (
 	EdgeCallLogs = "call_logs"
 	// EdgeCompetitorProfiles holds the string denoting the competitor_profiles edge name in mutations.
 	EdgeCompetitorProfiles = "competitor_profiles"
+	// EdgeLeadRecommendations holds the string denoting the lead_recommendations edge name in mutations.
+	EdgeLeadRecommendations = "lead_recommendations"
+	// EdgeBehaviors holds the string denoting the behaviors edge name in mutations.
+	EdgeBehaviors = "behaviors"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// SubscriptionsTable is the table that holds the subscriptions relation/edge.
@@ -299,6 +303,20 @@ const (
 	CompetitorProfilesInverseTable = "competitor_profiles"
 	// CompetitorProfilesColumn is the table column denoting the competitor_profiles relation/edge.
 	CompetitorProfilesColumn = "user_id"
+	// LeadRecommendationsTable is the table that holds the lead_recommendations relation/edge.
+	LeadRecommendationsTable = "lead_recommendations"
+	// LeadRecommendationsInverseTable is the table name for the LeadRecommendation entity.
+	// It exists in this package in order to avoid circular dependency with the "leadrecommendation" package.
+	LeadRecommendationsInverseTable = "lead_recommendations"
+	// LeadRecommendationsColumn is the table column denoting the lead_recommendations relation/edge.
+	LeadRecommendationsColumn = "user_id"
+	// BehaviorsTable is the table that holds the behaviors relation/edge.
+	BehaviorsTable = "user_behaviors"
+	// BehaviorsInverseTable is the table name for the UserBehavior entity.
+	// It exists in this package in order to avoid circular dependency with the "userbehavior" package.
+	BehaviorsInverseTable = "user_behaviors"
+	// BehaviorsColumn is the table column denoting the behaviors relation/edge.
+	BehaviorsColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -914,6 +932,34 @@ func ByCompetitorProfiles(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOptio
 		sqlgraph.OrderByNeighborTerms(s, newCompetitorProfilesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByLeadRecommendationsCount orders the results by lead_recommendations count.
+func ByLeadRecommendationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newLeadRecommendationsStep(), opts...)
+	}
+}
+
+// ByLeadRecommendations orders the results by lead_recommendations terms.
+func ByLeadRecommendations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newLeadRecommendationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByBehaviorsCount orders the results by behaviors count.
+func ByBehaviorsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newBehaviorsStep(), opts...)
+	}
+}
+
+// ByBehaviors orders the results by behaviors terms.
+func ByBehaviors(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newBehaviorsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSubscriptionsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -1094,5 +1140,19 @@ func newCompetitorProfilesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(CompetitorProfilesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, CompetitorProfilesTable, CompetitorProfilesColumn),
+	)
+}
+func newLeadRecommendationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(LeadRecommendationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, LeadRecommendationsTable, LeadRecommendationsColumn),
+	)
+}
+func newBehaviorsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(BehaviorsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, BehaviorsTable, BehaviorsColumn),
 	)
 }

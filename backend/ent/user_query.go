@@ -24,6 +24,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
+	"github.com/jordanlanch/industrydb/ent/leadrecommendation"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
@@ -36,6 +37,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/territorymember"
 	"github.com/jordanlanch/industrydb/ent/usagelog"
 	"github.com/jordanlanch/industrydb/ent/user"
+	"github.com/jordanlanch/industrydb/ent/userbehavior"
 	"github.com/jordanlanch/industrydb/ent/webhook"
 )
 
@@ -72,6 +74,8 @@ type UserQuery struct {
 	withSmsCampaigns                 *SMSCampaignQuery
 	withCallLogs                     *CallLogQuery
 	withCompetitorProfiles           *CompetitorProfileQuery
+	withLeadRecommendations          *LeadRecommendationQuery
+	withBehaviors                    *UserBehaviorQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -680,6 +684,50 @@ func (_q *UserQuery) QueryCompetitorProfiles() *CompetitorProfileQuery {
 	return query
 }
 
+// QueryLeadRecommendations chains the current query on the "lead_recommendations" edge.
+func (_q *UserQuery) QueryLeadRecommendations() *LeadRecommendationQuery {
+	query := (&LeadRecommendationClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(leadrecommendation.Table, leadrecommendation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.LeadRecommendationsTable, user.LeadRecommendationsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryBehaviors chains the current query on the "behaviors" edge.
+func (_q *UserQuery) QueryBehaviors() *UserBehaviorQuery {
+	query := (&UserBehaviorClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(userbehavior.Table, userbehavior.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.BehaviorsTable, user.BehaviorsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first User entity from the query.
 // Returns a *NotFoundError when no User was found.
 func (_q *UserQuery) First(ctx context.Context) (*User, error) {
@@ -898,6 +946,8 @@ func (_q *UserQuery) Clone() *UserQuery {
 		withSmsCampaigns:                 _q.withSmsCampaigns.Clone(),
 		withCallLogs:                     _q.withCallLogs.Clone(),
 		withCompetitorProfiles:           _q.withCompetitorProfiles.Clone(),
+		withLeadRecommendations:          _q.withLeadRecommendations.Clone(),
+		withBehaviors:                    _q.withBehaviors.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -1190,6 +1240,28 @@ func (_q *UserQuery) WithCompetitorProfiles(opts ...func(*CompetitorProfileQuery
 	return _q
 }
 
+// WithLeadRecommendations tells the query-builder to eager-load the nodes that are connected to
+// the "lead_recommendations" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithLeadRecommendations(opts ...func(*LeadRecommendationQuery)) *UserQuery {
+	query := (&LeadRecommendationClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withLeadRecommendations = query
+	return _q
+}
+
+// WithBehaviors tells the query-builder to eager-load the nodes that are connected to
+// the "behaviors" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithBehaviors(opts ...func(*UserBehaviorQuery)) *UserQuery {
+	query := (&UserBehaviorClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withBehaviors = query
+	return _q
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -1268,7 +1340,7 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
-		loadedTypes = [26]bool{
+		loadedTypes = [28]bool{
 			_q.withSubscriptions != nil,
 			_q.withExports != nil,
 			_q.withAPIKeys != nil,
@@ -1295,6 +1367,8 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			_q.withSmsCampaigns != nil,
 			_q.withCallLogs != nil,
 			_q.withCompetitorProfiles != nil,
+			_q.withLeadRecommendations != nil,
+			_q.withBehaviors != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -1509,6 +1583,22 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 			func(n *User, e *CompetitorProfile) {
 				n.Edges.CompetitorProfiles = append(n.Edges.CompetitorProfiles, e)
 			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withLeadRecommendations; query != nil {
+		if err := _q.loadLeadRecommendations(ctx, query, nodes,
+			func(n *User) { n.Edges.LeadRecommendations = []*LeadRecommendation{} },
+			func(n *User, e *LeadRecommendation) {
+				n.Edges.LeadRecommendations = append(n.Edges.LeadRecommendations, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withBehaviors; query != nil {
+		if err := _q.loadBehaviors(ctx, query, nodes,
+			func(n *User) { n.Edges.Behaviors = []*UserBehavior{} },
+			func(n *User, e *UserBehavior) { n.Edges.Behaviors = append(n.Edges.Behaviors, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -2287,6 +2377,66 @@ func (_q *UserQuery) loadCompetitorProfiles(ctx context.Context, query *Competit
 	}
 	query.Where(predicate.CompetitorProfile(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(user.CompetitorProfilesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.UserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadLeadRecommendations(ctx context.Context, query *LeadRecommendationQuery, nodes []*User, init func(*User), assign func(*User, *LeadRecommendation)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(leadrecommendation.FieldUserID)
+	}
+	query.Where(predicate.LeadRecommendation(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.LeadRecommendationsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.UserID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadBehaviors(ctx context.Context, query *UserBehaviorQuery, nodes []*User, init func(*User), assign func(*User, *UserBehavior)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(userbehavior.FieldUserID)
+	}
+	query.Where(predicate.UserBehavior(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.BehaviorsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

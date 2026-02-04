@@ -101,6 +101,8 @@ const (
 	EdgeSmsMessages = "sms_messages"
 	// EdgeCallLogs holds the string denoting the call_logs edge name in mutations.
 	EdgeCallLogs = "call_logs"
+	// EdgeRecommendations holds the string denoting the recommendations edge name in mutations.
+	EdgeRecommendations = "recommendations"
 	// Table holds the table name of the lead in the database.
 	Table = "leads"
 	// NotesTable is the table that holds the notes relation/edge.
@@ -159,6 +161,13 @@ const (
 	CallLogsInverseTable = "call_logs"
 	// CallLogsColumn is the table column denoting the call_logs relation/edge.
 	CallLogsColumn = "lead_id"
+	// RecommendationsTable is the table that holds the recommendations relation/edge.
+	RecommendationsTable = "lead_recommendations"
+	// RecommendationsInverseTable is the table name for the LeadRecommendation entity.
+	// It exists in this package in order to avoid circular dependency with the "leadrecommendation" package.
+	RecommendationsInverseTable = "lead_recommendations"
+	// RecommendationsColumn is the table column denoting the recommendations relation/edge.
+	RecommendationsColumn = "lead_id"
 )
 
 // Columns holds all SQL columns for lead fields.
@@ -658,6 +667,20 @@ func ByCallLogs(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newCallLogsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByRecommendationsCount orders the results by recommendations count.
+func ByRecommendationsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newRecommendationsStep(), opts...)
+	}
+}
+
+// ByRecommendations orders the results by recommendations terms.
+func ByRecommendations(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRecommendationsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newNotesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -712,5 +735,12 @@ func newCallLogsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(CallLogsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, CallLogsTable, CallLogsColumn),
+	)
+}
+func newRecommendationsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RecommendationsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, RecommendationsTable, RecommendationsColumn),
 	)
 }

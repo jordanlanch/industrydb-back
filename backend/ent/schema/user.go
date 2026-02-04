@@ -169,6 +169,10 @@ func (User) Edges() []ent.Edge {
 			Comment("Call logs for this user"),
 		edge.To("competitor_profiles", CompetitorProfile.Type).
 			Comment("Competitor profiles tracked by this user"),
+		edge.To("lead_recommendations", LeadRecommendation.Type).
+			Comment("Lead recommendations for this user"),
+		edge.To("behaviors", UserBehavior.Type).
+			Comment("User behavior tracking for recommendations"),
 	}
 }
 

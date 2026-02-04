@@ -206,6 +206,9 @@ func (Lead) Edges() []ent.Edge {
 
 		edge.To("call_logs", CallLog.Type).
 			Comment("Call logs for this lead"),
+
+		edge.To("recommendations", LeadRecommendation.Type).
+			Comment("Recommendations made for this lead"),
 	}
 }
 

@@ -34,6 +34,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/lead"
 	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
+	"github.com/jordanlanch/industrydb/ent/leadrecommendation"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
@@ -46,6 +47,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/territorymember"
 	"github.com/jordanlanch/industrydb/ent/usagelog"
 	"github.com/jordanlanch/industrydb/ent/user"
+	"github.com/jordanlanch/industrydb/ent/userbehavior"
 	"github.com/jordanlanch/industrydb/ent/webhook"
 )
 
@@ -92,6 +94,8 @@ type Client struct {
 	LeadAssignment *LeadAssignmentClient
 	// LeadNote is the client for interacting with the LeadNote builders.
 	LeadNote *LeadNoteClient
+	// LeadRecommendation is the client for interacting with the LeadRecommendation builders.
+	LeadRecommendation *LeadRecommendationClient
 	// LeadStatusHistory is the client for interacting with the LeadStatusHistory builders.
 	LeadStatusHistory *LeadStatusHistoryClient
 	// Organization is the client for interacting with the Organization builders.
@@ -116,6 +120,8 @@ type Client struct {
 	UsageLog *UsageLogClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// UserBehavior is the client for interacting with the UserBehavior builders.
+	UserBehavior *UserBehaviorClient
 	// Webhook is the client for interacting with the Webhook builders.
 	Webhook *WebhookClient
 }
@@ -148,6 +154,7 @@ func (c *Client) init() {
 	c.Lead = NewLeadClient(c.config)
 	c.LeadAssignment = NewLeadAssignmentClient(c.config)
 	c.LeadNote = NewLeadNoteClient(c.config)
+	c.LeadRecommendation = NewLeadRecommendationClient(c.config)
 	c.LeadStatusHistory = NewLeadStatusHistoryClient(c.config)
 	c.Organization = NewOrganizationClient(c.config)
 	c.OrganizationMember = NewOrganizationMemberClient(c.config)
@@ -160,6 +167,7 @@ func (c *Client) init() {
 	c.TerritoryMember = NewTerritoryMemberClient(c.config)
 	c.UsageLog = NewUsageLogClient(c.config)
 	c.User = NewUserClient(c.config)
+	c.UserBehavior = NewUserBehaviorClient(c.config)
 	c.Webhook = NewWebhookClient(c.config)
 }
 
@@ -272,6 +280,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Lead:                    NewLeadClient(cfg),
 		LeadAssignment:          NewLeadAssignmentClient(cfg),
 		LeadNote:                NewLeadNoteClient(cfg),
+		LeadRecommendation:      NewLeadRecommendationClient(cfg),
 		LeadStatusHistory:       NewLeadStatusHistoryClient(cfg),
 		Organization:            NewOrganizationClient(cfg),
 		OrganizationMember:      NewOrganizationMemberClient(cfg),
@@ -284,6 +293,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		TerritoryMember:         NewTerritoryMemberClient(cfg),
 		UsageLog:                NewUsageLogClient(cfg),
 		User:                    NewUserClient(cfg),
+		UserBehavior:            NewUserBehaviorClient(cfg),
 		Webhook:                 NewWebhookClient(cfg),
 	}, nil
 }
@@ -323,6 +333,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Lead:                    NewLeadClient(cfg),
 		LeadAssignment:          NewLeadAssignmentClient(cfg),
 		LeadNote:                NewLeadNoteClient(cfg),
+		LeadRecommendation:      NewLeadRecommendationClient(cfg),
 		LeadStatusHistory:       NewLeadStatusHistoryClient(cfg),
 		Organization:            NewOrganizationClient(cfg),
 		OrganizationMember:      NewOrganizationMemberClient(cfg),
@@ -335,6 +346,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		TerritoryMember:         NewTerritoryMemberClient(cfg),
 		UsageLog:                NewUsageLogClient(cfg),
 		User:                    NewUserClient(cfg),
+		UserBehavior:            NewUserBehaviorClient(cfg),
 		Webhook:                 NewWebhookClient(cfg),
 	}, nil
 }
@@ -369,9 +381,10 @@ func (c *Client) Use(hooks ...Hook) {
 		c.CallLog, c.CompetitorMetric, c.CompetitorProfile, c.EmailSequence,
 		c.EmailSequenceEnrollment, c.EmailSequenceSend, c.EmailSequenceStep,
 		c.Experiment, c.ExperimentAssignment, c.Export, c.Industry, c.Lead,
-		c.LeadAssignment, c.LeadNote, c.LeadStatusHistory, c.Organization,
-		c.OrganizationMember, c.Referral, c.SMSCampaign, c.SMSMessage, c.SavedSearch,
-		c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog, c.User, c.Webhook,
+		c.LeadAssignment, c.LeadNote, c.LeadRecommendation, c.LeadStatusHistory,
+		c.Organization, c.OrganizationMember, c.Referral, c.SMSCampaign, c.SMSMessage,
+		c.SavedSearch, c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog,
+		c.User, c.UserBehavior, c.Webhook,
 	} {
 		n.Use(hooks...)
 	}
@@ -385,9 +398,10 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 		c.CallLog, c.CompetitorMetric, c.CompetitorProfile, c.EmailSequence,
 		c.EmailSequenceEnrollment, c.EmailSequenceSend, c.EmailSequenceStep,
 		c.Experiment, c.ExperimentAssignment, c.Export, c.Industry, c.Lead,
-		c.LeadAssignment, c.LeadNote, c.LeadStatusHistory, c.Organization,
-		c.OrganizationMember, c.Referral, c.SMSCampaign, c.SMSMessage, c.SavedSearch,
-		c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog, c.User, c.Webhook,
+		c.LeadAssignment, c.LeadNote, c.LeadRecommendation, c.LeadStatusHistory,
+		c.Organization, c.OrganizationMember, c.Referral, c.SMSCampaign, c.SMSMessage,
+		c.SavedSearch, c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog,
+		c.User, c.UserBehavior, c.Webhook,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -434,6 +448,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.LeadAssignment.mutate(ctx, m)
 	case *LeadNoteMutation:
 		return c.LeadNote.mutate(ctx, m)
+	case *LeadRecommendationMutation:
+		return c.LeadRecommendation.mutate(ctx, m)
 	case *LeadStatusHistoryMutation:
 		return c.LeadStatusHistory.mutate(ctx, m)
 	case *OrganizationMutation:
@@ -458,6 +474,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.UsageLog.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
+	case *UserBehaviorMutation:
+		return c.UserBehavior.mutate(ctx, m)
 	case *WebhookMutation:
 		return c.Webhook.mutate(ctx, m)
 	default:
@@ -3309,6 +3327,22 @@ func (c *LeadClient) QueryCallLogs(_m *Lead) *CallLogQuery {
 	return query
 }
 
+// QueryRecommendations queries the recommendations edge of a Lead.
+func (c *LeadClient) QueryRecommendations(_m *Lead) *LeadRecommendationQuery {
+	query := (&LeadRecommendationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(lead.Table, lead.FieldID, id),
+			sqlgraph.To(leadrecommendation.Table, leadrecommendation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, lead.RecommendationsTable, lead.RecommendationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *LeadClient) Hooks() []Hook {
 	return c.hooks.Lead
@@ -3677,6 +3711,171 @@ func (c *LeadNoteClient) mutate(ctx context.Context, m *LeadNoteMutation) (Value
 		return (&LeadNoteDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown LeadNote mutation op: %q", m.Op())
+	}
+}
+
+// LeadRecommendationClient is a client for the LeadRecommendation schema.
+type LeadRecommendationClient struct {
+	config
+}
+
+// NewLeadRecommendationClient returns a client for the LeadRecommendation from the given config.
+func NewLeadRecommendationClient(c config) *LeadRecommendationClient {
+	return &LeadRecommendationClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `leadrecommendation.Hooks(f(g(h())))`.
+func (c *LeadRecommendationClient) Use(hooks ...Hook) {
+	c.hooks.LeadRecommendation = append(c.hooks.LeadRecommendation, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `leadrecommendation.Intercept(f(g(h())))`.
+func (c *LeadRecommendationClient) Intercept(interceptors ...Interceptor) {
+	c.inters.LeadRecommendation = append(c.inters.LeadRecommendation, interceptors...)
+}
+
+// Create returns a builder for creating a LeadRecommendation entity.
+func (c *LeadRecommendationClient) Create() *LeadRecommendationCreate {
+	mutation := newLeadRecommendationMutation(c.config, OpCreate)
+	return &LeadRecommendationCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of LeadRecommendation entities.
+func (c *LeadRecommendationClient) CreateBulk(builders ...*LeadRecommendationCreate) *LeadRecommendationCreateBulk {
+	return &LeadRecommendationCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *LeadRecommendationClient) MapCreateBulk(slice any, setFunc func(*LeadRecommendationCreate, int)) *LeadRecommendationCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &LeadRecommendationCreateBulk{err: fmt.Errorf("calling to LeadRecommendationClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*LeadRecommendationCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &LeadRecommendationCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for LeadRecommendation.
+func (c *LeadRecommendationClient) Update() *LeadRecommendationUpdate {
+	mutation := newLeadRecommendationMutation(c.config, OpUpdate)
+	return &LeadRecommendationUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *LeadRecommendationClient) UpdateOne(_m *LeadRecommendation) *LeadRecommendationUpdateOne {
+	mutation := newLeadRecommendationMutation(c.config, OpUpdateOne, withLeadRecommendation(_m))
+	return &LeadRecommendationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *LeadRecommendationClient) UpdateOneID(id int) *LeadRecommendationUpdateOne {
+	mutation := newLeadRecommendationMutation(c.config, OpUpdateOne, withLeadRecommendationID(id))
+	return &LeadRecommendationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for LeadRecommendation.
+func (c *LeadRecommendationClient) Delete() *LeadRecommendationDelete {
+	mutation := newLeadRecommendationMutation(c.config, OpDelete)
+	return &LeadRecommendationDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *LeadRecommendationClient) DeleteOne(_m *LeadRecommendation) *LeadRecommendationDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *LeadRecommendationClient) DeleteOneID(id int) *LeadRecommendationDeleteOne {
+	builder := c.Delete().Where(leadrecommendation.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &LeadRecommendationDeleteOne{builder}
+}
+
+// Query returns a query builder for LeadRecommendation.
+func (c *LeadRecommendationClient) Query() *LeadRecommendationQuery {
+	return &LeadRecommendationQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeLeadRecommendation},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a LeadRecommendation entity by its id.
+func (c *LeadRecommendationClient) Get(ctx context.Context, id int) (*LeadRecommendation, error) {
+	return c.Query().Where(leadrecommendation.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *LeadRecommendationClient) GetX(ctx context.Context, id int) *LeadRecommendation {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a LeadRecommendation.
+func (c *LeadRecommendationClient) QueryUser(_m *LeadRecommendation) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(leadrecommendation.Table, leadrecommendation.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, leadrecommendation.UserTable, leadrecommendation.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLead queries the lead edge of a LeadRecommendation.
+func (c *LeadRecommendationClient) QueryLead(_m *LeadRecommendation) *LeadQuery {
+	query := (&LeadClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(leadrecommendation.Table, leadrecommendation.FieldID, id),
+			sqlgraph.To(lead.Table, lead.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, leadrecommendation.LeadTable, leadrecommendation.LeadColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *LeadRecommendationClient) Hooks() []Hook {
+	return c.hooks.LeadRecommendation
+}
+
+// Interceptors returns the client interceptors.
+func (c *LeadRecommendationClient) Interceptors() []Interceptor {
+	return c.inters.LeadRecommendation
+}
+
+func (c *LeadRecommendationClient) mutate(ctx context.Context, m *LeadRecommendationMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&LeadRecommendationCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&LeadRecommendationUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&LeadRecommendationUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&LeadRecommendationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown LeadRecommendation mutation op: %q", m.Op())
 	}
 }
 
@@ -6019,6 +6218,38 @@ func (c *UserClient) QueryCompetitorProfiles(_m *User) *CompetitorProfileQuery {
 	return query
 }
 
+// QueryLeadRecommendations queries the lead_recommendations edge of a User.
+func (c *UserClient) QueryLeadRecommendations(_m *User) *LeadRecommendationQuery {
+	query := (&LeadRecommendationClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(leadrecommendation.Table, leadrecommendation.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.LeadRecommendationsTable, user.LeadRecommendationsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryBehaviors queries the behaviors edge of a User.
+func (c *UserClient) QueryBehaviors(_m *User) *UserBehaviorQuery {
+	query := (&UserBehaviorClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(userbehavior.Table, userbehavior.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.BehaviorsTable, user.BehaviorsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -6041,6 +6272,155 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 		return (&UserDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown User mutation op: %q", m.Op())
+	}
+}
+
+// UserBehaviorClient is a client for the UserBehavior schema.
+type UserBehaviorClient struct {
+	config
+}
+
+// NewUserBehaviorClient returns a client for the UserBehavior from the given config.
+func NewUserBehaviorClient(c config) *UserBehaviorClient {
+	return &UserBehaviorClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `userbehavior.Hooks(f(g(h())))`.
+func (c *UserBehaviorClient) Use(hooks ...Hook) {
+	c.hooks.UserBehavior = append(c.hooks.UserBehavior, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `userbehavior.Intercept(f(g(h())))`.
+func (c *UserBehaviorClient) Intercept(interceptors ...Interceptor) {
+	c.inters.UserBehavior = append(c.inters.UserBehavior, interceptors...)
+}
+
+// Create returns a builder for creating a UserBehavior entity.
+func (c *UserBehaviorClient) Create() *UserBehaviorCreate {
+	mutation := newUserBehaviorMutation(c.config, OpCreate)
+	return &UserBehaviorCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of UserBehavior entities.
+func (c *UserBehaviorClient) CreateBulk(builders ...*UserBehaviorCreate) *UserBehaviorCreateBulk {
+	return &UserBehaviorCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *UserBehaviorClient) MapCreateBulk(slice any, setFunc func(*UserBehaviorCreate, int)) *UserBehaviorCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &UserBehaviorCreateBulk{err: fmt.Errorf("calling to UserBehaviorClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*UserBehaviorCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &UserBehaviorCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for UserBehavior.
+func (c *UserBehaviorClient) Update() *UserBehaviorUpdate {
+	mutation := newUserBehaviorMutation(c.config, OpUpdate)
+	return &UserBehaviorUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *UserBehaviorClient) UpdateOne(_m *UserBehavior) *UserBehaviorUpdateOne {
+	mutation := newUserBehaviorMutation(c.config, OpUpdateOne, withUserBehavior(_m))
+	return &UserBehaviorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *UserBehaviorClient) UpdateOneID(id int) *UserBehaviorUpdateOne {
+	mutation := newUserBehaviorMutation(c.config, OpUpdateOne, withUserBehaviorID(id))
+	return &UserBehaviorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for UserBehavior.
+func (c *UserBehaviorClient) Delete() *UserBehaviorDelete {
+	mutation := newUserBehaviorMutation(c.config, OpDelete)
+	return &UserBehaviorDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *UserBehaviorClient) DeleteOne(_m *UserBehavior) *UserBehaviorDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *UserBehaviorClient) DeleteOneID(id int) *UserBehaviorDeleteOne {
+	builder := c.Delete().Where(userbehavior.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &UserBehaviorDeleteOne{builder}
+}
+
+// Query returns a query builder for UserBehavior.
+func (c *UserBehaviorClient) Query() *UserBehaviorQuery {
+	return &UserBehaviorQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeUserBehavior},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a UserBehavior entity by its id.
+func (c *UserBehaviorClient) Get(ctx context.Context, id int) (*UserBehavior, error) {
+	return c.Query().Where(userbehavior.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *UserBehaviorClient) GetX(ctx context.Context, id int) *UserBehavior {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a UserBehavior.
+func (c *UserBehaviorClient) QueryUser(_m *UserBehavior) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(userbehavior.Table, userbehavior.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, userbehavior.UserTable, userbehavior.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *UserBehaviorClient) Hooks() []Hook {
+	return c.hooks.UserBehavior
+}
+
+// Interceptors returns the client interceptors.
+func (c *UserBehaviorClient) Interceptors() []Interceptor {
+	return c.inters.UserBehavior
+}
+
+func (c *UserBehaviorClient) mutate(ctx context.Context, m *UserBehaviorMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&UserBehaviorCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&UserBehaviorUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&UserBehaviorUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&UserBehaviorDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown UserBehavior mutation op: %q", m.Op())
 	}
 }
 
@@ -6199,17 +6579,18 @@ type (
 		APIKey, Affiliate, AffiliateClick, AffiliateConversion, AuditLog, CallLog,
 		CompetitorMetric, CompetitorProfile, EmailSequence, EmailSequenceEnrollment,
 		EmailSequenceSend, EmailSequenceStep, Experiment, ExperimentAssignment, Export,
-		Industry, Lead, LeadAssignment, LeadNote, LeadStatusHistory, Organization,
-		OrganizationMember, Referral, SMSCampaign, SMSMessage, SavedSearch,
-		Subscription, Territory, TerritoryMember, UsageLog, User, Webhook []ent.Hook
+		Industry, Lead, LeadAssignment, LeadNote, LeadRecommendation,
+		LeadStatusHistory, Organization, OrganizationMember, Referral, SMSCampaign,
+		SMSMessage, SavedSearch, Subscription, Territory, TerritoryMember, UsageLog,
+		User, UserBehavior, Webhook []ent.Hook
 	}
 	inters struct {
 		APIKey, Affiliate, AffiliateClick, AffiliateConversion, AuditLog, CallLog,
 		CompetitorMetric, CompetitorProfile, EmailSequence, EmailSequenceEnrollment,
 		EmailSequenceSend, EmailSequenceStep, Experiment, ExperimentAssignment, Export,
-		Industry, Lead, LeadAssignment, LeadNote, LeadStatusHistory, Organization,
-		OrganizationMember, Referral, SMSCampaign, SMSMessage, SavedSearch,
-		Subscription, Territory, TerritoryMember, UsageLog, User,
-		Webhook []ent.Interceptor
+		Industry, Lead, LeadAssignment, LeadNote, LeadRecommendation,
+		LeadStatusHistory, Organization, OrganizationMember, Referral, SMSCampaign,
+		SMSMessage, SavedSearch, Subscription, Territory, TerritoryMember, UsageLog,
+		User, UserBehavior, Webhook []ent.Interceptor
 	}
 )

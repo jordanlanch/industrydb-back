@@ -24,6 +24,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/lead"
 	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
+	"github.com/jordanlanch/industrydb/ent/leadrecommendation"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
@@ -37,6 +38,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/territorymember"
 	"github.com/jordanlanch/industrydb/ent/usagelog"
 	"github.com/jordanlanch/industrydb/ent/user"
+	"github.com/jordanlanch/industrydb/ent/userbehavior"
 	"github.com/jordanlanch/industrydb/ent/webhook"
 )
 
@@ -742,6 +744,54 @@ func init() {
 	leadnote.DefaultUpdatedAt = leadnoteDescUpdatedAt.Default.(func() time.Time)
 	// leadnote.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	leadnote.UpdateDefaultUpdatedAt = leadnoteDescUpdatedAt.UpdateDefault.(func() time.Time)
+	leadrecommendationFields := schema.LeadRecommendation{}.Fields()
+	_ = leadrecommendationFields
+	// leadrecommendationDescScore is the schema descriptor for score field.
+	leadrecommendationDescScore := leadrecommendationFields[2].Descriptor()
+	// leadrecommendation.ScoreValidator is a validator for the "score" field. It is called by the builders before save.
+	leadrecommendation.ScoreValidator = func() func(float64) error {
+		validators := leadrecommendationDescScore.Validators
+		fns := [...]func(float64) error{
+			validators[0].(func(float64) error),
+			validators[1].(func(float64) error),
+		}
+		return func(score float64) error {
+			for _, fn := range fns {
+				if err := fn(score); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// leadrecommendationDescReason is the schema descriptor for reason field.
+	leadrecommendationDescReason := leadrecommendationFields[3].Descriptor()
+	// leadrecommendation.ReasonValidator is a validator for the "reason" field. It is called by the builders before save.
+	leadrecommendation.ReasonValidator = func() func(string) error {
+		validators := leadrecommendationDescReason.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(reason string) error {
+			for _, fn := range fns {
+				if err := fn(reason); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// leadrecommendationDescCreatedAt is the schema descriptor for created_at field.
+	leadrecommendationDescCreatedAt := leadrecommendationFields[7].Descriptor()
+	// leadrecommendation.DefaultCreatedAt holds the default value on creation for the created_at field.
+	leadrecommendation.DefaultCreatedAt = leadrecommendationDescCreatedAt.Default.(func() time.Time)
+	// leadrecommendationDescUpdatedAt is the schema descriptor for updated_at field.
+	leadrecommendationDescUpdatedAt := leadrecommendationFields[8].Descriptor()
+	// leadrecommendation.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	leadrecommendation.DefaultUpdatedAt = leadrecommendationDescUpdatedAt.Default.(func() time.Time)
+	// leadrecommendation.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	leadrecommendation.UpdateDefaultUpdatedAt = leadrecommendationDescUpdatedAt.UpdateDefault.(func() time.Time)
 	leadstatushistoryFields := schema.LeadStatusHistory{}.Fields()
 	_ = leadstatushistoryFields
 	// leadstatushistoryDescLeadID is the schema descriptor for lead_id field.
@@ -1112,6 +1162,24 @@ func init() {
 	user.DefaultOnboardingStep = userDescOnboardingStep.Default.(int)
 	// user.OnboardingStepValidator is a validator for the "onboarding_step" field. It is called by the builders before save.
 	user.OnboardingStepValidator = userDescOnboardingStep.Validators[0].(func(int) error)
+	userbehaviorFields := schema.UserBehavior{}.Fields()
+	_ = userbehaviorFields
+	// userbehaviorDescIndustry is the schema descriptor for industry field.
+	userbehaviorDescIndustry := userbehaviorFields[3].Descriptor()
+	// userbehavior.IndustryValidator is a validator for the "industry" field. It is called by the builders before save.
+	userbehavior.IndustryValidator = userbehaviorDescIndustry.Validators[0].(func(string) error)
+	// userbehaviorDescCountry is the schema descriptor for country field.
+	userbehaviorDescCountry := userbehaviorFields[4].Descriptor()
+	// userbehavior.CountryValidator is a validator for the "country" field. It is called by the builders before save.
+	userbehavior.CountryValidator = userbehaviorDescCountry.Validators[0].(func(string) error)
+	// userbehaviorDescCity is the schema descriptor for city field.
+	userbehaviorDescCity := userbehaviorFields[5].Descriptor()
+	// userbehavior.CityValidator is a validator for the "city" field. It is called by the builders before save.
+	userbehavior.CityValidator = userbehaviorDescCity.Validators[0].(func(string) error)
+	// userbehaviorDescCreatedAt is the schema descriptor for created_at field.
+	userbehaviorDescCreatedAt := userbehaviorFields[7].Descriptor()
+	// userbehavior.DefaultCreatedAt holds the default value on creation for the created_at field.
+	userbehavior.DefaultCreatedAt = userbehaviorDescCreatedAt.Default.(func() time.Time)
 	webhookFields := schema.Webhook{}.Fields()
 	_ = webhookFields
 	// webhookDescURL is the schema descriptor for url field.

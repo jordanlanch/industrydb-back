@@ -237,6 +237,18 @@ func (f LeadNoteFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, er
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.LeadNoteMutation", m)
 }
 
+// The LeadRecommendationFunc type is an adapter to allow the use of ordinary
+// function as LeadRecommendation mutator.
+type LeadRecommendationFunc func(context.Context, *ent.LeadRecommendationMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f LeadRecommendationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.LeadRecommendationMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.LeadRecommendationMutation", m)
+}
+
 // The LeadStatusHistoryFunc type is an adapter to allow the use of ordinary
 // function as LeadStatusHistory mutator.
 type LeadStatusHistoryFunc func(context.Context, *ent.LeadStatusHistoryMutation) (ent.Value, error)
@@ -379,6 +391,18 @@ func (f UserFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserMutation", m)
+}
+
+// The UserBehaviorFunc type is an adapter to allow the use of ordinary
+// function as UserBehavior mutator.
+type UserBehaviorFunc func(context.Context, *ent.UserBehaviorMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f UserBehaviorFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.UserBehaviorMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserBehaviorMutation", m)
 }
 
 // The WebhookFunc type is an adapter to allow the use of ordinary

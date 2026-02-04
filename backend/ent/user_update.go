@@ -23,6 +23,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/export"
 	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
+	"github.com/jordanlanch/industrydb/ent/leadrecommendation"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
@@ -35,6 +36,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/territorymember"
 	"github.com/jordanlanch/industrydb/ent/usagelog"
 	"github.com/jordanlanch/industrydb/ent/user"
+	"github.com/jordanlanch/industrydb/ent/userbehavior"
 	"github.com/jordanlanch/industrydb/ent/webhook"
 )
 
@@ -840,6 +842,36 @@ func (_u *UserUpdate) AddCompetitorProfiles(v ...*CompetitorProfile) *UserUpdate
 	return _u.AddCompetitorProfileIDs(ids...)
 }
 
+// AddLeadRecommendationIDs adds the "lead_recommendations" edge to the LeadRecommendation entity by IDs.
+func (_u *UserUpdate) AddLeadRecommendationIDs(ids ...int) *UserUpdate {
+	_u.mutation.AddLeadRecommendationIDs(ids...)
+	return _u
+}
+
+// AddLeadRecommendations adds the "lead_recommendations" edges to the LeadRecommendation entity.
+func (_u *UserUpdate) AddLeadRecommendations(v ...*LeadRecommendation) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddLeadRecommendationIDs(ids...)
+}
+
+// AddBehaviorIDs adds the "behaviors" edge to the UserBehavior entity by IDs.
+func (_u *UserUpdate) AddBehaviorIDs(ids ...int) *UserUpdate {
+	_u.mutation.AddBehaviorIDs(ids...)
+	return _u
+}
+
+// AddBehaviors adds the "behaviors" edges to the UserBehavior entity.
+func (_u *UserUpdate) AddBehaviors(v ...*UserBehavior) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddBehaviorIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -1374,6 +1406,48 @@ func (_u *UserUpdate) RemoveCompetitorProfiles(v ...*CompetitorProfile) *UserUpd
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveCompetitorProfileIDs(ids...)
+}
+
+// ClearLeadRecommendations clears all "lead_recommendations" edges to the LeadRecommendation entity.
+func (_u *UserUpdate) ClearLeadRecommendations() *UserUpdate {
+	_u.mutation.ClearLeadRecommendations()
+	return _u
+}
+
+// RemoveLeadRecommendationIDs removes the "lead_recommendations" edge to LeadRecommendation entities by IDs.
+func (_u *UserUpdate) RemoveLeadRecommendationIDs(ids ...int) *UserUpdate {
+	_u.mutation.RemoveLeadRecommendationIDs(ids...)
+	return _u
+}
+
+// RemoveLeadRecommendations removes "lead_recommendations" edges to LeadRecommendation entities.
+func (_u *UserUpdate) RemoveLeadRecommendations(v ...*LeadRecommendation) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveLeadRecommendationIDs(ids...)
+}
+
+// ClearBehaviors clears all "behaviors" edges to the UserBehavior entity.
+func (_u *UserUpdate) ClearBehaviors() *UserUpdate {
+	_u.mutation.ClearBehaviors()
+	return _u
+}
+
+// RemoveBehaviorIDs removes the "behaviors" edge to UserBehavior entities by IDs.
+func (_u *UserUpdate) RemoveBehaviorIDs(ids ...int) *UserUpdate {
+	_u.mutation.RemoveBehaviorIDs(ids...)
+	return _u
+}
+
+// RemoveBehaviors removes "behaviors" edges to UserBehavior entities.
+func (_u *UserUpdate) RemoveBehaviors(v ...*UserBehavior) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveBehaviorIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -2731,6 +2805,96 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.LeadRecommendationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadRecommendationsTable,
+			Columns: []string{user.LeadRecommendationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadrecommendation.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedLeadRecommendationsIDs(); len(nodes) > 0 && !_u.mutation.LeadRecommendationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadRecommendationsTable,
+			Columns: []string{user.LeadRecommendationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadrecommendation.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.LeadRecommendationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadRecommendationsTable,
+			Columns: []string{user.LeadRecommendationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadrecommendation.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.BehaviorsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.BehaviorsTable,
+			Columns: []string{user.BehaviorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userbehavior.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedBehaviorsIDs(); len(nodes) > 0 && !_u.mutation.BehaviorsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.BehaviorsTable,
+			Columns: []string{user.BehaviorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userbehavior.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.BehaviorsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.BehaviorsTable,
+			Columns: []string{user.BehaviorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userbehavior.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -3540,6 +3704,36 @@ func (_u *UserUpdateOne) AddCompetitorProfiles(v ...*CompetitorProfile) *UserUpd
 	return _u.AddCompetitorProfileIDs(ids...)
 }
 
+// AddLeadRecommendationIDs adds the "lead_recommendations" edge to the LeadRecommendation entity by IDs.
+func (_u *UserUpdateOne) AddLeadRecommendationIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.AddLeadRecommendationIDs(ids...)
+	return _u
+}
+
+// AddLeadRecommendations adds the "lead_recommendations" edges to the LeadRecommendation entity.
+func (_u *UserUpdateOne) AddLeadRecommendations(v ...*LeadRecommendation) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddLeadRecommendationIDs(ids...)
+}
+
+// AddBehaviorIDs adds the "behaviors" edge to the UserBehavior entity by IDs.
+func (_u *UserUpdateOne) AddBehaviorIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.AddBehaviorIDs(ids...)
+	return _u
+}
+
+// AddBehaviors adds the "behaviors" edges to the UserBehavior entity.
+func (_u *UserUpdateOne) AddBehaviors(v ...*UserBehavior) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddBehaviorIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -4074,6 +4268,48 @@ func (_u *UserUpdateOne) RemoveCompetitorProfiles(v ...*CompetitorProfile) *User
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveCompetitorProfileIDs(ids...)
+}
+
+// ClearLeadRecommendations clears all "lead_recommendations" edges to the LeadRecommendation entity.
+func (_u *UserUpdateOne) ClearLeadRecommendations() *UserUpdateOne {
+	_u.mutation.ClearLeadRecommendations()
+	return _u
+}
+
+// RemoveLeadRecommendationIDs removes the "lead_recommendations" edge to LeadRecommendation entities by IDs.
+func (_u *UserUpdateOne) RemoveLeadRecommendationIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.RemoveLeadRecommendationIDs(ids...)
+	return _u
+}
+
+// RemoveLeadRecommendations removes "lead_recommendations" edges to LeadRecommendation entities.
+func (_u *UserUpdateOne) RemoveLeadRecommendations(v ...*LeadRecommendation) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveLeadRecommendationIDs(ids...)
+}
+
+// ClearBehaviors clears all "behaviors" edges to the UserBehavior entity.
+func (_u *UserUpdateOne) ClearBehaviors() *UserUpdateOne {
+	_u.mutation.ClearBehaviors()
+	return _u
+}
+
+// RemoveBehaviorIDs removes the "behaviors" edge to UserBehavior entities by IDs.
+func (_u *UserUpdateOne) RemoveBehaviorIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.RemoveBehaviorIDs(ids...)
+	return _u
+}
+
+// RemoveBehaviors removes "behaviors" edges to UserBehavior entities.
+func (_u *UserUpdateOne) RemoveBehaviors(v ...*UserBehavior) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveBehaviorIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -5454,6 +5690,96 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(competitorprofile.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.LeadRecommendationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadRecommendationsTable,
+			Columns: []string{user.LeadRecommendationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadrecommendation.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedLeadRecommendationsIDs(); len(nodes) > 0 && !_u.mutation.LeadRecommendationsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadRecommendationsTable,
+			Columns: []string{user.LeadRecommendationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadrecommendation.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.LeadRecommendationsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LeadRecommendationsTable,
+			Columns: []string{user.LeadRecommendationsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leadrecommendation.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.BehaviorsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.BehaviorsTable,
+			Columns: []string{user.BehaviorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userbehavior.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedBehaviorsIDs(); len(nodes) > 0 && !_u.mutation.BehaviorsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.BehaviorsTable,
+			Columns: []string{user.BehaviorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userbehavior.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.BehaviorsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.BehaviorsTable,
+			Columns: []string{user.BehaviorsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userbehavior.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

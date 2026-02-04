@@ -114,9 +114,11 @@ type LeadEdges struct {
 	SmsMessages []*SMSMessage `json:"sms_messages,omitempty"`
 	// Call logs for this lead
 	CallLogs []*CallLog `json:"call_logs,omitempty"`
+	// Recommendations made for this lead
+	Recommendations []*LeadRecommendation `json:"recommendations,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [8]bool
+	loadedTypes [9]bool
 }
 
 // NotesOrErr returns the Notes value or an error if the edge
@@ -191,6 +193,15 @@ func (e LeadEdges) CallLogsOrErr() ([]*CallLog, error) {
 		return e.CallLogs, nil
 	}
 	return nil, &NotLoadedError{edge: "call_logs"}
+}
+
+// RecommendationsOrErr returns the Recommendations value or an error if the edge
+// was not loaded in eager-loading.
+func (e LeadEdges) RecommendationsOrErr() ([]*LeadRecommendation, error) {
+	if e.loadedTypes[8] {
+		return e.Recommendations, nil
+	}
+	return nil, &NotLoadedError{edge: "recommendations"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -510,6 +521,11 @@ func (_m *Lead) QuerySmsMessages() *SMSMessageQuery {
 // QueryCallLogs queries the "call_logs" edge of the Lead entity.
 func (_m *Lead) QueryCallLogs() *CallLogQuery {
 	return NewLeadClient(_m.config).QueryCallLogs(_m)
+}
+
+// QueryRecommendations queries the "recommendations" edge of the Lead entity.
+func (_m *Lead) QueryRecommendations() *LeadRecommendationQuery {
+	return NewLeadClient(_m.config).QueryRecommendations(_m)
 }
 
 // Update returns a builder for updating this Lead.

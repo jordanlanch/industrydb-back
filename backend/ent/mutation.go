@@ -30,6 +30,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/lead"
 	"github.com/jordanlanch/industrydb/ent/leadassignment"
 	"github.com/jordanlanch/industrydb/ent/leadnote"
+	"github.com/jordanlanch/industrydb/ent/leadrecommendation"
 	"github.com/jordanlanch/industrydb/ent/leadstatushistory"
 	"github.com/jordanlanch/industrydb/ent/organization"
 	"github.com/jordanlanch/industrydb/ent/organizationmember"
@@ -43,6 +44,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/territorymember"
 	"github.com/jordanlanch/industrydb/ent/usagelog"
 	"github.com/jordanlanch/industrydb/ent/user"
+	"github.com/jordanlanch/industrydb/ent/userbehavior"
 	"github.com/jordanlanch/industrydb/ent/webhook"
 )
 
@@ -74,6 +76,7 @@ const (
 	TypeLead                    = "Lead"
 	TypeLeadAssignment          = "LeadAssignment"
 	TypeLeadNote                = "LeadNote"
+	TypeLeadRecommendation      = "LeadRecommendation"
 	TypeLeadStatusHistory       = "LeadStatusHistory"
 	TypeOrganization            = "Organization"
 	TypeOrganizationMember      = "OrganizationMember"
@@ -86,6 +89,7 @@ const (
 	TypeTerritoryMember         = "TerritoryMember"
 	TypeUsageLog                = "UsageLog"
 	TypeUser                    = "User"
+	TypeUserBehavior            = "UserBehavior"
 	TypeWebhook                 = "Webhook"
 )
 
@@ -18650,6 +18654,9 @@ type LeadMutation struct {
 	call_logs                         map[int]struct{}
 	removedcall_logs                  map[int]struct{}
 	clearedcall_logs                  bool
+	recommendations                   map[int]struct{}
+	removedrecommendations            map[int]struct{}
+	clearedrecommendations            bool
 	done                              bool
 	oldValue                          func(context.Context) (*Lead, error)
 	predicates                        []predicate.Lead
@@ -20828,6 +20835,60 @@ func (m *LeadMutation) ResetCallLogs() {
 	m.removedcall_logs = nil
 }
 
+// AddRecommendationIDs adds the "recommendations" edge to the LeadRecommendation entity by ids.
+func (m *LeadMutation) AddRecommendationIDs(ids ...int) {
+	if m.recommendations == nil {
+		m.recommendations = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.recommendations[ids[i]] = struct{}{}
+	}
+}
+
+// ClearRecommendations clears the "recommendations" edge to the LeadRecommendation entity.
+func (m *LeadMutation) ClearRecommendations() {
+	m.clearedrecommendations = true
+}
+
+// RecommendationsCleared reports if the "recommendations" edge to the LeadRecommendation entity was cleared.
+func (m *LeadMutation) RecommendationsCleared() bool {
+	return m.clearedrecommendations
+}
+
+// RemoveRecommendationIDs removes the "recommendations" edge to the LeadRecommendation entity by IDs.
+func (m *LeadMutation) RemoveRecommendationIDs(ids ...int) {
+	if m.removedrecommendations == nil {
+		m.removedrecommendations = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.recommendations, ids[i])
+		m.removedrecommendations[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedRecommendations returns the removed IDs of the "recommendations" edge to the LeadRecommendation entity.
+func (m *LeadMutation) RemovedRecommendationsIDs() (ids []int) {
+	for id := range m.removedrecommendations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// RecommendationsIDs returns the "recommendations" edge IDs in the mutation.
+func (m *LeadMutation) RecommendationsIDs() (ids []int) {
+	for id := range m.recommendations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetRecommendations resets all changes to the "recommendations" edge.
+func (m *LeadMutation) ResetRecommendations() {
+	m.recommendations = nil
+	m.clearedrecommendations = false
+	m.removedrecommendations = nil
+}
+
 // Where appends a list predicates to the LeadMutation builder.
 func (m *LeadMutation) Where(ps ...predicate.Lead) {
 	m.predicates = append(m.predicates, ps...)
@@ -21731,7 +21792,7 @@ func (m *LeadMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *LeadMutation) AddedEdges() []string {
-	edges := make([]string, 0, 8)
+	edges := make([]string, 0, 9)
 	if m.notes != nil {
 		edges = append(edges, lead.EdgeNotes)
 	}
@@ -21755,6 +21816,9 @@ func (m *LeadMutation) AddedEdges() []string {
 	}
 	if m.call_logs != nil {
 		edges = append(edges, lead.EdgeCallLogs)
+	}
+	if m.recommendations != nil {
+		edges = append(edges, lead.EdgeRecommendations)
 	}
 	return edges
 }
@@ -21809,13 +21873,19 @@ func (m *LeadMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case lead.EdgeRecommendations:
+		ids := make([]ent.Value, 0, len(m.recommendations))
+		for id := range m.recommendations {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *LeadMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 8)
+	edges := make([]string, 0, 9)
 	if m.removednotes != nil {
 		edges = append(edges, lead.EdgeNotes)
 	}
@@ -21836,6 +21906,9 @@ func (m *LeadMutation) RemovedEdges() []string {
 	}
 	if m.removedcall_logs != nil {
 		edges = append(edges, lead.EdgeCallLogs)
+	}
+	if m.removedrecommendations != nil {
+		edges = append(edges, lead.EdgeRecommendations)
 	}
 	return edges
 }
@@ -21886,13 +21959,19 @@ func (m *LeadMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case lead.EdgeRecommendations:
+		ids := make([]ent.Value, 0, len(m.removedrecommendations))
+		for id := range m.removedrecommendations {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *LeadMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 8)
+	edges := make([]string, 0, 9)
 	if m.clearednotes {
 		edges = append(edges, lead.EdgeNotes)
 	}
@@ -21917,6 +21996,9 @@ func (m *LeadMutation) ClearedEdges() []string {
 	if m.clearedcall_logs {
 		edges = append(edges, lead.EdgeCallLogs)
 	}
+	if m.clearedrecommendations {
+		edges = append(edges, lead.EdgeRecommendations)
+	}
 	return edges
 }
 
@@ -21940,6 +22022,8 @@ func (m *LeadMutation) EdgeCleared(name string) bool {
 		return m.clearedsms_messages
 	case lead.EdgeCallLogs:
 		return m.clearedcall_logs
+	case lead.EdgeRecommendations:
+		return m.clearedrecommendations
 	}
 	return false
 }
@@ -21982,6 +22066,9 @@ func (m *LeadMutation) ResetEdge(name string) error {
 		return nil
 	case lead.EdgeCallLogs:
 		m.ResetCallLogs()
+		return nil
+	case lead.EdgeRecommendations:
+		m.ResetRecommendations()
 		return nil
 	}
 	return fmt.Errorf("unknown Lead edge %s", name)
@@ -23591,6 +23678,922 @@ func (m *LeadNoteMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown LeadNote edge %s", name)
+}
+
+// LeadRecommendationMutation represents an operation that mutates the LeadRecommendation nodes in the graph.
+type LeadRecommendationMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	score         *float64
+	addscore      *float64
+	reason        *string
+	status        *leadrecommendation.Status
+	metadata      *map[string]interface{}
+	expires_at    *time.Time
+	created_at    *time.Time
+	updated_at    *time.Time
+	clearedFields map[string]struct{}
+	user          *int
+	cleareduser   bool
+	lead          *int
+	clearedlead   bool
+	done          bool
+	oldValue      func(context.Context) (*LeadRecommendation, error)
+	predicates    []predicate.LeadRecommendation
+}
+
+var _ ent.Mutation = (*LeadRecommendationMutation)(nil)
+
+// leadrecommendationOption allows management of the mutation configuration using functional options.
+type leadrecommendationOption func(*LeadRecommendationMutation)
+
+// newLeadRecommendationMutation creates new mutation for the LeadRecommendation entity.
+func newLeadRecommendationMutation(c config, op Op, opts ...leadrecommendationOption) *LeadRecommendationMutation {
+	m := &LeadRecommendationMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeLeadRecommendation,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withLeadRecommendationID sets the ID field of the mutation.
+func withLeadRecommendationID(id int) leadrecommendationOption {
+	return func(m *LeadRecommendationMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *LeadRecommendation
+		)
+		m.oldValue = func(ctx context.Context) (*LeadRecommendation, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().LeadRecommendation.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withLeadRecommendation sets the old LeadRecommendation of the mutation.
+func withLeadRecommendation(node *LeadRecommendation) leadrecommendationOption {
+	return func(m *LeadRecommendationMutation) {
+		m.oldValue = func(context.Context) (*LeadRecommendation, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m LeadRecommendationMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m LeadRecommendationMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *LeadRecommendationMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *LeadRecommendationMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().LeadRecommendation.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetUserID sets the "user_id" field.
+func (m *LeadRecommendationMutation) SetUserID(i int) {
+	m.user = &i
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *LeadRecommendationMutation) UserID() (r int, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the LeadRecommendation entity.
+// If the LeadRecommendation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadRecommendationMutation) OldUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *LeadRecommendationMutation) ResetUserID() {
+	m.user = nil
+}
+
+// SetLeadID sets the "lead_id" field.
+func (m *LeadRecommendationMutation) SetLeadID(i int) {
+	m.lead = &i
+}
+
+// LeadID returns the value of the "lead_id" field in the mutation.
+func (m *LeadRecommendationMutation) LeadID() (r int, exists bool) {
+	v := m.lead
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLeadID returns the old "lead_id" field's value of the LeadRecommendation entity.
+// If the LeadRecommendation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadRecommendationMutation) OldLeadID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLeadID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLeadID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLeadID: %w", err)
+	}
+	return oldValue.LeadID, nil
+}
+
+// ResetLeadID resets all changes to the "lead_id" field.
+func (m *LeadRecommendationMutation) ResetLeadID() {
+	m.lead = nil
+}
+
+// SetScore sets the "score" field.
+func (m *LeadRecommendationMutation) SetScore(f float64) {
+	m.score = &f
+	m.addscore = nil
+}
+
+// Score returns the value of the "score" field in the mutation.
+func (m *LeadRecommendationMutation) Score() (r float64, exists bool) {
+	v := m.score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldScore returns the old "score" field's value of the LeadRecommendation entity.
+// If the LeadRecommendation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadRecommendationMutation) OldScore(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldScore is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldScore requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldScore: %w", err)
+	}
+	return oldValue.Score, nil
+}
+
+// AddScore adds f to the "score" field.
+func (m *LeadRecommendationMutation) AddScore(f float64) {
+	if m.addscore != nil {
+		*m.addscore += f
+	} else {
+		m.addscore = &f
+	}
+}
+
+// AddedScore returns the value that was added to the "score" field in this mutation.
+func (m *LeadRecommendationMutation) AddedScore() (r float64, exists bool) {
+	v := m.addscore
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetScore resets all changes to the "score" field.
+func (m *LeadRecommendationMutation) ResetScore() {
+	m.score = nil
+	m.addscore = nil
+}
+
+// SetReason sets the "reason" field.
+func (m *LeadRecommendationMutation) SetReason(s string) {
+	m.reason = &s
+}
+
+// Reason returns the value of the "reason" field in the mutation.
+func (m *LeadRecommendationMutation) Reason() (r string, exists bool) {
+	v := m.reason
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReason returns the old "reason" field's value of the LeadRecommendation entity.
+// If the LeadRecommendation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadRecommendationMutation) OldReason(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReason is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReason requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReason: %w", err)
+	}
+	return oldValue.Reason, nil
+}
+
+// ResetReason resets all changes to the "reason" field.
+func (m *LeadRecommendationMutation) ResetReason() {
+	m.reason = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *LeadRecommendationMutation) SetStatus(l leadrecommendation.Status) {
+	m.status = &l
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *LeadRecommendationMutation) Status() (r leadrecommendation.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the LeadRecommendation entity.
+// If the LeadRecommendation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadRecommendationMutation) OldStatus(ctx context.Context) (v leadrecommendation.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *LeadRecommendationMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetMetadata sets the "metadata" field.
+func (m *LeadRecommendationMutation) SetMetadata(value map[string]interface{}) {
+	m.metadata = &value
+}
+
+// Metadata returns the value of the "metadata" field in the mutation.
+func (m *LeadRecommendationMutation) Metadata() (r map[string]interface{}, exists bool) {
+	v := m.metadata
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMetadata returns the old "metadata" field's value of the LeadRecommendation entity.
+// If the LeadRecommendation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadRecommendationMutation) OldMetadata(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMetadata is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMetadata requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMetadata: %w", err)
+	}
+	return oldValue.Metadata, nil
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (m *LeadRecommendationMutation) ClearMetadata() {
+	m.metadata = nil
+	m.clearedFields[leadrecommendation.FieldMetadata] = struct{}{}
+}
+
+// MetadataCleared returns if the "metadata" field was cleared in this mutation.
+func (m *LeadRecommendationMutation) MetadataCleared() bool {
+	_, ok := m.clearedFields[leadrecommendation.FieldMetadata]
+	return ok
+}
+
+// ResetMetadata resets all changes to the "metadata" field.
+func (m *LeadRecommendationMutation) ResetMetadata() {
+	m.metadata = nil
+	delete(m.clearedFields, leadrecommendation.FieldMetadata)
+}
+
+// SetExpiresAt sets the "expires_at" field.
+func (m *LeadRecommendationMutation) SetExpiresAt(t time.Time) {
+	m.expires_at = &t
+}
+
+// ExpiresAt returns the value of the "expires_at" field in the mutation.
+func (m *LeadRecommendationMutation) ExpiresAt() (r time.Time, exists bool) {
+	v := m.expires_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExpiresAt returns the old "expires_at" field's value of the LeadRecommendation entity.
+// If the LeadRecommendation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadRecommendationMutation) OldExpiresAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExpiresAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExpiresAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExpiresAt: %w", err)
+	}
+	return oldValue.ExpiresAt, nil
+}
+
+// ResetExpiresAt resets all changes to the "expires_at" field.
+func (m *LeadRecommendationMutation) ResetExpiresAt() {
+	m.expires_at = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *LeadRecommendationMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *LeadRecommendationMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the LeadRecommendation entity.
+// If the LeadRecommendation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadRecommendationMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *LeadRecommendationMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *LeadRecommendationMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *LeadRecommendationMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the LeadRecommendation entity.
+// If the LeadRecommendation object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeadRecommendationMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *LeadRecommendationMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (m *LeadRecommendationMutation) ClearUser() {
+	m.cleareduser = true
+	m.clearedFields[leadrecommendation.FieldUserID] = struct{}{}
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *LeadRecommendationMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *LeadRecommendationMutation) UserIDs() (ids []int) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *LeadRecommendationMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
+// ClearLead clears the "lead" edge to the Lead entity.
+func (m *LeadRecommendationMutation) ClearLead() {
+	m.clearedlead = true
+	m.clearedFields[leadrecommendation.FieldLeadID] = struct{}{}
+}
+
+// LeadCleared reports if the "lead" edge to the Lead entity was cleared.
+func (m *LeadRecommendationMutation) LeadCleared() bool {
+	return m.clearedlead
+}
+
+// LeadIDs returns the "lead" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// LeadID instead. It exists only for internal usage by the builders.
+func (m *LeadRecommendationMutation) LeadIDs() (ids []int) {
+	if id := m.lead; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetLead resets all changes to the "lead" edge.
+func (m *LeadRecommendationMutation) ResetLead() {
+	m.lead = nil
+	m.clearedlead = false
+}
+
+// Where appends a list predicates to the LeadRecommendationMutation builder.
+func (m *LeadRecommendationMutation) Where(ps ...predicate.LeadRecommendation) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the LeadRecommendationMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *LeadRecommendationMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.LeadRecommendation, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *LeadRecommendationMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *LeadRecommendationMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (LeadRecommendation).
+func (m *LeadRecommendationMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *LeadRecommendationMutation) Fields() []string {
+	fields := make([]string, 0, 9)
+	if m.user != nil {
+		fields = append(fields, leadrecommendation.FieldUserID)
+	}
+	if m.lead != nil {
+		fields = append(fields, leadrecommendation.FieldLeadID)
+	}
+	if m.score != nil {
+		fields = append(fields, leadrecommendation.FieldScore)
+	}
+	if m.reason != nil {
+		fields = append(fields, leadrecommendation.FieldReason)
+	}
+	if m.status != nil {
+		fields = append(fields, leadrecommendation.FieldStatus)
+	}
+	if m.metadata != nil {
+		fields = append(fields, leadrecommendation.FieldMetadata)
+	}
+	if m.expires_at != nil {
+		fields = append(fields, leadrecommendation.FieldExpiresAt)
+	}
+	if m.created_at != nil {
+		fields = append(fields, leadrecommendation.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, leadrecommendation.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *LeadRecommendationMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case leadrecommendation.FieldUserID:
+		return m.UserID()
+	case leadrecommendation.FieldLeadID:
+		return m.LeadID()
+	case leadrecommendation.FieldScore:
+		return m.Score()
+	case leadrecommendation.FieldReason:
+		return m.Reason()
+	case leadrecommendation.FieldStatus:
+		return m.Status()
+	case leadrecommendation.FieldMetadata:
+		return m.Metadata()
+	case leadrecommendation.FieldExpiresAt:
+		return m.ExpiresAt()
+	case leadrecommendation.FieldCreatedAt:
+		return m.CreatedAt()
+	case leadrecommendation.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *LeadRecommendationMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case leadrecommendation.FieldUserID:
+		return m.OldUserID(ctx)
+	case leadrecommendation.FieldLeadID:
+		return m.OldLeadID(ctx)
+	case leadrecommendation.FieldScore:
+		return m.OldScore(ctx)
+	case leadrecommendation.FieldReason:
+		return m.OldReason(ctx)
+	case leadrecommendation.FieldStatus:
+		return m.OldStatus(ctx)
+	case leadrecommendation.FieldMetadata:
+		return m.OldMetadata(ctx)
+	case leadrecommendation.FieldExpiresAt:
+		return m.OldExpiresAt(ctx)
+	case leadrecommendation.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case leadrecommendation.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown LeadRecommendation field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *LeadRecommendationMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case leadrecommendation.FieldUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case leadrecommendation.FieldLeadID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLeadID(v)
+		return nil
+	case leadrecommendation.FieldScore:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetScore(v)
+		return nil
+	case leadrecommendation.FieldReason:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReason(v)
+		return nil
+	case leadrecommendation.FieldStatus:
+		v, ok := value.(leadrecommendation.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case leadrecommendation.FieldMetadata:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMetadata(v)
+		return nil
+	case leadrecommendation.FieldExpiresAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExpiresAt(v)
+		return nil
+	case leadrecommendation.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case leadrecommendation.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown LeadRecommendation field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *LeadRecommendationMutation) AddedFields() []string {
+	var fields []string
+	if m.addscore != nil {
+		fields = append(fields, leadrecommendation.FieldScore)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *LeadRecommendationMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case leadrecommendation.FieldScore:
+		return m.AddedScore()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *LeadRecommendationMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case leadrecommendation.FieldScore:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddScore(v)
+		return nil
+	}
+	return fmt.Errorf("unknown LeadRecommendation numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *LeadRecommendationMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(leadrecommendation.FieldMetadata) {
+		fields = append(fields, leadrecommendation.FieldMetadata)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *LeadRecommendationMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *LeadRecommendationMutation) ClearField(name string) error {
+	switch name {
+	case leadrecommendation.FieldMetadata:
+		m.ClearMetadata()
+		return nil
+	}
+	return fmt.Errorf("unknown LeadRecommendation nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *LeadRecommendationMutation) ResetField(name string) error {
+	switch name {
+	case leadrecommendation.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case leadrecommendation.FieldLeadID:
+		m.ResetLeadID()
+		return nil
+	case leadrecommendation.FieldScore:
+		m.ResetScore()
+		return nil
+	case leadrecommendation.FieldReason:
+		m.ResetReason()
+		return nil
+	case leadrecommendation.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case leadrecommendation.FieldMetadata:
+		m.ResetMetadata()
+		return nil
+	case leadrecommendation.FieldExpiresAt:
+		m.ResetExpiresAt()
+		return nil
+	case leadrecommendation.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case leadrecommendation.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown LeadRecommendation field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *LeadRecommendationMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.user != nil {
+		edges = append(edges, leadrecommendation.EdgeUser)
+	}
+	if m.lead != nil {
+		edges = append(edges, leadrecommendation.EdgeLead)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *LeadRecommendationMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case leadrecommendation.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	case leadrecommendation.EdgeLead:
+		if id := m.lead; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *LeadRecommendationMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *LeadRecommendationMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *LeadRecommendationMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.cleareduser {
+		edges = append(edges, leadrecommendation.EdgeUser)
+	}
+	if m.clearedlead {
+		edges = append(edges, leadrecommendation.EdgeLead)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *LeadRecommendationMutation) EdgeCleared(name string) bool {
+	switch name {
+	case leadrecommendation.EdgeUser:
+		return m.cleareduser
+	case leadrecommendation.EdgeLead:
+		return m.clearedlead
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *LeadRecommendationMutation) ClearEdge(name string) error {
+	switch name {
+	case leadrecommendation.EdgeUser:
+		m.ClearUser()
+		return nil
+	case leadrecommendation.EdgeLead:
+		m.ClearLead()
+		return nil
+	}
+	return fmt.Errorf("unknown LeadRecommendation unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *LeadRecommendationMutation) ResetEdge(name string) error {
+	switch name {
+	case leadrecommendation.EdgeUser:
+		m.ResetUser()
+		return nil
+	case leadrecommendation.EdgeLead:
+		m.ResetLead()
+		return nil
+	}
+	return fmt.Errorf("unknown LeadRecommendation edge %s", name)
 }
 
 // LeadStatusHistoryMutation represents an operation that mutates the LeadStatusHistory nodes in the graph.
@@ -34626,6 +35629,12 @@ type UserMutation struct {
 	competitor_profiles                    map[int]struct{}
 	removedcompetitor_profiles             map[int]struct{}
 	clearedcompetitor_profiles             bool
+	lead_recommendations                   map[int]struct{}
+	removedlead_recommendations            map[int]struct{}
+	clearedlead_recommendations            bool
+	behaviors                              map[int]struct{}
+	removedbehaviors                       map[int]struct{}
+	clearedbehaviors                       bool
 	done                                   bool
 	oldValue                               func(context.Context) (*User, error)
 	predicates                             []predicate.User
@@ -37172,6 +38181,114 @@ func (m *UserMutation) ResetCompetitorProfiles() {
 	m.removedcompetitor_profiles = nil
 }
 
+// AddLeadRecommendationIDs adds the "lead_recommendations" edge to the LeadRecommendation entity by ids.
+func (m *UserMutation) AddLeadRecommendationIDs(ids ...int) {
+	if m.lead_recommendations == nil {
+		m.lead_recommendations = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.lead_recommendations[ids[i]] = struct{}{}
+	}
+}
+
+// ClearLeadRecommendations clears the "lead_recommendations" edge to the LeadRecommendation entity.
+func (m *UserMutation) ClearLeadRecommendations() {
+	m.clearedlead_recommendations = true
+}
+
+// LeadRecommendationsCleared reports if the "lead_recommendations" edge to the LeadRecommendation entity was cleared.
+func (m *UserMutation) LeadRecommendationsCleared() bool {
+	return m.clearedlead_recommendations
+}
+
+// RemoveLeadRecommendationIDs removes the "lead_recommendations" edge to the LeadRecommendation entity by IDs.
+func (m *UserMutation) RemoveLeadRecommendationIDs(ids ...int) {
+	if m.removedlead_recommendations == nil {
+		m.removedlead_recommendations = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.lead_recommendations, ids[i])
+		m.removedlead_recommendations[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedLeadRecommendations returns the removed IDs of the "lead_recommendations" edge to the LeadRecommendation entity.
+func (m *UserMutation) RemovedLeadRecommendationsIDs() (ids []int) {
+	for id := range m.removedlead_recommendations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// LeadRecommendationsIDs returns the "lead_recommendations" edge IDs in the mutation.
+func (m *UserMutation) LeadRecommendationsIDs() (ids []int) {
+	for id := range m.lead_recommendations {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetLeadRecommendations resets all changes to the "lead_recommendations" edge.
+func (m *UserMutation) ResetLeadRecommendations() {
+	m.lead_recommendations = nil
+	m.clearedlead_recommendations = false
+	m.removedlead_recommendations = nil
+}
+
+// AddBehaviorIDs adds the "behaviors" edge to the UserBehavior entity by ids.
+func (m *UserMutation) AddBehaviorIDs(ids ...int) {
+	if m.behaviors == nil {
+		m.behaviors = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.behaviors[ids[i]] = struct{}{}
+	}
+}
+
+// ClearBehaviors clears the "behaviors" edge to the UserBehavior entity.
+func (m *UserMutation) ClearBehaviors() {
+	m.clearedbehaviors = true
+}
+
+// BehaviorsCleared reports if the "behaviors" edge to the UserBehavior entity was cleared.
+func (m *UserMutation) BehaviorsCleared() bool {
+	return m.clearedbehaviors
+}
+
+// RemoveBehaviorIDs removes the "behaviors" edge to the UserBehavior entity by IDs.
+func (m *UserMutation) RemoveBehaviorIDs(ids ...int) {
+	if m.removedbehaviors == nil {
+		m.removedbehaviors = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.behaviors, ids[i])
+		m.removedbehaviors[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedBehaviors returns the removed IDs of the "behaviors" edge to the UserBehavior entity.
+func (m *UserMutation) RemovedBehaviorsIDs() (ids []int) {
+	for id := range m.removedbehaviors {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// BehaviorsIDs returns the "behaviors" edge IDs in the mutation.
+func (m *UserMutation) BehaviorsIDs() (ids []int) {
+	for id := range m.behaviors {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetBehaviors resets all changes to the "behaviors" edge.
+func (m *UserMutation) ResetBehaviors() {
+	m.behaviors = nil
+	m.clearedbehaviors = false
+	m.removedbehaviors = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -37798,7 +38915,7 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 26)
+	edges := make([]string, 0, 28)
 	if m.subscriptions != nil {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -37876,6 +38993,12 @@ func (m *UserMutation) AddedEdges() []string {
 	}
 	if m.competitor_profiles != nil {
 		edges = append(edges, user.EdgeCompetitorProfiles)
+	}
+	if m.lead_recommendations != nil {
+		edges = append(edges, user.EdgeLeadRecommendations)
+	}
+	if m.behaviors != nil {
+		edges = append(edges, user.EdgeBehaviors)
 	}
 	return edges
 }
@@ -38038,13 +39161,25 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeLeadRecommendations:
+		ids := make([]ent.Value, 0, len(m.lead_recommendations))
+		for id := range m.lead_recommendations {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgeBehaviors:
+		ids := make([]ent.Value, 0, len(m.behaviors))
+		for id := range m.behaviors {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 26)
+	edges := make([]string, 0, 28)
 	if m.removedsubscriptions != nil {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -38119,6 +39254,12 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedcompetitor_profiles != nil {
 		edges = append(edges, user.EdgeCompetitorProfiles)
+	}
+	if m.removedlead_recommendations != nil {
+		edges = append(edges, user.EdgeLeadRecommendations)
+	}
+	if m.removedbehaviors != nil {
+		edges = append(edges, user.EdgeBehaviors)
 	}
 	return edges
 }
@@ -38277,13 +39418,25 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeLeadRecommendations:
+		ids := make([]ent.Value, 0, len(m.removedlead_recommendations))
+		for id := range m.removedlead_recommendations {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgeBehaviors:
+		ids := make([]ent.Value, 0, len(m.removedbehaviors))
+		for id := range m.removedbehaviors {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 26)
+	edges := make([]string, 0, 28)
 	if m.clearedsubscriptions {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -38362,6 +39515,12 @@ func (m *UserMutation) ClearedEdges() []string {
 	if m.clearedcompetitor_profiles {
 		edges = append(edges, user.EdgeCompetitorProfiles)
 	}
+	if m.clearedlead_recommendations {
+		edges = append(edges, user.EdgeLeadRecommendations)
+	}
+	if m.clearedbehaviors {
+		edges = append(edges, user.EdgeBehaviors)
+	}
 	return edges
 }
 
@@ -38421,6 +39580,10 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedcall_logs
 	case user.EdgeCompetitorProfiles:
 		return m.clearedcompetitor_profiles
+	case user.EdgeLeadRecommendations:
+		return m.clearedlead_recommendations
+	case user.EdgeBehaviors:
+		return m.clearedbehaviors
 	}
 	return false
 }
@@ -38518,8 +39681,907 @@ func (m *UserMutation) ResetEdge(name string) error {
 	case user.EdgeCompetitorProfiles:
 		m.ResetCompetitorProfiles()
 		return nil
+	case user.EdgeLeadRecommendations:
+		m.ResetLeadRecommendations()
+		return nil
+	case user.EdgeBehaviors:
+		m.ResetBehaviors()
+		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)
+}
+
+// UserBehaviorMutation represents an operation that mutates the UserBehavior nodes in the graph.
+type UserBehaviorMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	action_type   *userbehavior.ActionType
+	lead_id       *int
+	addlead_id    *int
+	industry      *string
+	country       *string
+	city          *string
+	metadata      *map[string]interface{}
+	created_at    *time.Time
+	clearedFields map[string]struct{}
+	user          *int
+	cleareduser   bool
+	done          bool
+	oldValue      func(context.Context) (*UserBehavior, error)
+	predicates    []predicate.UserBehavior
+}
+
+var _ ent.Mutation = (*UserBehaviorMutation)(nil)
+
+// userbehaviorOption allows management of the mutation configuration using functional options.
+type userbehaviorOption func(*UserBehaviorMutation)
+
+// newUserBehaviorMutation creates new mutation for the UserBehavior entity.
+func newUserBehaviorMutation(c config, op Op, opts ...userbehaviorOption) *UserBehaviorMutation {
+	m := &UserBehaviorMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeUserBehavior,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withUserBehaviorID sets the ID field of the mutation.
+func withUserBehaviorID(id int) userbehaviorOption {
+	return func(m *UserBehaviorMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *UserBehavior
+		)
+		m.oldValue = func(ctx context.Context) (*UserBehavior, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().UserBehavior.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withUserBehavior sets the old UserBehavior of the mutation.
+func withUserBehavior(node *UserBehavior) userbehaviorOption {
+	return func(m *UserBehaviorMutation) {
+		m.oldValue = func(context.Context) (*UserBehavior, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m UserBehaviorMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m UserBehaviorMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *UserBehaviorMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *UserBehaviorMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().UserBehavior.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetUserID sets the "user_id" field.
+func (m *UserBehaviorMutation) SetUserID(i int) {
+	m.user = &i
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *UserBehaviorMutation) UserID() (r int, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the UserBehavior entity.
+// If the UserBehavior object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserBehaviorMutation) OldUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *UserBehaviorMutation) ResetUserID() {
+	m.user = nil
+}
+
+// SetActionType sets the "action_type" field.
+func (m *UserBehaviorMutation) SetActionType(ut userbehavior.ActionType) {
+	m.action_type = &ut
+}
+
+// ActionType returns the value of the "action_type" field in the mutation.
+func (m *UserBehaviorMutation) ActionType() (r userbehavior.ActionType, exists bool) {
+	v := m.action_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldActionType returns the old "action_type" field's value of the UserBehavior entity.
+// If the UserBehavior object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserBehaviorMutation) OldActionType(ctx context.Context) (v userbehavior.ActionType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldActionType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldActionType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldActionType: %w", err)
+	}
+	return oldValue.ActionType, nil
+}
+
+// ResetActionType resets all changes to the "action_type" field.
+func (m *UserBehaviorMutation) ResetActionType() {
+	m.action_type = nil
+}
+
+// SetLeadID sets the "lead_id" field.
+func (m *UserBehaviorMutation) SetLeadID(i int) {
+	m.lead_id = &i
+	m.addlead_id = nil
+}
+
+// LeadID returns the value of the "lead_id" field in the mutation.
+func (m *UserBehaviorMutation) LeadID() (r int, exists bool) {
+	v := m.lead_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLeadID returns the old "lead_id" field's value of the UserBehavior entity.
+// If the UserBehavior object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserBehaviorMutation) OldLeadID(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLeadID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLeadID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLeadID: %w", err)
+	}
+	return oldValue.LeadID, nil
+}
+
+// AddLeadID adds i to the "lead_id" field.
+func (m *UserBehaviorMutation) AddLeadID(i int) {
+	if m.addlead_id != nil {
+		*m.addlead_id += i
+	} else {
+		m.addlead_id = &i
+	}
+}
+
+// AddedLeadID returns the value that was added to the "lead_id" field in this mutation.
+func (m *UserBehaviorMutation) AddedLeadID() (r int, exists bool) {
+	v := m.addlead_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearLeadID clears the value of the "lead_id" field.
+func (m *UserBehaviorMutation) ClearLeadID() {
+	m.lead_id = nil
+	m.addlead_id = nil
+	m.clearedFields[userbehavior.FieldLeadID] = struct{}{}
+}
+
+// LeadIDCleared returns if the "lead_id" field was cleared in this mutation.
+func (m *UserBehaviorMutation) LeadIDCleared() bool {
+	_, ok := m.clearedFields[userbehavior.FieldLeadID]
+	return ok
+}
+
+// ResetLeadID resets all changes to the "lead_id" field.
+func (m *UserBehaviorMutation) ResetLeadID() {
+	m.lead_id = nil
+	m.addlead_id = nil
+	delete(m.clearedFields, userbehavior.FieldLeadID)
+}
+
+// SetIndustry sets the "industry" field.
+func (m *UserBehaviorMutation) SetIndustry(s string) {
+	m.industry = &s
+}
+
+// Industry returns the value of the "industry" field in the mutation.
+func (m *UserBehaviorMutation) Industry() (r string, exists bool) {
+	v := m.industry
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIndustry returns the old "industry" field's value of the UserBehavior entity.
+// If the UserBehavior object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserBehaviorMutation) OldIndustry(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIndustry is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIndustry requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIndustry: %w", err)
+	}
+	return oldValue.Industry, nil
+}
+
+// ClearIndustry clears the value of the "industry" field.
+func (m *UserBehaviorMutation) ClearIndustry() {
+	m.industry = nil
+	m.clearedFields[userbehavior.FieldIndustry] = struct{}{}
+}
+
+// IndustryCleared returns if the "industry" field was cleared in this mutation.
+func (m *UserBehaviorMutation) IndustryCleared() bool {
+	_, ok := m.clearedFields[userbehavior.FieldIndustry]
+	return ok
+}
+
+// ResetIndustry resets all changes to the "industry" field.
+func (m *UserBehaviorMutation) ResetIndustry() {
+	m.industry = nil
+	delete(m.clearedFields, userbehavior.FieldIndustry)
+}
+
+// SetCountry sets the "country" field.
+func (m *UserBehaviorMutation) SetCountry(s string) {
+	m.country = &s
+}
+
+// Country returns the value of the "country" field in the mutation.
+func (m *UserBehaviorMutation) Country() (r string, exists bool) {
+	v := m.country
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCountry returns the old "country" field's value of the UserBehavior entity.
+// If the UserBehavior object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserBehaviorMutation) OldCountry(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCountry is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCountry requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCountry: %w", err)
+	}
+	return oldValue.Country, nil
+}
+
+// ClearCountry clears the value of the "country" field.
+func (m *UserBehaviorMutation) ClearCountry() {
+	m.country = nil
+	m.clearedFields[userbehavior.FieldCountry] = struct{}{}
+}
+
+// CountryCleared returns if the "country" field was cleared in this mutation.
+func (m *UserBehaviorMutation) CountryCleared() bool {
+	_, ok := m.clearedFields[userbehavior.FieldCountry]
+	return ok
+}
+
+// ResetCountry resets all changes to the "country" field.
+func (m *UserBehaviorMutation) ResetCountry() {
+	m.country = nil
+	delete(m.clearedFields, userbehavior.FieldCountry)
+}
+
+// SetCity sets the "city" field.
+func (m *UserBehaviorMutation) SetCity(s string) {
+	m.city = &s
+}
+
+// City returns the value of the "city" field in the mutation.
+func (m *UserBehaviorMutation) City() (r string, exists bool) {
+	v := m.city
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCity returns the old "city" field's value of the UserBehavior entity.
+// If the UserBehavior object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserBehaviorMutation) OldCity(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCity is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCity requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCity: %w", err)
+	}
+	return oldValue.City, nil
+}
+
+// ClearCity clears the value of the "city" field.
+func (m *UserBehaviorMutation) ClearCity() {
+	m.city = nil
+	m.clearedFields[userbehavior.FieldCity] = struct{}{}
+}
+
+// CityCleared returns if the "city" field was cleared in this mutation.
+func (m *UserBehaviorMutation) CityCleared() bool {
+	_, ok := m.clearedFields[userbehavior.FieldCity]
+	return ok
+}
+
+// ResetCity resets all changes to the "city" field.
+func (m *UserBehaviorMutation) ResetCity() {
+	m.city = nil
+	delete(m.clearedFields, userbehavior.FieldCity)
+}
+
+// SetMetadata sets the "metadata" field.
+func (m *UserBehaviorMutation) SetMetadata(value map[string]interface{}) {
+	m.metadata = &value
+}
+
+// Metadata returns the value of the "metadata" field in the mutation.
+func (m *UserBehaviorMutation) Metadata() (r map[string]interface{}, exists bool) {
+	v := m.metadata
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMetadata returns the old "metadata" field's value of the UserBehavior entity.
+// If the UserBehavior object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserBehaviorMutation) OldMetadata(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMetadata is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMetadata requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMetadata: %w", err)
+	}
+	return oldValue.Metadata, nil
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (m *UserBehaviorMutation) ClearMetadata() {
+	m.metadata = nil
+	m.clearedFields[userbehavior.FieldMetadata] = struct{}{}
+}
+
+// MetadataCleared returns if the "metadata" field was cleared in this mutation.
+func (m *UserBehaviorMutation) MetadataCleared() bool {
+	_, ok := m.clearedFields[userbehavior.FieldMetadata]
+	return ok
+}
+
+// ResetMetadata resets all changes to the "metadata" field.
+func (m *UserBehaviorMutation) ResetMetadata() {
+	m.metadata = nil
+	delete(m.clearedFields, userbehavior.FieldMetadata)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *UserBehaviorMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *UserBehaviorMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the UserBehavior entity.
+// If the UserBehavior object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserBehaviorMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *UserBehaviorMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (m *UserBehaviorMutation) ClearUser() {
+	m.cleareduser = true
+	m.clearedFields[userbehavior.FieldUserID] = struct{}{}
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *UserBehaviorMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *UserBehaviorMutation) UserIDs() (ids []int) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *UserBehaviorMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
+// Where appends a list predicates to the UserBehaviorMutation builder.
+func (m *UserBehaviorMutation) Where(ps ...predicate.UserBehavior) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the UserBehaviorMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *UserBehaviorMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.UserBehavior, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *UserBehaviorMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *UserBehaviorMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (UserBehavior).
+func (m *UserBehaviorMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *UserBehaviorMutation) Fields() []string {
+	fields := make([]string, 0, 8)
+	if m.user != nil {
+		fields = append(fields, userbehavior.FieldUserID)
+	}
+	if m.action_type != nil {
+		fields = append(fields, userbehavior.FieldActionType)
+	}
+	if m.lead_id != nil {
+		fields = append(fields, userbehavior.FieldLeadID)
+	}
+	if m.industry != nil {
+		fields = append(fields, userbehavior.FieldIndustry)
+	}
+	if m.country != nil {
+		fields = append(fields, userbehavior.FieldCountry)
+	}
+	if m.city != nil {
+		fields = append(fields, userbehavior.FieldCity)
+	}
+	if m.metadata != nil {
+		fields = append(fields, userbehavior.FieldMetadata)
+	}
+	if m.created_at != nil {
+		fields = append(fields, userbehavior.FieldCreatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *UserBehaviorMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case userbehavior.FieldUserID:
+		return m.UserID()
+	case userbehavior.FieldActionType:
+		return m.ActionType()
+	case userbehavior.FieldLeadID:
+		return m.LeadID()
+	case userbehavior.FieldIndustry:
+		return m.Industry()
+	case userbehavior.FieldCountry:
+		return m.Country()
+	case userbehavior.FieldCity:
+		return m.City()
+	case userbehavior.FieldMetadata:
+		return m.Metadata()
+	case userbehavior.FieldCreatedAt:
+		return m.CreatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *UserBehaviorMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case userbehavior.FieldUserID:
+		return m.OldUserID(ctx)
+	case userbehavior.FieldActionType:
+		return m.OldActionType(ctx)
+	case userbehavior.FieldLeadID:
+		return m.OldLeadID(ctx)
+	case userbehavior.FieldIndustry:
+		return m.OldIndustry(ctx)
+	case userbehavior.FieldCountry:
+		return m.OldCountry(ctx)
+	case userbehavior.FieldCity:
+		return m.OldCity(ctx)
+	case userbehavior.FieldMetadata:
+		return m.OldMetadata(ctx)
+	case userbehavior.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown UserBehavior field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UserBehaviorMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case userbehavior.FieldUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case userbehavior.FieldActionType:
+		v, ok := value.(userbehavior.ActionType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetActionType(v)
+		return nil
+	case userbehavior.FieldLeadID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLeadID(v)
+		return nil
+	case userbehavior.FieldIndustry:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIndustry(v)
+		return nil
+	case userbehavior.FieldCountry:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCountry(v)
+		return nil
+	case userbehavior.FieldCity:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCity(v)
+		return nil
+	case userbehavior.FieldMetadata:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMetadata(v)
+		return nil
+	case userbehavior.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown UserBehavior field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *UserBehaviorMutation) AddedFields() []string {
+	var fields []string
+	if m.addlead_id != nil {
+		fields = append(fields, userbehavior.FieldLeadID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *UserBehaviorMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case userbehavior.FieldLeadID:
+		return m.AddedLeadID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UserBehaviorMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case userbehavior.FieldLeadID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddLeadID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown UserBehavior numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *UserBehaviorMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(userbehavior.FieldLeadID) {
+		fields = append(fields, userbehavior.FieldLeadID)
+	}
+	if m.FieldCleared(userbehavior.FieldIndustry) {
+		fields = append(fields, userbehavior.FieldIndustry)
+	}
+	if m.FieldCleared(userbehavior.FieldCountry) {
+		fields = append(fields, userbehavior.FieldCountry)
+	}
+	if m.FieldCleared(userbehavior.FieldCity) {
+		fields = append(fields, userbehavior.FieldCity)
+	}
+	if m.FieldCleared(userbehavior.FieldMetadata) {
+		fields = append(fields, userbehavior.FieldMetadata)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *UserBehaviorMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *UserBehaviorMutation) ClearField(name string) error {
+	switch name {
+	case userbehavior.FieldLeadID:
+		m.ClearLeadID()
+		return nil
+	case userbehavior.FieldIndustry:
+		m.ClearIndustry()
+		return nil
+	case userbehavior.FieldCountry:
+		m.ClearCountry()
+		return nil
+	case userbehavior.FieldCity:
+		m.ClearCity()
+		return nil
+	case userbehavior.FieldMetadata:
+		m.ClearMetadata()
+		return nil
+	}
+	return fmt.Errorf("unknown UserBehavior nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *UserBehaviorMutation) ResetField(name string) error {
+	switch name {
+	case userbehavior.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case userbehavior.FieldActionType:
+		m.ResetActionType()
+		return nil
+	case userbehavior.FieldLeadID:
+		m.ResetLeadID()
+		return nil
+	case userbehavior.FieldIndustry:
+		m.ResetIndustry()
+		return nil
+	case userbehavior.FieldCountry:
+		m.ResetCountry()
+		return nil
+	case userbehavior.FieldCity:
+		m.ResetCity()
+		return nil
+	case userbehavior.FieldMetadata:
+		m.ResetMetadata()
+		return nil
+	case userbehavior.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown UserBehavior field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *UserBehaviorMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.user != nil {
+		edges = append(edges, userbehavior.EdgeUser)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *UserBehaviorMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case userbehavior.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *UserBehaviorMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *UserBehaviorMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *UserBehaviorMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.cleareduser {
+		edges = append(edges, userbehavior.EdgeUser)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *UserBehaviorMutation) EdgeCleared(name string) bool {
+	switch name {
+	case userbehavior.EdgeUser:
+		return m.cleareduser
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *UserBehaviorMutation) ClearEdge(name string) error {
+	switch name {
+	case userbehavior.EdgeUser:
+		m.ClearUser()
+		return nil
+	}
+	return fmt.Errorf("unknown UserBehavior unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *UserBehaviorMutation) ResetEdge(name string) error {
+	switch name {
+	case userbehavior.EdgeUser:
+		m.ResetUser()
+		return nil
+	}
+	return fmt.Errorf("unknown UserBehavior edge %s", name)
 }
 
 // WebhookMutation represents an operation that mutates the Webhook nodes in the graph.

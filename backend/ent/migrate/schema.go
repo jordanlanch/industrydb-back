@@ -1132,6 +1132,71 @@ var (
 			},
 		},
 	}
+	// LeadRecommendationsColumns holds the columns for the "lead_recommendations" table.
+	LeadRecommendationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "score", Type: field.TypeFloat64},
+		{Name: "reason", Type: field.TypeString, Size: 500},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "accepted", "rejected", "expired"}, Default: "pending"},
+		{Name: "metadata", Type: field.TypeJSON, Nullable: true},
+		{Name: "expires_at", Type: field.TypeTime},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "lead_id", Type: field.TypeInt},
+		{Name: "user_id", Type: field.TypeInt},
+	}
+	// LeadRecommendationsTable holds the schema information for the "lead_recommendations" table.
+	LeadRecommendationsTable = &schema.Table{
+		Name:       "lead_recommendations",
+		Columns:    LeadRecommendationsColumns,
+		PrimaryKey: []*schema.Column{LeadRecommendationsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "lead_recommendations_leads_recommendations",
+				Columns:    []*schema.Column{LeadRecommendationsColumns[8]},
+				RefColumns: []*schema.Column{LeadsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "lead_recommendations_users_lead_recommendations",
+				Columns:    []*schema.Column{LeadRecommendationsColumns[9]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "leadrecommendation_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{LeadRecommendationsColumns[9]},
+			},
+			{
+				Name:    "leadrecommendation_lead_id",
+				Unique:  false,
+				Columns: []*schema.Column{LeadRecommendationsColumns[8]},
+			},
+			{
+				Name:    "leadrecommendation_status",
+				Unique:  false,
+				Columns: []*schema.Column{LeadRecommendationsColumns[3]},
+			},
+			{
+				Name:    "leadrecommendation_score",
+				Unique:  false,
+				Columns: []*schema.Column{LeadRecommendationsColumns[1]},
+			},
+			{
+				Name:    "leadrecommendation_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{LeadRecommendationsColumns[6]},
+			},
+			{
+				Name:    "leadrecommendation_expires_at",
+				Unique:  false,
+				Columns: []*schema.Column{LeadRecommendationsColumns[5]},
+			},
+		},
+	}
 	// LeadStatusHistoriesColumns holds the columns for the "lead_status_histories" table.
 	LeadStatusHistoriesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -1755,6 +1820,64 @@ var (
 			},
 		},
 	}
+	// UserBehaviorsColumns holds the columns for the "user_behaviors" table.
+	UserBehaviorsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "action_type", Type: field.TypeEnum, Enums: []string{"search", "view", "export", "contact", "save", "filter", "sort"}},
+		{Name: "lead_id", Type: field.TypeInt, Nullable: true},
+		{Name: "industry", Type: field.TypeString, Nullable: true, Size: 50},
+		{Name: "country", Type: field.TypeString, Nullable: true, Size: 2},
+		{Name: "city", Type: field.TypeString, Nullable: true, Size: 100},
+		{Name: "metadata", Type: field.TypeJSON, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "user_id", Type: field.TypeInt},
+	}
+	// UserBehaviorsTable holds the schema information for the "user_behaviors" table.
+	UserBehaviorsTable = &schema.Table{
+		Name:       "user_behaviors",
+		Columns:    UserBehaviorsColumns,
+		PrimaryKey: []*schema.Column{UserBehaviorsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_behaviors_users_behaviors",
+				Columns:    []*schema.Column{UserBehaviorsColumns[8]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "userbehavior_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{UserBehaviorsColumns[8]},
+			},
+			{
+				Name:    "userbehavior_action_type",
+				Unique:  false,
+				Columns: []*schema.Column{UserBehaviorsColumns[1]},
+			},
+			{
+				Name:    "userbehavior_lead_id",
+				Unique:  false,
+				Columns: []*schema.Column{UserBehaviorsColumns[2]},
+			},
+			{
+				Name:    "userbehavior_industry",
+				Unique:  false,
+				Columns: []*schema.Column{UserBehaviorsColumns[3]},
+			},
+			{
+				Name:    "userbehavior_country",
+				Unique:  false,
+				Columns: []*schema.Column{UserBehaviorsColumns[4]},
+			},
+			{
+				Name:    "userbehavior_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{UserBehaviorsColumns[7]},
+			},
+		},
+	}
 	// WebhooksColumns holds the columns for the "webhooks" table.
 	WebhooksColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -1818,6 +1941,7 @@ var (
 		LeadsTable,
 		LeadAssignmentsTable,
 		LeadNotesTable,
+		LeadRecommendationsTable,
 		LeadStatusHistoriesTable,
 		OrganizationsTable,
 		OrganizationMembersTable,
@@ -1830,6 +1954,7 @@ var (
 		TerritoryMembersTable,
 		UsageLogsTable,
 		UsersTable,
+		UserBehaviorsTable,
 		WebhooksTable,
 	}
 )
@@ -1863,6 +1988,8 @@ func init() {
 	LeadAssignmentsTable.ForeignKeys[2].RefTable = UsersTable
 	LeadNotesTable.ForeignKeys[0].RefTable = LeadsTable
 	LeadNotesTable.ForeignKeys[1].RefTable = UsersTable
+	LeadRecommendationsTable.ForeignKeys[0].RefTable = LeadsTable
+	LeadRecommendationsTable.ForeignKeys[1].RefTable = UsersTable
 	LeadStatusHistoriesTable.ForeignKeys[0].RefTable = LeadsTable
 	LeadStatusHistoriesTable.ForeignKeys[1].RefTable = UsersTable
 	OrganizationsTable.ForeignKeys[0].RefTable = UsersTable
@@ -1880,5 +2007,6 @@ func init() {
 	TerritoryMembersTable.ForeignKeys[1].RefTable = UsersTable
 	TerritoryMembersTable.ForeignKeys[2].RefTable = UsersTable
 	UsageLogsTable.ForeignKeys[0].RefTable = UsersTable
+	UserBehaviorsTable.ForeignKeys[0].RefTable = UsersTable
 	WebhooksTable.ForeignKeys[0].RefTable = UsersTable
 }

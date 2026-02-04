@@ -126,9 +126,13 @@ type UserEdges struct {
 	CallLogs []*CallLog `json:"call_logs,omitempty"`
 	// Competitor profiles tracked by this user
 	CompetitorProfiles []*CompetitorProfile `json:"competitor_profiles,omitempty"`
+	// Lead recommendations for this user
+	LeadRecommendations []*LeadRecommendation `json:"lead_recommendations,omitempty"`
+	// User behavior tracking for recommendations
+	Behaviors []*UserBehavior `json:"behaviors,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [26]bool
+	loadedTypes [28]bool
 }
 
 // SubscriptionsOrErr returns the Subscriptions value or an error if the edge
@@ -365,6 +369,24 @@ func (e UserEdges) CompetitorProfilesOrErr() ([]*CompetitorProfile, error) {
 		return e.CompetitorProfiles, nil
 	}
 	return nil, &NotLoadedError{edge: "competitor_profiles"}
+}
+
+// LeadRecommendationsOrErr returns the LeadRecommendations value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) LeadRecommendationsOrErr() ([]*LeadRecommendation, error) {
+	if e.loadedTypes[26] {
+		return e.LeadRecommendations, nil
+	}
+	return nil, &NotLoadedError{edge: "lead_recommendations"}
+}
+
+// BehaviorsOrErr returns the Behaviors value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) BehaviorsOrErr() ([]*UserBehavior, error) {
+	if e.loadedTypes[27] {
+		return e.Behaviors, nil
+	}
+	return nil, &NotLoadedError{edge: "behaviors"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -696,6 +718,16 @@ func (_m *User) QueryCallLogs() *CallLogQuery {
 // QueryCompetitorProfiles queries the "competitor_profiles" edge of the User entity.
 func (_m *User) QueryCompetitorProfiles() *CompetitorProfileQuery {
 	return NewUserClient(_m.config).QueryCompetitorProfiles(_m)
+}
+
+// QueryLeadRecommendations queries the "lead_recommendations" edge of the User entity.
+func (_m *User) QueryLeadRecommendations() *LeadRecommendationQuery {
+	return NewUserClient(_m.config).QueryLeadRecommendations(_m)
+}
+
+// QueryBehaviors queries the "behaviors" edge of the User entity.
+func (_m *User) QueryBehaviors() *UserBehaviorQuery {
+	return NewUserClient(_m.config).QueryBehaviors(_m)
 }
 
 // Update returns a builder for updating this User.
