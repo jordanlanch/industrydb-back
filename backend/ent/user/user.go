@@ -113,6 +113,8 @@ const (
 	EdgeSmsCampaigns = "sms_campaigns"
 	// EdgeCallLogs holds the string denoting the call_logs edge name in mutations.
 	EdgeCallLogs = "call_logs"
+	// EdgeCompetitorProfiles holds the string denoting the competitor_profiles edge name in mutations.
+	EdgeCompetitorProfiles = "competitor_profiles"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// SubscriptionsTable is the table that holds the subscriptions relation/edge.
@@ -290,6 +292,13 @@ const (
 	CallLogsInverseTable = "call_logs"
 	// CallLogsColumn is the table column denoting the call_logs relation/edge.
 	CallLogsColumn = "user_id"
+	// CompetitorProfilesTable is the table that holds the competitor_profiles relation/edge.
+	CompetitorProfilesTable = "competitor_profiles"
+	// CompetitorProfilesInverseTable is the table name for the CompetitorProfile entity.
+	// It exists in this package in order to avoid circular dependency with the "competitorprofile" package.
+	CompetitorProfilesInverseTable = "competitor_profiles"
+	// CompetitorProfilesColumn is the table column denoting the competitor_profiles relation/edge.
+	CompetitorProfilesColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -891,6 +900,20 @@ func ByCallLogs(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newCallLogsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByCompetitorProfilesCount orders the results by competitor_profiles count.
+func ByCompetitorProfilesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newCompetitorProfilesStep(), opts...)
+	}
+}
+
+// ByCompetitorProfiles orders the results by competitor_profiles terms.
+func ByCompetitorProfiles(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCompetitorProfilesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newSubscriptionsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -1064,5 +1087,12 @@ func newCallLogsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(CallLogsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, CallLogsTable, CallLogsColumn),
+	)
+}
+func newCompetitorProfilesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CompetitorProfilesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, CompetitorProfilesTable, CompetitorProfilesColumn),
 	)
 }

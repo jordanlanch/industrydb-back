@@ -1870,6 +1870,29 @@ func HasCallLogsWith(preds ...predicate.CallLog) predicate.User {
 	})
 }
 
+// HasCompetitorProfiles applies the HasEdge predicate on the "competitor_profiles" edge.
+func HasCompetitorProfiles() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, CompetitorProfilesTable, CompetitorProfilesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasCompetitorProfilesWith applies the HasEdge predicate on the "competitor_profiles" edge with a given conditions (other predicates).
+func HasCompetitorProfilesWith(preds ...predicate.CompetitorProfile) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newCompetitorProfilesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.User) predicate.User {
 	return predicate.User(sql.AndPredicates(predicates...))

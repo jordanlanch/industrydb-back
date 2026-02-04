@@ -21,6 +21,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/calllog"
+	"github.com/jordanlanch/industrydb/ent/competitormetric"
+	"github.com/jordanlanch/industrydb/ent/competitorprofile"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/emailsequencesend"
@@ -64,6 +66,10 @@ type Client struct {
 	AuditLog *AuditLogClient
 	// CallLog is the client for interacting with the CallLog builders.
 	CallLog *CallLogClient
+	// CompetitorMetric is the client for interacting with the CompetitorMetric builders.
+	CompetitorMetric *CompetitorMetricClient
+	// CompetitorProfile is the client for interacting with the CompetitorProfile builders.
+	CompetitorProfile *CompetitorProfileClient
 	// EmailSequence is the client for interacting with the EmailSequence builders.
 	EmailSequence *EmailSequenceClient
 	// EmailSequenceEnrollment is the client for interacting with the EmailSequenceEnrollment builders.
@@ -129,6 +135,8 @@ func (c *Client) init() {
 	c.AffiliateConversion = NewAffiliateConversionClient(c.config)
 	c.AuditLog = NewAuditLogClient(c.config)
 	c.CallLog = NewCallLogClient(c.config)
+	c.CompetitorMetric = NewCompetitorMetricClient(c.config)
+	c.CompetitorProfile = NewCompetitorProfileClient(c.config)
 	c.EmailSequence = NewEmailSequenceClient(c.config)
 	c.EmailSequenceEnrollment = NewEmailSequenceEnrollmentClient(c.config)
 	c.EmailSequenceSend = NewEmailSequenceSendClient(c.config)
@@ -251,6 +259,8 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		AffiliateConversion:     NewAffiliateConversionClient(cfg),
 		AuditLog:                NewAuditLogClient(cfg),
 		CallLog:                 NewCallLogClient(cfg),
+		CompetitorMetric:        NewCompetitorMetricClient(cfg),
+		CompetitorProfile:       NewCompetitorProfileClient(cfg),
 		EmailSequence:           NewEmailSequenceClient(cfg),
 		EmailSequenceEnrollment: NewEmailSequenceEnrollmentClient(cfg),
 		EmailSequenceSend:       NewEmailSequenceSendClient(cfg),
@@ -300,6 +310,8 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		AffiliateConversion:     NewAffiliateConversionClient(cfg),
 		AuditLog:                NewAuditLogClient(cfg),
 		CallLog:                 NewCallLogClient(cfg),
+		CompetitorMetric:        NewCompetitorMetricClient(cfg),
+		CompetitorProfile:       NewCompetitorProfileClient(cfg),
 		EmailSequence:           NewEmailSequenceClient(cfg),
 		EmailSequenceEnrollment: NewEmailSequenceEnrollmentClient(cfg),
 		EmailSequenceSend:       NewEmailSequenceSendClient(cfg),
@@ -354,12 +366,12 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.APIKey, c.Affiliate, c.AffiliateClick, c.AffiliateConversion, c.AuditLog,
-		c.CallLog, c.EmailSequence, c.EmailSequenceEnrollment, c.EmailSequenceSend,
-		c.EmailSequenceStep, c.Experiment, c.ExperimentAssignment, c.Export,
-		c.Industry, c.Lead, c.LeadAssignment, c.LeadNote, c.LeadStatusHistory,
-		c.Organization, c.OrganizationMember, c.Referral, c.SMSCampaign, c.SMSMessage,
-		c.SavedSearch, c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog,
-		c.User, c.Webhook,
+		c.CallLog, c.CompetitorMetric, c.CompetitorProfile, c.EmailSequence,
+		c.EmailSequenceEnrollment, c.EmailSequenceSend, c.EmailSequenceStep,
+		c.Experiment, c.ExperimentAssignment, c.Export, c.Industry, c.Lead,
+		c.LeadAssignment, c.LeadNote, c.LeadStatusHistory, c.Organization,
+		c.OrganizationMember, c.Referral, c.SMSCampaign, c.SMSMessage, c.SavedSearch,
+		c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog, c.User, c.Webhook,
 	} {
 		n.Use(hooks...)
 	}
@@ -370,12 +382,12 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.APIKey, c.Affiliate, c.AffiliateClick, c.AffiliateConversion, c.AuditLog,
-		c.CallLog, c.EmailSequence, c.EmailSequenceEnrollment, c.EmailSequenceSend,
-		c.EmailSequenceStep, c.Experiment, c.ExperimentAssignment, c.Export,
-		c.Industry, c.Lead, c.LeadAssignment, c.LeadNote, c.LeadStatusHistory,
-		c.Organization, c.OrganizationMember, c.Referral, c.SMSCampaign, c.SMSMessage,
-		c.SavedSearch, c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog,
-		c.User, c.Webhook,
+		c.CallLog, c.CompetitorMetric, c.CompetitorProfile, c.EmailSequence,
+		c.EmailSequenceEnrollment, c.EmailSequenceSend, c.EmailSequenceStep,
+		c.Experiment, c.ExperimentAssignment, c.Export, c.Industry, c.Lead,
+		c.LeadAssignment, c.LeadNote, c.LeadStatusHistory, c.Organization,
+		c.OrganizationMember, c.Referral, c.SMSCampaign, c.SMSMessage, c.SavedSearch,
+		c.Subscription, c.Territory, c.TerritoryMember, c.UsageLog, c.User, c.Webhook,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -396,6 +408,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.AuditLog.mutate(ctx, m)
 	case *CallLogMutation:
 		return c.CallLog.mutate(ctx, m)
+	case *CompetitorMetricMutation:
+		return c.CompetitorMetric.mutate(ctx, m)
+	case *CompetitorProfileMutation:
+		return c.CompetitorProfile.mutate(ctx, m)
 	case *EmailSequenceMutation:
 		return c.EmailSequence.mutate(ctx, m)
 	case *EmailSequenceEnrollmentMutation:
@@ -1404,6 +1420,320 @@ func (c *CallLogClient) mutate(ctx context.Context, m *CallLogMutation) (Value, 
 		return (&CallLogDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown CallLog mutation op: %q", m.Op())
+	}
+}
+
+// CompetitorMetricClient is a client for the CompetitorMetric schema.
+type CompetitorMetricClient struct {
+	config
+}
+
+// NewCompetitorMetricClient returns a client for the CompetitorMetric from the given config.
+func NewCompetitorMetricClient(c config) *CompetitorMetricClient {
+	return &CompetitorMetricClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `competitormetric.Hooks(f(g(h())))`.
+func (c *CompetitorMetricClient) Use(hooks ...Hook) {
+	c.hooks.CompetitorMetric = append(c.hooks.CompetitorMetric, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `competitormetric.Intercept(f(g(h())))`.
+func (c *CompetitorMetricClient) Intercept(interceptors ...Interceptor) {
+	c.inters.CompetitorMetric = append(c.inters.CompetitorMetric, interceptors...)
+}
+
+// Create returns a builder for creating a CompetitorMetric entity.
+func (c *CompetitorMetricClient) Create() *CompetitorMetricCreate {
+	mutation := newCompetitorMetricMutation(c.config, OpCreate)
+	return &CompetitorMetricCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of CompetitorMetric entities.
+func (c *CompetitorMetricClient) CreateBulk(builders ...*CompetitorMetricCreate) *CompetitorMetricCreateBulk {
+	return &CompetitorMetricCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CompetitorMetricClient) MapCreateBulk(slice any, setFunc func(*CompetitorMetricCreate, int)) *CompetitorMetricCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CompetitorMetricCreateBulk{err: fmt.Errorf("calling to CompetitorMetricClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CompetitorMetricCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CompetitorMetricCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for CompetitorMetric.
+func (c *CompetitorMetricClient) Update() *CompetitorMetricUpdate {
+	mutation := newCompetitorMetricMutation(c.config, OpUpdate)
+	return &CompetitorMetricUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CompetitorMetricClient) UpdateOne(_m *CompetitorMetric) *CompetitorMetricUpdateOne {
+	mutation := newCompetitorMetricMutation(c.config, OpUpdateOne, withCompetitorMetric(_m))
+	return &CompetitorMetricUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CompetitorMetricClient) UpdateOneID(id int) *CompetitorMetricUpdateOne {
+	mutation := newCompetitorMetricMutation(c.config, OpUpdateOne, withCompetitorMetricID(id))
+	return &CompetitorMetricUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for CompetitorMetric.
+func (c *CompetitorMetricClient) Delete() *CompetitorMetricDelete {
+	mutation := newCompetitorMetricMutation(c.config, OpDelete)
+	return &CompetitorMetricDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CompetitorMetricClient) DeleteOne(_m *CompetitorMetric) *CompetitorMetricDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CompetitorMetricClient) DeleteOneID(id int) *CompetitorMetricDeleteOne {
+	builder := c.Delete().Where(competitormetric.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CompetitorMetricDeleteOne{builder}
+}
+
+// Query returns a query builder for CompetitorMetric.
+func (c *CompetitorMetricClient) Query() *CompetitorMetricQuery {
+	return &CompetitorMetricQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCompetitorMetric},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a CompetitorMetric entity by its id.
+func (c *CompetitorMetricClient) Get(ctx context.Context, id int) (*CompetitorMetric, error) {
+	return c.Query().Where(competitormetric.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CompetitorMetricClient) GetX(ctx context.Context, id int) *CompetitorMetric {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryCompetitor queries the competitor edge of a CompetitorMetric.
+func (c *CompetitorMetricClient) QueryCompetitor(_m *CompetitorMetric) *CompetitorProfileQuery {
+	query := (&CompetitorProfileClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(competitormetric.Table, competitormetric.FieldID, id),
+			sqlgraph.To(competitorprofile.Table, competitorprofile.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, competitormetric.CompetitorTable, competitormetric.CompetitorColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *CompetitorMetricClient) Hooks() []Hook {
+	return c.hooks.CompetitorMetric
+}
+
+// Interceptors returns the client interceptors.
+func (c *CompetitorMetricClient) Interceptors() []Interceptor {
+	return c.inters.CompetitorMetric
+}
+
+func (c *CompetitorMetricClient) mutate(ctx context.Context, m *CompetitorMetricMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CompetitorMetricCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CompetitorMetricUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CompetitorMetricUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CompetitorMetricDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown CompetitorMetric mutation op: %q", m.Op())
+	}
+}
+
+// CompetitorProfileClient is a client for the CompetitorProfile schema.
+type CompetitorProfileClient struct {
+	config
+}
+
+// NewCompetitorProfileClient returns a client for the CompetitorProfile from the given config.
+func NewCompetitorProfileClient(c config) *CompetitorProfileClient {
+	return &CompetitorProfileClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `competitorprofile.Hooks(f(g(h())))`.
+func (c *CompetitorProfileClient) Use(hooks ...Hook) {
+	c.hooks.CompetitorProfile = append(c.hooks.CompetitorProfile, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `competitorprofile.Intercept(f(g(h())))`.
+func (c *CompetitorProfileClient) Intercept(interceptors ...Interceptor) {
+	c.inters.CompetitorProfile = append(c.inters.CompetitorProfile, interceptors...)
+}
+
+// Create returns a builder for creating a CompetitorProfile entity.
+func (c *CompetitorProfileClient) Create() *CompetitorProfileCreate {
+	mutation := newCompetitorProfileMutation(c.config, OpCreate)
+	return &CompetitorProfileCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of CompetitorProfile entities.
+func (c *CompetitorProfileClient) CreateBulk(builders ...*CompetitorProfileCreate) *CompetitorProfileCreateBulk {
+	return &CompetitorProfileCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CompetitorProfileClient) MapCreateBulk(slice any, setFunc func(*CompetitorProfileCreate, int)) *CompetitorProfileCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CompetitorProfileCreateBulk{err: fmt.Errorf("calling to CompetitorProfileClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CompetitorProfileCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CompetitorProfileCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for CompetitorProfile.
+func (c *CompetitorProfileClient) Update() *CompetitorProfileUpdate {
+	mutation := newCompetitorProfileMutation(c.config, OpUpdate)
+	return &CompetitorProfileUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CompetitorProfileClient) UpdateOne(_m *CompetitorProfile) *CompetitorProfileUpdateOne {
+	mutation := newCompetitorProfileMutation(c.config, OpUpdateOne, withCompetitorProfile(_m))
+	return &CompetitorProfileUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CompetitorProfileClient) UpdateOneID(id int) *CompetitorProfileUpdateOne {
+	mutation := newCompetitorProfileMutation(c.config, OpUpdateOne, withCompetitorProfileID(id))
+	return &CompetitorProfileUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for CompetitorProfile.
+func (c *CompetitorProfileClient) Delete() *CompetitorProfileDelete {
+	mutation := newCompetitorProfileMutation(c.config, OpDelete)
+	return &CompetitorProfileDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CompetitorProfileClient) DeleteOne(_m *CompetitorProfile) *CompetitorProfileDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CompetitorProfileClient) DeleteOneID(id int) *CompetitorProfileDeleteOne {
+	builder := c.Delete().Where(competitorprofile.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CompetitorProfileDeleteOne{builder}
+}
+
+// Query returns a query builder for CompetitorProfile.
+func (c *CompetitorProfileClient) Query() *CompetitorProfileQuery {
+	return &CompetitorProfileQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCompetitorProfile},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a CompetitorProfile entity by its id.
+func (c *CompetitorProfileClient) Get(ctx context.Context, id int) (*CompetitorProfile, error) {
+	return c.Query().Where(competitorprofile.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CompetitorProfileClient) GetX(ctx context.Context, id int) *CompetitorProfile {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a CompetitorProfile.
+func (c *CompetitorProfileClient) QueryUser(_m *CompetitorProfile) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(competitorprofile.Table, competitorprofile.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, competitorprofile.UserTable, competitorprofile.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryMetrics queries the metrics edge of a CompetitorProfile.
+func (c *CompetitorProfileClient) QueryMetrics(_m *CompetitorProfile) *CompetitorMetricQuery {
+	query := (&CompetitorMetricClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(competitorprofile.Table, competitorprofile.FieldID, id),
+			sqlgraph.To(competitormetric.Table, competitormetric.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, competitorprofile.MetricsTable, competitorprofile.MetricsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *CompetitorProfileClient) Hooks() []Hook {
+	return c.hooks.CompetitorProfile
+}
+
+// Interceptors returns the client interceptors.
+func (c *CompetitorProfileClient) Interceptors() []Interceptor {
+	return c.inters.CompetitorProfile
+}
+
+func (c *CompetitorProfileClient) mutate(ctx context.Context, m *CompetitorProfileMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CompetitorProfileCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CompetitorProfileUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CompetitorProfileUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CompetitorProfileDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown CompetitorProfile mutation op: %q", m.Op())
 	}
 }
 
@@ -5673,6 +6003,22 @@ func (c *UserClient) QueryCallLogs(_m *User) *CallLogQuery {
 	return query
 }
 
+// QueryCompetitorProfiles queries the competitor_profiles edge of a User.
+func (c *UserClient) QueryCompetitorProfiles(_m *User) *CompetitorProfileQuery {
+	query := (&CompetitorProfileClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(competitorprofile.Table, competitorprofile.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.CompetitorProfilesTable, user.CompetitorProfilesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -5851,18 +6197,19 @@ func (c *WebhookClient) mutate(ctx context.Context, m *WebhookMutation) (Value, 
 type (
 	hooks struct {
 		APIKey, Affiliate, AffiliateClick, AffiliateConversion, AuditLog, CallLog,
-		EmailSequence, EmailSequenceEnrollment, EmailSequenceSend, EmailSequenceStep,
-		Experiment, ExperimentAssignment, Export, Industry, Lead, LeadAssignment,
-		LeadNote, LeadStatusHistory, Organization, OrganizationMember, Referral,
-		SMSCampaign, SMSMessage, SavedSearch, Subscription, Territory, TerritoryMember,
-		UsageLog, User, Webhook []ent.Hook
+		CompetitorMetric, CompetitorProfile, EmailSequence, EmailSequenceEnrollment,
+		EmailSequenceSend, EmailSequenceStep, Experiment, ExperimentAssignment, Export,
+		Industry, Lead, LeadAssignment, LeadNote, LeadStatusHistory, Organization,
+		OrganizationMember, Referral, SMSCampaign, SMSMessage, SavedSearch,
+		Subscription, Territory, TerritoryMember, UsageLog, User, Webhook []ent.Hook
 	}
 	inters struct {
 		APIKey, Affiliate, AffiliateClick, AffiliateConversion, AuditLog, CallLog,
-		EmailSequence, EmailSequenceEnrollment, EmailSequenceSend, EmailSequenceStep,
-		Experiment, ExperimentAssignment, Export, Industry, Lead, LeadAssignment,
-		LeadNote, LeadStatusHistory, Organization, OrganizationMember, Referral,
-		SMSCampaign, SMSMessage, SavedSearch, Subscription, Territory, TerritoryMember,
-		UsageLog, User, Webhook []ent.Interceptor
+		CompetitorMetric, CompetitorProfile, EmailSequence, EmailSequenceEnrollment,
+		EmailSequenceSend, EmailSequenceStep, Experiment, ExperimentAssignment, Export,
+		Industry, Lead, LeadAssignment, LeadNote, LeadStatusHistory, Organization,
+		OrganizationMember, Referral, SMSCampaign, SMSMessage, SavedSearch,
+		Subscription, Territory, TerritoryMember, UsageLog, User,
+		Webhook []ent.Interceptor
 	}
 )

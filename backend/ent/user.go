@@ -124,9 +124,11 @@ type UserEdges struct {
 	SmsCampaigns []*SMSCampaign `json:"sms_campaigns,omitempty"`
 	// Call logs for this user
 	CallLogs []*CallLog `json:"call_logs,omitempty"`
+	// Competitor profiles tracked by this user
+	CompetitorProfiles []*CompetitorProfile `json:"competitor_profiles,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [25]bool
+	loadedTypes [26]bool
 }
 
 // SubscriptionsOrErr returns the Subscriptions value or an error if the edge
@@ -354,6 +356,15 @@ func (e UserEdges) CallLogsOrErr() ([]*CallLog, error) {
 		return e.CallLogs, nil
 	}
 	return nil, &NotLoadedError{edge: "call_logs"}
+}
+
+// CompetitorProfilesOrErr returns the CompetitorProfiles value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) CompetitorProfilesOrErr() ([]*CompetitorProfile, error) {
+	if e.loadedTypes[25] {
+		return e.CompetitorProfiles, nil
+	}
+	return nil, &NotLoadedError{edge: "competitor_profiles"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -680,6 +691,11 @@ func (_m *User) QuerySmsCampaigns() *SMSCampaignQuery {
 // QueryCallLogs queries the "call_logs" edge of the User entity.
 func (_m *User) QueryCallLogs() *CallLogQuery {
 	return NewUserClient(_m.config).QueryCallLogs(_m)
+}
+
+// QueryCompetitorProfiles queries the "competitor_profiles" edge of the User entity.
+func (_m *User) QueryCompetitorProfiles() *CompetitorProfileQuery {
+	return NewUserClient(_m.config).QueryCompetitorProfiles(_m)
 }
 
 // Update returns a builder for updating this User.

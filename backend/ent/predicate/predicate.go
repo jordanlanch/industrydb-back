@@ -24,6 +24,12 @@ type AuditLog func(*sql.Selector)
 // CallLog is the predicate function for calllog builders.
 type CallLog func(*sql.Selector)
 
+// CompetitorMetric is the predicate function for competitormetric builders.
+type CompetitorMetric func(*sql.Selector)
+
+// CompetitorProfile is the predicate function for competitorprofile builders.
+type CompetitorProfile func(*sql.Selector)
+
 // EmailSequence is the predicate function for emailsequence builders.
 type EmailSequence func(*sql.Selector)
 

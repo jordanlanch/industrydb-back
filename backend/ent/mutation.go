@@ -17,6 +17,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/calllog"
+	"github.com/jordanlanch/industrydb/ent/competitormetric"
+	"github.com/jordanlanch/industrydb/ent/competitorprofile"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/emailsequencesend"
@@ -59,6 +61,8 @@ const (
 	TypeAffiliateConversion     = "AffiliateConversion"
 	TypeAuditLog                = "AuditLog"
 	TypeCallLog                 = "CallLog"
+	TypeCompetitorMetric        = "CompetitorMetric"
+	TypeCompetitorProfile       = "CompetitorProfile"
 	TypeEmailSequence           = "EmailSequence"
 	TypeEmailSequenceEnrollment = "EmailSequenceEnrollment"
 	TypeEmailSequenceSend       = "EmailSequenceSend"
@@ -7515,6 +7519,2853 @@ func (m *CallLogMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown CallLog edge %s", name)
+}
+
+// CompetitorMetricMutation represents an operation that mutates the CompetitorMetric nodes in the graph.
+type CompetitorMetricMutation struct {
+	config
+	op                Op
+	typ               string
+	id                *int
+	metric_type       *competitormetric.MetricType
+	metric_name       *string
+	metric_value      *string
+	numeric_value     *float64
+	addnumeric_value  *float64
+	unit              *string
+	notes             *string
+	source            *string
+	recorded_at       *time.Time
+	created_at        *time.Time
+	clearedFields     map[string]struct{}
+	competitor        *int
+	clearedcompetitor bool
+	done              bool
+	oldValue          func(context.Context) (*CompetitorMetric, error)
+	predicates        []predicate.CompetitorMetric
+}
+
+var _ ent.Mutation = (*CompetitorMetricMutation)(nil)
+
+// competitormetricOption allows management of the mutation configuration using functional options.
+type competitormetricOption func(*CompetitorMetricMutation)
+
+// newCompetitorMetricMutation creates new mutation for the CompetitorMetric entity.
+func newCompetitorMetricMutation(c config, op Op, opts ...competitormetricOption) *CompetitorMetricMutation {
+	m := &CompetitorMetricMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCompetitorMetric,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCompetitorMetricID sets the ID field of the mutation.
+func withCompetitorMetricID(id int) competitormetricOption {
+	return func(m *CompetitorMetricMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *CompetitorMetric
+		)
+		m.oldValue = func(ctx context.Context) (*CompetitorMetric, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().CompetitorMetric.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCompetitorMetric sets the old CompetitorMetric of the mutation.
+func withCompetitorMetric(node *CompetitorMetric) competitormetricOption {
+	return func(m *CompetitorMetricMutation) {
+		m.oldValue = func(context.Context) (*CompetitorMetric, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CompetitorMetricMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CompetitorMetricMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CompetitorMetricMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CompetitorMetricMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().CompetitorMetric.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCompetitorID sets the "competitor_id" field.
+func (m *CompetitorMetricMutation) SetCompetitorID(i int) {
+	m.competitor = &i
+}
+
+// CompetitorID returns the value of the "competitor_id" field in the mutation.
+func (m *CompetitorMetricMutation) CompetitorID() (r int, exists bool) {
+	v := m.competitor
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCompetitorID returns the old "competitor_id" field's value of the CompetitorMetric entity.
+// If the CompetitorMetric object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorMetricMutation) OldCompetitorID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCompetitorID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCompetitorID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCompetitorID: %w", err)
+	}
+	return oldValue.CompetitorID, nil
+}
+
+// ResetCompetitorID resets all changes to the "competitor_id" field.
+func (m *CompetitorMetricMutation) ResetCompetitorID() {
+	m.competitor = nil
+}
+
+// SetMetricType sets the "metric_type" field.
+func (m *CompetitorMetricMutation) SetMetricType(ct competitormetric.MetricType) {
+	m.metric_type = &ct
+}
+
+// MetricType returns the value of the "metric_type" field in the mutation.
+func (m *CompetitorMetricMutation) MetricType() (r competitormetric.MetricType, exists bool) {
+	v := m.metric_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMetricType returns the old "metric_type" field's value of the CompetitorMetric entity.
+// If the CompetitorMetric object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorMetricMutation) OldMetricType(ctx context.Context) (v competitormetric.MetricType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMetricType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMetricType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMetricType: %w", err)
+	}
+	return oldValue.MetricType, nil
+}
+
+// ResetMetricType resets all changes to the "metric_type" field.
+func (m *CompetitorMetricMutation) ResetMetricType() {
+	m.metric_type = nil
+}
+
+// SetMetricName sets the "metric_name" field.
+func (m *CompetitorMetricMutation) SetMetricName(s string) {
+	m.metric_name = &s
+}
+
+// MetricName returns the value of the "metric_name" field in the mutation.
+func (m *CompetitorMetricMutation) MetricName() (r string, exists bool) {
+	v := m.metric_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMetricName returns the old "metric_name" field's value of the CompetitorMetric entity.
+// If the CompetitorMetric object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorMetricMutation) OldMetricName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMetricName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMetricName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMetricName: %w", err)
+	}
+	return oldValue.MetricName, nil
+}
+
+// ResetMetricName resets all changes to the "metric_name" field.
+func (m *CompetitorMetricMutation) ResetMetricName() {
+	m.metric_name = nil
+}
+
+// SetMetricValue sets the "metric_value" field.
+func (m *CompetitorMetricMutation) SetMetricValue(s string) {
+	m.metric_value = &s
+}
+
+// MetricValue returns the value of the "metric_value" field in the mutation.
+func (m *CompetitorMetricMutation) MetricValue() (r string, exists bool) {
+	v := m.metric_value
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMetricValue returns the old "metric_value" field's value of the CompetitorMetric entity.
+// If the CompetitorMetric object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorMetricMutation) OldMetricValue(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMetricValue is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMetricValue requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMetricValue: %w", err)
+	}
+	return oldValue.MetricValue, nil
+}
+
+// ResetMetricValue resets all changes to the "metric_value" field.
+func (m *CompetitorMetricMutation) ResetMetricValue() {
+	m.metric_value = nil
+}
+
+// SetNumericValue sets the "numeric_value" field.
+func (m *CompetitorMetricMutation) SetNumericValue(f float64) {
+	m.numeric_value = &f
+	m.addnumeric_value = nil
+}
+
+// NumericValue returns the value of the "numeric_value" field in the mutation.
+func (m *CompetitorMetricMutation) NumericValue() (r float64, exists bool) {
+	v := m.numeric_value
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNumericValue returns the old "numeric_value" field's value of the CompetitorMetric entity.
+// If the CompetitorMetric object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorMetricMutation) OldNumericValue(ctx context.Context) (v *float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNumericValue is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNumericValue requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNumericValue: %w", err)
+	}
+	return oldValue.NumericValue, nil
+}
+
+// AddNumericValue adds f to the "numeric_value" field.
+func (m *CompetitorMetricMutation) AddNumericValue(f float64) {
+	if m.addnumeric_value != nil {
+		*m.addnumeric_value += f
+	} else {
+		m.addnumeric_value = &f
+	}
+}
+
+// AddedNumericValue returns the value that was added to the "numeric_value" field in this mutation.
+func (m *CompetitorMetricMutation) AddedNumericValue() (r float64, exists bool) {
+	v := m.addnumeric_value
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearNumericValue clears the value of the "numeric_value" field.
+func (m *CompetitorMetricMutation) ClearNumericValue() {
+	m.numeric_value = nil
+	m.addnumeric_value = nil
+	m.clearedFields[competitormetric.FieldNumericValue] = struct{}{}
+}
+
+// NumericValueCleared returns if the "numeric_value" field was cleared in this mutation.
+func (m *CompetitorMetricMutation) NumericValueCleared() bool {
+	_, ok := m.clearedFields[competitormetric.FieldNumericValue]
+	return ok
+}
+
+// ResetNumericValue resets all changes to the "numeric_value" field.
+func (m *CompetitorMetricMutation) ResetNumericValue() {
+	m.numeric_value = nil
+	m.addnumeric_value = nil
+	delete(m.clearedFields, competitormetric.FieldNumericValue)
+}
+
+// SetUnit sets the "unit" field.
+func (m *CompetitorMetricMutation) SetUnit(s string) {
+	m.unit = &s
+}
+
+// Unit returns the value of the "unit" field in the mutation.
+func (m *CompetitorMetricMutation) Unit() (r string, exists bool) {
+	v := m.unit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUnit returns the old "unit" field's value of the CompetitorMetric entity.
+// If the CompetitorMetric object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorMetricMutation) OldUnit(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUnit is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUnit requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUnit: %w", err)
+	}
+	return oldValue.Unit, nil
+}
+
+// ClearUnit clears the value of the "unit" field.
+func (m *CompetitorMetricMutation) ClearUnit() {
+	m.unit = nil
+	m.clearedFields[competitormetric.FieldUnit] = struct{}{}
+}
+
+// UnitCleared returns if the "unit" field was cleared in this mutation.
+func (m *CompetitorMetricMutation) UnitCleared() bool {
+	_, ok := m.clearedFields[competitormetric.FieldUnit]
+	return ok
+}
+
+// ResetUnit resets all changes to the "unit" field.
+func (m *CompetitorMetricMutation) ResetUnit() {
+	m.unit = nil
+	delete(m.clearedFields, competitormetric.FieldUnit)
+}
+
+// SetNotes sets the "notes" field.
+func (m *CompetitorMetricMutation) SetNotes(s string) {
+	m.notes = &s
+}
+
+// Notes returns the value of the "notes" field in the mutation.
+func (m *CompetitorMetricMutation) Notes() (r string, exists bool) {
+	v := m.notes
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNotes returns the old "notes" field's value of the CompetitorMetric entity.
+// If the CompetitorMetric object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorMetricMutation) OldNotes(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNotes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNotes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNotes: %w", err)
+	}
+	return oldValue.Notes, nil
+}
+
+// ClearNotes clears the value of the "notes" field.
+func (m *CompetitorMetricMutation) ClearNotes() {
+	m.notes = nil
+	m.clearedFields[competitormetric.FieldNotes] = struct{}{}
+}
+
+// NotesCleared returns if the "notes" field was cleared in this mutation.
+func (m *CompetitorMetricMutation) NotesCleared() bool {
+	_, ok := m.clearedFields[competitormetric.FieldNotes]
+	return ok
+}
+
+// ResetNotes resets all changes to the "notes" field.
+func (m *CompetitorMetricMutation) ResetNotes() {
+	m.notes = nil
+	delete(m.clearedFields, competitormetric.FieldNotes)
+}
+
+// SetSource sets the "source" field.
+func (m *CompetitorMetricMutation) SetSource(s string) {
+	m.source = &s
+}
+
+// Source returns the value of the "source" field in the mutation.
+func (m *CompetitorMetricMutation) Source() (r string, exists bool) {
+	v := m.source
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSource returns the old "source" field's value of the CompetitorMetric entity.
+// If the CompetitorMetric object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorMetricMutation) OldSource(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSource is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSource requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSource: %w", err)
+	}
+	return oldValue.Source, nil
+}
+
+// ClearSource clears the value of the "source" field.
+func (m *CompetitorMetricMutation) ClearSource() {
+	m.source = nil
+	m.clearedFields[competitormetric.FieldSource] = struct{}{}
+}
+
+// SourceCleared returns if the "source" field was cleared in this mutation.
+func (m *CompetitorMetricMutation) SourceCleared() bool {
+	_, ok := m.clearedFields[competitormetric.FieldSource]
+	return ok
+}
+
+// ResetSource resets all changes to the "source" field.
+func (m *CompetitorMetricMutation) ResetSource() {
+	m.source = nil
+	delete(m.clearedFields, competitormetric.FieldSource)
+}
+
+// SetRecordedAt sets the "recorded_at" field.
+func (m *CompetitorMetricMutation) SetRecordedAt(t time.Time) {
+	m.recorded_at = &t
+}
+
+// RecordedAt returns the value of the "recorded_at" field in the mutation.
+func (m *CompetitorMetricMutation) RecordedAt() (r time.Time, exists bool) {
+	v := m.recorded_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRecordedAt returns the old "recorded_at" field's value of the CompetitorMetric entity.
+// If the CompetitorMetric object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorMetricMutation) OldRecordedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRecordedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRecordedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRecordedAt: %w", err)
+	}
+	return oldValue.RecordedAt, nil
+}
+
+// ResetRecordedAt resets all changes to the "recorded_at" field.
+func (m *CompetitorMetricMutation) ResetRecordedAt() {
+	m.recorded_at = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *CompetitorMetricMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *CompetitorMetricMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the CompetitorMetric entity.
+// If the CompetitorMetric object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorMetricMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *CompetitorMetricMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// ClearCompetitor clears the "competitor" edge to the CompetitorProfile entity.
+func (m *CompetitorMetricMutation) ClearCompetitor() {
+	m.clearedcompetitor = true
+	m.clearedFields[competitormetric.FieldCompetitorID] = struct{}{}
+}
+
+// CompetitorCleared reports if the "competitor" edge to the CompetitorProfile entity was cleared.
+func (m *CompetitorMetricMutation) CompetitorCleared() bool {
+	return m.clearedcompetitor
+}
+
+// CompetitorIDs returns the "competitor" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// CompetitorID instead. It exists only for internal usage by the builders.
+func (m *CompetitorMetricMutation) CompetitorIDs() (ids []int) {
+	if id := m.competitor; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetCompetitor resets all changes to the "competitor" edge.
+func (m *CompetitorMetricMutation) ResetCompetitor() {
+	m.competitor = nil
+	m.clearedcompetitor = false
+}
+
+// Where appends a list predicates to the CompetitorMetricMutation builder.
+func (m *CompetitorMetricMutation) Where(ps ...predicate.CompetitorMetric) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CompetitorMetricMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CompetitorMetricMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.CompetitorMetric, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CompetitorMetricMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CompetitorMetricMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (CompetitorMetric).
+func (m *CompetitorMetricMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CompetitorMetricMutation) Fields() []string {
+	fields := make([]string, 0, 10)
+	if m.competitor != nil {
+		fields = append(fields, competitormetric.FieldCompetitorID)
+	}
+	if m.metric_type != nil {
+		fields = append(fields, competitormetric.FieldMetricType)
+	}
+	if m.metric_name != nil {
+		fields = append(fields, competitormetric.FieldMetricName)
+	}
+	if m.metric_value != nil {
+		fields = append(fields, competitormetric.FieldMetricValue)
+	}
+	if m.numeric_value != nil {
+		fields = append(fields, competitormetric.FieldNumericValue)
+	}
+	if m.unit != nil {
+		fields = append(fields, competitormetric.FieldUnit)
+	}
+	if m.notes != nil {
+		fields = append(fields, competitormetric.FieldNotes)
+	}
+	if m.source != nil {
+		fields = append(fields, competitormetric.FieldSource)
+	}
+	if m.recorded_at != nil {
+		fields = append(fields, competitormetric.FieldRecordedAt)
+	}
+	if m.created_at != nil {
+		fields = append(fields, competitormetric.FieldCreatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CompetitorMetricMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case competitormetric.FieldCompetitorID:
+		return m.CompetitorID()
+	case competitormetric.FieldMetricType:
+		return m.MetricType()
+	case competitormetric.FieldMetricName:
+		return m.MetricName()
+	case competitormetric.FieldMetricValue:
+		return m.MetricValue()
+	case competitormetric.FieldNumericValue:
+		return m.NumericValue()
+	case competitormetric.FieldUnit:
+		return m.Unit()
+	case competitormetric.FieldNotes:
+		return m.Notes()
+	case competitormetric.FieldSource:
+		return m.Source()
+	case competitormetric.FieldRecordedAt:
+		return m.RecordedAt()
+	case competitormetric.FieldCreatedAt:
+		return m.CreatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CompetitorMetricMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case competitormetric.FieldCompetitorID:
+		return m.OldCompetitorID(ctx)
+	case competitormetric.FieldMetricType:
+		return m.OldMetricType(ctx)
+	case competitormetric.FieldMetricName:
+		return m.OldMetricName(ctx)
+	case competitormetric.FieldMetricValue:
+		return m.OldMetricValue(ctx)
+	case competitormetric.FieldNumericValue:
+		return m.OldNumericValue(ctx)
+	case competitormetric.FieldUnit:
+		return m.OldUnit(ctx)
+	case competitormetric.FieldNotes:
+		return m.OldNotes(ctx)
+	case competitormetric.FieldSource:
+		return m.OldSource(ctx)
+	case competitormetric.FieldRecordedAt:
+		return m.OldRecordedAt(ctx)
+	case competitormetric.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown CompetitorMetric field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CompetitorMetricMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case competitormetric.FieldCompetitorID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCompetitorID(v)
+		return nil
+	case competitormetric.FieldMetricType:
+		v, ok := value.(competitormetric.MetricType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMetricType(v)
+		return nil
+	case competitormetric.FieldMetricName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMetricName(v)
+		return nil
+	case competitormetric.FieldMetricValue:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMetricValue(v)
+		return nil
+	case competitormetric.FieldNumericValue:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNumericValue(v)
+		return nil
+	case competitormetric.FieldUnit:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUnit(v)
+		return nil
+	case competitormetric.FieldNotes:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNotes(v)
+		return nil
+	case competitormetric.FieldSource:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSource(v)
+		return nil
+	case competitormetric.FieldRecordedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRecordedAt(v)
+		return nil
+	case competitormetric.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown CompetitorMetric field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CompetitorMetricMutation) AddedFields() []string {
+	var fields []string
+	if m.addnumeric_value != nil {
+		fields = append(fields, competitormetric.FieldNumericValue)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CompetitorMetricMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case competitormetric.FieldNumericValue:
+		return m.AddedNumericValue()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CompetitorMetricMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case competitormetric.FieldNumericValue:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddNumericValue(v)
+		return nil
+	}
+	return fmt.Errorf("unknown CompetitorMetric numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CompetitorMetricMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(competitormetric.FieldNumericValue) {
+		fields = append(fields, competitormetric.FieldNumericValue)
+	}
+	if m.FieldCleared(competitormetric.FieldUnit) {
+		fields = append(fields, competitormetric.FieldUnit)
+	}
+	if m.FieldCleared(competitormetric.FieldNotes) {
+		fields = append(fields, competitormetric.FieldNotes)
+	}
+	if m.FieldCleared(competitormetric.FieldSource) {
+		fields = append(fields, competitormetric.FieldSource)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CompetitorMetricMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CompetitorMetricMutation) ClearField(name string) error {
+	switch name {
+	case competitormetric.FieldNumericValue:
+		m.ClearNumericValue()
+		return nil
+	case competitormetric.FieldUnit:
+		m.ClearUnit()
+		return nil
+	case competitormetric.FieldNotes:
+		m.ClearNotes()
+		return nil
+	case competitormetric.FieldSource:
+		m.ClearSource()
+		return nil
+	}
+	return fmt.Errorf("unknown CompetitorMetric nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CompetitorMetricMutation) ResetField(name string) error {
+	switch name {
+	case competitormetric.FieldCompetitorID:
+		m.ResetCompetitorID()
+		return nil
+	case competitormetric.FieldMetricType:
+		m.ResetMetricType()
+		return nil
+	case competitormetric.FieldMetricName:
+		m.ResetMetricName()
+		return nil
+	case competitormetric.FieldMetricValue:
+		m.ResetMetricValue()
+		return nil
+	case competitormetric.FieldNumericValue:
+		m.ResetNumericValue()
+		return nil
+	case competitormetric.FieldUnit:
+		m.ResetUnit()
+		return nil
+	case competitormetric.FieldNotes:
+		m.ResetNotes()
+		return nil
+	case competitormetric.FieldSource:
+		m.ResetSource()
+		return nil
+	case competitormetric.FieldRecordedAt:
+		m.ResetRecordedAt()
+		return nil
+	case competitormetric.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown CompetitorMetric field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CompetitorMetricMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.competitor != nil {
+		edges = append(edges, competitormetric.EdgeCompetitor)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CompetitorMetricMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case competitormetric.EdgeCompetitor:
+		if id := m.competitor; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CompetitorMetricMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CompetitorMetricMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CompetitorMetricMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedcompetitor {
+		edges = append(edges, competitormetric.EdgeCompetitor)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CompetitorMetricMutation) EdgeCleared(name string) bool {
+	switch name {
+	case competitormetric.EdgeCompetitor:
+		return m.clearedcompetitor
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CompetitorMetricMutation) ClearEdge(name string) error {
+	switch name {
+	case competitormetric.EdgeCompetitor:
+		m.ClearCompetitor()
+		return nil
+	}
+	return fmt.Errorf("unknown CompetitorMetric unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CompetitorMetricMutation) ResetEdge(name string) error {
+	switch name {
+	case competitormetric.EdgeCompetitor:
+		m.ResetCompetitor()
+		return nil
+	}
+	return fmt.Errorf("unknown CompetitorMetric edge %s", name)
+}
+
+// CompetitorProfileMutation represents an operation that mutates the CompetitorProfile nodes in the graph.
+type CompetitorProfileMutation struct {
+	config
+	op                     Op
+	typ                    string
+	id                     *int
+	name                   *string
+	website                *string
+	industry               *string
+	country                *string
+	description            *string
+	market_position        *competitorprofile.MarketPosition
+	estimated_employees    *int
+	addestimated_employees *int
+	estimated_revenue      *string
+	strengths              *[]string
+	appendstrengths        []string
+	weaknesses             *[]string
+	appendweaknesses       []string
+	products               *[]string
+	appendproducts         []string
+	pricing_tiers          *map[string]interface{}
+	target_markets         *[]string
+	appendtarget_markets   []string
+	linkedin_url           *string
+	twitter_handle         *string
+	is_active              *bool
+	last_analyzed_at       *time.Time
+	created_at             *time.Time
+	updated_at             *time.Time
+	clearedFields          map[string]struct{}
+	user                   *int
+	cleareduser            bool
+	metrics                map[int]struct{}
+	removedmetrics         map[int]struct{}
+	clearedmetrics         bool
+	done                   bool
+	oldValue               func(context.Context) (*CompetitorProfile, error)
+	predicates             []predicate.CompetitorProfile
+}
+
+var _ ent.Mutation = (*CompetitorProfileMutation)(nil)
+
+// competitorprofileOption allows management of the mutation configuration using functional options.
+type competitorprofileOption func(*CompetitorProfileMutation)
+
+// newCompetitorProfileMutation creates new mutation for the CompetitorProfile entity.
+func newCompetitorProfileMutation(c config, op Op, opts ...competitorprofileOption) *CompetitorProfileMutation {
+	m := &CompetitorProfileMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCompetitorProfile,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCompetitorProfileID sets the ID field of the mutation.
+func withCompetitorProfileID(id int) competitorprofileOption {
+	return func(m *CompetitorProfileMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *CompetitorProfile
+		)
+		m.oldValue = func(ctx context.Context) (*CompetitorProfile, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().CompetitorProfile.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCompetitorProfile sets the old CompetitorProfile of the mutation.
+func withCompetitorProfile(node *CompetitorProfile) competitorprofileOption {
+	return func(m *CompetitorProfileMutation) {
+		m.oldValue = func(context.Context) (*CompetitorProfile, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CompetitorProfileMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CompetitorProfileMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CompetitorProfileMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CompetitorProfileMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().CompetitorProfile.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetUserID sets the "user_id" field.
+func (m *CompetitorProfileMutation) SetUserID(i int) {
+	m.user = &i
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *CompetitorProfileMutation) UserID() (r int, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the CompetitorProfile entity.
+// If the CompetitorProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorProfileMutation) OldUserID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *CompetitorProfileMutation) ResetUserID() {
+	m.user = nil
+}
+
+// SetName sets the "name" field.
+func (m *CompetitorProfileMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *CompetitorProfileMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the CompetitorProfile entity.
+// If the CompetitorProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorProfileMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *CompetitorProfileMutation) ResetName() {
+	m.name = nil
+}
+
+// SetWebsite sets the "website" field.
+func (m *CompetitorProfileMutation) SetWebsite(s string) {
+	m.website = &s
+}
+
+// Website returns the value of the "website" field in the mutation.
+func (m *CompetitorProfileMutation) Website() (r string, exists bool) {
+	v := m.website
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWebsite returns the old "website" field's value of the CompetitorProfile entity.
+// If the CompetitorProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorProfileMutation) OldWebsite(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWebsite is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWebsite requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWebsite: %w", err)
+	}
+	return oldValue.Website, nil
+}
+
+// ClearWebsite clears the value of the "website" field.
+func (m *CompetitorProfileMutation) ClearWebsite() {
+	m.website = nil
+	m.clearedFields[competitorprofile.FieldWebsite] = struct{}{}
+}
+
+// WebsiteCleared returns if the "website" field was cleared in this mutation.
+func (m *CompetitorProfileMutation) WebsiteCleared() bool {
+	_, ok := m.clearedFields[competitorprofile.FieldWebsite]
+	return ok
+}
+
+// ResetWebsite resets all changes to the "website" field.
+func (m *CompetitorProfileMutation) ResetWebsite() {
+	m.website = nil
+	delete(m.clearedFields, competitorprofile.FieldWebsite)
+}
+
+// SetIndustry sets the "industry" field.
+func (m *CompetitorProfileMutation) SetIndustry(s string) {
+	m.industry = &s
+}
+
+// Industry returns the value of the "industry" field in the mutation.
+func (m *CompetitorProfileMutation) Industry() (r string, exists bool) {
+	v := m.industry
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIndustry returns the old "industry" field's value of the CompetitorProfile entity.
+// If the CompetitorProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorProfileMutation) OldIndustry(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIndustry is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIndustry requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIndustry: %w", err)
+	}
+	return oldValue.Industry, nil
+}
+
+// ResetIndustry resets all changes to the "industry" field.
+func (m *CompetitorProfileMutation) ResetIndustry() {
+	m.industry = nil
+}
+
+// SetCountry sets the "country" field.
+func (m *CompetitorProfileMutation) SetCountry(s string) {
+	m.country = &s
+}
+
+// Country returns the value of the "country" field in the mutation.
+func (m *CompetitorProfileMutation) Country() (r string, exists bool) {
+	v := m.country
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCountry returns the old "country" field's value of the CompetitorProfile entity.
+// If the CompetitorProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorProfileMutation) OldCountry(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCountry is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCountry requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCountry: %w", err)
+	}
+	return oldValue.Country, nil
+}
+
+// ClearCountry clears the value of the "country" field.
+func (m *CompetitorProfileMutation) ClearCountry() {
+	m.country = nil
+	m.clearedFields[competitorprofile.FieldCountry] = struct{}{}
+}
+
+// CountryCleared returns if the "country" field was cleared in this mutation.
+func (m *CompetitorProfileMutation) CountryCleared() bool {
+	_, ok := m.clearedFields[competitorprofile.FieldCountry]
+	return ok
+}
+
+// ResetCountry resets all changes to the "country" field.
+func (m *CompetitorProfileMutation) ResetCountry() {
+	m.country = nil
+	delete(m.clearedFields, competitorprofile.FieldCountry)
+}
+
+// SetDescription sets the "description" field.
+func (m *CompetitorProfileMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *CompetitorProfileMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the CompetitorProfile entity.
+// If the CompetitorProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorProfileMutation) OldDescription(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ClearDescription clears the value of the "description" field.
+func (m *CompetitorProfileMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[competitorprofile.FieldDescription] = struct{}{}
+}
+
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *CompetitorProfileMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[competitorprofile.FieldDescription]
+	return ok
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *CompetitorProfileMutation) ResetDescription() {
+	m.description = nil
+	delete(m.clearedFields, competitorprofile.FieldDescription)
+}
+
+// SetMarketPosition sets the "market_position" field.
+func (m *CompetitorProfileMutation) SetMarketPosition(cp competitorprofile.MarketPosition) {
+	m.market_position = &cp
+}
+
+// MarketPosition returns the value of the "market_position" field in the mutation.
+func (m *CompetitorProfileMutation) MarketPosition() (r competitorprofile.MarketPosition, exists bool) {
+	v := m.market_position
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMarketPosition returns the old "market_position" field's value of the CompetitorProfile entity.
+// If the CompetitorProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorProfileMutation) OldMarketPosition(ctx context.Context) (v *competitorprofile.MarketPosition, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMarketPosition is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMarketPosition requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMarketPosition: %w", err)
+	}
+	return oldValue.MarketPosition, nil
+}
+
+// ClearMarketPosition clears the value of the "market_position" field.
+func (m *CompetitorProfileMutation) ClearMarketPosition() {
+	m.market_position = nil
+	m.clearedFields[competitorprofile.FieldMarketPosition] = struct{}{}
+}
+
+// MarketPositionCleared returns if the "market_position" field was cleared in this mutation.
+func (m *CompetitorProfileMutation) MarketPositionCleared() bool {
+	_, ok := m.clearedFields[competitorprofile.FieldMarketPosition]
+	return ok
+}
+
+// ResetMarketPosition resets all changes to the "market_position" field.
+func (m *CompetitorProfileMutation) ResetMarketPosition() {
+	m.market_position = nil
+	delete(m.clearedFields, competitorprofile.FieldMarketPosition)
+}
+
+// SetEstimatedEmployees sets the "estimated_employees" field.
+func (m *CompetitorProfileMutation) SetEstimatedEmployees(i int) {
+	m.estimated_employees = &i
+	m.addestimated_employees = nil
+}
+
+// EstimatedEmployees returns the value of the "estimated_employees" field in the mutation.
+func (m *CompetitorProfileMutation) EstimatedEmployees() (r int, exists bool) {
+	v := m.estimated_employees
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEstimatedEmployees returns the old "estimated_employees" field's value of the CompetitorProfile entity.
+// If the CompetitorProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorProfileMutation) OldEstimatedEmployees(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEstimatedEmployees is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEstimatedEmployees requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEstimatedEmployees: %w", err)
+	}
+	return oldValue.EstimatedEmployees, nil
+}
+
+// AddEstimatedEmployees adds i to the "estimated_employees" field.
+func (m *CompetitorProfileMutation) AddEstimatedEmployees(i int) {
+	if m.addestimated_employees != nil {
+		*m.addestimated_employees += i
+	} else {
+		m.addestimated_employees = &i
+	}
+}
+
+// AddedEstimatedEmployees returns the value that was added to the "estimated_employees" field in this mutation.
+func (m *CompetitorProfileMutation) AddedEstimatedEmployees() (r int, exists bool) {
+	v := m.addestimated_employees
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearEstimatedEmployees clears the value of the "estimated_employees" field.
+func (m *CompetitorProfileMutation) ClearEstimatedEmployees() {
+	m.estimated_employees = nil
+	m.addestimated_employees = nil
+	m.clearedFields[competitorprofile.FieldEstimatedEmployees] = struct{}{}
+}
+
+// EstimatedEmployeesCleared returns if the "estimated_employees" field was cleared in this mutation.
+func (m *CompetitorProfileMutation) EstimatedEmployeesCleared() bool {
+	_, ok := m.clearedFields[competitorprofile.FieldEstimatedEmployees]
+	return ok
+}
+
+// ResetEstimatedEmployees resets all changes to the "estimated_employees" field.
+func (m *CompetitorProfileMutation) ResetEstimatedEmployees() {
+	m.estimated_employees = nil
+	m.addestimated_employees = nil
+	delete(m.clearedFields, competitorprofile.FieldEstimatedEmployees)
+}
+
+// SetEstimatedRevenue sets the "estimated_revenue" field.
+func (m *CompetitorProfileMutation) SetEstimatedRevenue(s string) {
+	m.estimated_revenue = &s
+}
+
+// EstimatedRevenue returns the value of the "estimated_revenue" field in the mutation.
+func (m *CompetitorProfileMutation) EstimatedRevenue() (r string, exists bool) {
+	v := m.estimated_revenue
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEstimatedRevenue returns the old "estimated_revenue" field's value of the CompetitorProfile entity.
+// If the CompetitorProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorProfileMutation) OldEstimatedRevenue(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEstimatedRevenue is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEstimatedRevenue requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEstimatedRevenue: %w", err)
+	}
+	return oldValue.EstimatedRevenue, nil
+}
+
+// ClearEstimatedRevenue clears the value of the "estimated_revenue" field.
+func (m *CompetitorProfileMutation) ClearEstimatedRevenue() {
+	m.estimated_revenue = nil
+	m.clearedFields[competitorprofile.FieldEstimatedRevenue] = struct{}{}
+}
+
+// EstimatedRevenueCleared returns if the "estimated_revenue" field was cleared in this mutation.
+func (m *CompetitorProfileMutation) EstimatedRevenueCleared() bool {
+	_, ok := m.clearedFields[competitorprofile.FieldEstimatedRevenue]
+	return ok
+}
+
+// ResetEstimatedRevenue resets all changes to the "estimated_revenue" field.
+func (m *CompetitorProfileMutation) ResetEstimatedRevenue() {
+	m.estimated_revenue = nil
+	delete(m.clearedFields, competitorprofile.FieldEstimatedRevenue)
+}
+
+// SetStrengths sets the "strengths" field.
+func (m *CompetitorProfileMutation) SetStrengths(s []string) {
+	m.strengths = &s
+	m.appendstrengths = nil
+}
+
+// Strengths returns the value of the "strengths" field in the mutation.
+func (m *CompetitorProfileMutation) Strengths() (r []string, exists bool) {
+	v := m.strengths
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStrengths returns the old "strengths" field's value of the CompetitorProfile entity.
+// If the CompetitorProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorProfileMutation) OldStrengths(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStrengths is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStrengths requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStrengths: %w", err)
+	}
+	return oldValue.Strengths, nil
+}
+
+// AppendStrengths adds s to the "strengths" field.
+func (m *CompetitorProfileMutation) AppendStrengths(s []string) {
+	m.appendstrengths = append(m.appendstrengths, s...)
+}
+
+// AppendedStrengths returns the list of values that were appended to the "strengths" field in this mutation.
+func (m *CompetitorProfileMutation) AppendedStrengths() ([]string, bool) {
+	if len(m.appendstrengths) == 0 {
+		return nil, false
+	}
+	return m.appendstrengths, true
+}
+
+// ClearStrengths clears the value of the "strengths" field.
+func (m *CompetitorProfileMutation) ClearStrengths() {
+	m.strengths = nil
+	m.appendstrengths = nil
+	m.clearedFields[competitorprofile.FieldStrengths] = struct{}{}
+}
+
+// StrengthsCleared returns if the "strengths" field was cleared in this mutation.
+func (m *CompetitorProfileMutation) StrengthsCleared() bool {
+	_, ok := m.clearedFields[competitorprofile.FieldStrengths]
+	return ok
+}
+
+// ResetStrengths resets all changes to the "strengths" field.
+func (m *CompetitorProfileMutation) ResetStrengths() {
+	m.strengths = nil
+	m.appendstrengths = nil
+	delete(m.clearedFields, competitorprofile.FieldStrengths)
+}
+
+// SetWeaknesses sets the "weaknesses" field.
+func (m *CompetitorProfileMutation) SetWeaknesses(s []string) {
+	m.weaknesses = &s
+	m.appendweaknesses = nil
+}
+
+// Weaknesses returns the value of the "weaknesses" field in the mutation.
+func (m *CompetitorProfileMutation) Weaknesses() (r []string, exists bool) {
+	v := m.weaknesses
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldWeaknesses returns the old "weaknesses" field's value of the CompetitorProfile entity.
+// If the CompetitorProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorProfileMutation) OldWeaknesses(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldWeaknesses is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldWeaknesses requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldWeaknesses: %w", err)
+	}
+	return oldValue.Weaknesses, nil
+}
+
+// AppendWeaknesses adds s to the "weaknesses" field.
+func (m *CompetitorProfileMutation) AppendWeaknesses(s []string) {
+	m.appendweaknesses = append(m.appendweaknesses, s...)
+}
+
+// AppendedWeaknesses returns the list of values that were appended to the "weaknesses" field in this mutation.
+func (m *CompetitorProfileMutation) AppendedWeaknesses() ([]string, bool) {
+	if len(m.appendweaknesses) == 0 {
+		return nil, false
+	}
+	return m.appendweaknesses, true
+}
+
+// ClearWeaknesses clears the value of the "weaknesses" field.
+func (m *CompetitorProfileMutation) ClearWeaknesses() {
+	m.weaknesses = nil
+	m.appendweaknesses = nil
+	m.clearedFields[competitorprofile.FieldWeaknesses] = struct{}{}
+}
+
+// WeaknessesCleared returns if the "weaknesses" field was cleared in this mutation.
+func (m *CompetitorProfileMutation) WeaknessesCleared() bool {
+	_, ok := m.clearedFields[competitorprofile.FieldWeaknesses]
+	return ok
+}
+
+// ResetWeaknesses resets all changes to the "weaknesses" field.
+func (m *CompetitorProfileMutation) ResetWeaknesses() {
+	m.weaknesses = nil
+	m.appendweaknesses = nil
+	delete(m.clearedFields, competitorprofile.FieldWeaknesses)
+}
+
+// SetProducts sets the "products" field.
+func (m *CompetitorProfileMutation) SetProducts(s []string) {
+	m.products = &s
+	m.appendproducts = nil
+}
+
+// Products returns the value of the "products" field in the mutation.
+func (m *CompetitorProfileMutation) Products() (r []string, exists bool) {
+	v := m.products
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProducts returns the old "products" field's value of the CompetitorProfile entity.
+// If the CompetitorProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorProfileMutation) OldProducts(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProducts is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProducts requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProducts: %w", err)
+	}
+	return oldValue.Products, nil
+}
+
+// AppendProducts adds s to the "products" field.
+func (m *CompetitorProfileMutation) AppendProducts(s []string) {
+	m.appendproducts = append(m.appendproducts, s...)
+}
+
+// AppendedProducts returns the list of values that were appended to the "products" field in this mutation.
+func (m *CompetitorProfileMutation) AppendedProducts() ([]string, bool) {
+	if len(m.appendproducts) == 0 {
+		return nil, false
+	}
+	return m.appendproducts, true
+}
+
+// ClearProducts clears the value of the "products" field.
+func (m *CompetitorProfileMutation) ClearProducts() {
+	m.products = nil
+	m.appendproducts = nil
+	m.clearedFields[competitorprofile.FieldProducts] = struct{}{}
+}
+
+// ProductsCleared returns if the "products" field was cleared in this mutation.
+func (m *CompetitorProfileMutation) ProductsCleared() bool {
+	_, ok := m.clearedFields[competitorprofile.FieldProducts]
+	return ok
+}
+
+// ResetProducts resets all changes to the "products" field.
+func (m *CompetitorProfileMutation) ResetProducts() {
+	m.products = nil
+	m.appendproducts = nil
+	delete(m.clearedFields, competitorprofile.FieldProducts)
+}
+
+// SetPricingTiers sets the "pricing_tiers" field.
+func (m *CompetitorProfileMutation) SetPricingTiers(value map[string]interface{}) {
+	m.pricing_tiers = &value
+}
+
+// PricingTiers returns the value of the "pricing_tiers" field in the mutation.
+func (m *CompetitorProfileMutation) PricingTiers() (r map[string]interface{}, exists bool) {
+	v := m.pricing_tiers
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPricingTiers returns the old "pricing_tiers" field's value of the CompetitorProfile entity.
+// If the CompetitorProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorProfileMutation) OldPricingTiers(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPricingTiers is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPricingTiers requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPricingTiers: %w", err)
+	}
+	return oldValue.PricingTiers, nil
+}
+
+// ClearPricingTiers clears the value of the "pricing_tiers" field.
+func (m *CompetitorProfileMutation) ClearPricingTiers() {
+	m.pricing_tiers = nil
+	m.clearedFields[competitorprofile.FieldPricingTiers] = struct{}{}
+}
+
+// PricingTiersCleared returns if the "pricing_tiers" field was cleared in this mutation.
+func (m *CompetitorProfileMutation) PricingTiersCleared() bool {
+	_, ok := m.clearedFields[competitorprofile.FieldPricingTiers]
+	return ok
+}
+
+// ResetPricingTiers resets all changes to the "pricing_tiers" field.
+func (m *CompetitorProfileMutation) ResetPricingTiers() {
+	m.pricing_tiers = nil
+	delete(m.clearedFields, competitorprofile.FieldPricingTiers)
+}
+
+// SetTargetMarkets sets the "target_markets" field.
+func (m *CompetitorProfileMutation) SetTargetMarkets(s []string) {
+	m.target_markets = &s
+	m.appendtarget_markets = nil
+}
+
+// TargetMarkets returns the value of the "target_markets" field in the mutation.
+func (m *CompetitorProfileMutation) TargetMarkets() (r []string, exists bool) {
+	v := m.target_markets
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTargetMarkets returns the old "target_markets" field's value of the CompetitorProfile entity.
+// If the CompetitorProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorProfileMutation) OldTargetMarkets(ctx context.Context) (v []string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTargetMarkets is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTargetMarkets requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTargetMarkets: %w", err)
+	}
+	return oldValue.TargetMarkets, nil
+}
+
+// AppendTargetMarkets adds s to the "target_markets" field.
+func (m *CompetitorProfileMutation) AppendTargetMarkets(s []string) {
+	m.appendtarget_markets = append(m.appendtarget_markets, s...)
+}
+
+// AppendedTargetMarkets returns the list of values that were appended to the "target_markets" field in this mutation.
+func (m *CompetitorProfileMutation) AppendedTargetMarkets() ([]string, bool) {
+	if len(m.appendtarget_markets) == 0 {
+		return nil, false
+	}
+	return m.appendtarget_markets, true
+}
+
+// ClearTargetMarkets clears the value of the "target_markets" field.
+func (m *CompetitorProfileMutation) ClearTargetMarkets() {
+	m.target_markets = nil
+	m.appendtarget_markets = nil
+	m.clearedFields[competitorprofile.FieldTargetMarkets] = struct{}{}
+}
+
+// TargetMarketsCleared returns if the "target_markets" field was cleared in this mutation.
+func (m *CompetitorProfileMutation) TargetMarketsCleared() bool {
+	_, ok := m.clearedFields[competitorprofile.FieldTargetMarkets]
+	return ok
+}
+
+// ResetTargetMarkets resets all changes to the "target_markets" field.
+func (m *CompetitorProfileMutation) ResetTargetMarkets() {
+	m.target_markets = nil
+	m.appendtarget_markets = nil
+	delete(m.clearedFields, competitorprofile.FieldTargetMarkets)
+}
+
+// SetLinkedinURL sets the "linkedin_url" field.
+func (m *CompetitorProfileMutation) SetLinkedinURL(s string) {
+	m.linkedin_url = &s
+}
+
+// LinkedinURL returns the value of the "linkedin_url" field in the mutation.
+func (m *CompetitorProfileMutation) LinkedinURL() (r string, exists bool) {
+	v := m.linkedin_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLinkedinURL returns the old "linkedin_url" field's value of the CompetitorProfile entity.
+// If the CompetitorProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorProfileMutation) OldLinkedinURL(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLinkedinURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLinkedinURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLinkedinURL: %w", err)
+	}
+	return oldValue.LinkedinURL, nil
+}
+
+// ClearLinkedinURL clears the value of the "linkedin_url" field.
+func (m *CompetitorProfileMutation) ClearLinkedinURL() {
+	m.linkedin_url = nil
+	m.clearedFields[competitorprofile.FieldLinkedinURL] = struct{}{}
+}
+
+// LinkedinURLCleared returns if the "linkedin_url" field was cleared in this mutation.
+func (m *CompetitorProfileMutation) LinkedinURLCleared() bool {
+	_, ok := m.clearedFields[competitorprofile.FieldLinkedinURL]
+	return ok
+}
+
+// ResetLinkedinURL resets all changes to the "linkedin_url" field.
+func (m *CompetitorProfileMutation) ResetLinkedinURL() {
+	m.linkedin_url = nil
+	delete(m.clearedFields, competitorprofile.FieldLinkedinURL)
+}
+
+// SetTwitterHandle sets the "twitter_handle" field.
+func (m *CompetitorProfileMutation) SetTwitterHandle(s string) {
+	m.twitter_handle = &s
+}
+
+// TwitterHandle returns the value of the "twitter_handle" field in the mutation.
+func (m *CompetitorProfileMutation) TwitterHandle() (r string, exists bool) {
+	v := m.twitter_handle
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTwitterHandle returns the old "twitter_handle" field's value of the CompetitorProfile entity.
+// If the CompetitorProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorProfileMutation) OldTwitterHandle(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTwitterHandle is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTwitterHandle requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTwitterHandle: %w", err)
+	}
+	return oldValue.TwitterHandle, nil
+}
+
+// ClearTwitterHandle clears the value of the "twitter_handle" field.
+func (m *CompetitorProfileMutation) ClearTwitterHandle() {
+	m.twitter_handle = nil
+	m.clearedFields[competitorprofile.FieldTwitterHandle] = struct{}{}
+}
+
+// TwitterHandleCleared returns if the "twitter_handle" field was cleared in this mutation.
+func (m *CompetitorProfileMutation) TwitterHandleCleared() bool {
+	_, ok := m.clearedFields[competitorprofile.FieldTwitterHandle]
+	return ok
+}
+
+// ResetTwitterHandle resets all changes to the "twitter_handle" field.
+func (m *CompetitorProfileMutation) ResetTwitterHandle() {
+	m.twitter_handle = nil
+	delete(m.clearedFields, competitorprofile.FieldTwitterHandle)
+}
+
+// SetIsActive sets the "is_active" field.
+func (m *CompetitorProfileMutation) SetIsActive(b bool) {
+	m.is_active = &b
+}
+
+// IsActive returns the value of the "is_active" field in the mutation.
+func (m *CompetitorProfileMutation) IsActive() (r bool, exists bool) {
+	v := m.is_active
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsActive returns the old "is_active" field's value of the CompetitorProfile entity.
+// If the CompetitorProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorProfileMutation) OldIsActive(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsActive is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsActive requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsActive: %w", err)
+	}
+	return oldValue.IsActive, nil
+}
+
+// ResetIsActive resets all changes to the "is_active" field.
+func (m *CompetitorProfileMutation) ResetIsActive() {
+	m.is_active = nil
+}
+
+// SetLastAnalyzedAt sets the "last_analyzed_at" field.
+func (m *CompetitorProfileMutation) SetLastAnalyzedAt(t time.Time) {
+	m.last_analyzed_at = &t
+}
+
+// LastAnalyzedAt returns the value of the "last_analyzed_at" field in the mutation.
+func (m *CompetitorProfileMutation) LastAnalyzedAt() (r time.Time, exists bool) {
+	v := m.last_analyzed_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastAnalyzedAt returns the old "last_analyzed_at" field's value of the CompetitorProfile entity.
+// If the CompetitorProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorProfileMutation) OldLastAnalyzedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastAnalyzedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastAnalyzedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastAnalyzedAt: %w", err)
+	}
+	return oldValue.LastAnalyzedAt, nil
+}
+
+// ClearLastAnalyzedAt clears the value of the "last_analyzed_at" field.
+func (m *CompetitorProfileMutation) ClearLastAnalyzedAt() {
+	m.last_analyzed_at = nil
+	m.clearedFields[competitorprofile.FieldLastAnalyzedAt] = struct{}{}
+}
+
+// LastAnalyzedAtCleared returns if the "last_analyzed_at" field was cleared in this mutation.
+func (m *CompetitorProfileMutation) LastAnalyzedAtCleared() bool {
+	_, ok := m.clearedFields[competitorprofile.FieldLastAnalyzedAt]
+	return ok
+}
+
+// ResetLastAnalyzedAt resets all changes to the "last_analyzed_at" field.
+func (m *CompetitorProfileMutation) ResetLastAnalyzedAt() {
+	m.last_analyzed_at = nil
+	delete(m.clearedFields, competitorprofile.FieldLastAnalyzedAt)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *CompetitorProfileMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *CompetitorProfileMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the CompetitorProfile entity.
+// If the CompetitorProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorProfileMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *CompetitorProfileMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *CompetitorProfileMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *CompetitorProfileMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the CompetitorProfile entity.
+// If the CompetitorProfile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CompetitorProfileMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *CompetitorProfileMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (m *CompetitorProfileMutation) ClearUser() {
+	m.cleareduser = true
+	m.clearedFields[competitorprofile.FieldUserID] = struct{}{}
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *CompetitorProfileMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *CompetitorProfileMutation) UserIDs() (ids []int) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *CompetitorProfileMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
+// AddMetricIDs adds the "metrics" edge to the CompetitorMetric entity by ids.
+func (m *CompetitorProfileMutation) AddMetricIDs(ids ...int) {
+	if m.metrics == nil {
+		m.metrics = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.metrics[ids[i]] = struct{}{}
+	}
+}
+
+// ClearMetrics clears the "metrics" edge to the CompetitorMetric entity.
+func (m *CompetitorProfileMutation) ClearMetrics() {
+	m.clearedmetrics = true
+}
+
+// MetricsCleared reports if the "metrics" edge to the CompetitorMetric entity was cleared.
+func (m *CompetitorProfileMutation) MetricsCleared() bool {
+	return m.clearedmetrics
+}
+
+// RemoveMetricIDs removes the "metrics" edge to the CompetitorMetric entity by IDs.
+func (m *CompetitorProfileMutation) RemoveMetricIDs(ids ...int) {
+	if m.removedmetrics == nil {
+		m.removedmetrics = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.metrics, ids[i])
+		m.removedmetrics[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedMetrics returns the removed IDs of the "metrics" edge to the CompetitorMetric entity.
+func (m *CompetitorProfileMutation) RemovedMetricsIDs() (ids []int) {
+	for id := range m.removedmetrics {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// MetricsIDs returns the "metrics" edge IDs in the mutation.
+func (m *CompetitorProfileMutation) MetricsIDs() (ids []int) {
+	for id := range m.metrics {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetMetrics resets all changes to the "metrics" edge.
+func (m *CompetitorProfileMutation) ResetMetrics() {
+	m.metrics = nil
+	m.clearedmetrics = false
+	m.removedmetrics = nil
+}
+
+// Where appends a list predicates to the CompetitorProfileMutation builder.
+func (m *CompetitorProfileMutation) Where(ps ...predicate.CompetitorProfile) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CompetitorProfileMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CompetitorProfileMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.CompetitorProfile, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CompetitorProfileMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CompetitorProfileMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (CompetitorProfile).
+func (m *CompetitorProfileMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CompetitorProfileMutation) Fields() []string {
+	fields := make([]string, 0, 20)
+	if m.user != nil {
+		fields = append(fields, competitorprofile.FieldUserID)
+	}
+	if m.name != nil {
+		fields = append(fields, competitorprofile.FieldName)
+	}
+	if m.website != nil {
+		fields = append(fields, competitorprofile.FieldWebsite)
+	}
+	if m.industry != nil {
+		fields = append(fields, competitorprofile.FieldIndustry)
+	}
+	if m.country != nil {
+		fields = append(fields, competitorprofile.FieldCountry)
+	}
+	if m.description != nil {
+		fields = append(fields, competitorprofile.FieldDescription)
+	}
+	if m.market_position != nil {
+		fields = append(fields, competitorprofile.FieldMarketPosition)
+	}
+	if m.estimated_employees != nil {
+		fields = append(fields, competitorprofile.FieldEstimatedEmployees)
+	}
+	if m.estimated_revenue != nil {
+		fields = append(fields, competitorprofile.FieldEstimatedRevenue)
+	}
+	if m.strengths != nil {
+		fields = append(fields, competitorprofile.FieldStrengths)
+	}
+	if m.weaknesses != nil {
+		fields = append(fields, competitorprofile.FieldWeaknesses)
+	}
+	if m.products != nil {
+		fields = append(fields, competitorprofile.FieldProducts)
+	}
+	if m.pricing_tiers != nil {
+		fields = append(fields, competitorprofile.FieldPricingTiers)
+	}
+	if m.target_markets != nil {
+		fields = append(fields, competitorprofile.FieldTargetMarkets)
+	}
+	if m.linkedin_url != nil {
+		fields = append(fields, competitorprofile.FieldLinkedinURL)
+	}
+	if m.twitter_handle != nil {
+		fields = append(fields, competitorprofile.FieldTwitterHandle)
+	}
+	if m.is_active != nil {
+		fields = append(fields, competitorprofile.FieldIsActive)
+	}
+	if m.last_analyzed_at != nil {
+		fields = append(fields, competitorprofile.FieldLastAnalyzedAt)
+	}
+	if m.created_at != nil {
+		fields = append(fields, competitorprofile.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, competitorprofile.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CompetitorProfileMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case competitorprofile.FieldUserID:
+		return m.UserID()
+	case competitorprofile.FieldName:
+		return m.Name()
+	case competitorprofile.FieldWebsite:
+		return m.Website()
+	case competitorprofile.FieldIndustry:
+		return m.Industry()
+	case competitorprofile.FieldCountry:
+		return m.Country()
+	case competitorprofile.FieldDescription:
+		return m.Description()
+	case competitorprofile.FieldMarketPosition:
+		return m.MarketPosition()
+	case competitorprofile.FieldEstimatedEmployees:
+		return m.EstimatedEmployees()
+	case competitorprofile.FieldEstimatedRevenue:
+		return m.EstimatedRevenue()
+	case competitorprofile.FieldStrengths:
+		return m.Strengths()
+	case competitorprofile.FieldWeaknesses:
+		return m.Weaknesses()
+	case competitorprofile.FieldProducts:
+		return m.Products()
+	case competitorprofile.FieldPricingTiers:
+		return m.PricingTiers()
+	case competitorprofile.FieldTargetMarkets:
+		return m.TargetMarkets()
+	case competitorprofile.FieldLinkedinURL:
+		return m.LinkedinURL()
+	case competitorprofile.FieldTwitterHandle:
+		return m.TwitterHandle()
+	case competitorprofile.FieldIsActive:
+		return m.IsActive()
+	case competitorprofile.FieldLastAnalyzedAt:
+		return m.LastAnalyzedAt()
+	case competitorprofile.FieldCreatedAt:
+		return m.CreatedAt()
+	case competitorprofile.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CompetitorProfileMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case competitorprofile.FieldUserID:
+		return m.OldUserID(ctx)
+	case competitorprofile.FieldName:
+		return m.OldName(ctx)
+	case competitorprofile.FieldWebsite:
+		return m.OldWebsite(ctx)
+	case competitorprofile.FieldIndustry:
+		return m.OldIndustry(ctx)
+	case competitorprofile.FieldCountry:
+		return m.OldCountry(ctx)
+	case competitorprofile.FieldDescription:
+		return m.OldDescription(ctx)
+	case competitorprofile.FieldMarketPosition:
+		return m.OldMarketPosition(ctx)
+	case competitorprofile.FieldEstimatedEmployees:
+		return m.OldEstimatedEmployees(ctx)
+	case competitorprofile.FieldEstimatedRevenue:
+		return m.OldEstimatedRevenue(ctx)
+	case competitorprofile.FieldStrengths:
+		return m.OldStrengths(ctx)
+	case competitorprofile.FieldWeaknesses:
+		return m.OldWeaknesses(ctx)
+	case competitorprofile.FieldProducts:
+		return m.OldProducts(ctx)
+	case competitorprofile.FieldPricingTiers:
+		return m.OldPricingTiers(ctx)
+	case competitorprofile.FieldTargetMarkets:
+		return m.OldTargetMarkets(ctx)
+	case competitorprofile.FieldLinkedinURL:
+		return m.OldLinkedinURL(ctx)
+	case competitorprofile.FieldTwitterHandle:
+		return m.OldTwitterHandle(ctx)
+	case competitorprofile.FieldIsActive:
+		return m.OldIsActive(ctx)
+	case competitorprofile.FieldLastAnalyzedAt:
+		return m.OldLastAnalyzedAt(ctx)
+	case competitorprofile.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case competitorprofile.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown CompetitorProfile field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CompetitorProfileMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case competitorprofile.FieldUserID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case competitorprofile.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case competitorprofile.FieldWebsite:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWebsite(v)
+		return nil
+	case competitorprofile.FieldIndustry:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIndustry(v)
+		return nil
+	case competitorprofile.FieldCountry:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCountry(v)
+		return nil
+	case competitorprofile.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case competitorprofile.FieldMarketPosition:
+		v, ok := value.(competitorprofile.MarketPosition)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMarketPosition(v)
+		return nil
+	case competitorprofile.FieldEstimatedEmployees:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEstimatedEmployees(v)
+		return nil
+	case competitorprofile.FieldEstimatedRevenue:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEstimatedRevenue(v)
+		return nil
+	case competitorprofile.FieldStrengths:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStrengths(v)
+		return nil
+	case competitorprofile.FieldWeaknesses:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetWeaknesses(v)
+		return nil
+	case competitorprofile.FieldProducts:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProducts(v)
+		return nil
+	case competitorprofile.FieldPricingTiers:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPricingTiers(v)
+		return nil
+	case competitorprofile.FieldTargetMarkets:
+		v, ok := value.([]string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTargetMarkets(v)
+		return nil
+	case competitorprofile.FieldLinkedinURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLinkedinURL(v)
+		return nil
+	case competitorprofile.FieldTwitterHandle:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTwitterHandle(v)
+		return nil
+	case competitorprofile.FieldIsActive:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsActive(v)
+		return nil
+	case competitorprofile.FieldLastAnalyzedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastAnalyzedAt(v)
+		return nil
+	case competitorprofile.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case competitorprofile.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown CompetitorProfile field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CompetitorProfileMutation) AddedFields() []string {
+	var fields []string
+	if m.addestimated_employees != nil {
+		fields = append(fields, competitorprofile.FieldEstimatedEmployees)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CompetitorProfileMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case competitorprofile.FieldEstimatedEmployees:
+		return m.AddedEstimatedEmployees()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CompetitorProfileMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case competitorprofile.FieldEstimatedEmployees:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEstimatedEmployees(v)
+		return nil
+	}
+	return fmt.Errorf("unknown CompetitorProfile numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CompetitorProfileMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(competitorprofile.FieldWebsite) {
+		fields = append(fields, competitorprofile.FieldWebsite)
+	}
+	if m.FieldCleared(competitorprofile.FieldCountry) {
+		fields = append(fields, competitorprofile.FieldCountry)
+	}
+	if m.FieldCleared(competitorprofile.FieldDescription) {
+		fields = append(fields, competitorprofile.FieldDescription)
+	}
+	if m.FieldCleared(competitorprofile.FieldMarketPosition) {
+		fields = append(fields, competitorprofile.FieldMarketPosition)
+	}
+	if m.FieldCleared(competitorprofile.FieldEstimatedEmployees) {
+		fields = append(fields, competitorprofile.FieldEstimatedEmployees)
+	}
+	if m.FieldCleared(competitorprofile.FieldEstimatedRevenue) {
+		fields = append(fields, competitorprofile.FieldEstimatedRevenue)
+	}
+	if m.FieldCleared(competitorprofile.FieldStrengths) {
+		fields = append(fields, competitorprofile.FieldStrengths)
+	}
+	if m.FieldCleared(competitorprofile.FieldWeaknesses) {
+		fields = append(fields, competitorprofile.FieldWeaknesses)
+	}
+	if m.FieldCleared(competitorprofile.FieldProducts) {
+		fields = append(fields, competitorprofile.FieldProducts)
+	}
+	if m.FieldCleared(competitorprofile.FieldPricingTiers) {
+		fields = append(fields, competitorprofile.FieldPricingTiers)
+	}
+	if m.FieldCleared(competitorprofile.FieldTargetMarkets) {
+		fields = append(fields, competitorprofile.FieldTargetMarkets)
+	}
+	if m.FieldCleared(competitorprofile.FieldLinkedinURL) {
+		fields = append(fields, competitorprofile.FieldLinkedinURL)
+	}
+	if m.FieldCleared(competitorprofile.FieldTwitterHandle) {
+		fields = append(fields, competitorprofile.FieldTwitterHandle)
+	}
+	if m.FieldCleared(competitorprofile.FieldLastAnalyzedAt) {
+		fields = append(fields, competitorprofile.FieldLastAnalyzedAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CompetitorProfileMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CompetitorProfileMutation) ClearField(name string) error {
+	switch name {
+	case competitorprofile.FieldWebsite:
+		m.ClearWebsite()
+		return nil
+	case competitorprofile.FieldCountry:
+		m.ClearCountry()
+		return nil
+	case competitorprofile.FieldDescription:
+		m.ClearDescription()
+		return nil
+	case competitorprofile.FieldMarketPosition:
+		m.ClearMarketPosition()
+		return nil
+	case competitorprofile.FieldEstimatedEmployees:
+		m.ClearEstimatedEmployees()
+		return nil
+	case competitorprofile.FieldEstimatedRevenue:
+		m.ClearEstimatedRevenue()
+		return nil
+	case competitorprofile.FieldStrengths:
+		m.ClearStrengths()
+		return nil
+	case competitorprofile.FieldWeaknesses:
+		m.ClearWeaknesses()
+		return nil
+	case competitorprofile.FieldProducts:
+		m.ClearProducts()
+		return nil
+	case competitorprofile.FieldPricingTiers:
+		m.ClearPricingTiers()
+		return nil
+	case competitorprofile.FieldTargetMarkets:
+		m.ClearTargetMarkets()
+		return nil
+	case competitorprofile.FieldLinkedinURL:
+		m.ClearLinkedinURL()
+		return nil
+	case competitorprofile.FieldTwitterHandle:
+		m.ClearTwitterHandle()
+		return nil
+	case competitorprofile.FieldLastAnalyzedAt:
+		m.ClearLastAnalyzedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown CompetitorProfile nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CompetitorProfileMutation) ResetField(name string) error {
+	switch name {
+	case competitorprofile.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case competitorprofile.FieldName:
+		m.ResetName()
+		return nil
+	case competitorprofile.FieldWebsite:
+		m.ResetWebsite()
+		return nil
+	case competitorprofile.FieldIndustry:
+		m.ResetIndustry()
+		return nil
+	case competitorprofile.FieldCountry:
+		m.ResetCountry()
+		return nil
+	case competitorprofile.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case competitorprofile.FieldMarketPosition:
+		m.ResetMarketPosition()
+		return nil
+	case competitorprofile.FieldEstimatedEmployees:
+		m.ResetEstimatedEmployees()
+		return nil
+	case competitorprofile.FieldEstimatedRevenue:
+		m.ResetEstimatedRevenue()
+		return nil
+	case competitorprofile.FieldStrengths:
+		m.ResetStrengths()
+		return nil
+	case competitorprofile.FieldWeaknesses:
+		m.ResetWeaknesses()
+		return nil
+	case competitorprofile.FieldProducts:
+		m.ResetProducts()
+		return nil
+	case competitorprofile.FieldPricingTiers:
+		m.ResetPricingTiers()
+		return nil
+	case competitorprofile.FieldTargetMarkets:
+		m.ResetTargetMarkets()
+		return nil
+	case competitorprofile.FieldLinkedinURL:
+		m.ResetLinkedinURL()
+		return nil
+	case competitorprofile.FieldTwitterHandle:
+		m.ResetTwitterHandle()
+		return nil
+	case competitorprofile.FieldIsActive:
+		m.ResetIsActive()
+		return nil
+	case competitorprofile.FieldLastAnalyzedAt:
+		m.ResetLastAnalyzedAt()
+		return nil
+	case competitorprofile.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case competitorprofile.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown CompetitorProfile field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CompetitorProfileMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.user != nil {
+		edges = append(edges, competitorprofile.EdgeUser)
+	}
+	if m.metrics != nil {
+		edges = append(edges, competitorprofile.EdgeMetrics)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CompetitorProfileMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case competitorprofile.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	case competitorprofile.EdgeMetrics:
+		ids := make([]ent.Value, 0, len(m.metrics))
+		for id := range m.metrics {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CompetitorProfileMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.removedmetrics != nil {
+		edges = append(edges, competitorprofile.EdgeMetrics)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CompetitorProfileMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case competitorprofile.EdgeMetrics:
+		ids := make([]ent.Value, 0, len(m.removedmetrics))
+		for id := range m.removedmetrics {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CompetitorProfileMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.cleareduser {
+		edges = append(edges, competitorprofile.EdgeUser)
+	}
+	if m.clearedmetrics {
+		edges = append(edges, competitorprofile.EdgeMetrics)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CompetitorProfileMutation) EdgeCleared(name string) bool {
+	switch name {
+	case competitorprofile.EdgeUser:
+		return m.cleareduser
+	case competitorprofile.EdgeMetrics:
+		return m.clearedmetrics
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CompetitorProfileMutation) ClearEdge(name string) error {
+	switch name {
+	case competitorprofile.EdgeUser:
+		m.ClearUser()
+		return nil
+	}
+	return fmt.Errorf("unknown CompetitorProfile unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CompetitorProfileMutation) ResetEdge(name string) error {
+	switch name {
+	case competitorprofile.EdgeUser:
+		m.ResetUser()
+		return nil
+	case competitorprofile.EdgeMetrics:
+		m.ResetMetrics()
+		return nil
+	}
+	return fmt.Errorf("unknown CompetitorProfile edge %s", name)
 }
 
 // EmailSequenceMutation represents an operation that mutates the EmailSequence nodes in the graph.
@@ -31772,6 +34623,9 @@ type UserMutation struct {
 	call_logs                              map[int]struct{}
 	removedcall_logs                       map[int]struct{}
 	clearedcall_logs                       bool
+	competitor_profiles                    map[int]struct{}
+	removedcompetitor_profiles             map[int]struct{}
+	clearedcompetitor_profiles             bool
 	done                                   bool
 	oldValue                               func(context.Context) (*User, error)
 	predicates                             []predicate.User
@@ -34264,6 +37118,60 @@ func (m *UserMutation) ResetCallLogs() {
 	m.removedcall_logs = nil
 }
 
+// AddCompetitorProfileIDs adds the "competitor_profiles" edge to the CompetitorProfile entity by ids.
+func (m *UserMutation) AddCompetitorProfileIDs(ids ...int) {
+	if m.competitor_profiles == nil {
+		m.competitor_profiles = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.competitor_profiles[ids[i]] = struct{}{}
+	}
+}
+
+// ClearCompetitorProfiles clears the "competitor_profiles" edge to the CompetitorProfile entity.
+func (m *UserMutation) ClearCompetitorProfiles() {
+	m.clearedcompetitor_profiles = true
+}
+
+// CompetitorProfilesCleared reports if the "competitor_profiles" edge to the CompetitorProfile entity was cleared.
+func (m *UserMutation) CompetitorProfilesCleared() bool {
+	return m.clearedcompetitor_profiles
+}
+
+// RemoveCompetitorProfileIDs removes the "competitor_profiles" edge to the CompetitorProfile entity by IDs.
+func (m *UserMutation) RemoveCompetitorProfileIDs(ids ...int) {
+	if m.removedcompetitor_profiles == nil {
+		m.removedcompetitor_profiles = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.competitor_profiles, ids[i])
+		m.removedcompetitor_profiles[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedCompetitorProfiles returns the removed IDs of the "competitor_profiles" edge to the CompetitorProfile entity.
+func (m *UserMutation) RemovedCompetitorProfilesIDs() (ids []int) {
+	for id := range m.removedcompetitor_profiles {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// CompetitorProfilesIDs returns the "competitor_profiles" edge IDs in the mutation.
+func (m *UserMutation) CompetitorProfilesIDs() (ids []int) {
+	for id := range m.competitor_profiles {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetCompetitorProfiles resets all changes to the "competitor_profiles" edge.
+func (m *UserMutation) ResetCompetitorProfiles() {
+	m.competitor_profiles = nil
+	m.clearedcompetitor_profiles = false
+	m.removedcompetitor_profiles = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -34890,7 +37798,7 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 25)
+	edges := make([]string, 0, 26)
 	if m.subscriptions != nil {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -34965,6 +37873,9 @@ func (m *UserMutation) AddedEdges() []string {
 	}
 	if m.call_logs != nil {
 		edges = append(edges, user.EdgeCallLogs)
+	}
+	if m.competitor_profiles != nil {
+		edges = append(edges, user.EdgeCompetitorProfiles)
 	}
 	return edges
 }
@@ -35121,13 +38032,19 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeCompetitorProfiles:
+		ids := make([]ent.Value, 0, len(m.competitor_profiles))
+		for id := range m.competitor_profiles {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 25)
+	edges := make([]string, 0, 26)
 	if m.removedsubscriptions != nil {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -35199,6 +38116,9 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedcall_logs != nil {
 		edges = append(edges, user.EdgeCallLogs)
+	}
+	if m.removedcompetitor_profiles != nil {
+		edges = append(edges, user.EdgeCompetitorProfiles)
 	}
 	return edges
 }
@@ -35351,13 +38271,19 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeCompetitorProfiles:
+		ids := make([]ent.Value, 0, len(m.removedcompetitor_profiles))
+		for id := range m.removedcompetitor_profiles {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 25)
+	edges := make([]string, 0, 26)
 	if m.clearedsubscriptions {
 		edges = append(edges, user.EdgeSubscriptions)
 	}
@@ -35433,6 +38359,9 @@ func (m *UserMutation) ClearedEdges() []string {
 	if m.clearedcall_logs {
 		edges = append(edges, user.EdgeCallLogs)
 	}
+	if m.clearedcompetitor_profiles {
+		edges = append(edges, user.EdgeCompetitorProfiles)
+	}
 	return edges
 }
 
@@ -35490,6 +38419,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedsms_campaigns
 	case user.EdgeCallLogs:
 		return m.clearedcall_logs
+	case user.EdgeCompetitorProfiles:
+		return m.clearedcompetitor_profiles
 	}
 	return false
 }
@@ -35583,6 +38514,9 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgeCallLogs:
 		m.ResetCallLogs()
+		return nil
+	case user.EdgeCompetitorProfiles:
+		m.ResetCompetitorProfiles()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

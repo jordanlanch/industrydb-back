@@ -11,6 +11,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/calllog"
+	"github.com/jordanlanch/industrydb/ent/competitormetric"
+	"github.com/jordanlanch/industrydb/ent/competitorprofile"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/emailsequencesend"
@@ -226,6 +228,110 @@ func init() {
 	calllog.DefaultUpdatedAt = calllogDescUpdatedAt.Default.(func() time.Time)
 	// calllog.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	calllog.UpdateDefaultUpdatedAt = calllogDescUpdatedAt.UpdateDefault.(func() time.Time)
+	competitormetricFields := schema.CompetitorMetric{}.Fields()
+	_ = competitormetricFields
+	// competitormetricDescMetricName is the schema descriptor for metric_name field.
+	competitormetricDescMetricName := competitormetricFields[2].Descriptor()
+	// competitormetric.MetricNameValidator is a validator for the "metric_name" field. It is called by the builders before save.
+	competitormetric.MetricNameValidator = func() func(string) error {
+		validators := competitormetricDescMetricName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(metric_name string) error {
+			for _, fn := range fns {
+				if err := fn(metric_name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// competitormetricDescMetricValue is the schema descriptor for metric_value field.
+	competitormetricDescMetricValue := competitormetricFields[3].Descriptor()
+	// competitormetric.MetricValueValidator is a validator for the "metric_value" field. It is called by the builders before save.
+	competitormetric.MetricValueValidator = competitormetricDescMetricValue.Validators[0].(func(string) error)
+	// competitormetricDescUnit is the schema descriptor for unit field.
+	competitormetricDescUnit := competitormetricFields[5].Descriptor()
+	// competitormetric.UnitValidator is a validator for the "unit" field. It is called by the builders before save.
+	competitormetric.UnitValidator = competitormetricDescUnit.Validators[0].(func(string) error)
+	// competitormetricDescRecordedAt is the schema descriptor for recorded_at field.
+	competitormetricDescRecordedAt := competitormetricFields[8].Descriptor()
+	// competitormetric.DefaultRecordedAt holds the default value on creation for the recorded_at field.
+	competitormetric.DefaultRecordedAt = competitormetricDescRecordedAt.Default.(func() time.Time)
+	// competitormetricDescCreatedAt is the schema descriptor for created_at field.
+	competitormetricDescCreatedAt := competitormetricFields[9].Descriptor()
+	// competitormetric.DefaultCreatedAt holds the default value on creation for the created_at field.
+	competitormetric.DefaultCreatedAt = competitormetricDescCreatedAt.Default.(func() time.Time)
+	competitorprofileFields := schema.CompetitorProfile{}.Fields()
+	_ = competitorprofileFields
+	// competitorprofileDescName is the schema descriptor for name field.
+	competitorprofileDescName := competitorprofileFields[1].Descriptor()
+	// competitorprofile.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	competitorprofile.NameValidator = func() func(string) error {
+		validators := competitorprofileDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// competitorprofileDescIndustry is the schema descriptor for industry field.
+	competitorprofileDescIndustry := competitorprofileFields[3].Descriptor()
+	// competitorprofile.IndustryValidator is a validator for the "industry" field. It is called by the builders before save.
+	competitorprofile.IndustryValidator = func() func(string) error {
+		validators := competitorprofileDescIndustry.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(industry string) error {
+			for _, fn := range fns {
+				if err := fn(industry); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// competitorprofileDescCountry is the schema descriptor for country field.
+	competitorprofileDescCountry := competitorprofileFields[4].Descriptor()
+	// competitorprofile.CountryValidator is a validator for the "country" field. It is called by the builders before save.
+	competitorprofile.CountryValidator = competitorprofileDescCountry.Validators[0].(func(string) error)
+	// competitorprofileDescEstimatedEmployees is the schema descriptor for estimated_employees field.
+	competitorprofileDescEstimatedEmployees := competitorprofileFields[7].Descriptor()
+	// competitorprofile.EstimatedEmployeesValidator is a validator for the "estimated_employees" field. It is called by the builders before save.
+	competitorprofile.EstimatedEmployeesValidator = competitorprofileDescEstimatedEmployees.Validators[0].(func(int) error)
+	// competitorprofileDescEstimatedRevenue is the schema descriptor for estimated_revenue field.
+	competitorprofileDescEstimatedRevenue := competitorprofileFields[8].Descriptor()
+	// competitorprofile.EstimatedRevenueValidator is a validator for the "estimated_revenue" field. It is called by the builders before save.
+	competitorprofile.EstimatedRevenueValidator = competitorprofileDescEstimatedRevenue.Validators[0].(func(string) error)
+	// competitorprofileDescTwitterHandle is the schema descriptor for twitter_handle field.
+	competitorprofileDescTwitterHandle := competitorprofileFields[15].Descriptor()
+	// competitorprofile.TwitterHandleValidator is a validator for the "twitter_handle" field. It is called by the builders before save.
+	competitorprofile.TwitterHandleValidator = competitorprofileDescTwitterHandle.Validators[0].(func(string) error)
+	// competitorprofileDescIsActive is the schema descriptor for is_active field.
+	competitorprofileDescIsActive := competitorprofileFields[16].Descriptor()
+	// competitorprofile.DefaultIsActive holds the default value on creation for the is_active field.
+	competitorprofile.DefaultIsActive = competitorprofileDescIsActive.Default.(bool)
+	// competitorprofileDescCreatedAt is the schema descriptor for created_at field.
+	competitorprofileDescCreatedAt := competitorprofileFields[18].Descriptor()
+	// competitorprofile.DefaultCreatedAt holds the default value on creation for the created_at field.
+	competitorprofile.DefaultCreatedAt = competitorprofileDescCreatedAt.Default.(func() time.Time)
+	// competitorprofileDescUpdatedAt is the schema descriptor for updated_at field.
+	competitorprofileDescUpdatedAt := competitorprofileFields[19].Descriptor()
+	// competitorprofile.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	competitorprofile.DefaultUpdatedAt = competitorprofileDescUpdatedAt.Default.(func() time.Time)
+	// competitorprofile.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	competitorprofile.UpdateDefaultUpdatedAt = competitorprofileDescUpdatedAt.UpdateDefault.(func() time.Time)
 	emailsequenceFields := schema.EmailSequence{}.Fields()
 	_ = emailsequenceFields
 	// emailsequenceDescName is the schema descriptor for name field.

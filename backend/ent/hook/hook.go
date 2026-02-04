@@ -81,6 +81,30 @@ func (f CallLogFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, err
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CallLogMutation", m)
 }
 
+// The CompetitorMetricFunc type is an adapter to allow the use of ordinary
+// function as CompetitorMetric mutator.
+type CompetitorMetricFunc func(context.Context, *ent.CompetitorMetricMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CompetitorMetricFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CompetitorMetricMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CompetitorMetricMutation", m)
+}
+
+// The CompetitorProfileFunc type is an adapter to allow the use of ordinary
+// function as CompetitorProfile mutator.
+type CompetitorProfileFunc func(context.Context, *ent.CompetitorProfileMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CompetitorProfileFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CompetitorProfileMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CompetitorProfileMutation", m)
+}
+
 // The EmailSequenceFunc type is an adapter to allow the use of ordinary
 // function as EmailSequence mutator.
 type EmailSequenceFunc func(context.Context, *ent.EmailSequenceMutation) (ent.Value, error)

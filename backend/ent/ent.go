@@ -18,6 +18,8 @@ import (
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/calllog"
+	"github.com/jordanlanch/industrydb/ent/competitormetric"
+	"github.com/jordanlanch/industrydb/ent/competitorprofile"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/emailsequencesend"
@@ -108,6 +110,8 @@ func checkColumn(t, c string) error {
 			affiliateconversion.Table:     affiliateconversion.ValidColumn,
 			auditlog.Table:                auditlog.ValidColumn,
 			calllog.Table:                 calllog.ValidColumn,
+			competitormetric.Table:        competitormetric.ValidColumn,
+			competitorprofile.Table:       competitorprofile.ValidColumn,
 			emailsequence.Table:           emailsequence.ValidColumn,
 			emailsequenceenrollment.Table: emailsequenceenrollment.ValidColumn,
 			emailsequencesend.Table:       emailsequencesend.ValidColumn,

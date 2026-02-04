@@ -16,6 +16,7 @@ import (
 	"github.com/jordanlanch/industrydb/ent/apikey"
 	"github.com/jordanlanch/industrydb/ent/auditlog"
 	"github.com/jordanlanch/industrydb/ent/calllog"
+	"github.com/jordanlanch/industrydb/ent/competitorprofile"
 	"github.com/jordanlanch/industrydb/ent/emailsequence"
 	"github.com/jordanlanch/industrydb/ent/emailsequenceenrollment"
 	"github.com/jordanlanch/industrydb/ent/experimentassignment"
@@ -824,6 +825,21 @@ func (_u *UserUpdate) AddCallLogs(v ...*CallLog) *UserUpdate {
 	return _u.AddCallLogIDs(ids...)
 }
 
+// AddCompetitorProfileIDs adds the "competitor_profiles" edge to the CompetitorProfile entity by IDs.
+func (_u *UserUpdate) AddCompetitorProfileIDs(ids ...int) *UserUpdate {
+	_u.mutation.AddCompetitorProfileIDs(ids...)
+	return _u
+}
+
+// AddCompetitorProfiles adds the "competitor_profiles" edges to the CompetitorProfile entity.
+func (_u *UserUpdate) AddCompetitorProfiles(v ...*CompetitorProfile) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddCompetitorProfileIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -1337,6 +1353,27 @@ func (_u *UserUpdate) RemoveCallLogs(v ...*CallLog) *UserUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveCallLogIDs(ids...)
+}
+
+// ClearCompetitorProfiles clears all "competitor_profiles" edges to the CompetitorProfile entity.
+func (_u *UserUpdate) ClearCompetitorProfiles() *UserUpdate {
+	_u.mutation.ClearCompetitorProfiles()
+	return _u
+}
+
+// RemoveCompetitorProfileIDs removes the "competitor_profiles" edge to CompetitorProfile entities by IDs.
+func (_u *UserUpdate) RemoveCompetitorProfileIDs(ids ...int) *UserUpdate {
+	_u.mutation.RemoveCompetitorProfileIDs(ids...)
+	return _u
+}
+
+// RemoveCompetitorProfiles removes "competitor_profiles" edges to CompetitorProfile entities.
+func (_u *UserUpdate) RemoveCompetitorProfiles(v ...*CompetitorProfile) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveCompetitorProfileIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -2649,6 +2686,51 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.CompetitorProfilesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CompetitorProfilesTable,
+			Columns: []string{user.CompetitorProfilesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(competitorprofile.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedCompetitorProfilesIDs(); len(nodes) > 0 && !_u.mutation.CompetitorProfilesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CompetitorProfilesTable,
+			Columns: []string{user.CompetitorProfilesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(competitorprofile.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CompetitorProfilesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CompetitorProfilesTable,
+			Columns: []string{user.CompetitorProfilesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(competitorprofile.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -3443,6 +3525,21 @@ func (_u *UserUpdateOne) AddCallLogs(v ...*CallLog) *UserUpdateOne {
 	return _u.AddCallLogIDs(ids...)
 }
 
+// AddCompetitorProfileIDs adds the "competitor_profiles" edge to the CompetitorProfile entity by IDs.
+func (_u *UserUpdateOne) AddCompetitorProfileIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.AddCompetitorProfileIDs(ids...)
+	return _u
+}
+
+// AddCompetitorProfiles adds the "competitor_profiles" edges to the CompetitorProfile entity.
+func (_u *UserUpdateOne) AddCompetitorProfiles(v ...*CompetitorProfile) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddCompetitorProfileIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -3956,6 +4053,27 @@ func (_u *UserUpdateOne) RemoveCallLogs(v ...*CallLog) *UserUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveCallLogIDs(ids...)
+}
+
+// ClearCompetitorProfiles clears all "competitor_profiles" edges to the CompetitorProfile entity.
+func (_u *UserUpdateOne) ClearCompetitorProfiles() *UserUpdateOne {
+	_u.mutation.ClearCompetitorProfiles()
+	return _u
+}
+
+// RemoveCompetitorProfileIDs removes the "competitor_profiles" edge to CompetitorProfile entities by IDs.
+func (_u *UserUpdateOne) RemoveCompetitorProfileIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.RemoveCompetitorProfileIDs(ids...)
+	return _u
+}
+
+// RemoveCompetitorProfiles removes "competitor_profiles" edges to CompetitorProfile entities.
+func (_u *UserUpdateOne) RemoveCompetitorProfiles(v ...*CompetitorProfile) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveCompetitorProfileIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -5291,6 +5409,51 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(calllog.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.CompetitorProfilesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CompetitorProfilesTable,
+			Columns: []string{user.CompetitorProfilesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(competitorprofile.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedCompetitorProfilesIDs(); len(nodes) > 0 && !_u.mutation.CompetitorProfilesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CompetitorProfilesTable,
+			Columns: []string{user.CompetitorProfilesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(competitorprofile.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CompetitorProfilesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CompetitorProfilesTable,
+			Columns: []string{user.CompetitorProfilesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(competitorprofile.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

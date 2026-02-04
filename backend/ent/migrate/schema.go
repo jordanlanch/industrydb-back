@@ -361,6 +361,126 @@ var (
 			},
 		},
 	}
+	// CompetitorMetricsColumns holds the columns for the "competitor_metrics" table.
+	CompetitorMetricsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "metric_type", Type: field.TypeEnum, Enums: []string{"pricing", "features", "market_share", "traffic", "employees", "funding", "reviews", "social_media", "custom"}},
+		{Name: "metric_name", Type: field.TypeString, Size: 100},
+		{Name: "metric_value", Type: field.TypeString, Size: 2147483647},
+		{Name: "numeric_value", Type: field.TypeFloat64, Nullable: true},
+		{Name: "unit", Type: field.TypeString, Nullable: true, Size: 50},
+		{Name: "notes", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "source", Type: field.TypeString, Nullable: true},
+		{Name: "recorded_at", Type: field.TypeTime},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "competitor_id", Type: field.TypeInt},
+	}
+	// CompetitorMetricsTable holds the schema information for the "competitor_metrics" table.
+	CompetitorMetricsTable = &schema.Table{
+		Name:       "competitor_metrics",
+		Columns:    CompetitorMetricsColumns,
+		PrimaryKey: []*schema.Column{CompetitorMetricsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "competitor_metrics_competitor_profiles_metrics",
+				Columns:    []*schema.Column{CompetitorMetricsColumns[10]},
+				RefColumns: []*schema.Column{CompetitorProfilesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "competitormetric_competitor_id",
+				Unique:  false,
+				Columns: []*schema.Column{CompetitorMetricsColumns[10]},
+			},
+			{
+				Name:    "competitormetric_metric_type",
+				Unique:  false,
+				Columns: []*schema.Column{CompetitorMetricsColumns[1]},
+			},
+			{
+				Name:    "competitormetric_metric_name",
+				Unique:  false,
+				Columns: []*schema.Column{CompetitorMetricsColumns[2]},
+			},
+			{
+				Name:    "competitormetric_recorded_at",
+				Unique:  false,
+				Columns: []*schema.Column{CompetitorMetricsColumns[8]},
+			},
+			{
+				Name:    "competitormetric_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{CompetitorMetricsColumns[9]},
+			},
+		},
+	}
+	// CompetitorProfilesColumns holds the columns for the "competitor_profiles" table.
+	CompetitorProfilesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString, Size: 200},
+		{Name: "website", Type: field.TypeString, Nullable: true},
+		{Name: "industry", Type: field.TypeString, Size: 50},
+		{Name: "country", Type: field.TypeString, Nullable: true, Size: 2},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "market_position", Type: field.TypeEnum, Nullable: true, Enums: []string{"leader", "challenger", "follower", "nicher"}},
+		{Name: "estimated_employees", Type: field.TypeInt, Nullable: true},
+		{Name: "estimated_revenue", Type: field.TypeString, Nullable: true, Size: 50},
+		{Name: "strengths", Type: field.TypeJSON, Nullable: true},
+		{Name: "weaknesses", Type: field.TypeJSON, Nullable: true},
+		{Name: "products", Type: field.TypeJSON, Nullable: true},
+		{Name: "pricing_tiers", Type: field.TypeJSON, Nullable: true},
+		{Name: "target_markets", Type: field.TypeJSON, Nullable: true},
+		{Name: "linkedin_url", Type: field.TypeString, Nullable: true},
+		{Name: "twitter_handle", Type: field.TypeString, Nullable: true, Size: 100},
+		{Name: "is_active", Type: field.TypeBool, Default: true},
+		{Name: "last_analyzed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "user_id", Type: field.TypeInt},
+	}
+	// CompetitorProfilesTable holds the schema information for the "competitor_profiles" table.
+	CompetitorProfilesTable = &schema.Table{
+		Name:       "competitor_profiles",
+		Columns:    CompetitorProfilesColumns,
+		PrimaryKey: []*schema.Column{CompetitorProfilesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "competitor_profiles_users_competitor_profiles",
+				Columns:    []*schema.Column{CompetitorProfilesColumns[20]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "competitorprofile_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{CompetitorProfilesColumns[20]},
+			},
+			{
+				Name:    "competitorprofile_industry",
+				Unique:  false,
+				Columns: []*schema.Column{CompetitorProfilesColumns[3]},
+			},
+			{
+				Name:    "competitorprofile_country",
+				Unique:  false,
+				Columns: []*schema.Column{CompetitorProfilesColumns[4]},
+			},
+			{
+				Name:    "competitorprofile_is_active",
+				Unique:  false,
+				Columns: []*schema.Column{CompetitorProfilesColumns[16]},
+			},
+			{
+				Name:    "competitorprofile_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{CompetitorProfilesColumns[18]},
+			},
+		},
+	}
 	// EmailSequencesColumns holds the columns for the "email_sequences" table.
 	EmailSequencesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -1685,6 +1805,8 @@ var (
 		AffiliateConversionsTable,
 		AuditLogsTable,
 		CallLogsTable,
+		CompetitorMetricsTable,
+		CompetitorProfilesTable,
 		EmailSequencesTable,
 		EmailSequenceEnrollmentsTable,
 		EmailSequenceSendsTable,
@@ -1721,6 +1843,8 @@ func init() {
 	AuditLogsTable.ForeignKeys[0].RefTable = UsersTable
 	CallLogsTable.ForeignKeys[0].RefTable = LeadsTable
 	CallLogsTable.ForeignKeys[1].RefTable = UsersTable
+	CompetitorMetricsTable.ForeignKeys[0].RefTable = CompetitorProfilesTable
+	CompetitorProfilesTable.ForeignKeys[0].RefTable = UsersTable
 	EmailSequencesTable.ForeignKeys[0].RefTable = UsersTable
 	EmailSequenceEnrollmentsTable.ForeignKeys[0].RefTable = EmailSequencesTable
 	EmailSequenceEnrollmentsTable.ForeignKeys[1].RefTable = LeadsTable

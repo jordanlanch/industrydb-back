@@ -24,6 +24,10 @@ type Tx struct {
 	AuditLog *AuditLogClient
 	// CallLog is the client for interacting with the CallLog builders.
 	CallLog *CallLogClient
+	// CompetitorMetric is the client for interacting with the CompetitorMetric builders.
+	CompetitorMetric *CompetitorMetricClient
+	// CompetitorProfile is the client for interacting with the CompetitorProfile builders.
+	CompetitorProfile *CompetitorProfileClient
 	// EmailSequence is the client for interacting with the EmailSequence builders.
 	EmailSequence *EmailSequenceClient
 	// EmailSequenceEnrollment is the client for interacting with the EmailSequenceEnrollment builders.
@@ -209,6 +213,8 @@ func (tx *Tx) init() {
 	tx.AffiliateConversion = NewAffiliateConversionClient(tx.config)
 	tx.AuditLog = NewAuditLogClient(tx.config)
 	tx.CallLog = NewCallLogClient(tx.config)
+	tx.CompetitorMetric = NewCompetitorMetricClient(tx.config)
+	tx.CompetitorProfile = NewCompetitorProfileClient(tx.config)
 	tx.EmailSequence = NewEmailSequenceClient(tx.config)
 	tx.EmailSequenceEnrollment = NewEmailSequenceEnrollmentClient(tx.config)
 	tx.EmailSequenceSend = NewEmailSequenceSendClient(tx.config)
