@@ -167,28 +167,7 @@ func main() {
 	e.Use(prometheusMetrics.Middleware())
 
 	// CORS with restricted origins
-	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{
-			"http://localhost:5678",      // Development (root docker-compose)
-			"http://localhost:5566",      // Development (modular frontend docker-compose)
-			"https://industrydb.io",      // Production
-			"https://www.industrydb.io",  // Production WWW
-		},
-		AllowMethods: []string{
-			http.MethodGet,
-			http.MethodPost,
-			http.MethodPut,
-			http.MethodPatch,
-			http.MethodDelete,
-		},
-		AllowCredentials: true,
-		AllowHeaders: []string{
-			"Origin",
-			"Content-Type",
-			"Accept",
-			"Authorization",
-		},
-	}))
+	e.Use(middleware.CORSWithConfig(custommiddleware.CORSConfig()))
 
 	e.Use(middleware.Gzip())
 	e.Use(middleware.Secure())
