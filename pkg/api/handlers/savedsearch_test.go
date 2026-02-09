@@ -16,6 +16,7 @@ import (
 
 	"github.com/jordanlanch/industrydb/ent"
 	"github.com/jordanlanch/industrydb/ent/enttest"
+	"github.com/jordanlanch/industrydb/ent/user"
 	"github.com/jordanlanch/industrydb/pkg/savedsearch"
 )
 
@@ -36,7 +37,7 @@ func createTestUserForHandlers(t *testing.T, client *ent.Client, email string) *
 		SetEmail(email).
 		SetPasswordHash("hashed_password").
 		SetName("Test User").
-		SetSubscriptionTier("free").
+		SetSubscriptionTier(user.SubscriptionTierFree).
 		Save(ctx)
 	require.NoError(t, err)
 	return user

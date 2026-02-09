@@ -11,6 +11,7 @@ import (
 
 	"github.com/jordanlanch/industrydb/ent"
 	"github.com/jordanlanch/industrydb/ent/enttest"
+	"github.com/jordanlanch/industrydb/ent/user"
 	"github.com/jordanlanch/industrydb/pkg/audit"
 	"github.com/jordanlanch/industrydb/pkg/auth"
 	"github.com/jordanlanch/industrydb/pkg/leads"
@@ -47,7 +48,7 @@ func createTestUser(t *testing.T, client *ent.Client) *ent.User {
 		SetEmail("test@example.com").
 		SetPasswordHash("$2a$10$test_hash").
 		SetName("Test User").
-		SetSubscriptionTier("free").
+		SetSubscriptionTier(user.SubscriptionTierFree).
 		SetUsageCount(10).
 		SetUsageLimit(50).
 		SetEmailVerified(true).
@@ -242,7 +243,7 @@ func TestDeleteAccount_Success(t *testing.T) {
 		SetEmail("delete@example.com").
 		SetPasswordHash(passwordHash).
 		SetName("Delete User").
-		SetSubscriptionTier("free").
+		SetSubscriptionTier(user.SubscriptionTierFree).
 		SetUsageCount(0).
 		SetUsageLimit(50).
 		SetEmailVerified(true).
@@ -308,7 +309,7 @@ func TestDeleteAccount_InvalidPassword(t *testing.T) {
 		SetEmail("delete@example.com").
 		SetPasswordHash(passwordHash).
 		SetName("Delete User").
-		SetSubscriptionTier("free").
+		SetSubscriptionTier(user.SubscriptionTierFree).
 		SetUsageCount(0).
 		SetUsageLimit(50).
 		SetEmailVerified(true).
