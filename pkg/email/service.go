@@ -175,6 +175,20 @@ The IndustryDB Team
 	return nil
 }
 
+// SendRawEmail sends an email with custom subject and body content.
+// Uses SendGrid in production, logs to console in development.
+func (s *Service) SendRawEmail(toEmail, toName, subject, htmlBody, plainTextBody string) error {
+	if s.useSendGrid {
+		return s.sendViaSendGrid(toEmail, toName, subject, htmlBody, plainTextBody)
+	}
+
+	log.Printf("📧 [EMAIL] %s", subject)
+	log.Printf("   To: %s <%s>", toName, toEmail)
+	log.Printf("   From: %s <%s>", s.fromName, s.fromEmail)
+	log.Printf("   ⚠️  Email NOT sent (development mode)")
+	return nil
+}
+
 // sendViaSendGrid sends email using SendGrid API
 func (s *Service) sendViaSendGrid(toEmail, toName, subject, htmlBody, plainTextBody string) error {
 	from := mail.NewEmail(s.fromName, s.fromEmail)

@@ -21,11 +21,29 @@ import (
 	"github.com/stripe/stripe-go/v76/webhook"
 )
 
+// EmailSender abstracts email sending for billing notifications.
+type EmailSender interface {
+	SendEmail(toEmail, toName, subject, htmlBody, plainTextBody string) error
+}
+
+// AuditLogger abstracts audit logging for billing events.
+type AuditLogger interface {
+	LogPaymentFailed(userID int, subscriptionID string, metadata map[string]interface{}) error
+}
+
+// OrgMembershipChecker abstracts organization membership lookups.
+type OrgMembershipChecker interface {
+	CheckMembership(ctx context.Context, orgID int, userID int) (isMember bool, role string, err error)
+}
+
 // Service handles Stripe billing operations
 type Service struct {
 	db          *ent.Client
 	leadService *leads.Service
 	config      *StripeConfig
+	email       EmailSender
+	audit       AuditLogger
+	orgChecker  OrgMembershipChecker
 }
 
 // StripeConfig holds Stripe configuration
@@ -37,6 +55,7 @@ type StripeConfig struct {
 	PriceBusiness   string
 	SuccessURL      string
 	CancelURL       string
+	BaseURL         string
 }
 
 // NewService creates a new billing service
@@ -49,6 +68,29 @@ func NewService(db *ent.Client, leadService *leads.Service, config *StripeConfig
 		leadService: leadService,
 		config:      config,
 	}
+}
+
+// SetEmailSender sets the email sender for billing notifications.
+func (s *Service) SetEmailSender(e EmailSender) {
+	s.email = e
+}
+
+// SetAuditLogger sets the audit logger for billing events.
+func (s *Service) SetAuditLogger(a AuditLogger) {
+	s.audit = a
+}
+
+// SetOrgMembershipChecker sets the organization membership checker.
+func (s *Service) SetOrgMembershipChecker(c OrgMembershipChecker) {
+	s.orgChecker = c
+}
+
+// checkOrgBillingAccess verifies a user has owner or admin role for billing management.
+func (s *Service) checkOrgBillingAccess(orgID int, userID int, role string) error {
+	if role == "owner" || role == "admin" {
+		return nil
+	}
+	return fmt.Errorf("only organization owner or admin can manage subscriptions")
 }
 
 // CreateCheckoutSession creates a Stripe checkout session
@@ -75,10 +117,22 @@ func (s *Service) CreateCheckoutSession(ctx context.Context, userID int, tier st
 			return nil, fmt.Errorf("failed to get organization: %w", err)
 		}
 
-		// Verify user is owner of organization
-		// TODO Phase 4: Allow admin members to manage subscriptions
-		if org.OwnerID != userID {
-			return nil, fmt.Errorf("only organization owner can manage subscriptions")
+		// Verify user is owner or admin of organization
+		if org.OwnerID == userID {
+			// Owner always has access
+		} else if s.orgChecker != nil {
+			isMember, role, err := s.orgChecker.CheckMembership(ctx, *organizationID, userID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to check membership: %w", err)
+			}
+			if !isMember {
+				return nil, fmt.Errorf("user is not a member of this organization")
+			}
+			if err := s.checkOrgBillingAccess(*organizationID, userID, role); err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, fmt.Errorf("only organization owner or admin can manage subscriptions")
 		}
 
 		// Use organization's stripe customer ID or create new
@@ -385,6 +439,28 @@ func (s *Service) handleSubscriptionUpdated(ctx context.Context, event stripe.Ev
 		return fmt.Errorf("failed to update subscription: %w", err)
 	}
 
+	// Send email notification based on status change
+	if s.email != nil {
+		u, err := s.db.User.Get(ctx, entSub.UserID)
+		if err != nil {
+			log.Printf("⚠️  Failed to get user for email notification: %v", err)
+			return nil
+		}
+
+		switch sub.Status {
+		case stripe.SubscriptionStatusActive:
+			subject, html, plain := buildSubscriptionActivatedEmail(u.Name, string(entSub.Tier), s.config.BaseURL)
+			if err := s.email.SendEmail(u.Email, u.Name, subject, html, plain); err != nil {
+				log.Printf("⚠️  Failed to send activation email to %s: %v", u.Email, err)
+			}
+		case stripe.SubscriptionStatusPastDue:
+			subject, html, plain := buildPaymentFailedEmail(u.Name, s.config.BaseURL)
+			if err := s.email.SendEmail(u.Email, u.Name, subject, html, plain); err != nil {
+				log.Printf("⚠️  Failed to send payment failed email to %s: %v", u.Email, err)
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -418,12 +494,20 @@ func (s *Service) handleSubscriptionDeleted(ctx context.Context, event stripe.Ev
 	}
 
 	// Downgrade user to free tier
-	_, err = s.db.User.UpdateOneID(entSub.UserID).
+	u, err := s.db.User.UpdateOneID(entSub.UserID).
 		SetSubscriptionTier(user.SubscriptionTierFree).
 		SetUsageLimit(50).
 		Save(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to downgrade user: %w", err)
+	}
+
+	// Send cancellation email notification
+	if s.email != nil {
+		subject, html, plain := buildSubscriptionCancelledEmail(u.Name, s.config.BaseURL)
+		if err := s.email.SendEmail(u.Email, u.Name, subject, html, plain); err != nil {
+			log.Printf("⚠️  Failed to send cancellation email to %s: %v", u.Email, err)
+		}
 	}
 
 	return nil
@@ -437,6 +521,24 @@ func (s *Service) handleInvoicePaid(ctx context.Context, event stripe.Event) err
 	}
 
 	log.Printf("💰 Invoice paid: %s, amount=%d", invoice.ID, invoice.AmountPaid)
+
+	// Send renewal email notification for recurring invoices (not the first one)
+	if s.email != nil && invoice.Subscription != nil && invoice.Subscription.ID != "" && invoice.BillingReason == stripe.InvoiceBillingReasonSubscriptionCycle {
+		entSub, err := s.db.Subscription.Query().
+			Where(subscription.StripeSubscriptionIDEQ(invoice.Subscription.ID)).
+			Only(ctx)
+		if err == nil {
+			u, err := s.db.User.Get(ctx, entSub.UserID)
+			if err == nil {
+				nextBilling := time.Unix(invoice.PeriodEnd, 0).Format("2006-01-02")
+				subject, html, plain := buildSubscriptionRenewedEmail(u.Name, string(entSub.Tier), nextBilling, s.config.BaseURL)
+				if err := s.email.SendEmail(u.Email, u.Name, subject, html, plain); err != nil {
+					log.Printf("⚠️  Failed to send renewal email to %s: %v", u.Email, err)
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -449,8 +551,59 @@ func (s *Service) handleInvoicePaymentFailed(ctx context.Context, event stripe.E
 
 	log.Printf("⚠️  Invoice payment failed: %s", invoice.ID)
 
-	// TODO: Send email notification to user
-	// TODO: Update subscription status to past_due
+	// Find subscription by Stripe subscription ID from the invoice
+	if invoice.Subscription == nil || invoice.Subscription.ID == "" {
+		log.Printf("⚠️  No subscription ID in failed invoice %s", invoice.ID)
+		return nil
+	}
+
+	entSub, err := s.db.Subscription.Query().
+		Where(subscription.StripeSubscriptionIDEQ(invoice.Subscription.ID)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			log.Printf("⚠️  Subscription not found for failed invoice: %s", invoice.Subscription.ID)
+			return nil
+		}
+		return fmt.Errorf("failed to find subscription: %w", err)
+	}
+
+	// Update subscription status to past_due
+	_, err = s.db.Subscription.UpdateOne(entSub).
+		SetStatus(subscription.StatusPastDue).
+		Save(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to update subscription to past_due: %w", err)
+	}
+
+	log.Printf("🔄 Subscription %s set to past_due due to payment failure", invoice.Subscription.ID)
+
+	// Get user for email notification
+	u, err := s.db.User.Get(ctx, entSub.UserID)
+	if err != nil {
+		log.Printf("⚠️  Failed to get user %d for payment failed notification: %v", entSub.UserID, err)
+		return nil
+	}
+
+	// Send payment failed email notification
+	if s.email != nil {
+		subject, html, plain := buildPaymentFailedEmail(u.Name, s.config.BaseURL)
+		if err := s.email.SendEmail(u.Email, u.Name, subject, html, plain); err != nil {
+			log.Printf("⚠️  Failed to send payment failed email to %s: %v", u.Email, err)
+		}
+	}
+
+	// Log audit event
+	if s.audit != nil {
+		metadata := map[string]interface{}{
+			"invoice_id":      invoice.ID,
+			"subscription_id": invoice.Subscription.ID,
+			"amount_due":      invoice.AmountDue,
+		}
+		if err := s.audit.LogPaymentFailed(entSub.UserID, invoice.Subscription.ID, metadata); err != nil {
+			log.Printf("⚠️  Failed to log payment failed audit: %v", err)
+		}
+	}
 
 	return nil
 }
