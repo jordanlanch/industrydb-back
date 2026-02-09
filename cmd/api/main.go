@@ -328,8 +328,14 @@ func main() {
 		PriceBusiness:   cfg.StripePriceBusiness,
 		SuccessURL:      cfg.FrontendURL + "/dashboard/settings/billing?success=true",
 		CancelURL:       cfg.FrontendURL + "/dashboard/settings/billing?canceled=true",
+		BaseURL:         cfg.FrontendURL,
 	})
 	organizationService := organization.NewService(db.Ent)
+
+	// Wire billing service dependencies (Dependency Inversion Principle)
+	billingService.SetEmailSender(billing.NewEmailServiceAdapter(emailService))
+	billingService.SetAuditLogger(billing.NewAuditServiceAdapter(auditLogger))
+	billingService.SetOrgMembershipChecker(organizationService)
 	apiKeyService := apikey.NewService(db.Ent)
 	industriesService := industries.NewService(db.Ent, redisClient)
 	savedSearchService := savedsearch.NewService(db.Ent)
