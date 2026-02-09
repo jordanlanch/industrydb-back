@@ -1,5 +1,7 @@
 # 🚀 IndustryDB
 
+[![Backend CI](https://github.com/jordanlanch/industrydb-back/actions/workflows/ci.yml/badge.svg)](https://github.com/jordanlanch/industrydb-back/actions/workflows/ci.yml)
+
 > Industry-specific business data. Verified. Affordable.
 
 **IndustryDB** is a SaaS platform providing verified local business data by industry. Access leads for tattoo studios, beauty salons, gyms, restaurants, and more at affordable prices.

@@ -1,0 +1,73 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test & Build
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgis/postgis:15-3.3
+        env:
+          POSTGRES_USER: industrydb
+          POSTGRES_PASSWORD: industrydb
+          POSTGRES_DB: industrydb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U industrydb"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgres://industrydb:industrydb@localhost:5432/industrydb?sslmode=disable
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: ci-test-secret-key-minimum-32-chars
+      STRIPE_SECRET_KEY: sk_test_fake
+      SENDGRID_API_KEY: SG.fake
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Vet (lint)
+        run: go vet ./...
+
+      - name: Run tests
+        run: go test ./... -race -coverprofile=coverage.out -covermode=atomic
+
+      - name: Verify build
+        run: go build -o /dev/null ./cmd/api/...
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.out
+          retention-days: 14
