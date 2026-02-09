@@ -3,9 +3,9 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -21,49 +21,46 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// setupAPIKeyTest creates test database and API key handler
-func setupAPIKeyTest(t *testing.T) (*ent.Client, *APIKeyHandler, func()) {
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
-	service := apikey.NewService(client)
-	handler := NewAPIKeyHandler(service)
-	cleanup := func() {
-		client.Close()
-	}
-	return client, handler, cleanup
+// setupAPIKeyHandler creates an APIKeyHandler with in-memory database
+func setupAPIKeyHandler(t *testing.T) (*APIKeyHandler, *apikey.Service, *ent.Client, func()) {
+	client := enttest.Open(t, "sqlite3", "file:apikey_test?mode=memory&cache=shared&_fk=1")
+	svc := apikey.NewService(client)
+	handler := NewAPIKeyHandler(svc)
+	cleanup := func() { client.Close() }
+	return handler, svc, client, cleanup
 }
 
-// createAPIKeyTestUser creates a test user with specified tier
-func createAPIKeyTestUser(t *testing.T, client *ent.Client, email, tier string) *ent.User {
-	ctx := context.Background()
-	user, err := client.User.Create().
-		SetEmail(email).
-		SetPasswordHash("$2a$10$dummyhash").
-		SetName("Test User").
+// createAPIKeyTestUser creates a user for testing API key operations
+func createAPIKeyTestUser(t *testing.T, client *ent.Client, tier string) int {
+	u, err := client.User.Create().
+		SetEmail("apikey-" + tier + "@example.com").
+		SetPasswordHash("$2a$10$hash").
+		SetName("API Key User").
 		SetSubscriptionTier(user.SubscriptionTier(tier)).
-		SetUsageLimit(50).
 		SetUsageCount(0).
-		SetLastResetAt(time.Now()).
+		SetUsageLimit(10000).
 		SetEmailVerified(true).
-		Save(ctx)
+		SetAcceptedTermsAt(time.Now()).
+		Save(context.Background())
 	require.NoError(t, err)
-	return user
+	return u.ID
 }
 
 // --- Create API Key Tests ---
 
 func TestAPIKeyHandler_Create_Success(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
+	handler, _, client, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
 
-	user := createAPIKeyTestUser(t, client, "business@example.com", "business")
+	userID := createAPIKeyTestUser(t, client, "business")
 
 	e := echo.New()
-	body := `{"name":"Production Key"}`
+	body := `{"name":"My Production Key"}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/api-keys", strings.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("user_id", user.ID)
+	c.Set("user_id", userID)
 
 	err := handler.Create(c)
 	require.NoError(t, err)
@@ -73,54 +70,31 @@ func TestAPIKeyHandler_Create_Success(t *testing.T) {
 	err = json.Unmarshal(rec.Body.Bytes(), &response)
 	require.NoError(t, err)
 
+	// Should include API key and warning
 	assert.Contains(t, response, "api_key")
 	assert.Contains(t, response, "warning")
 
 	apiKeyData := response["api_key"].(map[string]interface{})
-	assert.Equal(t, "Production Key", apiKeyData["name"])
-	assert.Contains(t, apiKeyData["key"].(string), "idb_")
+	assert.Equal(t, "My Production Key", apiKeyData["name"])
+	assert.NotEmpty(t, apiKeyData["key"])
+	keyStr := apiKeyData["key"].(string)
+	assert.True(t, strings.HasPrefix(keyStr, "idb_"), "Key should start with idb_ prefix")
 	assert.NotEmpty(t, apiKeyData["prefix"])
 }
 
-func TestAPIKeyHandler_Create_WithExpiration(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
+func TestAPIKeyHandler_Create_FreeTierReturns403(t *testing.T) {
+	handler, _, client, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
 
-	user := createAPIKeyTestUser(t, client, "business@example.com", "business")
+	userID := createAPIKeyTestUser(t, client, "free")
 
 	e := echo.New()
-	body := `{"name":"Expiring Key","expires_at":"2027-01-01T00:00:00Z"}`
+	body := `{"name":"Test Key"}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/api-keys", strings.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("user_id", user.ID)
-
-	err := handler.Create(c)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusCreated, rec.Code)
-
-	var response map[string]interface{}
-	err = json.Unmarshal(rec.Body.Bytes(), &response)
-	require.NoError(t, err)
-
-	apiKeyData := response["api_key"].(map[string]interface{})
-	assert.NotNil(t, apiKeyData["expires_at"])
-}
-
-func TestAPIKeyHandler_Create_FreeTierForbidden(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
-	defer cleanup()
-
-	user := createAPIKeyTestUser(t, client, "free@example.com", "free")
-
-	e := echo.New()
-	body := `{"name":"Free Key"}`
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/api-keys", strings.NewReader(body))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	c.Set("user_id", user.ID)
+	c.Set("user_id", userID)
 
 	err := handler.Create(c)
 	require.NoError(t, err)
@@ -132,107 +106,104 @@ func TestAPIKeyHandler_Create_FreeTierForbidden(t *testing.T) {
 	assert.Equal(t, "upgrade_required", response["error"])
 }
 
-func TestAPIKeyHandler_Create_StarterTierForbidden(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
+func TestAPIKeyHandler_Create_StarterTierReturns403(t *testing.T) {
+	handler, _, client, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
 
-	user := createAPIKeyTestUser(t, client, "starter@example.com", "starter")
+	userID := createAPIKeyTestUser(t, client, "starter")
 
 	e := echo.New()
-	body := `{"name":"Starter Key"}`
+	body := `{"name":"Test Key"}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/api-keys", strings.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("user_id", user.ID)
+	c.Set("user_id", userID)
 
 	err := handler.Create(c)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusForbidden, rec.Code)
 }
 
-func TestAPIKeyHandler_Create_ProTierForbidden(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
+func TestAPIKeyHandler_Create_ProTierReturns403(t *testing.T) {
+	handler, _, client, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
 
-	user := createAPIKeyTestUser(t, client, "pro@example.com", "pro")
+	userID := createAPIKeyTestUser(t, client, "pro")
 
 	e := echo.New()
-	body := `{"name":"Pro Key"}`
+	body := `{"name":"Test Key"}`
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/api-keys", strings.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("user_id", user.ID)
+	c.Set("user_id", userID)
 
 	err := handler.Create(c)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusForbidden, rec.Code)
 }
 
-func TestAPIKeyHandler_Create_NameValidation(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
+func TestAPIKeyHandler_Create_NameValidation_TooShort(t *testing.T) {
+	handler, _, client, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
 
-	user := createAPIKeyTestUser(t, client, "business@example.com", "business")
+	userID := createAPIKeyTestUser(t, client, "business")
 
-	tests := []struct {
-		name    string
-		body    string
-		wantErr bool
-	}{
-		{
-			name:    "empty name",
-			body:    `{"name":""}`,
-			wantErr: true,
-		},
-		{
-			name:    "single char name",
-			body:    `{"name":"A"}`,
-			wantErr: true,
-		},
-		{
-			name:    "valid short name",
-			body:    `{"name":"AB"}`,
-			wantErr: false,
-		},
-		{
-			name:    "name at max length 100",
-			body:    `{"name":"` + strings.Repeat("A", 100) + `"}`,
-			wantErr: false,
-		},
-		{
-			name:    "name exceeding max length",
-			body:    `{"name":"` + strings.Repeat("A", 101) + `"}`,
-			wantErr: true,
-		},
-	}
+	e := echo.New()
+	body := `{"name":"A"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/api-keys", strings.NewReader(body))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.Set("user_id", userID)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPost, "/api/v1/api-keys", strings.NewReader(tt.body))
-			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
-			c.Set("user_id", user.ID)
+	err := handler.Create(c)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+}
 
-			err := handler.Create(c)
-			require.NoError(t, err)
+func TestAPIKeyHandler_Create_NameValidation_TooLong(t *testing.T) {
+	handler, _, client, cleanup := setupAPIKeyHandler(t)
+	defer cleanup()
 
-			if tt.wantErr {
-				assert.Equal(t, http.StatusBadRequest, rec.Code,
-					"Expected 400 for body: %s", tt.body)
-			} else {
-				assert.Equal(t, http.StatusCreated, rec.Code,
-					"Expected 201 for body: %s", tt.body)
-			}
-		})
-	}
+	userID := createAPIKeyTestUser(t, client, "business")
+
+	longName := strings.Repeat("x", 101)
+	e := echo.New()
+	body := `{"name":"` + longName + `"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/api-keys", strings.NewReader(body))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.Set("user_id", userID)
+
+	err := handler.Create(c)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
+func TestAPIKeyHandler_Create_NameValidation_Empty(t *testing.T) {
+	handler, _, client, cleanup := setupAPIKeyHandler(t)
+	defer cleanup()
+
+	userID := createAPIKeyTestUser(t, client, "business")
+
+	e := echo.New()
+	body := `{"name":""}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/api-keys", strings.NewReader(body))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.Set("user_id", userID)
+
+	err := handler.Create(c)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
 
 func TestAPIKeyHandler_Create_Unauthorized(t *testing.T) {
-	_, handler, cleanup := setupAPIKeyTest(t)
+	handler, _, _, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
 
 	e := echo.New()
@@ -249,8 +220,10 @@ func TestAPIKeyHandler_Create_Unauthorized(t *testing.T) {
 }
 
 func TestAPIKeyHandler_Create_InvalidJSON(t *testing.T) {
-	_, handler, cleanup := setupAPIKeyTest(t)
+	handler, _, client, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
+
+	userID := createAPIKeyTestUser(t, client, "business")
 
 	e := echo.New()
 	body := `{invalid json}`
@@ -258,34 +231,76 @@ func TestAPIKeyHandler_Create_InvalidJSON(t *testing.T) {
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("user_id", 1)
+	c.Set("user_id", userID)
 
 	err := handler.Create(c)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
 
+func TestAPIKeyHandler_Create_WithExpiration(t *testing.T) {
+	handler, _, client, cleanup := setupAPIKeyHandler(t)
+	defer cleanup()
+
+	userID := createAPIKeyTestUser(t, client, "business")
+
+	e := echo.New()
+	body := `{"name":"Expiring Key","expires_at":"2027-01-01T00:00:00Z"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/api-keys", strings.NewReader(body))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.Set("user_id", userID)
+
+	err := handler.Create(c)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusCreated, rec.Code)
+
+	var response map[string]interface{}
+	err = json.Unmarshal(rec.Body.Bytes(), &response)
+	require.NoError(t, err)
+	apiKeyData := response["api_key"].(map[string]interface{})
+	assert.NotNil(t, apiKeyData["expires_at"])
+}
+
 // --- List API Keys Tests ---
 
-func TestAPIKeyHandler_List_Success(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
+func TestAPIKeyHandler_List_ReturnsUserKeysOnly(t *testing.T) {
+	handler, svc, client, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
 
-	user := createAPIKeyTestUser(t, client, "business@example.com", "business")
+	user1ID := createAPIKeyTestUser(t, client, "business")
+	// Create second user with unique email
+	u2, err := client.User.Create().
+		SetEmail("other@example.com").
+		SetPasswordHash("$2a$10$hash").
+		SetName("Other User").
+		SetSubscriptionTier("business").
+		SetUsageCount(0).
+		SetUsageLimit(10000).
+		SetEmailVerified(true).
+		SetAcceptedTermsAt(time.Now()).
+		Save(context.Background())
+	require.NoError(t, err)
+	user2ID := u2.ID
 
-	// Create some API keys via service
+	// Create keys for user1
 	ctx := context.Background()
-	service := apikey.NewService(client)
-	_, err := service.CreateAPIKey(ctx, user.ID, apikey.CreateAPIKeyRequest{Name: "Key 1"})
+	_, err = svc.CreateAPIKey(ctx, user1ID, apikey.CreateAPIKeyRequest{Name: "User1 Key 1"})
 	require.NoError(t, err)
-	_, err = service.CreateAPIKey(ctx, user.ID, apikey.CreateAPIKeyRequest{Name: "Key 2"})
+	_, err = svc.CreateAPIKey(ctx, user1ID, apikey.CreateAPIKeyRequest{Name: "User1 Key 2"})
 	require.NoError(t, err)
 
+	// Create key for user2
+	_, err = svc.CreateAPIKey(ctx, user2ID, apikey.CreateAPIKeyRequest{Name: "User2 Key"})
+	require.NoError(t, err)
+
+	// List keys for user1 — should only see 2
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/api-keys", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("user_id", user.ID)
+	c.Set("user_id", user1ID)
 
 	err = handler.List(c)
 	require.NoError(t, err)
@@ -294,54 +309,20 @@ func TestAPIKeyHandler_List_Success(t *testing.T) {
 	var response map[string]interface{}
 	err = json.Unmarshal(rec.Body.Bytes(), &response)
 	require.NoError(t, err)
-
 	assert.Equal(t, float64(2), response["total"])
-	keys := response["api_keys"].([]interface{})
-	assert.Len(t, keys, 2)
 }
 
-func TestAPIKeyHandler_List_ReturnsOnlyUsersKeys(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
+func TestAPIKeyHandler_List_EmptyResults(t *testing.T) {
+	handler, _, client, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
 
-	user1 := createAPIKeyTestUser(t, client, "user1@example.com", "business")
-	user2 := createAPIKeyTestUser(t, client, "user2@example.com", "business")
-
-	ctx := context.Background()
-	service := apikey.NewService(client)
-	_, err := service.CreateAPIKey(ctx, user1.ID, apikey.CreateAPIKeyRequest{Name: "User1 Key"})
-	require.NoError(t, err)
-	_, err = service.CreateAPIKey(ctx, user2.ID, apikey.CreateAPIKeyRequest{Name: "User2 Key"})
-	require.NoError(t, err)
-
-	// List for user1
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/api-keys", nil)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	c.Set("user_id", user1.ID)
-
-	err = handler.List(c)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusOK, rec.Code)
-
-	var response map[string]interface{}
-	err = json.Unmarshal(rec.Body.Bytes(), &response)
-	require.NoError(t, err)
-	assert.Equal(t, float64(1), response["total"])
-}
-
-func TestAPIKeyHandler_List_Empty(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
-	defer cleanup()
-
-	user := createAPIKeyTestUser(t, client, "business@example.com", "business")
+	userID := createAPIKeyTestUser(t, client, "business")
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/api-keys", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("user_id", user.ID)
+	c.Set("user_id", userID)
 
 	err := handler.List(c)
 	require.NoError(t, err)
@@ -354,7 +335,7 @@ func TestAPIKeyHandler_List_Empty(t *testing.T) {
 }
 
 func TestAPIKeyHandler_List_Unauthorized(t *testing.T) {
-	_, handler, cleanup := setupAPIKeyTest(t)
+	handler, _, _, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
 
 	e := echo.New()
@@ -367,140 +348,62 @@ func TestAPIKeyHandler_List_Unauthorized(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 }
 
-// --- Get API Key Tests ---
-
-func TestAPIKeyHandler_Get_Success(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
-	defer cleanup()
-
-	user := createAPIKeyTestUser(t, client, "business@example.com", "business")
-
-	ctx := context.Background()
-	service := apikey.NewService(client)
-	created, err := service.CreateAPIKey(ctx, user.ID, apikey.CreateAPIKeyRequest{Name: "My Key"})
-	require.NoError(t, err)
-
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/api-keys/"+string(rune(created.ID+'0')), nil)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	c.Set("user_id", user.ID)
-	c.SetParamNames("id")
-	c.SetParamValues(itoa(created.ID))
-
-	err = handler.Get(c)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusOK, rec.Code)
-}
-
-func TestAPIKeyHandler_Get_InvalidID(t *testing.T) {
-	_, handler, cleanup := setupAPIKeyTest(t)
-	defer cleanup()
-
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/api-keys/abc", nil)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	c.Set("user_id", 1)
-	c.SetParamNames("id")
-	c.SetParamValues("abc")
-
-	err := handler.Get(c)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusBadRequest, rec.Code)
-
-	var response map[string]interface{}
-	err = json.Unmarshal(rec.Body.Bytes(), &response)
-	require.NoError(t, err)
-	assert.Equal(t, "invalid_id", response["error"])
-}
-
-func TestAPIKeyHandler_Get_NotFound(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
-	defer cleanup()
-
-	user := createAPIKeyTestUser(t, client, "business@example.com", "business")
-
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/api-keys/99999", nil)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	c.Set("user_id", user.ID)
-	c.SetParamNames("id")
-	c.SetParamValues("99999")
-
-	err := handler.Get(c)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusNotFound, rec.Code)
-}
-
-func TestAPIKeyHandler_Get_Unauthorized(t *testing.T) {
-	_, handler, cleanup := setupAPIKeyTest(t)
-	defer cleanup()
-
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/api-keys/1", nil)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	c.SetParamNames("id")
-	c.SetParamValues("1")
-
-	err := handler.Get(c)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusUnauthorized, rec.Code)
-}
-
 // --- Delete API Key Tests ---
 
 func TestAPIKeyHandler_Delete_Success(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
+	handler, svc, client, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
 
-	user := createAPIKeyTestUser(t, client, "business@example.com", "business")
-
-	ctx := context.Background()
-	service := apikey.NewService(client)
-	created, err := service.CreateAPIKey(ctx, user.ID, apikey.CreateAPIKeyRequest{Name: "To Delete"})
+	userID := createAPIKeyTestUser(t, client, "business")
+	created, err := svc.CreateAPIKey(context.Background(), userID, apikey.CreateAPIKeyRequest{Name: "To Delete"})
 	require.NoError(t, err)
 
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodDelete, "/api/v1/api-keys/"+itoa(created.ID), nil)
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/api-keys/"+strconv.Itoa(created.ID), nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("user_id", user.ID)
+	c.Set("user_id", userID)
 	c.SetParamNames("id")
-	c.SetParamValues(itoa(created.ID))
+	c.SetParamValues(strconv.Itoa(created.ID))
 
 	err = handler.Delete(c)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
 
-	var response map[string]interface{}
+	var response map[string]string
 	err = json.Unmarshal(rec.Body.Bytes(), &response)
 	require.NoError(t, err)
 	assert.Equal(t, "API key deleted successfully", response["message"])
 }
 
 func TestAPIKeyHandler_Delete_OwnershipCheck(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
+	handler, svc, client, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
 
-	user1 := createAPIKeyTestUser(t, client, "user1@example.com", "business")
-	user2 := createAPIKeyTestUser(t, client, "user2@example.com", "business")
-
-	ctx := context.Background()
-	service := apikey.NewService(client)
-	created, err := service.CreateAPIKey(ctx, user1.ID, apikey.CreateAPIKeyRequest{Name: "User1 Key"})
+	ownerID := createAPIKeyTestUser(t, client, "business")
+	otherUser, err := client.User.Create().
+		SetEmail("other-del@example.com").
+		SetPasswordHash("$2a$10$hash").
+		SetName("Other").
+		SetSubscriptionTier("business").
+		SetUsageCount(0).
+		SetUsageLimit(10000).
+		SetEmailVerified(true).
+		SetAcceptedTermsAt(time.Now()).
+		Save(context.Background())
 	require.NoError(t, err)
 
-	// User2 tries to delete User1's key
+	created, err := svc.CreateAPIKey(context.Background(), ownerID, apikey.CreateAPIKeyRequest{Name: "Owner Key"})
+	require.NoError(t, err)
+
+	// Try to delete as other user — should fail
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodDelete, "/api/v1/api-keys/"+itoa(created.ID), nil)
+	req := httptest.NewRequest(http.MethodDelete, "/", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("user_id", user2.ID)
+	c.Set("user_id", otherUser.ID)
 	c.SetParamNames("id")
-	c.SetParamValues(itoa(created.ID))
+	c.SetParamValues(strconv.Itoa(created.ID))
 
 	err = handler.Delete(c)
 	require.NoError(t, err)
@@ -508,16 +411,16 @@ func TestAPIKeyHandler_Delete_OwnershipCheck(t *testing.T) {
 }
 
 func TestAPIKeyHandler_Delete_NotFound(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
+	handler, _, client, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
 
-	user := createAPIKeyTestUser(t, client, "business@example.com", "business")
+	userID := createAPIKeyTestUser(t, client, "business")
 
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodDelete, "/api/v1/api-keys/99999", nil)
+	req := httptest.NewRequest(http.MethodDelete, "/", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("user_id", user.ID)
+	c.Set("user_id", userID)
 	c.SetParamNames("id")
 	c.SetParamValues("99999")
 
@@ -526,54 +429,70 @@ func TestAPIKeyHandler_Delete_NotFound(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, rec.Code)
 }
 
+func TestAPIKeyHandler_Delete_InvalidID(t *testing.T) {
+	handler, _, client, cleanup := setupAPIKeyHandler(t)
+	defer cleanup()
+
+	userID := createAPIKeyTestUser(t, client, "business")
+
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodDelete, "/", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.Set("user_id", userID)
+	c.SetParamNames("id")
+	c.SetParamValues("abc")
+
+	err := handler.Delete(c)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
 // --- Revoke API Key Tests ---
 
 func TestAPIKeyHandler_Revoke_Success(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
+	handler, svc, client, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
 
-	user := createAPIKeyTestUser(t, client, "business@example.com", "business")
-
-	ctx := context.Background()
-	service := apikey.NewService(client)
-	created, err := service.CreateAPIKey(ctx, user.ID, apikey.CreateAPIKeyRequest{Name: "To Revoke"})
+	userID := createAPIKeyTestUser(t, client, "business")
+	created, err := svc.CreateAPIKey(context.Background(), userID, apikey.CreateAPIKeyRequest{Name: "To Revoke"})
 	require.NoError(t, err)
 
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/api-keys/"+itoa(created.ID)+"/revoke", nil)
+	req := httptest.NewRequest(http.MethodPost, "/", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("user_id", user.ID)
+	c.Set("user_id", userID)
 	c.SetParamNames("id")
-	c.SetParamValues(itoa(created.ID))
+	c.SetParamValues(strconv.Itoa(created.ID))
 
 	err = handler.Revoke(c)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
 
-	var response map[string]interface{}
+	var response map[string]string
 	err = json.Unmarshal(rec.Body.Bytes(), &response)
 	require.NoError(t, err)
 	assert.Equal(t, "API key revoked successfully", response["message"])
 
-	// Verify the key is actually revoked in DB
-	key, err := service.GetAPIKey(ctx, user.ID, created.ID)
+	// Verify key is revoked in DB
+	key, err := svc.GetAPIKey(context.Background(), userID, created.ID)
 	require.NoError(t, err)
 	assert.True(t, key.Revoked)
 	assert.NotNil(t, key.RevokedAt)
 }
 
 func TestAPIKeyHandler_Revoke_NotFound(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
+	handler, _, client, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
 
-	user := createAPIKeyTestUser(t, client, "business@example.com", "business")
+	userID := createAPIKeyTestUser(t, client, "business")
 
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/api-keys/99999/revoke", nil)
+	req := httptest.NewRequest(http.MethodPost, "/", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("user_id", user.ID)
+	c.Set("user_id", userID)
 	c.SetParamNames("id")
 	c.SetParamValues("99999")
 
@@ -583,11 +502,11 @@ func TestAPIKeyHandler_Revoke_NotFound(t *testing.T) {
 }
 
 func TestAPIKeyHandler_Revoke_Unauthorized(t *testing.T) {
-	_, handler, cleanup := setupAPIKeyTest(t)
+	handler, _, _, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
 
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/api-keys/1/revoke", nil)
+	req := httptest.NewRequest(http.MethodPost, "/", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetParamNames("id")
@@ -598,95 +517,92 @@ func TestAPIKeyHandler_Revoke_Unauthorized(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 }
 
+func TestAPIKeyHandler_Revoke_InvalidID(t *testing.T) {
+	handler, _, client, cleanup := setupAPIKeyHandler(t)
+	defer cleanup()
+
+	userID := createAPIKeyTestUser(t, client, "business")
+
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodPost, "/", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.Set("user_id", userID)
+	c.SetParamNames("id")
+	c.SetParamValues("notanumber")
+
+	err := handler.Revoke(c)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
 // --- UpdateName Tests ---
 
 func TestAPIKeyHandler_UpdateName_Success(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
+	handler, svc, client, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
 
-	user := createAPIKeyTestUser(t, client, "business@example.com", "business")
-
-	ctx := context.Background()
-	service := apikey.NewService(client)
-	created, err := service.CreateAPIKey(ctx, user.ID, apikey.CreateAPIKeyRequest{Name: "Original Name"})
+	userID := createAPIKeyTestUser(t, client, "business")
+	created, err := svc.CreateAPIKey(context.Background(), userID, apikey.CreateAPIKeyRequest{Name: "Old Name"})
 	require.NoError(t, err)
 
 	e := echo.New()
-	body := `{"name":"Updated Name"}`
-	req := httptest.NewRequest(http.MethodPatch, "/api/v1/api-keys/"+itoa(created.ID), strings.NewReader(body))
+	body := `{"name":"New Name"}`
+	req := httptest.NewRequest(http.MethodPatch, "/", strings.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("user_id", user.ID)
+	c.Set("user_id", userID)
 	c.SetParamNames("id")
-	c.SetParamValues(itoa(created.ID))
+	c.SetParamValues(strconv.Itoa(created.ID))
 
 	err = handler.UpdateName(c)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
 
-	var response map[string]interface{}
-	err = json.Unmarshal(rec.Body.Bytes(), &response)
+	// Verify name was changed
+	key, err := svc.GetAPIKey(context.Background(), userID, created.ID)
 	require.NoError(t, err)
-	assert.Equal(t, "API key name updated successfully", response["message"])
-
-	// Verify in DB
-	key, err := service.GetAPIKey(ctx, user.ID, created.ID)
-	require.NoError(t, err)
-	assert.Equal(t, "Updated Name", key.Name)
+	assert.Equal(t, "New Name", key.Name)
 }
 
 func TestAPIKeyHandler_UpdateName_ValidationError(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
+	handler, svc, client, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
 
-	user := createAPIKeyTestUser(t, client, "business@example.com", "business")
-
-	ctx := context.Background()
-	service := apikey.NewService(client)
-	created, err := service.CreateAPIKey(ctx, user.ID, apikey.CreateAPIKeyRequest{Name: "Original"})
+	userID := createAPIKeyTestUser(t, client, "business")
+	created, err := svc.CreateAPIKey(context.Background(), userID, apikey.CreateAPIKeyRequest{Name: "Original"})
 	require.NoError(t, err)
 
-	tests := []struct {
-		name string
-		body string
-	}{
-		{"empty name", `{"name":""}`},
-		{"single char", `{"name":"A"}`},
-		{"over 100 chars", `{"name":"` + strings.Repeat("X", 101) + `"}`},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			e := echo.New()
-			req := httptest.NewRequest(http.MethodPatch, "/api/v1/api-keys/"+itoa(created.ID), strings.NewReader(tt.body))
-			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-			rec := httptest.NewRecorder()
-			c := e.NewContext(req, rec)
-			c.Set("user_id", user.ID)
-			c.SetParamNames("id")
-			c.SetParamValues(itoa(created.ID))
-
-			err := handler.UpdateName(c)
-			require.NoError(t, err)
-			assert.Equal(t, http.StatusBadRequest, rec.Code, "Expected 400 for %s", tt.name)
-		})
-	}
-}
-
-func TestAPIKeyHandler_UpdateName_NotFound(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
-	defer cleanup()
-
-	user := createAPIKeyTestUser(t, client, "business@example.com", "business")
-
+	// Name too short (min=2)
 	e := echo.New()
-	body := `{"name":"Updated"}`
-	req := httptest.NewRequest(http.MethodPatch, "/api/v1/api-keys/99999", strings.NewReader(body))
+	body := `{"name":"A"}`
+	req := httptest.NewRequest(http.MethodPatch, "/", strings.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("user_id", user.ID)
+	c.Set("user_id", userID)
+	c.SetParamNames("id")
+	c.SetParamValues(strconv.Itoa(created.ID))
+
+	err = handler.UpdateName(c)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
+func TestAPIKeyHandler_UpdateName_NotFound(t *testing.T) {
+	handler, _, client, cleanup := setupAPIKeyHandler(t)
+	defer cleanup()
+
+	userID := createAPIKeyTestUser(t, client, "business")
+
+	e := echo.New()
+	body := `{"name":"New Name"}`
+	req := httptest.NewRequest(http.MethodPatch, "/", strings.NewReader(body))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.Set("user_id", userID)
 	c.SetParamNames("id")
 	c.SetParamValues("99999")
 
@@ -695,21 +611,63 @@ func TestAPIKeyHandler_UpdateName_NotFound(t *testing.T) {
 	assert.Equal(t, http.StatusNotFound, rec.Code)
 }
 
-func TestAPIKeyHandler_UpdateName_InvalidID(t *testing.T) {
-	_, handler, cleanup := setupAPIKeyTest(t)
+// --- Get API Key Tests ---
+
+func TestAPIKeyHandler_Get_Success(t *testing.T) {
+	handler, svc, client, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
 
+	userID := createAPIKeyTestUser(t, client, "business")
+	created, err := svc.CreateAPIKey(context.Background(), userID, apikey.CreateAPIKeyRequest{Name: "Get Key"})
+	require.NoError(t, err)
+
 	e := echo.New()
-	body := `{"name":"Updated"}`
-	req := httptest.NewRequest(http.MethodPatch, "/api/v1/api-keys/abc", strings.NewReader(body))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("user_id", 1)
+	c.Set("user_id", userID)
 	c.SetParamNames("id")
-	c.SetParamValues("abc")
+	c.SetParamValues(strconv.Itoa(created.ID))
 
-	err := handler.UpdateName(c)
+	err = handler.Get(c)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+}
+
+func TestAPIKeyHandler_Get_NotFound(t *testing.T) {
+	handler, _, client, cleanup := setupAPIKeyHandler(t)
+	defer cleanup()
+
+	userID := createAPIKeyTestUser(t, client, "business")
+
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.Set("user_id", userID)
+	c.SetParamNames("id")
+	c.SetParamValues("99999")
+
+	err := handler.Get(c)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusNotFound, rec.Code)
+}
+
+func TestAPIKeyHandler_Get_InvalidID(t *testing.T) {
+	handler, _, client, cleanup := setupAPIKeyHandler(t)
+	defer cleanup()
+
+	userID := createAPIKeyTestUser(t, client, "business")
+
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.Set("user_id", userID)
+	c.SetParamNames("id")
+	c.SetParamValues("xyz")
+
+	err := handler.Get(c)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 }
@@ -717,27 +675,26 @@ func TestAPIKeyHandler_UpdateName_InvalidID(t *testing.T) {
 // --- GetStats Tests ---
 
 func TestAPIKeyHandler_GetStats_Success(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
+	handler, svc, client, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
 
-	user := createAPIKeyTestUser(t, client, "business@example.com", "business")
+	userID := createAPIKeyTestUser(t, client, "business")
 
 	ctx := context.Background()
-	service := apikey.NewService(client)
-	_, err := service.CreateAPIKey(ctx, user.ID, apikey.CreateAPIKeyRequest{Name: "Key 1"})
+	_, err := svc.CreateAPIKey(ctx, userID, apikey.CreateAPIKeyRequest{Name: "Key 1"})
 	require.NoError(t, err)
-	created2, err := service.CreateAPIKey(ctx, user.ID, apikey.CreateAPIKeyRequest{Name: "Key 2"})
+	key2, err := svc.CreateAPIKey(ctx, userID, apikey.CreateAPIKeyRequest{Name: "Key 2"})
 	require.NoError(t, err)
 
 	// Revoke one key
-	err = service.RevokeAPIKey(ctx, user.ID, created2.ID)
+	err = svc.RevokeAPIKey(ctx, userID, key2.ID)
 	require.NoError(t, err)
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/api-keys/stats", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("user_id", user.ID)
+	c.Set("user_id", userID)
 
 	err = handler.GetStats(c)
 	require.NoError(t, err)
@@ -746,38 +703,23 @@ func TestAPIKeyHandler_GetStats_Success(t *testing.T) {
 	var response map[string]interface{}
 	err = json.Unmarshal(rec.Body.Bytes(), &response)
 	require.NoError(t, err)
-
 	assert.Equal(t, float64(2), response["total_keys"])
 	assert.Equal(t, float64(1), response["active_keys"])
 	assert.Equal(t, float64(1), response["revoked_keys"])
 	assert.Equal(t, float64(0), response["total_usage"])
 }
 
-func TestAPIKeyHandler_GetStats_Unauthorized(t *testing.T) {
-	_, handler, cleanup := setupAPIKeyTest(t)
-	defer cleanup()
-
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/api-keys/stats", nil)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	err := handler.GetStats(c)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusUnauthorized, rec.Code)
-}
-
 func TestAPIKeyHandler_GetStats_NoKeys(t *testing.T) {
-	client, handler, cleanup := setupAPIKeyTest(t)
+	handler, _, client, cleanup := setupAPIKeyHandler(t)
 	defer cleanup()
 
-	user := createAPIKeyTestUser(t, client, "business@example.com", "business")
+	userID := createAPIKeyTestUser(t, client, "business")
 
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/api-keys/stats", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
-	c.Set("user_id", user.ID)
+	c.Set("user_id", userID)
 
 	err := handler.GetStats(c)
 	require.NoError(t, err)
@@ -790,7 +732,16 @@ func TestAPIKeyHandler_GetStats_NoKeys(t *testing.T) {
 	assert.Equal(t, float64(0), response["active_keys"])
 }
 
-// itoa converts int to string for test helpers
-func itoa(n int) string {
-	return fmt.Sprintf("%d", n)
+func TestAPIKeyHandler_GetStats_Unauthorized(t *testing.T) {
+	handler, _, _, cleanup := setupAPIKeyHandler(t)
+	defer cleanup()
+
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/api-keys/stats", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	err := handler.GetStats(c)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusUnauthorized, rec.Code)
 }

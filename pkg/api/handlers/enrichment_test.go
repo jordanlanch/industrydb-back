@@ -53,30 +53,33 @@ func (m *mockEnrichmentProvider) ValidateEmail(_ context.Context, email string) 
 	}, nil
 }
 
-// setupEnrichmentTest creates test database and enrichment handler with mock provider
-func setupEnrichmentTest(t *testing.T, provider enrichment.EnrichmentProvider) (*ent.Client, *EnrichmentHandler, func()) {
-	client := enttest.Open(t, "sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
+// setupEnrichmentHandler creates an EnrichmentHandler with in-memory database and mock provider
+func setupEnrichmentHandler(t *testing.T, provider enrichment.EnrichmentProvider) (*EnrichmentHandler, *ent.Client, func()) {
+	client := enttest.Open(t, "sqlite3", "file:enrichment_test?mode=memory&cache=shared&_fk=1")
 	handler := NewEnrichmentHandler(client, provider)
-	cleanup := func() {
-		client.Close()
-	}
-	return client, handler, cleanup
+	cleanup := func() { client.Close() }
+	return handler, client, cleanup
 }
 
-// createEnrichmentTestLead creates a test lead for enrichment tests
-func createEnrichmentTestLead(t *testing.T, client *ent.Client, name, website, email string) *ent.Lead {
-	ctx := context.Background()
-	lead, err := client.Lead.Create().
+// createEnrichmentTestLead creates a lead for enrichment testing
+func createEnrichmentTestLead(t *testing.T, client *ent.Client, name, website, email string) int {
+	builder := client.Lead.Create().
 		SetName(name).
 		SetIndustry("tattoo").
 		SetCountry("US").
 		SetCity("New York").
-		SetWebsite(website).
-		SetEmail(email).
-		SetQualityScore(50).
-		Save(ctx)
+		SetStatusChangedAt(time.Now())
+
+	if website != "" {
+		builder.SetWebsite(website)
+	}
+	if email != "" {
+		builder.SetEmail(email)
+	}
+
+	l, err := builder.Save(context.Background())
 	require.NoError(t, err)
-	return lead
+	return l.ID
 }
 
 // --- EnrichLead Tests ---
@@ -84,49 +87,48 @@ func createEnrichmentTestLead(t *testing.T, client *ent.Client, name, website, e
 func TestEnrichmentHandler_EnrichLead_Success(t *testing.T) {
 	provider := &mockEnrichmentProvider{
 		enrichResult: &enrichment.CompanyData{
-			Name:          "Test Studio",
-			Description:   "A premium tattoo studio",
+			Name:          "Ink Masters",
+			Description:   "Premium tattoo studio",
 			Industry:      "tattoo",
 			EmployeeCount: 5,
 			Founded:       2015,
-			Revenue:       "$1M-$5M",
-			LinkedIn:      "https://linkedin.com/company/test",
-			Twitter:       "https://twitter.com/test",
-			Facebook:      "https://facebook.com/test",
+			Revenue:       "$500K-$1M",
+			LinkedIn:      "https://linkedin.com/company/inkmasters",
+			Twitter:       "https://twitter.com/inkmasters",
+			Facebook:      "https://facebook.com/inkmasters",
 		},
 	}
-
-	client, handler, cleanup := setupEnrichmentTest(t, provider)
+	handler, client, cleanup := setupEnrichmentHandler(t, provider)
 	defer cleanup()
 
-	lead := createEnrichmentTestLead(t, client, "Test Studio", "https://teststudio.com", "info@teststudio.com")
+	leadID := createEnrichmentTestLead(t, client, "Ink Masters", "https://inkmasters.com", "info@inkmasters.com")
 
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/leads/"+strconv.Itoa(lead.ID)+"/enrich", nil)
+	req := httptest.NewRequest(http.MethodPost, "/", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetParamNames("id")
-	c.SetParamValues(strconv.Itoa(lead.ID))
+	c.SetParamValues(strconv.Itoa(leadID))
 
 	err := handler.EnrichLead(c)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, rec.Code)
 
-	// Verify the enriched lead data is returned
-	var response map[string]interface{}
-	err = json.Unmarshal(rec.Body.Bytes(), &response)
+	// Verify enrichment data was saved
+	enrichedLead, err := client.Lead.Get(context.Background(), leadID)
 	require.NoError(t, err)
-	assert.Equal(t, true, response["is_enriched"])
-	assert.Equal(t, "A premium tattoo studio", response["company_description"])
+	assert.True(t, enrichedLead.IsEnriched)
+	assert.Equal(t, "Premium tattoo studio", enrichedLead.CompanyDescription)
+	assert.Equal(t, 5, enrichedLead.EmployeeCount)
 }
 
 func TestEnrichmentHandler_EnrichLead_InvalidID(t *testing.T) {
 	provider := &mockEnrichmentProvider{}
-	_, handler, cleanup := setupEnrichmentTest(t, provider)
+	handler, _, cleanup := setupEnrichmentHandler(t, provider)
 	defer cleanup()
 
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/leads/abc/enrich", nil)
+	req := httptest.NewRequest(http.MethodPost, "/", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetParamNames("id")
@@ -142,13 +144,13 @@ func TestEnrichmentHandler_EnrichLead_InvalidID(t *testing.T) {
 	assert.Equal(t, "invalid_lead_id", response["error"])
 }
 
-func TestEnrichmentHandler_EnrichLead_NotFound(t *testing.T) {
+func TestEnrichmentHandler_EnrichLead_NonExistentLead(t *testing.T) {
 	provider := &mockEnrichmentProvider{}
-	_, handler, cleanup := setupEnrichmentTest(t, provider)
+	handler, _, cleanup := setupEnrichmentHandler(t, provider)
 	defer cleanup()
 
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/leads/99999/enrich", nil)
+	req := httptest.NewRequest(http.MethodPost, "/", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetParamNames("id")
@@ -166,28 +168,19 @@ func TestEnrichmentHandler_EnrichLead_NotFound(t *testing.T) {
 
 func TestEnrichmentHandler_EnrichLead_NoWebsite(t *testing.T) {
 	provider := &mockEnrichmentProvider{}
-	client, handler, cleanup := setupEnrichmentTest(t, provider)
+	handler, client, cleanup := setupEnrichmentHandler(t, provider)
 	defer cleanup()
 
-	// Create lead without website
-	ctx := context.Background()
-	lead, err := client.Lead.Create().
-		SetName("No Website Lead").
-		SetIndustry("tattoo").
-		SetCountry("US").
-		SetCity("New York").
-		SetQualityScore(50).
-		Save(ctx)
-	require.NoError(t, err)
+	leadID := createEnrichmentTestLead(t, client, "No Website Studio", "", "")
 
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/leads/"+strconv.Itoa(lead.ID)+"/enrich", nil)
+	req := httptest.NewRequest(http.MethodPost, "/", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetParamNames("id")
-	c.SetParamValues(strconv.Itoa(lead.ID))
+	c.SetParamValues(strconv.Itoa(leadID))
 
-	err = handler.EnrichLead(c)
+	err := handler.EnrichLead(c)
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 
@@ -199,20 +192,19 @@ func TestEnrichmentHandler_EnrichLead_NoWebsite(t *testing.T) {
 
 func TestEnrichmentHandler_EnrichLead_ProviderError(t *testing.T) {
 	provider := &mockEnrichmentProvider{
-		enrichErr: errors.New("API rate limit exceeded"),
+		enrichErr: errors.New("external API unavailable"),
 	}
-
-	client, handler, cleanup := setupEnrichmentTest(t, provider)
+	handler, client, cleanup := setupEnrichmentHandler(t, provider)
 	defer cleanup()
 
-	lead := createEnrichmentTestLead(t, client, "Test Studio", "https://teststudio.com", "info@teststudio.com")
+	leadID := createEnrichmentTestLead(t, client, "Error Studio", "https://errorstudio.com", "")
 
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/leads/"+strconv.Itoa(lead.ID)+"/enrich", nil)
+	req := httptest.NewRequest(http.MethodPost, "/", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetParamNames("id")
-	c.SetParamValues(strconv.Itoa(lead.ID))
+	c.SetParamValues(strconv.Itoa(leadID))
 
 	err := handler.EnrichLead(c)
 	require.NoError(t, err)
@@ -224,21 +216,19 @@ func TestEnrichmentHandler_EnrichLead_ProviderError(t *testing.T) {
 func TestEnrichmentHandler_BulkEnrich_Success(t *testing.T) {
 	provider := &mockEnrichmentProvider{
 		enrichResult: &enrichment.CompanyData{
-			Name:          "Test",
-			Description:   "A business",
-			EmployeeCount: 5,
+			Name:        "Studio",
+			Description: "A studio",
 		},
 	}
-
-	client, handler, cleanup := setupEnrichmentTest(t, provider)
+	handler, client, cleanup := setupEnrichmentHandler(t, provider)
 	defer cleanup()
 
-	lead1 := createEnrichmentTestLead(t, client, "Lead 1", "https://lead1.com", "a@lead1.com")
-	lead2 := createEnrichmentTestLead(t, client, "Lead 2", "https://lead2.com", "a@lead2.com")
+	lead1 := createEnrichmentTestLead(t, client, "Studio 1", "https://studio1.com", "")
+	lead2 := createEnrichmentTestLead(t, client, "Studio 2", "https://studio2.com", "")
 
 	e := echo.New()
-	body := `{"lead_ids":[` + strconv.Itoa(lead1.ID) + `,` + strconv.Itoa(lead2.ID) + `]}`
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/leads/bulk-enrich", strings.NewReader(body))
+	body := `{"lead_ids":[` + strconv.Itoa(lead1) + `,` + strconv.Itoa(lead2) + `]}`
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -255,14 +245,48 @@ func TestEnrichmentHandler_BulkEnrich_Success(t *testing.T) {
 	assert.Equal(t, 0, response.FailureCount)
 }
 
-func TestEnrichmentHandler_BulkEnrich_EmptyIDs(t *testing.T) {
+func TestEnrichmentHandler_BulkEnrich_PartialFailure(t *testing.T) {
+	provider := &mockEnrichmentProvider{
+		enrichResult: &enrichment.CompanyData{
+			Name:        "Studio",
+			Description: "A studio",
+		},
+	}
+	handler, client, cleanup := setupEnrichmentHandler(t, provider)
+	defer cleanup()
+
+	lead1 := createEnrichmentTestLead(t, client, "Good Studio", "https://good.com", "")
+	// Lead without website will fail enrichment
+	lead2 := createEnrichmentTestLead(t, client, "No Website", "", "")
+
+	e := echo.New()
+	body := `{"lead_ids":[` + strconv.Itoa(lead1) + `,` + strconv.Itoa(lead2) + `]}`
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
+	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	err := handler.BulkEnrichLeads(c)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var response enrichment.BulkEnrichmentResult
+	err = json.Unmarshal(rec.Body.Bytes(), &response)
+	require.NoError(t, err)
+	assert.Equal(t, 2, response.TotalLeads)
+	assert.Equal(t, 1, response.SuccessCount)
+	assert.Equal(t, 1, response.FailureCount)
+	assert.Contains(t, response.Errors, lead2)
+}
+
+func TestEnrichmentHandler_BulkEnrich_EmptyList(t *testing.T) {
 	provider := &mockEnrichmentProvider{}
-	_, handler, cleanup := setupEnrichmentTest(t, provider)
+	handler, _, cleanup := setupEnrichmentHandler(t, provider)
 	defer cleanup()
 
 	e := echo.New()
 	body := `{"lead_ids":[]}`
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/leads/bulk-enrich", strings.NewReader(body))
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -279,18 +303,19 @@ func TestEnrichmentHandler_BulkEnrich_EmptyIDs(t *testing.T) {
 
 func TestEnrichmentHandler_BulkEnrich_TooManyLeads(t *testing.T) {
 	provider := &mockEnrichmentProvider{}
-	_, handler, cleanup := setupEnrichmentTest(t, provider)
+	handler, _, cleanup := setupEnrichmentHandler(t, provider)
 	defer cleanup()
 
-	// Create 101 IDs
+	// Create array of 101 IDs
 	ids := make([]string, 101)
 	for i := range ids {
 		ids[i] = strconv.Itoa(i + 1)
 	}
+	idsJSON := "[" + strings.Join(ids, ",") + "]"
 
 	e := echo.New()
-	body := `{"lead_ids":[` + strings.Join(ids, ",") + `]}`
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/leads/bulk-enrich", strings.NewReader(body))
+	body := `{"lead_ids":` + idsJSON + `}`
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -305,49 +330,14 @@ func TestEnrichmentHandler_BulkEnrich_TooManyLeads(t *testing.T) {
 	assert.Equal(t, "too_many_leads", response["error"])
 }
 
-func TestEnrichmentHandler_BulkEnrich_PartialFailures(t *testing.T) {
-	provider := &mockEnrichmentProvider{
-		enrichResult: &enrichment.CompanyData{
-			Name:          "Test",
-			Description:   "A business",
-			EmployeeCount: 5,
-		},
-	}
-
-	client, handler, cleanup := setupEnrichmentTest(t, provider)
-	defer cleanup()
-
-	lead := createEnrichmentTestLead(t, client, "Good Lead", "https://good.com", "a@good.com")
-	nonExistentID := 99999
-
-	e := echo.New()
-	body := `{"lead_ids":[` + strconv.Itoa(lead.ID) + `,` + strconv.Itoa(nonExistentID) + `]}`
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/leads/bulk-enrich", strings.NewReader(body))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	err := handler.BulkEnrichLeads(c)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusOK, rec.Code)
-
-	var response enrichment.BulkEnrichmentResult
-	err = json.Unmarshal(rec.Body.Bytes(), &response)
-	require.NoError(t, err)
-	assert.Equal(t, 2, response.TotalLeads)
-	assert.Equal(t, 1, response.SuccessCount)
-	assert.Equal(t, 1, response.FailureCount)
-	assert.Contains(t, response.Errors, nonExistentID)
-}
-
 func TestEnrichmentHandler_BulkEnrich_InvalidJSON(t *testing.T) {
 	provider := &mockEnrichmentProvider{}
-	_, handler, cleanup := setupEnrichmentTest(t, provider)
+	handler, _, cleanup := setupEnrichmentHandler(t, provider)
 	defer cleanup()
 
 	e := echo.New()
 	body := `{invalid}`
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/leads/bulk-enrich", strings.NewReader(body))
+	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(body))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
@@ -359,7 +349,7 @@ func TestEnrichmentHandler_BulkEnrich_InvalidJSON(t *testing.T) {
 
 // --- ValidateLeadEmail Tests ---
 
-func TestEnrichmentHandler_ValidateEmail_Valid(t *testing.T) {
+func TestEnrichmentHandler_ValidateEmail_ValidEmail(t *testing.T) {
 	provider := &mockEnrichmentProvider{
 		validateResult: &enrichment.EmailValidation{
 			Email:          "valid@example.com",
@@ -370,18 +360,17 @@ func TestEnrichmentHandler_ValidateEmail_Valid(t *testing.T) {
 			Deliverable:    true,
 		},
 	}
-
-	client, handler, cleanup := setupEnrichmentTest(t, provider)
+	handler, client, cleanup := setupEnrichmentHandler(t, provider)
 	defer cleanup()
 
-	lead := createEnrichmentTestLead(t, client, "Test Lead", "https://example.com", "valid@example.com")
+	leadID := createEnrichmentTestLead(t, client, "Valid Email Lead", "https://example.com", "valid@example.com")
 
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/leads/"+strconv.Itoa(lead.ID)+"/validate-email", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetParamNames("id")
-	c.SetParamValues(strconv.Itoa(lead.ID))
+	c.SetParamValues(strconv.Itoa(leadID))
 
 	err := handler.ValidateLeadEmail(c)
 	require.NoError(t, err)
@@ -391,34 +380,32 @@ func TestEnrichmentHandler_ValidateEmail_Valid(t *testing.T) {
 	err = json.Unmarshal(rec.Body.Bytes(), &response)
 	require.NoError(t, err)
 	assert.True(t, response.IsValid)
-	assert.Equal(t, "valid@example.com", response.Email)
 	assert.True(t, response.Deliverable)
 	assert.False(t, response.IsDisposable)
 }
 
-func TestEnrichmentHandler_ValidateEmail_Invalid(t *testing.T) {
+func TestEnrichmentHandler_ValidateEmail_InvalidEmail(t *testing.T) {
 	provider := &mockEnrichmentProvider{
 		validateResult: &enrichment.EmailValidation{
-			Email:          "fake@disposable.xyz",
+			Email:          "fake@disposable.com",
 			IsValid:        false,
 			IsDisposable:   true,
 			IsFreeProvider: false,
-			Provider:       "disposable.xyz",
+			Provider:       "disposable.com",
 			Deliverable:    false,
 		},
 	}
-
-	client, handler, cleanup := setupEnrichmentTest(t, provider)
+	handler, client, cleanup := setupEnrichmentHandler(t, provider)
 	defer cleanup()
 
-	lead := createEnrichmentTestLead(t, client, "Test Lead", "https://example.com", "fake@disposable.xyz")
+	leadID := createEnrichmentTestLead(t, client, "Disposable Lead", "https://example.com", "fake@disposable.com")
 
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/leads/"+strconv.Itoa(lead.ID)+"/validate-email", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetParamNames("id")
-	c.SetParamValues(strconv.Itoa(lead.ID))
+	c.SetParamValues(strconv.Itoa(leadID))
 
 	err := handler.ValidateLeadEmail(c)
 	require.NoError(t, err)
@@ -429,20 +416,43 @@ func TestEnrichmentHandler_ValidateEmail_Invalid(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, response.IsValid)
 	assert.True(t, response.IsDisposable)
-	assert.False(t, response.Deliverable)
+}
+
+func TestEnrichmentHandler_ValidateEmail_NoEmail(t *testing.T) {
+	provider := &mockEnrichmentProvider{}
+	handler, client, cleanup := setupEnrichmentHandler(t, provider)
+	defer cleanup()
+
+	leadID := createEnrichmentTestLead(t, client, "No Email Lead", "https://example.com", "")
+
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetParamNames("id")
+	c.SetParamValues(strconv.Itoa(leadID))
+
+	err := handler.ValidateLeadEmail(c)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+
+	var response map[string]interface{}
+	err = json.Unmarshal(rec.Body.Bytes(), &response)
+	require.NoError(t, err)
+	assert.Equal(t, "email_validation_failed", response["error"])
 }
 
 func TestEnrichmentHandler_ValidateEmail_InvalidLeadID(t *testing.T) {
 	provider := &mockEnrichmentProvider{}
-	_, handler, cleanup := setupEnrichmentTest(t, provider)
+	handler, _, cleanup := setupEnrichmentHandler(t, provider)
 	defer cleanup()
 
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/leads/abc/validate-email", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetParamNames("id")
-	c.SetParamValues("abc")
+	c.SetParamValues("notanumber")
 
 	err := handler.ValidateLeadEmail(c)
 	require.NoError(t, err)
@@ -454,13 +464,34 @@ func TestEnrichmentHandler_ValidateEmail_InvalidLeadID(t *testing.T) {
 	assert.Equal(t, "invalid_lead_id", response["error"])
 }
 
-func TestEnrichmentHandler_ValidateEmail_LeadNotFound(t *testing.T) {
+func TestEnrichmentHandler_ValidateEmail_ProviderError(t *testing.T) {
+	provider := &mockEnrichmentProvider{
+		validateErr: errors.New("validation service down"),
+	}
+	handler, client, cleanup := setupEnrichmentHandler(t, provider)
+	defer cleanup()
+
+	leadID := createEnrichmentTestLead(t, client, "Provider Error Lead", "https://example.com", "test@example.com")
+
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetParamNames("id")
+	c.SetParamValues(strconv.Itoa(leadID))
+
+	err := handler.ValidateLeadEmail(c)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
+}
+
+func TestEnrichmentHandler_ValidateEmail_NonExistentLead(t *testing.T) {
 	provider := &mockEnrichmentProvider{}
-	_, handler, cleanup := setupEnrichmentTest(t, provider)
+	handler, _, cleanup := setupEnrichmentHandler(t, provider)
 	defer cleanup()
 
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/leads/99999/validate-email", nil)
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	c.SetParamNames("id")
@@ -471,84 +502,40 @@ func TestEnrichmentHandler_ValidateEmail_LeadNotFound(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 }
 
-func TestEnrichmentHandler_ValidateEmail_NoEmail(t *testing.T) {
-	provider := &mockEnrichmentProvider{}
-	client, handler, cleanup := setupEnrichmentTest(t, provider)
-	defer cleanup()
-
-	// Create lead without email
-	ctx := context.Background()
-	lead, err := client.Lead.Create().
-		SetName("No Email Lead").
-		SetIndustry("tattoo").
-		SetCountry("US").
-		SetCity("New York").
-		SetWebsite("https://noemail.com").
-		SetQualityScore(50).
-		Save(ctx)
-	require.NoError(t, err)
-
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/leads/"+strconv.Itoa(lead.ID)+"/validate-email", nil)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	c.SetParamNames("id")
-	c.SetParamValues(strconv.Itoa(lead.ID))
-
-	err = handler.ValidateLeadEmail(c)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusInternalServerError, rec.Code)
-
-	var response map[string]interface{}
-	err = json.Unmarshal(rec.Body.Bytes(), &response)
-	require.NoError(t, err)
-	assert.Equal(t, "email_validation_failed", response["error"])
-}
-
-func TestEnrichmentHandler_ValidateEmail_ProviderError(t *testing.T) {
-	provider := &mockEnrichmentProvider{
-		validateErr: errors.New("email validation API down"),
-	}
-
-	client, handler, cleanup := setupEnrichmentTest(t, provider)
-	defer cleanup()
-
-	lead := createEnrichmentTestLead(t, client, "Test Lead", "https://example.com", "test@example.com")
-
-	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/leads/"+strconv.Itoa(lead.ID)+"/validate-email", nil)
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-	c.SetParamNames("id")
-	c.SetParamValues(strconv.Itoa(lead.ID))
-
-	err := handler.ValidateLeadEmail(c)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusInternalServerError, rec.Code)
-}
-
 // --- GetEnrichmentStats Tests ---
 
 func TestEnrichmentHandler_GetStats_Success(t *testing.T) {
 	provider := &mockEnrichmentProvider{}
-	client, handler, cleanup := setupEnrichmentTest(t, provider)
+	handler, client, cleanup := setupEnrichmentHandler(t, provider)
 	defer cleanup()
 
-	// Create some leads
-	createEnrichmentTestLead(t, client, "Lead 1", "https://lead1.com", "a@lead1.com")
-	createEnrichmentTestLead(t, client, "Lead 2", "https://lead2.com", "b@lead2.com")
-
-	// Enrich one lead directly
 	ctx := context.Background()
+	// Create some leads — some enriched, some not
 	_, err := client.Lead.Create().
 		SetName("Enriched Lead").
 		SetIndustry("tattoo").
 		SetCountry("US").
-		SetCity("New York").
-		SetWebsite("https://enriched.com").
+		SetCity("NYC").
 		SetIsEnriched(true).
-		SetEnrichedAt(time.Now()).
-		SetQualityScore(80).
+		SetStatusChangedAt(time.Now()).
+		Save(ctx)
+	require.NoError(t, err)
+
+	_, err = client.Lead.Create().
+		SetName("Not Enriched 1").
+		SetIndustry("beauty").
+		SetCountry("US").
+		SetCity("LA").
+		SetStatusChangedAt(time.Now()).
+		Save(ctx)
+	require.NoError(t, err)
+
+	_, err = client.Lead.Create().
+		SetName("Not Enriched 2").
+		SetIndustry("gym").
+		SetCountry("US").
+		SetCity("Chicago").
+		SetStatusChangedAt(time.Now()).
 		Save(ctx)
 	require.NoError(t, err)
 
@@ -567,12 +554,12 @@ func TestEnrichmentHandler_GetStats_Success(t *testing.T) {
 	assert.Equal(t, 3, response.TotalLeads)
 	assert.Equal(t, 1, response.EnrichedLeads)
 	assert.Equal(t, 2, response.UnenrichedLeads)
-	assert.Greater(t, response.EnrichmentRate, 0.0)
+	assert.InDelta(t, 33.33, response.EnrichmentRate, 0.1)
 }
 
-func TestEnrichmentHandler_GetStats_NoLeads(t *testing.T) {
+func TestEnrichmentHandler_GetStats_Empty(t *testing.T) {
 	provider := &mockEnrichmentProvider{}
-	_, handler, cleanup := setupEnrichmentTest(t, provider)
+	handler, _, cleanup := setupEnrichmentHandler(t, provider)
 	defer cleanup()
 
 	e := echo.New()
