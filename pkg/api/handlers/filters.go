@@ -47,8 +47,14 @@ func removeAccents(s string) string {
 	return norm.NFC.String(result)
 }
 
-// GetCountries returns list of unique countries with lead data
-// GET /api/v1/leads/filters/countries
+// GetCountries godoc
+// @Summary Get list of countries
+// @Description Returns a sorted list of unique countries that have lead data in the database
+// @Tags Filters
+// @Produce json
+// @Success 200 {object} map[string]interface{} "List of countries with total count"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /leads/filters/countries [get]
 func (h *FilterHandler) GetCountries(c echo.Context) error {
 	ctx := c.Request().Context()
 
@@ -95,8 +101,15 @@ func normalizeCity(city string) string {
 	return strings.Title(strings.ToLower(noSuffix))
 }
 
-// GetCities returns list of cities, optionally filtered by country
-// GET /api/v1/leads/filters/cities?country=US
+// GetCities godoc
+// @Summary Get list of cities
+// @Description Returns a sorted, deduplicated list of cities with lead data. Optionally filtered by country. City names are normalized (accents removed, title-cased).
+// @Tags Filters
+// @Produce json
+// @Param country query string false "Country code to filter cities (e.g., US, GB, DE)"
+// @Success 200 {object} map[string]interface{} "List of cities with total count and applied country filter"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /leads/filters/cities [get]
 func (h *FilterHandler) GetCities(c echo.Context) error {
 	ctx := c.Request().Context()
 	country := c.QueryParam("country")

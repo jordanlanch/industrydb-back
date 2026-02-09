@@ -22,8 +22,18 @@ func NewJobsHandler(monitor *jobs.DataMonitor) *JobsHandler {
 	}
 }
 
-// DetectLowDataHandler triggers detection of industries with low data
-// POST /api/v1/admin/jobs/detect-low-data
+// DetectLowDataHandler godoc
+// @Summary Detect industries with low data
+// @Description Detects industry-country combinations with fewer leads than the specified threshold. Requires admin role.
+// @Tags Admin Jobs
+// @Produce json
+// @Security BearerAuth
+// @Param threshold query integer false "Minimum lead count threshold" default(100)
+// @Success 200 {object} map[string]interface{} "Low data industry-country pairs with threshold and count"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 403 {object} map[string]string "Forbidden - admin role required"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /admin/jobs/detect-low-data [post]
 func (h *JobsHandler) DetectLowDataHandler(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(c.Request().Context(), 30*time.Second)
 	defer cancel()
@@ -52,8 +62,17 @@ func (h *JobsHandler) DetectLowDataHandler(c echo.Context) error {
 	})
 }
 
-// DetectMissingHandler triggers detection of missing combinations
-// POST /api/v1/admin/jobs/detect-missing
+// DetectMissingHandler godoc
+// @Summary Detect missing industry-country combinations
+// @Description Detects industry-country combinations that have no data at all. Requires admin role.
+// @Tags Admin Jobs
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{} "Missing industry-country pairs with count"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 403 {object} map[string]string "Forbidden - admin role required"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /admin/jobs/detect-missing [post]
 func (h *JobsHandler) DetectMissingHandler(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(c.Request().Context(), 30*time.Second)
 	defer cancel()
@@ -72,8 +91,20 @@ func (h *JobsHandler) DetectMissingHandler(c echo.Context) error {
 	})
 }
 
-// TriggerFetchHandler triggers a manual data fetch
-// POST /api/v1/admin/jobs/trigger-fetch
+// TriggerFetchHandler godoc
+// @Summary Trigger manual data fetch
+// @Description Triggers a manual data acquisition fetch for a specific industry and country from OpenStreetMap. Requires admin role.
+// @Tags Admin Jobs
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body object true "Fetch configuration" SchemaExample({"industry": "tattoo", "country": "US", "limit": 1000})
+// @Success 202 {object} map[string]interface{} "Data fetch triggered"
+// @Failure 400 {object} map[string]interface{} "Invalid request body"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 403 {object} map[string]string "Forbidden - admin role required"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /admin/jobs/trigger-fetch [post]
 func (h *JobsHandler) TriggerFetchHandler(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(c.Request().Context(), 5*time.Second)
 	defer cancel()
@@ -111,8 +142,20 @@ func (h *JobsHandler) TriggerFetchHandler(c echo.Context) error {
 	})
 }
 
-// TriggerBatchFetchHandler triggers batch data fetch
-// POST /api/v1/admin/jobs/trigger-batch-fetch
+// TriggerBatchFetchHandler godoc
+// @Summary Trigger batch data fetch
+// @Description Triggers data acquisition for multiple industry-country pairs concurrently. Requires admin role.
+// @Tags Admin Jobs
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body object true "Batch fetch configuration with pairs, limit, and concurrency"
+// @Success 202 {object} map[string]interface{} "Batch fetch triggered with count and configuration"
+// @Failure 400 {object} map[string]interface{} "Invalid request body"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 403 {object} map[string]string "Forbidden - admin role required"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /admin/jobs/trigger-batch-fetch [post]
 func (h *JobsHandler) TriggerBatchFetchHandler(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(c.Request().Context(), 10*time.Second)
 	defer cancel()
@@ -153,8 +196,17 @@ func (h *JobsHandler) TriggerBatchFetchHandler(c echo.Context) error {
 	})
 }
 
-// GetPopulationStatsHandler returns data population statistics
-// GET /api/v1/admin/jobs/stats
+// GetPopulationStatsHandler godoc
+// @Summary Get data population statistics
+// @Description Returns statistics about data population across industries and countries. Requires admin role.
+// @Tags Admin Jobs
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{} "Population statistics"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 403 {object} map[string]string "Forbidden - admin role required"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /admin/jobs/stats [get]
 func (h *JobsHandler) GetPopulationStatsHandler(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(c.Request().Context(), 30*time.Second)
 	defer cancel()
@@ -170,8 +222,21 @@ func (h *JobsHandler) GetPopulationStatsHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, stats)
 }
 
-// AutoPopulateHandler triggers automatic population workflow
-// POST /api/v1/admin/jobs/auto-populate
+// AutoPopulateHandler godoc
+// @Summary Auto-populate low data industries
+// @Description Detects industries with low data and automatically triggers data fetches to populate them. Optionally includes missing combinations. Requires admin role.
+// @Tags Admin Jobs
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body object true "Auto-populate configuration" SchemaExample({"threshold": 100, "count": 10, "max_concurrent": 3, "limit": 1000, "include_missing": false})
+// @Success 202 {object} map[string]interface{} "Auto-population triggered with pairs and configuration"
+// @Success 200 {object} map[string]interface{} "No industries need population"
+// @Failure 400 {object} map[string]interface{} "Invalid request body"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 403 {object} map[string]string "Forbidden - admin role required"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /admin/jobs/auto-populate [post]
 func (h *JobsHandler) AutoPopulateHandler(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(c.Request().Context(), 5*time.Minute)
 	defer cancel()

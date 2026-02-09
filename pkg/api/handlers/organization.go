@@ -27,7 +27,20 @@ func NewOrganizationHandler(orgService *organization.Service) *OrganizationHandl
 	}
 }
 
-// Create handles creating a new organization
+// Create godoc
+// @Summary Create a new organization
+// @Description Create a new organization. The authenticated user becomes the owner.
+// @Tags Organizations
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body organization.CreateOrganizationRequest true "Organization details"
+// @Success 201 {object} map[string]interface{} "Organization created"
+// @Failure 400 {object} models.ErrorResponse "Invalid request"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 409 {object} models.ErrorResponse "Slug already taken"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /organizations [post]
 func (h *OrganizationHandler) Create(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
@@ -68,7 +81,20 @@ func (h *OrganizationHandler) Create(c echo.Context) error {
 	return c.JSON(http.StatusCreated, org)
 }
 
-// Get handles retrieving a single organization
+// Get godoc
+// @Summary Get organization details
+// @Description Get details of a specific organization. Requires membership in the organization.
+// @Tags Organizations
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Organization ID"
+// @Success 200 {object} map[string]interface{} "Organization details"
+// @Failure 400 {object} models.ErrorResponse "Invalid ID"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 403 {object} models.ErrorResponse "Not a member"
+// @Failure 404 {object} models.ErrorResponse "Organization not found"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /organizations/{id} [get]
 func (h *OrganizationHandler) Get(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
@@ -117,7 +143,16 @@ func (h *OrganizationHandler) Get(c echo.Context) error {
 	return c.JSON(http.StatusOK, org)
 }
 
-// List handles listing all organizations for the current user
+// List godoc
+// @Summary List user's organizations
+// @Description List all organizations the authenticated user belongs to
+// @Tags Organizations
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{} "List of organizations with total count"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /organizations [get]
 func (h *OrganizationHandler) List(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
@@ -144,7 +179,22 @@ func (h *OrganizationHandler) List(c echo.Context) error {
 	})
 }
 
-// Update handles updating an organization
+// Update godoc
+// @Summary Update organization
+// @Description Update organization name or slug. Requires owner or admin role in the organization.
+// @Tags Organizations
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Organization ID"
+// @Param request body organization.UpdateOrganizationRequest true "Updated organization data"
+// @Success 200 {object} map[string]interface{} "Updated organization"
+// @Failure 400 {object} models.ErrorResponse "Invalid ID or request"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 403 {object} models.ErrorResponse "Forbidden - owner or admin required"
+// @Failure 404 {object} models.ErrorResponse "Organization not found"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /organizations/{id} [patch]
 func (h *OrganizationHandler) Update(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
@@ -204,7 +254,20 @@ func (h *OrganizationHandler) Update(c echo.Context) error {
 	return c.JSON(http.StatusOK, org)
 }
 
-// Delete handles deleting an organization
+// Delete godoc
+// @Summary Delete organization
+// @Description Permanently delete an organization and all its members. Requires owner role.
+// @Tags Organizations
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Organization ID"
+// @Success 200 {object} map[string]string "Organization deleted successfully"
+// @Failure 400 {object} models.ErrorResponse "Invalid ID"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 403 {object} models.ErrorResponse "Forbidden - owner required"
+// @Failure 404 {object} models.ErrorResponse "Organization not found"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /organizations/{id} [delete]
 func (h *OrganizationHandler) Delete(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
@@ -254,7 +317,19 @@ func (h *OrganizationHandler) Delete(c echo.Context) error {
 	})
 }
 
-// ListMembers handles listing all members of an organization
+// ListMembers godoc
+// @Summary List organization members
+// @Description List all members of an organization with their roles. Requires membership in the organization.
+// @Tags Organizations
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Organization ID"
+// @Success 200 {object} map[string]interface{} "List of members with total count"
+// @Failure 400 {object} models.ErrorResponse "Invalid ID"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 403 {object} models.ErrorResponse "Not a member"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /organizations/{id}/members [get]
 func (h *OrganizationHandler) ListMembers(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
@@ -303,7 +378,23 @@ func (h *OrganizationHandler) ListMembers(c echo.Context) error {
 	})
 }
 
-// InviteMember handles inviting a new member to an organization
+// InviteMember godoc
+// @Summary Invite member to organization
+// @Description Invite a user to join the organization by email. Requires owner or admin role.
+// @Tags Organizations
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Organization ID"
+// @Param request body organization.InviteMemberRequest true "Invitation details with email and role"
+// @Success 201 {object} map[string]interface{} "Invitation sent with member details"
+// @Failure 400 {object} models.ErrorResponse "Invalid ID or request"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 403 {object} models.ErrorResponse "Forbidden - owner or admin required"
+// @Failure 404 {object} models.ErrorResponse "User not found"
+// @Failure 409 {object} models.ErrorResponse "User is already a member"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /organizations/{id}/invite [post]
 func (h *OrganizationHandler) InviteMember(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
@@ -375,7 +466,21 @@ func (h *OrganizationHandler) InviteMember(c echo.Context) error {
 	})
 }
 
-// RemoveMember handles removing a member from an organization
+// RemoveMember godoc
+// @Summary Remove member from organization
+// @Description Remove a member from the organization. Cannot remove the owner. Requires owner or admin role.
+// @Tags Organizations
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Organization ID"
+// @Param user_id path int true "User ID of the member to remove"
+// @Success 200 {object} map[string]string "Member removed successfully"
+// @Failure 400 {object} models.ErrorResponse "Invalid ID"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 403 {object} models.ErrorResponse "Forbidden - cannot remove owner"
+// @Failure 404 {object} models.ErrorResponse "Member not found"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /organizations/{id}/members/{user_id} [delete]
 func (h *OrganizationHandler) RemoveMember(c echo.Context) error {
 	// Get user ID from context
 	currentUserID, ok := c.Get("user_id").(int)
@@ -441,7 +546,23 @@ func (h *OrganizationHandler) RemoveMember(c echo.Context) error {
 	})
 }
 
-// UpdateMemberRole handles updating a member's role
+// UpdateMemberRole godoc
+// @Summary Update member role
+// @Description Update a member's role in the organization. Cannot change the owner's role. Requires owner or admin role.
+// @Tags Organizations
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Organization ID"
+// @Param user_id path int true "User ID of the member"
+// @Param request body object true "New role" SchemaExample({"role": "admin"})
+// @Success 200 {object} map[string]string "Member role updated successfully"
+// @Failure 400 {object} models.ErrorResponse "Invalid ID or request"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 403 {object} models.ErrorResponse "Forbidden - cannot change owner role"
+// @Failure 404 {object} models.ErrorResponse "Member not found"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /organizations/{id}/members/{user_id} [patch]
 func (h *OrganizationHandler) UpdateMemberRole(c echo.Context) error {
 	// Get user ID from context
 	currentUserID, ok := c.Get("user_id").(int)
