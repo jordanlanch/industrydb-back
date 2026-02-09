@@ -142,7 +142,9 @@ func (c *Container) initServices() {
 	c.LeadService = leads.NewService(c.DB.Ent, cacheClient)
 	c.AnalyticsService = analytics.NewService(c.DB.Ent)
 	c.IndustriesService = industries.NewService(c.DB.Ent, cacheClient)
-	c.OrganizationService = organization.NewService(c.DB.Ent)
+	c.OrganizationService = organization.NewService(c.DB.Ent,
+		organization.WithEmailSender(c.EmailService, c.Config.FrontendURL),
+	)
 
 	// Export service (needs concrete lead service and analytics service)
 	c.ExportService = export.NewService(

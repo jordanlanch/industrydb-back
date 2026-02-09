@@ -16,15 +16,37 @@ import (
 	"github.com/jordanlanch/industrydb/ent/user"
 )
 
+// InviteEmailSender abstracts invitation email sending for testability
+type InviteEmailSender interface {
+	SendOrganizationInviteEmail(toEmail, toName, orgName, inviterName, acceptURL string) error
+}
+
 // Service handles organization business logic
 type Service struct {
-	db *ent.Client
+	db          *ent.Client
+	emailSender InviteEmailSender
+	baseURL     string
 }
 
 // NewService creates a new organization service
-func NewService(db *ent.Client) *Service {
-	return &Service{
+func NewService(db *ent.Client, opts ...ServiceOption) *Service {
+	s := &Service{
 		db: db,
+	}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
+}
+
+// ServiceOption configures the organization service
+type ServiceOption func(*Service)
+
+// WithEmailSender sets the email sender for invitation emails
+func WithEmailSender(sender InviteEmailSender, baseURL string) ServiceOption {
+	return func(s *Service) {
+		s.emailSender = sender
+		s.baseURL = baseURL
 	}
 }
 
@@ -281,7 +303,23 @@ func (s *Service) InviteMember(ctx context.Context, orgID int, req InviteMemberR
 		return nil, fmt.Errorf("failed to create invitation: %w", err)
 	}
 
-	// TODO: Send invitation email
+	// Send invitation email if email sender is configured
+	if s.emailSender != nil {
+		org, orgErr := s.db.Organization.Get(ctx, orgID)
+		if orgErr == nil {
+			acceptURL := fmt.Sprintf("%s/organizations/%d/accept-invite/%d", s.baseURL, orgID, member.ID)
+			if emailErr := s.emailSender.SendOrganizationInviteEmail(
+				req.Email,
+				invitedUser.Name,
+				org.Name,
+				org.Name, // use org name as inviter context
+				acceptURL,
+			); emailErr != nil {
+				// Log error but don't fail the invitation
+				fmt.Printf("failed to send invitation email to %s: %v\n", req.Email, emailErr)
+			}
+		}
+	}
 
 	return member, nil
 }
