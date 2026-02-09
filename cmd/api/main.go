@@ -192,6 +192,7 @@ func main() {
 
 	e.Use(middleware.Gzip())
 	e.Use(middleware.Secure())
+	e.Use(custommiddleware.SecurityHeaders(custommiddleware.SecurityHeadersConfig{}))
 
 	// Global rate limiting (default 60 req/min)
 	e.Use(globalRateLimiter.RateLimitMiddleware())
