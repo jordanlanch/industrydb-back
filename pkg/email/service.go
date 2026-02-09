@@ -175,6 +175,48 @@ The IndustryDB Team
 	return nil
 }
 
+// SendOrganizationInviteEmail sends an invitation to join an organization
+func (s *Service) SendOrganizationInviteEmail(toEmail, toName, orgName, inviterName, acceptURL string) error {
+	subject := fmt.Sprintf("You've been invited to join %s on IndustryDB", orgName)
+	body := fmt.Sprintf(`
+		<html>
+		<body>
+			<h2>Organization Invitation</h2>
+			<p>Hi %s,</p>
+			<p><strong>%s</strong> has invited you to join <strong>%s</strong> on IndustryDB.</p>
+			<p>Click the button below to accept the invitation:</p>
+			<p><a href="%s" style="background-color: #4A90E2; color: white; padding: 14px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">Accept Invitation</a></p>
+			<p>Or copy and paste this link into your browser:</p>
+			<p><a href="%s">%s</a></p>
+			<p>If you don't want to join, you can safely ignore this email.</p>
+			<p>Thanks,<br>The IndustryDB Team</p>
+		</body>
+		</html>
+	`, toName, inviterName, orgName, acceptURL, acceptURL, acceptURL)
+
+	plainText := fmt.Sprintf(`
+Hi %s,
+
+%s has invited you to join %s on IndustryDB.
+
+Click the link below to accept the invitation:
+
+%s
+
+If you don't want to join, you can safely ignore this email.
+
+Thanks,
+The IndustryDB Team
+	`, toName, inviterName, orgName, acceptURL)
+
+	if s.useSendGrid {
+		return s.sendViaSendGrid(toEmail, toName, subject, body, plainText)
+	}
+
+	// Development mode: log to console
+	return s.logEmailToConsole(toEmail, toName, subject, acceptURL)
+}
+
 // sendViaSendGrid sends email using SendGrid API
 func (s *Service) sendViaSendGrid(toEmail, toName, subject, htmlBody, plainTextBody string) error {
 	from := mail.NewEmail(s.fromName, s.fromEmail)
