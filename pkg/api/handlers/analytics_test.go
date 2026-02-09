@@ -10,6 +10,7 @@ import (
 
 	"github.com/jordanlanch/industrydb/ent"
 	"github.com/jordanlanch/industrydb/ent/enttest"
+	"github.com/jordanlanch/industrydb/ent/user"
 	"github.com/jordanlanch/industrydb/pkg/analytics"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -84,7 +85,7 @@ func createAnalyticsTestUser(t *testing.T, client *ent.Client) *ent.User {
 		SetEmail("analytics-test@example.com").
 		SetPasswordHash("$2a$10$dummyhash").
 		SetName("Analytics Test User").
-		SetSubscriptionTier("free").
+		SetSubscriptionTier(user.SubscriptionTierFree).
 		SetUsageLimit(50).
 		SetUsageCount(0).
 		SetLastResetAt(time.Now()).
