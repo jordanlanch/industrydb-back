@@ -55,7 +55,20 @@ func toSavedSearchResponse(s *ent.SavedSearch) SavedSearchResponse {
 	}
 }
 
-// Create handles POST /api/v1/saved-searches
+// Create godoc
+// @Summary Create a saved search
+// @Description Save a search query with filters for quick access. Name must be unique per user.
+// @Tags Saved Searches
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body CreateSavedSearchRequest true "Saved search name and filters"
+// @Success 201 {object} SavedSearchResponse "Created saved search"
+// @Failure 400 {object} map[string]string "Invalid request or filters"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 409 {object} map[string]string "Saved search with this name already exists"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /saved-searches [post]
 func (h *SavedSearchHandler) Create(c echo.Context) error {
 	// Get user from context
 	user, ok := c.Get("user").(*ent.User)
@@ -92,7 +105,16 @@ func (h *SavedSearchHandler) Create(c echo.Context) error {
 	return c.JSON(http.StatusCreated, toSavedSearchResponse(search))
 }
 
-// List handles GET /api/v1/saved-searches
+// List godoc
+// @Summary List saved searches
+// @Description List all saved searches for the authenticated user
+// @Tags Saved Searches
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{} "List of saved searches with count"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /saved-searches [get]
 func (h *SavedSearchHandler) List(c echo.Context) error {
 	// Get user from context
 	user, ok := c.Get("user").(*ent.User)
@@ -118,7 +140,19 @@ func (h *SavedSearchHandler) List(c echo.Context) error {
 	})
 }
 
-// Get handles GET /api/v1/saved-searches/:id
+// Get godoc
+// @Summary Get saved search
+// @Description Get details of a specific saved search by ID
+// @Tags Saved Searches
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Saved search ID"
+// @Success 200 {object} SavedSearchResponse "Saved search details"
+// @Failure 400 {object} map[string]string "Invalid ID"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 404 {object} map[string]string "Saved search not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /saved-searches/{id} [get]
 func (h *SavedSearchHandler) Get(c echo.Context) error {
 	// Get user from context
 	user, ok := c.Get("user").(*ent.User)
@@ -144,7 +178,22 @@ func (h *SavedSearchHandler) Get(c echo.Context) error {
 	return c.JSON(http.StatusOK, toSavedSearchResponse(search))
 }
 
-// Update handles PATCH /api/v1/saved-searches/:id
+// Update godoc
+// @Summary Update saved search
+// @Description Update the name and/or filters of an existing saved search
+// @Tags Saved Searches
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Saved search ID"
+// @Param request body UpdateSavedSearchRequest true "Fields to update"
+// @Success 200 {object} SavedSearchResponse "Updated saved search"
+// @Failure 400 {object} map[string]string "Invalid ID or request"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 404 {object} map[string]string "Saved search not found"
+// @Failure 409 {object} map[string]string "Saved search with this name already exists"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /saved-searches/{id} [patch]
 func (h *SavedSearchHandler) Update(c echo.Context) error {
 	// Get user from context
 	user, ok := c.Get("user").(*ent.User)
@@ -198,7 +247,19 @@ func (h *SavedSearchHandler) Update(c echo.Context) error {
 	return c.JSON(http.StatusOK, toSavedSearchResponse(search))
 }
 
-// Delete handles DELETE /api/v1/saved-searches/:id
+// Delete godoc
+// @Summary Delete saved search
+// @Description Permanently delete a saved search
+// @Tags Saved Searches
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Saved search ID"
+// @Success 200 {object} map[string]interface{} "Saved search deleted successfully"
+// @Failure 400 {object} map[string]string "Invalid ID"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 404 {object} map[string]string "Saved search not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /saved-searches/{id} [delete]
 func (h *SavedSearchHandler) Delete(c echo.Context) error {
 	// Get user from context
 	user, ok := c.Get("user").(*ent.User)

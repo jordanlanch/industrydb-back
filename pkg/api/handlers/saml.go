@@ -30,8 +30,18 @@ func NewSAMLHandler(samlService *saml.Service, auditLogger *audit.Service, jwtSe
 	}
 }
 
-// GetMetadata returns the Service Provider metadata
-// GET /api/v1/auth/saml/metadata/:org_id
+// GetMetadata godoc
+// @Summary Get SAML Service Provider metadata
+// @Description Returns the SAML 2.0 Service Provider metadata XML for the specified organization. Used by Identity Providers to configure SSO.
+// @Tags SAML SSO
+// @Produce json
+// @Param org_id path int true "Organization ID"
+// @Success 200 {object} map[string]interface{} "SP metadata"
+// @Failure 400 {object} models.ErrorResponse "Invalid organization ID or SAML not configured"
+// @Failure 404 {object} models.ErrorResponse "Organization not found"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Failure 501 {object} models.ErrorResponse "Not implemented - requires IdP configuration"
+// @Router /auth/saml/metadata/{org_id} [get]
 func (h *SAMLHandler) GetMetadata(c echo.Context) error {
 	orgIDStr := c.Param("org_id")
 	orgID, err := strconv.Atoi(orgIDStr)
@@ -74,8 +84,18 @@ func (h *SAMLHandler) GetMetadata(c echo.Context) error {
 	})
 }
 
-// InitiateLogin initiates SAML authentication flow
-// GET /api/v1/auth/saml/login/:org_id
+// InitiateLogin godoc
+// @Summary Initiate SAML login
+// @Description Initiates the SAML 2.0 authentication flow by redirecting the user to the organization's Identity Provider
+// @Tags SAML SSO
+// @Produce json
+// @Param org_id path int true "Organization ID"
+// @Success 302 {string} string "Redirect to IdP"
+// @Failure 400 {object} models.ErrorResponse "Invalid organization ID or SAML not configured"
+// @Failure 404 {object} models.ErrorResponse "Organization not found"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Failure 501 {object} models.ErrorResponse "Not implemented - requires IdP configuration"
+// @Router /auth/saml/login/{org_id} [get]
 func (h *SAMLHandler) InitiateLogin(c echo.Context) error {
 	orgIDStr := c.Param("org_id")
 	orgID, err := strconv.Atoi(orgIDStr)
@@ -118,8 +138,19 @@ func (h *SAMLHandler) InitiateLogin(c echo.Context) error {
 	})
 }
 
-// AssertionConsumerService handles SAML assertion from IdP
-// POST /api/v1/auth/saml/acs/:org_id
+// AssertionConsumerService godoc
+// @Summary Handle SAML assertion (ACS)
+// @Description Assertion Consumer Service endpoint. Receives and validates SAML assertions from the Identity Provider, creates or links user accounts, and issues JWT tokens.
+// @Tags SAML SSO
+// @Accept application/x-www-form-urlencoded
+// @Produce json
+// @Param org_id path int true "Organization ID"
+// @Param SAMLResponse formData string true "Base64-encoded SAML response from IdP"
+// @Success 302 {string} string "Redirect to frontend with JWT token"
+// @Failure 400 {object} models.ErrorResponse "Invalid organization ID"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Failure 501 {object} models.ErrorResponse "Not implemented - requires IdP configuration"
+// @Router /auth/saml/acs/{org_id} [post]
 func (h *SAMLHandler) AssertionConsumerService(c echo.Context) error {
 	orgIDStr := c.Param("org_id")
 	orgID, err := strconv.Atoi(orgIDStr)

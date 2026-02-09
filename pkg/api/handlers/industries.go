@@ -19,8 +19,14 @@ func NewIndustryHandler(industryService *industries.Service) *IndustryHandler {
 	}
 }
 
-// ListIndustries returns all active industries grouped by category
-// GET /api/v1/industries
+// ListIndustries godoc
+// @Summary List all industries
+// @Description Returns all active industries grouped by category (e.g., Personal Care, Health & Fitness, Food & Beverage)
+// @Tags Industries
+// @Produce json
+// @Success 200 {object} map[string]interface{} "Industries grouped by category with total count"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /industries [get]
 func (h *IndustryHandler) ListIndustries(c echo.Context) error {
 	ctx := c.Request().Context()
 
@@ -39,8 +45,16 @@ func (h *IndustryHandler) ListIndustries(c echo.Context) error {
 	})
 }
 
-// ListIndustriesWithLeads returns only industries that have leads with counts
-// GET /api/v1/industries/with-leads?country=CO&city=Bogota
+// ListIndustriesWithLeads godoc
+// @Summary List industries with lead counts
+// @Description Returns only industries that have leads in the database, with lead counts. Optionally filtered by country and city.
+// @Tags Industries
+// @Produce json
+// @Param country query string false "Country code to filter (e.g., US, CO, DE)"
+// @Param city query string false "City name to filter (e.g., Bogota, New York)"
+// @Success 200 {object} map[string]interface{} "Industries with lead counts and applied filters"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /industries/with-leads [get]
 func (h *IndustryHandler) ListIndustriesWithLeads(c echo.Context) error {
 	ctx := c.Request().Context()
 
@@ -67,8 +81,15 @@ func (h *IndustryHandler) ListIndustriesWithLeads(c echo.Context) error {
 	})
 }
 
-// GetIndustry returns a single industry by ID
-// GET /api/v1/industries/:id
+// GetIndustry godoc
+// @Summary Get industry by ID
+// @Description Returns detailed information about a specific industry including OSM tags, category, and sort order
+// @Tags Industries
+// @Produce json
+// @Param id path string true "Industry ID (e.g., tattoo, beauty, gym)"
+// @Success 200 {object} industries.IndustryResponse "Industry details"
+// @Failure 404 {object} map[string]string "Industry not found"
+// @Router /industries/{id} [get]
 func (h *IndustryHandler) GetIndustry(c echo.Context) error {
 	ctx := c.Request().Context()
 	id := c.Param("id")
@@ -94,8 +115,16 @@ func (h *IndustryHandler) GetIndustry(c echo.Context) error {
 	})
 }
 
-// GetSubNiches returns all sub-niches for an industry with lead counts
-// GET /api/v1/industries/:id/sub-niches
+// GetSubNiches godoc
+// @Summary Get sub-niches for an industry
+// @Description Returns all sub-niches for an industry with lead counts (e.g., cuisine types for restaurants, tattoo styles for tattoo studios)
+// @Tags Industries
+// @Produce json
+// @Param id path string true "Industry ID (e.g., restaurant, tattoo, gym)"
+// @Success 200 {object} map[string]interface{} "Sub-niches with counts and industry metadata"
+// @Failure 404 {object} map[string]string "Industry not found"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /industries/{id}/sub-niches [get]
 func (h *IndustryHandler) GetSubNiches(c echo.Context) error {
 	ctx := c.Request().Context()
 	industryID := c.Param("id")

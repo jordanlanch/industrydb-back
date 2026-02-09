@@ -24,6 +24,130 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/admin/audit-logs/critical": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns critical severity audit logs (account deletions, data exports, suspicious activity). Requires admin role.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Audit"
+                ],
+                "summary": "Get critical audit logs (admin)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Number of logs to return (1-200)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Critical audit logs with count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - admin role required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/audit-logs/recent": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns recent audit logs across all users. Requires admin role.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Audit"
+                ],
+                "summary": "Get recent audit logs (admin)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 100,
+                        "description": "Number of logs to return (1-500)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Recent audit logs with count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - admin role required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/admin/backup/create": {
             "post": {
                 "security": [
@@ -234,6 +358,391 @@ const docTemplate = `{
                         "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/jobs/auto-populate": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Detects industries with low data and automatically triggers data fetches to populate them. Optionally includes missing combinations. Requires admin role.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin Jobs"
+                ],
+                "summary": "Auto-populate low data industries",
+                "parameters": [
+                    {
+                        "description": "Auto-populate configuration",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "No industries need population",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "202": {
+                        "description": "Auto-population triggered with pairs and configuration",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - admin role required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/jobs/detect-low-data": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Detects industry-country combinations with fewer leads than the specified threshold. Requires admin role.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin Jobs"
+                ],
+                "summary": "Detect industries with low data",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 100,
+                        "description": "Minimum lead count threshold",
+                        "name": "threshold",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Low data industry-country pairs with threshold and count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - admin role required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/jobs/detect-missing": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Detects industry-country combinations that have no data at all. Requires admin role.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin Jobs"
+                ],
+                "summary": "Detect missing industry-country combinations",
+                "responses": {
+                    "200": {
+                        "description": "Missing industry-country pairs with count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - admin role required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/jobs/stats": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns statistics about data population across industries and countries. Requires admin role.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin Jobs"
+                ],
+                "summary": "Get data population statistics",
+                "responses": {
+                    "200": {
+                        "description": "Population statistics",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - admin role required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/jobs/trigger-batch-fetch": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Triggers data acquisition for multiple industry-country pairs concurrently. Requires admin role.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin Jobs"
+                ],
+                "summary": "Trigger batch data fetch",
+                "parameters": [
+                    {
+                        "description": "Batch fetch configuration with pairs, limit, and concurrency",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Batch fetch triggered with count and configuration",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - admin role required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/admin/jobs/trigger-fetch": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Triggers a manual data acquisition fetch for a specific industry and country from OpenStreetMap. Requires admin role.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin Jobs"
+                ],
+                "summary": "Trigger manual data fetch",
+                "parameters": [
+                    {
+                        "description": "Fetch configuration",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Data fetch triggered",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - admin role required",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 }
@@ -563,6 +1072,3735 @@ const docTemplate = `{
                 }
             }
         },
+        "/api-keys": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "List all API keys for the authenticated user. Key hashes are not returned.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "API Keys"
+                ],
+                "summary": "List all API keys",
+                "responses": {
+                    "200": {
+                        "description": "List of API keys with total count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new API key for programmatic access. Requires Business tier subscription. The plain key is only shown once on creation.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "API Keys"
+                ],
+                "summary": "Create a new API key",
+                "parameters": [
+                    {
+                        "description": "API key configuration",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/apikey.CreateAPIKeyRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "API key created with plain key (shown only once)",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Business tier required",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api-keys/stats": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get aggregated usage statistics across all API keys for the authenticated user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "API Keys"
+                ],
+                "summary": "Get API key usage statistics",
+                "responses": {
+                    "200": {
+                        "description": "API key usage statistics",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api-keys/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get details of a specific API key by ID. The key hash is not returned.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "API Keys"
+                ],
+                "summary": "Get API key details",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "API key ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "API key details",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "API key not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Permanently delete an API key (hard delete). This action cannot be undone.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "API Keys"
+                ],
+                "summary": "Delete an API key",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "API key ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "API key deleted successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "API key not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update the display name of an existing API key",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "API Keys"
+                ],
+                "summary": "Update API key name",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "API key ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New name",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "API key name updated successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID or request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "API key not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api-keys/{id}/revoke": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Revoke an API key (soft delete). The key can no longer be used for authentication but the record is preserved.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "API Keys"
+                ],
+                "summary": "Revoke an API key",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "API key ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "API key revoked successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "API key not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/analytics/cohorts": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get list of user cohorts grouped by time period",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get user cohorts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "week",
+                        "description": "Time period (day, week, month)",
+                        "name": "period",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 12,
+                        "description": "Number of periods to retrieve",
+                        "name": "count",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/analytics.Cohort"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/analytics/cohorts/activity": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get activity metrics for a specific cohort",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get cohort activity metrics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Cohort start date (RFC3339 format)",
+                        "name": "cohort_start",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 4,
+                        "description": "Number of weeks to track",
+                        "name": "weeks",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/analytics.CohortActivityMetrics"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/analytics/cohorts/comparison": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Compare retention across multiple cohorts",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Compare multiple cohorts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "default": "week",
+                        "description": "Time period (day, week, month)",
+                        "name": "period",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 6,
+                        "description": "Number of cohorts to compare",
+                        "name": "cohort_count",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 12,
+                        "description": "Number of retention periods",
+                        "name": "retention_periods",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/analytics.CohortComparison"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/analytics/cohorts/retention": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get retention data for a specific cohort over time",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get cohort retention",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Cohort start date (RFC3339 format)",
+                        "name": "cohort_start",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "week",
+                        "description": "Time period (day, week, month)",
+                        "name": "period",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 12,
+                        "description": "Number of periods to track",
+                        "name": "periods",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/analytics.CohortRetention"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/analytics/funnel/details": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get detailed breakdown of funnel stages with user counts and conversion rates",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get detailed funnel breakdown",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Number of days to analyze (default: 30, max: 365)",
+                        "name": "days",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/analytics.FunnelDetails"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/analytics/funnel/dropoff": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Analyze where users drop off in the conversion funnel",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get dropoff analysis",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Number of days to analyze (default: 30, max: 365)",
+                        "name": "days",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/analytics.DropoffAnalysis"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/analytics/funnel/metrics": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get conversion rates through signup → search → export → upgrade funnel",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get conversion funnel metrics",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Number of days to analyze (default: 30, max: 365)",
+                        "name": "days",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/analytics.FunnelMetrics"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/analytics/funnel/time-to-conversion": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get metrics on how long users take to convert between funnel stages",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get time to conversion metrics",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Number of days to analyze (default: 30, max: 365)",
+                        "name": "days",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/analytics.TimeToConversionMetrics"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/analytics/revenue/annual-forecast": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get forecasted revenue for the next 12 months with monthly breakdown",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get annual revenue forecast",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/analytics.AnnualRevenueForecast"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/analytics/revenue/by-tier": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get current monthly recurring revenue breakdown by subscription tier",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get revenue breakdown by subscription tier",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/analytics.RevenueByTier"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/analytics/revenue/growth-rate": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get average monthly growth rate over the last N months",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get growth rate",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Number of months to analyze (default: 3, max: 12)",
+                        "name": "months",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "number",
+                                "format": "float64"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/analytics/revenue/monthly-forecast": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get forecasted revenue for the next N months based on historical data",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get monthly revenue forecast",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Number of months to forecast (default: 12, max: 24)",
+                        "name": "months",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/analytics.MonthlyRevenueForecast"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/email-sequences": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all email sequences created by the user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Email Sequences"
+                ],
+                "summary": "List email sequences",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/emailsequence.SequenceResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new email drip campaign sequence",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Email Sequences"
+                ],
+                "summary": "Create email sequence",
+                "parameters": [
+                    {
+                        "description": "Sequence details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/emailsequence.CreateSequenceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/emailsequence.SequenceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/email-sequences/enroll": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Enroll a lead in an email drip campaign sequence",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Email Sequences"
+                ],
+                "summary": "Enroll lead in sequence",
+                "parameters": [
+                    {
+                        "description": "Enrollment details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/emailsequence.EnrollLeadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/emailsequence.EnrollmentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/email-sequences/enrollments/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get details of a lead's enrollment in a sequence",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Email Sequences"
+                ],
+                "summary": "Get enrollment details",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Enrollment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/emailsequence.EnrollmentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/email-sequences/enrollments/{id}/stop": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Stop a lead's enrollment in an email sequence (no more emails will be sent)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Email Sequences"
+                ],
+                "summary": "Stop enrollment",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Enrollment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/email-sequences/steps": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Add a new email step to a sequence",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Email Sequences"
+                ],
+                "summary": "Create sequence step",
+                "parameters": [
+                    {
+                        "description": "Step details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/emailsequence.CreateStepRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/emailsequence.SequenceStepResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/email-sequences/steps/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get details of a specific email sequence step",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Email Sequences"
+                ],
+                "summary": "Get sequence step",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Step ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/emailsequence.SequenceStepResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/email-sequences/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get details of an email sequence with its steps",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Email Sequences"
+                ],
+                "summary": "Get email sequence",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Sequence ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/emailsequence.SequenceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update name, description, or status of an email sequence",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Email Sequences"
+                ],
+                "summary": "Update email sequence",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Sequence ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/emailsequence.UpdateSequenceRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/emailsequence.SequenceResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete an email sequence and all its steps",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Email Sequences"
+                ],
+                "summary": "Delete email sequence",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Sequence ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/enrichment/stats": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get statistics about lead enrichment status",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Enrichment"
+                ],
+                "summary": "Get enrichment statistics",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/enrichment.EnrichmentStats"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/lead-notes": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new note/comment on a lead",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lead Notes"
+                ],
+                "summary": "Create a new note on a lead",
+                "parameters": [
+                    {
+                        "description": "Note details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/leadnote.CreateNoteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/leadnote.NoteResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/lead-notes/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a note by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lead Notes"
+                ],
+                "summary": "Get a single note",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Note ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/leadnote.NoteResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete a note (only owner can delete)",
+                "tags": [
+                    "Lead Notes"
+                ],
+                "summary": "Delete a note",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Note ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update a note's content or pinned status (only owner can update)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lead Notes"
+                ],
+                "summary": "Update a note",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Note ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/leadnote.UpdateNoteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/leadnote.NoteResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leads/bulk-enrich": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Enrich multiple leads in bulk",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Enrichment"
+                ],
+                "summary": "Enrich multiple leads",
+                "parameters": [
+                    {
+                        "description": "Lead IDs to enrich",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/enrichment.BulkEnrichmentResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leads/by-status/{status}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all leads with a specific lifecycle status",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Leads"
+                ],
+                "summary": "Get leads by status",
+                "parameters": [
+                    {
+                        "enum": [
+                            "new",
+                            "contacted",
+                            "qualified",
+                            "negotiating",
+                            "won",
+                            "lost",
+                            "archived"
+                        ],
+                        "type": "string",
+                        "description": "Status",
+                        "name": "status",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit (default 50, max 100)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/leadlifecycle.LeadWithStatusResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leads/low-scoring": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get leads with quality scores below threshold (need improvement)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lead Scoring"
+                ],
+                "summary": "Get low scoring leads",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 30,
+                        "description": "Score threshold (default 30)",
+                        "name": "threshold",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Limit (default 50, max 100)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ent.Lead"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leads/score-distribution": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get distribution of quality scores across all leads",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lead Scoring"
+                ],
+                "summary": "Get score distribution",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leads/status-counts": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get count of leads in each lifecycle status",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Leads"
+                ],
+                "summary": "Get lead counts by status",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leads/top-scoring": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get leads sorted by quality score (highest first)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lead Scoring"
+                ],
+                "summary": "Get top scoring leads",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Limit (default 50, max 100)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ent.Lead"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leads/{id}/assign": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Assign a lead to a specific user with a reason",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lead Assignment"
+                ],
+                "summary": "Manually assign lead to user",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Lead ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Assignment details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/leadassignment.AssignLeadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/leadassignment.AssignmentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leads/{id}/assignment-history": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get complete assignment history for a lead",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lead Assignment"
+                ],
+                "summary": "Get lead assignment history",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Lead ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/leadassignment.AssignmentResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leads/{id}/auto-assign": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Automatically assign lead to user with fewest active leads",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lead Assignment"
+                ],
+                "summary": "Auto-assign lead using round-robin",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Lead ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/leadassignment.AssignmentResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leads/{id}/current-assignment": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get the current active assignment for a lead",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lead Assignment"
+                ],
+                "summary": "Get current lead assignment",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Lead ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/leadassignment.AssignmentResponse"
+                        }
+                    },
+                    "204": {
+                        "description": "No assignment"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leads/{id}/custom-fields": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieve all user-defined custom fields for a specific lead",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Custom Fields"
+                ],
+                "summary": "Get all custom fields for a lead",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Lead ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/customfields.CustomFieldsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Replace all custom fields for a lead with new values",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Custom Fields"
+                ],
+                "summary": "Update all custom fields (bulk)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Lead ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Custom fields data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/customfields.UpdateCustomFieldsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/customfields.CustomFieldsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Remove all custom fields from a lead",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Custom Fields"
+                ],
+                "summary": "Clear all custom fields",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Lead ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/customfields.CustomFieldsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leads/{id}/custom-fields/set": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Set or update a single custom field for a lead",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Custom Fields"
+                ],
+                "summary": "Set a single custom field",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Lead ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Custom field data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/customfields.SetCustomFieldRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/customfields.CustomFieldsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leads/{id}/custom-fields/{key}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Remove a specific custom field from a lead",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Custom Fields"
+                ],
+                "summary": "Remove a custom field",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Lead ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Field key to remove",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/customfields.CustomFieldsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leads/{id}/enrich": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Enrich a lead with additional company data from third-party APIs",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Enrichment"
+                ],
+                "summary": "Enrich a single lead",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Lead ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/ent.Lead"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leads/{id}/enrollments": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all email sequence enrollments for a specific lead",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Email Sequences"
+                ],
+                "summary": "List lead's enrollments",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Lead ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/emailsequence.EnrollmentResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leads/{id}/score": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Calculate quality score for a lead based on data completeness",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lead Scoring"
+                ],
+                "summary": "Calculate lead quality score",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Lead ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/leadscoring.ScoreResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Calculate and save quality score for a lead",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lead Scoring"
+                ],
+                "summary": "Update lead quality score",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Lead ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/leadscoring.ScoreResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leads/{id}/status": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update the lifecycle status of a lead (new → contacted → qualified → negotiating → won/lost/archived)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Leads"
+                ],
+                "summary": "Update lead status",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Lead ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Status update request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/leadlifecycle.UpdateStatusRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/leadlifecycle.LeadWithStatusResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leads/{id}/status-history": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get complete history of status changes for a lead",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Leads"
+                ],
+                "summary": "Get lead status history",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Lead ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/leadlifecycle.StatusHistoryResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leads/{id}/validate-email": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Validate a lead's email address using third-party API",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Enrichment"
+                ],
+                "summary": "Validate lead email",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Lead ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/enrichment.EmailValidation"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/leads/{lead_id}/notes": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all notes for a specific lead, ordered by pinned first then by date",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lead Notes"
+                ],
+                "summary": "List all notes for a lead",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Lead ID",
+                        "name": "lead_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/leadnote.NoteResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/phone/batch-validate": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Validate up to 100 phone numbers in a single request",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Phone"
+                ],
+                "summary": "Validate multiple phone numbers",
+                "parameters": [
+                    {
+                        "description": "Batch validation request (max 100 phones)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.BatchValidateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.BatchValidateResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/phone/normalize": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Convert a phone number to E.164 international format (+15551234567)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Phone"
+                ],
+                "summary": "Normalize a phone number to E.164 format",
+                "parameters": [
+                    {
+                        "description": "Phone normalization request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.NormalizePhoneRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.NormalizePhoneResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/phone/validate": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Validate and normalize a phone number with international format support",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Phone"
+                ],
+                "summary": "Validate a phone number",
+                "parameters": [
+                    {
+                        "description": "Phone validation request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ValidatePhoneRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/phone.ValidationResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/referrals/code": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get the user's referral code for sharing (auto-generates if none exists)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Referrals"
+                ],
+                "summary": "Get user's referral code",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/referrals/history": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get a list of all referrals sent by the user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Referrals"
+                ],
+                "summary": "List user's referrals",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ent.Referral"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/referrals/stats": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get statistics about user's referrals and rewards",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Referrals"
+                ],
+                "summary": "Get referral statistics",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/referral.ReferralStats"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/referrals/validate": {
+            "get": {
+                "description": "Check if a referral code is valid and not expired",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Referrals"
+                ],
+                "summary": "Validate a referral code",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Referral code to validate",
+                        "name": "code",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/territories": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get list of territories with optional filters",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Territories"
+                ],
+                "summary": "List territories",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "description": "Only active territories",
+                        "name": "active",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Limit (default 50, max 100)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/territory.TerritoryResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new sales territory with geographic and industry filters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Territories"
+                ],
+                "summary": "Create new territory",
+                "parameters": [
+                    {
+                        "description": "Territory details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/territory.CreateTerritoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/territory.TerritoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/territories/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get details of a specific territory",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Territories"
+                ],
+                "summary": "Get territory details",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Territory ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/territory.TerritoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update an existing territory's details",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Territories"
+                ],
+                "summary": "Update territory",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Territory ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated territory details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/territory.UpdateTerritoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/territory.TerritoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/territories/{id}/members": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all members of a territory",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Territories"
+                ],
+                "summary": "Get territory members",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Territory ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/territory.TerritoryMemberResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Add a user as a member of a territory",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Territories"
+                ],
+                "summary": "Add member to territory",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Territory ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Member details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/territory.TerritoryMemberResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/territories/{id}/members/{user_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Remove a user from a territory",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Territories"
+                ],
+                "summary": "Remove member from territory",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Territory ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/assigned-leads": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all active leads assigned to the current user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Lead Assignment"
+                ],
+                "summary": "Get user's assigned leads",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Limit (default 50, max 100)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/leadassignment.AssignmentResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/user/territories": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get all territories a user belongs to",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Territories"
+                ],
+                "summary": "Get user's territories",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/territory.TerritoryResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/login": {
             "post": {
                 "description": "Authenticate user with email and password, returns JWT token",
@@ -615,6 +4853,106 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/oauth/callback/{provider}": {
+            "get": {
+                "description": "Processes OAuth callback and creates/logs in user",
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Handle OAuth callback",
+                "parameters": [
+                    {
+                        "enum": [
+                            "google",
+                            "github",
+                            "microsoft"
+                        ],
+                        "type": "string",
+                        "description": "OAuth Provider",
+                        "name": "provider",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Authorization code",
+                        "name": "code",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "State token",
+                        "name": "state",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Redirect to frontend with JWT token"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/oauth/{provider}": {
+            "get": {
+                "description": "Redirects to OAuth provider for authentication",
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Initiate OAuth login",
+                "parameters": [
+                    {
+                        "enum": [
+                            "google",
+                            "github",
+                            "microsoft"
+                        ],
+                        "type": "string",
+                        "description": "OAuth Provider",
+                        "name": "provider",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Redirect to OAuth provider"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/auth/register": {
             "post": {
                 "description": "Create a new user account with email and password",
@@ -660,6 +4998,170 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/saml/acs/{org_id}": {
+            "post": {
+                "description": "Assertion Consumer Service endpoint. Receives and validates SAML assertions from the Identity Provider, creates or links user accounts, and issues JWT tokens.",
+                "consumes": [
+                    "application/x-www-form-urlencoded"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SAML SSO"
+                ],
+                "summary": "Handle SAML assertion (ACS)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Organization ID",
+                        "name": "org_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Base64-encoded SAML response from IdP",
+                        "name": "SAMLResponse",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Redirect to frontend with JWT token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid organization ID",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "501": {
+                        "description": "Not implemented - requires IdP configuration",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/saml/login/{org_id}": {
+            "get": {
+                "description": "Initiates the SAML 2.0 authentication flow by redirecting the user to the organization's Identity Provider",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SAML SSO"
+                ],
+                "summary": "Initiate SAML login",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Organization ID",
+                        "name": "org_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Redirect to IdP",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid organization ID or SAML not configured",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Organization not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "501": {
+                        "description": "Not implemented - requires IdP configuration",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/saml/metadata/{org_id}": {
+            "get": {
+                "description": "Returns the SAML 2.0 Service Provider metadata XML for the specified organization. Used by Identity Providers to configure SSO.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SAML SSO"
+                ],
+                "summary": "Get SAML Service Provider metadata",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Organization ID",
+                        "name": "org_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SP metadata",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid organization ID or SAML not configured",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Organization not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "501": {
+                        "description": "Not implemented - requires IdP configuration",
                         "schema": {
                             "$ref": "#/definitions/models.ErrorResponse"
                         }
@@ -1276,6 +5778,166 @@ const docTemplate = `{
                 }
             }
         },
+        "/industries": {
+            "get": {
+                "description": "Returns all active industries grouped by category (e.g., Personal Care, Health \u0026 Fitness, Food \u0026 Beverage)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Industries"
+                ],
+                "summary": "List all industries",
+                "responses": {
+                    "200": {
+                        "description": "Industries grouped by category with total count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/industries/with-leads": {
+            "get": {
+                "description": "Returns only industries that have leads in the database, with lead counts. Optionally filtered by country and city.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Industries"
+                ],
+                "summary": "List industries with lead counts",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Country code to filter (e.g., US, CO, DE)",
+                        "name": "country",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "City name to filter (e.g., Bogota, New York)",
+                        "name": "city",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Industries with lead counts and applied filters",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/industries/{id}": {
+            "get": {
+                "description": "Returns detailed information about a specific industry including OSM tags, category, and sort order",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Industries"
+                ],
+                "summary": "Get industry by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Industry ID (e.g., tattoo, beauty, gym)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Industry details",
+                        "schema": {
+                            "$ref": "#/definitions/industries.IndustryResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Industry not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/industries/{id}/sub-niches": {
+            "get": {
+                "description": "Returns all sub-niches for an industry with lead counts (e.g., cuisine types for restaurants, tattoo styles for tattoo studios)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Industries"
+                ],
+                "summary": "Get sub-niches for an industry",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Industry ID (e.g., restaurant, tattoo, gym)",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Sub-niches with counts and industry metadata",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "404": {
+                        "description": "Industry not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/leads": {
             "get": {
                 "security": [
@@ -1363,6 +6025,74 @@ const docTemplate = `{
                         "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/leads/filters/cities": {
+            "get": {
+                "description": "Returns a sorted, deduplicated list of cities with lead data. Optionally filtered by country. City names are normalized (accents removed, title-cased).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Filters"
+                ],
+                "summary": "Get list of cities",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Country code to filter cities (e.g., US, GB, DE)",
+                        "name": "country",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of cities with total count and applied country filter",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/leads/filters/countries": {
+            "get": {
+                "description": "Returns a sorted list of unique countries that have lead data in the database",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Filters"
+                ],
+                "summary": "Get list of countries",
+                "responses": {
+                    "200": {
+                        "description": "List of countries with total count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -1491,6 +6221,1177 @@ const docTemplate = `{
                         "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/organizations": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "List all organizations the authenticated user belongs to",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "List user's organizations",
+                "responses": {
+                    "200": {
+                        "description": "List of organizations with total count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a new organization. The authenticated user becomes the owner.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "Create a new organization",
+                "parameters": [
+                    {
+                        "description": "Organization details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organization.CreateOrganizationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Organization created",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Slug already taken",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/organizations/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get details of a specific organization. Requires membership in the organization.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "Get organization details",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Organization ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Organization details",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Not a member",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Organization not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Permanently delete an organization and all its members. Requires owner role.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "Delete organization",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Organization ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Organization deleted successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - owner required",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Organization not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update organization name or slug. Requires owner or admin role in the organization.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "Update organization",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Organization ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated organization data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organization.UpdateOrganizationRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated organization",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID or request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - owner or admin required",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Organization not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/organizations/{id}/invite": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Invite a user to join the organization by email. Requires owner or admin role.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "Invite member to organization",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Organization ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Invitation details with email and role",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/organization.InviteMemberRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Invitation sent with member details",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID or request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - owner or admin required",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "User is already a member",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/organizations/{id}/members": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "List all members of an organization with their roles. Requires membership in the organization.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "List organization members",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Organization ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of members with total count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Not a member",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/organizations/{id}/members/{user_id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Remove a member from the organization. Cannot remove the owner. Requires owner or admin role.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "Remove member from organization",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Organization ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "User ID of the member to remove",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Member removed successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - cannot remove owner",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Member not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update a member's role in the organization. Cannot change the owner's role. Requires owner or admin role.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Organizations"
+                ],
+                "summary": "Update member role",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Organization ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "User ID of the member",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "New role",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Member role updated successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID or request",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden - cannot change owner role",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Member not found",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/saved-searches": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "List all saved searches for the authenticated user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Saved Searches"
+                ],
+                "summary": "List saved searches",
+                "responses": {
+                    "200": {
+                        "description": "List of saved searches with count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Save a search query with filters for quick access. Name must be unique per user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Saved Searches"
+                ],
+                "summary": "Create a saved search",
+                "parameters": [
+                    {
+                        "description": "Saved search name and filters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.CreateSavedSearchRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created saved search",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SavedSearchResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or filters",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Saved search with this name already exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/saved-searches/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get details of a specific saved search by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Saved Searches"
+                ],
+                "summary": "Get saved search",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Saved search ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Saved search details",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SavedSearchResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Saved search not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Permanently delete a saved search",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Saved Searches"
+                ],
+                "summary": "Delete saved search",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Saved search ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Saved search deleted successfully",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Saved search not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update the name and/or filters of an existing saved search",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Saved Searches"
+                ],
+                "summary": "Update saved search",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Saved search ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Fields to update",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.UpdateSavedSearchRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated saved search",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.SavedSearchResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID or request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Saved search not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Saved search with this name already exists",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/user/analytics/breakdown": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns usage breakdown by action type (search, export, view) for the authenticated user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get usage breakdown by action type",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 30,
+                        "description": "Number of days to analyze (1-365)",
+                        "name": "days",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usage breakdown by action type",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/user/analytics/daily": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns daily usage statistics for the authenticated user over a configurable number of days",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get daily usage statistics",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 30,
+                        "description": "Number of days to retrieve (1-365)",
+                        "name": "days",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Daily usage data with day count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/user/analytics/summary": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns aggregated usage statistics for the authenticated user over a configurable number of days",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Analytics"
+                ],
+                "summary": "Get aggregated usage summary",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 30,
+                        "description": "Number of days to aggregate (1-365)",
+                        "name": "days",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Aggregated usage summary",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/user/audit-logs": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns audit logs for the authenticated user, ordered by most recent first",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Audit"
+                ],
+                "summary": "Get user audit logs",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Number of logs to return (1-100)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Audit logs with count",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
                         }
                     }
                 }
@@ -1917,6 +7818,4728 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "affiliate.Status": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "pending",
+                "active",
+                "suspended",
+                "terminated"
+            ],
+            "x-enum-varnames": [
+                "DefaultStatus",
+                "StatusPending",
+                "StatusActive",
+                "StatusSuspended",
+                "StatusTerminated"
+            ]
+        },
+        "affiliateconversion.Status": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "pending",
+                "approved",
+                "paid",
+                "rejected"
+            ],
+            "x-enum-varnames": [
+                "DefaultStatus",
+                "StatusPending",
+                "StatusApproved",
+                "StatusPaid",
+                "StatusRejected"
+            ]
+        },
+        "analytics.AnnualRevenueForecast": {
+            "type": "object",
+            "properties": {
+                "churn_rate": {
+                    "description": "Projected annual churn rate (%)",
+                    "type": "number"
+                },
+                "current_arr": {
+                    "description": "Current Annual Recurring Revenue",
+                    "type": "number"
+                },
+                "current_mrr": {
+                    "description": "Current Monthly Recurring Revenue",
+                    "type": "number"
+                },
+                "forecasted_arr": {
+                    "description": "Forecasted ARR for end of year",
+                    "type": "number"
+                },
+                "growth_rate": {
+                    "description": "Projected annual growth rate (%)",
+                    "type": "number"
+                },
+                "monthly_breakdown": {
+                    "description": "Month-by-month forecast",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analytics.MonthlyForecast"
+                    }
+                }
+            }
+        },
+        "analytics.Cohort": {
+            "type": "object",
+            "properties": {
+                "end_date": {
+                    "type": "string"
+                },
+                "period": {
+                    "description": "\"day\", \"week\", \"month\"",
+                    "type": "string"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "start_date": {
+                    "type": "string"
+                }
+            }
+        },
+        "analytics.CohortActivityMetrics": {
+            "type": "object",
+            "properties": {
+                "active_users": {
+                    "type": "integer"
+                },
+                "activity_rate": {
+                    "description": "Percentage of cohort that was active",
+                    "type": "number"
+                },
+                "avg_exports_per_user": {
+                    "type": "number"
+                },
+                "avg_searches_per_user": {
+                    "type": "number"
+                },
+                "cohort_end": {
+                    "type": "string"
+                },
+                "cohort_size": {
+                    "type": "integer"
+                },
+                "cohort_start": {
+                    "type": "string"
+                },
+                "total_exports": {
+                    "type": "integer"
+                },
+                "total_searches": {
+                    "type": "integer"
+                },
+                "weeks_tracked": {
+                    "type": "integer"
+                }
+            }
+        },
+        "analytics.CohortComparison": {
+            "type": "object",
+            "properties": {
+                "cohorts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analytics.CohortRetention"
+                    }
+                },
+                "period": {
+                    "type": "string"
+                }
+            }
+        },
+        "analytics.CohortRetention": {
+            "type": "object",
+            "properties": {
+                "cohort_end": {
+                    "type": "string"
+                },
+                "cohort_size": {
+                    "type": "integer"
+                },
+                "cohort_start": {
+                    "type": "string"
+                },
+                "period": {
+                    "description": "\"day\", \"week\", \"month\"",
+                    "type": "string"
+                },
+                "retention": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analytics.RetentionPeriod"
+                    }
+                }
+            }
+        },
+        "analytics.DropoffAnalysis": {
+            "type": "object",
+            "properties": {
+                "dropoffs": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/analytics.DropoffPoint"
+                    }
+                },
+                "period_days": {
+                    "type": "integer"
+                }
+            }
+        },
+        "analytics.DropoffPoint": {
+            "type": "object",
+            "properties": {
+                "dropoff_rate": {
+                    "type": "number"
+                },
+                "from_stage": {
+                    "type": "string"
+                },
+                "to_stage": {
+                    "type": "string"
+                },
+                "users_dropped": {
+                    "type": "integer"
+                }
+            }
+        },
+        "analytics.FunnelDetails": {
+            "type": "object",
+            "properties": {
+                "end_date": {
+                    "type": "string"
+                },
+                "period_days": {
+                    "type": "integer"
+                },
+                "stages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analytics.FunnelStage"
+                    }
+                },
+                "start_date": {
+                    "type": "string"
+                }
+            }
+        },
+        "analytics.FunnelMetrics": {
+            "type": "object",
+            "properties": {
+                "export_conversion_rate": {
+                    "type": "number"
+                },
+                "export_to_upgrade_rate": {
+                    "type": "number"
+                },
+                "period_days": {
+                    "type": "integer"
+                },
+                "search_conversion_rate": {
+                    "type": "number"
+                },
+                "search_to_export_rate": {
+                    "type": "number"
+                },
+                "total_signups": {
+                    "type": "integer"
+                },
+                "upgrade_conversion_rate": {
+                    "type": "number"
+                },
+                "users_who_exported": {
+                    "type": "integer"
+                },
+                "users_who_searched": {
+                    "type": "integer"
+                },
+                "users_who_upgraded": {
+                    "type": "integer"
+                }
+            }
+        },
+        "analytics.FunnelStage": {
+            "type": "object",
+            "properties": {
+                "conversion_from_previous": {
+                    "type": "number"
+                },
+                "dropoff_count": {
+                    "type": "integer"
+                },
+                "dropoff_rate": {
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "user_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "analytics.MonthlyForecast": {
+            "type": "object",
+            "properties": {
+                "active_subscriptions": {
+                    "description": "Estimated active paid subscriptions",
+                    "type": "integer"
+                },
+                "month": {
+                    "description": "YYYY-MM format",
+                    "type": "string"
+                },
+                "revenue": {
+                    "description": "Forecasted MRR for this month",
+                    "type": "number"
+                }
+            }
+        },
+        "analytics.MonthlyRevenueForecast": {
+            "type": "object",
+            "properties": {
+                "churn_rate": {
+                    "description": "Monthly churn rate (%)",
+                    "type": "number"
+                },
+                "current_mrr": {
+                    "description": "Current Monthly Recurring Revenue",
+                    "type": "number"
+                },
+                "forecasted_months": {
+                    "description": "Forecast for each month",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analytics.MonthlyForecast"
+                    }
+                },
+                "growth_rate": {
+                    "description": "Monthly growth rate (%)",
+                    "type": "number"
+                }
+            }
+        },
+        "analytics.RetentionPeriod": {
+            "type": "object",
+            "properties": {
+                "active_users": {
+                    "description": "Number of users active in this period",
+                    "type": "integer"
+                },
+                "period_number": {
+                    "description": "0 for signup period, 1 for first retention period, etc.",
+                    "type": "integer"
+                },
+                "retention_rate": {
+                    "description": "Percentage of original cohort still active",
+                    "type": "number"
+                }
+            }
+        },
+        "analytics.RevenueByTier": {
+            "type": "object",
+            "properties": {
+                "by_tier": {
+                    "description": "Breakdown by tier",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analytics.TierRevenue"
+                    }
+                },
+                "total_mrr": {
+                    "description": "Total Monthly Recurring Revenue",
+                    "type": "number"
+                }
+            }
+        },
+        "analytics.TierRevenue": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "description": "Number of active subscriptions",
+                    "type": "integer"
+                },
+                "percent": {
+                    "description": "Percentage of total revenue",
+                    "type": "number"
+                },
+                "revenue": {
+                    "description": "Monthly revenue from this tier",
+                    "type": "number"
+                },
+                "tier": {
+                    "description": "Subscription tier name",
+                    "type": "string"
+                }
+            }
+        },
+        "analytics.TimeDistribution": {
+            "type": "object",
+            "properties": {
+                "average_hours": {
+                    "type": "number"
+                },
+                "distribution": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                },
+                "median_hours": {
+                    "type": "number"
+                }
+            }
+        },
+        "analytics.TimeToConversionMetrics": {
+            "type": "object",
+            "properties": {
+                "export_to_upgrade": {
+                    "$ref": "#/definitions/analytics.TimeDistribution"
+                },
+                "period_days": {
+                    "type": "integer"
+                },
+                "search_to_export": {
+                    "$ref": "#/definitions/analytics.TimeDistribution"
+                },
+                "signup_to_search": {
+                    "$ref": "#/definitions/analytics.TimeDistribution"
+                }
+            }
+        },
+        "apikey.CreateAPIKeyRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "expires_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                }
+            }
+        },
+        "auditlog.Action": {
+            "type": "string",
+            "enum": [
+                "user_login",
+                "user_logout",
+                "user_register",
+                "user_profile_update",
+                "user_password_change",
+                "user_email_verify",
+                "user_account_delete",
+                "user_update",
+                "user_suspension",
+                "data_export",
+                "lead_search",
+                "lead_view",
+                "export_create",
+                "export_download",
+                "subscription_create",
+                "subscription_update",
+                "subscription_cancel",
+                "payment_success",
+                "payment_failed",
+                "api_key_create",
+                "api_key_delete"
+            ],
+            "x-enum-varnames": [
+                "ActionUserLogin",
+                "ActionUserLogout",
+                "ActionUserRegister",
+                "ActionUserProfileUpdate",
+                "ActionUserPasswordChange",
+                "ActionUserEmailVerify",
+                "ActionUserAccountDelete",
+                "ActionUserUpdate",
+                "ActionUserSuspension",
+                "ActionDataExport",
+                "ActionLeadSearch",
+                "ActionLeadView",
+                "ActionExportCreate",
+                "ActionExportDownload",
+                "ActionSubscriptionCreate",
+                "ActionSubscriptionUpdate",
+                "ActionSubscriptionCancel",
+                "ActionPaymentSuccess",
+                "ActionPaymentFailed",
+                "ActionAPIKeyCreate",
+                "ActionAPIKeyDelete"
+            ]
+        },
+        "auditlog.Severity": {
+            "type": "string",
+            "enum": [
+                "info",
+                "info",
+                "warning",
+                "error",
+                "critical"
+            ],
+            "x-enum-varnames": [
+                "DefaultSeverity",
+                "SeverityInfo",
+                "SeverityWarning",
+                "SeverityError",
+                "SeverityCritical"
+            ]
+        },
+        "calllog.Direction": {
+            "type": "string",
+            "enum": [
+                "inbound",
+                "outbound"
+            ],
+            "x-enum-varnames": [
+                "DirectionInbound",
+                "DirectionOutbound"
+            ]
+        },
+        "calllog.Status": {
+            "type": "string",
+            "enum": [
+                "initiated",
+                "initiated",
+                "ringing",
+                "in_progress",
+                "completed",
+                "failed",
+                "busy",
+                "no_answer",
+                "canceled"
+            ],
+            "x-enum-varnames": [
+                "DefaultStatus",
+                "StatusInitiated",
+                "StatusRinging",
+                "StatusInProgress",
+                "StatusCompleted",
+                "StatusFailed",
+                "StatusBusy",
+                "StatusNoAnswer",
+                "StatusCanceled"
+            ]
+        },
+        "competitormetric.MetricType": {
+            "type": "string",
+            "enum": [
+                "pricing",
+                "features",
+                "market_share",
+                "traffic",
+                "employees",
+                "funding",
+                "reviews",
+                "social_media",
+                "custom"
+            ],
+            "x-enum-varnames": [
+                "MetricTypePricing",
+                "MetricTypeFeatures",
+                "MetricTypeMarketShare",
+                "MetricTypeTraffic",
+                "MetricTypeEmployees",
+                "MetricTypeFunding",
+                "MetricTypeReviews",
+                "MetricTypeSocialMedia",
+                "MetricTypeCustom"
+            ]
+        },
+        "competitorprofile.MarketPosition": {
+            "type": "string",
+            "enum": [
+                "leader",
+                "challenger",
+                "follower",
+                "nicher"
+            ],
+            "x-enum-varnames": [
+                "MarketPositionLeader",
+                "MarketPositionChallenger",
+                "MarketPositionFollower",
+                "MarketPositionNicher"
+            ]
+        },
+        "crmintegration.Provider": {
+            "type": "string",
+            "enum": [
+                "salesforce",
+                "hubspot",
+                "pipedrive",
+                "zoho"
+            ],
+            "x-enum-varnames": [
+                "ProviderSalesforce",
+                "ProviderHubspot",
+                "ProviderPipedrive",
+                "ProviderZoho"
+            ]
+        },
+        "crmintegration.SyncDirection": {
+            "type": "string",
+            "enum": [
+                "bidirectional",
+                "bidirectional",
+                "to_crm",
+                "from_crm"
+            ],
+            "x-enum-varnames": [
+                "DefaultSyncDirection",
+                "SyncDirectionBidirectional",
+                "SyncDirectionToCrm",
+                "SyncDirectionFromCrm"
+            ]
+        },
+        "crmleadsync.SyncDirection": {
+            "type": "string",
+            "enum": [
+                "to_crm",
+                "from_crm"
+            ],
+            "x-enum-varnames": [
+                "SyncDirectionToCrm",
+                "SyncDirectionFromCrm"
+            ]
+        },
+        "crmleadsync.SyncStatus": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "pending",
+                "synced",
+                "failed",
+                "deleted"
+            ],
+            "x-enum-varnames": [
+                "DefaultSyncStatus",
+                "SyncStatusPending",
+                "SyncStatusSynced",
+                "SyncStatusFailed",
+                "SyncStatusDeleted"
+            ]
+        },
+        "customfields.CustomFieldsResponse": {
+            "type": "object",
+            "properties": {
+                "custom_fields": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "lead_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "customfields.SetCustomFieldRequest": {
+            "type": "object",
+            "required": [
+                "key",
+                "value"
+            ],
+            "properties": {
+                "key": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 1
+                },
+                "value": {}
+            }
+        },
+        "customfields.UpdateCustomFieldsRequest": {
+            "type": "object",
+            "required": [
+                "custom_fields"
+            ],
+            "properties": {
+                "custom_fields": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "emailcampaign.Status": {
+            "type": "string",
+            "enum": [
+                "draft",
+                "draft",
+                "scheduled",
+                "sending",
+                "sent",
+                "paused",
+                "failed"
+            ],
+            "x-enum-varnames": [
+                "DefaultStatus",
+                "StatusDraft",
+                "StatusScheduled",
+                "StatusSending",
+                "StatusSent",
+                "StatusPaused",
+                "StatusFailed"
+            ]
+        },
+        "emailcampaignrecipient.Status": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "pending",
+                "sent",
+                "failed",
+                "opened",
+                "clicked",
+                "unsubscribed"
+            ],
+            "x-enum-varnames": [
+                "DefaultStatus",
+                "StatusPending",
+                "StatusSent",
+                "StatusFailed",
+                "StatusOpened",
+                "StatusClicked",
+                "StatusUnsubscribed"
+            ]
+        },
+        "emailsequence.CreateSequenceRequest": {
+            "type": "object",
+            "required": [
+                "name",
+                "trigger"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 200
+                },
+                "trigger": {
+                    "type": "string",
+                    "enum": [
+                        "lead_created",
+                        "lead_assigned",
+                        "lead_status_changed",
+                        "manual"
+                    ]
+                }
+            }
+        },
+        "emailsequence.CreateStepRequest": {
+            "type": "object",
+            "required": [
+                "body",
+                "sequence_id",
+                "step_order",
+                "subject"
+            ],
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "delay_days": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "sequence_id": {
+                    "type": "integer"
+                },
+                "step_order": {
+                    "type": "integer",
+                    "minimum": 1
+                },
+                "subject": {
+                    "type": "string",
+                    "maxLength": 500
+                }
+            }
+        },
+        "emailsequence.EnrollLeadRequest": {
+            "type": "object",
+            "required": [
+                "lead_id",
+                "sequence_id"
+            ],
+            "properties": {
+                "lead_id": {
+                    "type": "integer"
+                },
+                "sequence_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "emailsequence.EnrollmentResponse": {
+            "type": "object",
+            "properties": {
+                "completed_at": {
+                    "type": "string"
+                },
+                "current_step": {
+                    "type": "integer"
+                },
+                "enrolled_at": {
+                    "type": "string"
+                },
+                "enrolled_by": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lead_id": {
+                    "type": "integer"
+                },
+                "lead_name": {
+                    "type": "string"
+                },
+                "sequence_id": {
+                    "type": "integer"
+                },
+                "sequence_name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "emailsequence.SequenceResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "steps": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/emailsequence.SequenceStepBrief"
+                    }
+                },
+                "trigger": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "emailsequence.SequenceStepBrief": {
+            "type": "object",
+            "properties": {
+                "delay_days": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "step_order": {
+                    "type": "integer"
+                },
+                "subject": {
+                    "type": "string"
+                }
+            }
+        },
+        "emailsequence.SequenceStepResponse": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "delay_days": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "sequence_id": {
+                    "type": "integer"
+                },
+                "step_order": {
+                    "type": "integer"
+                },
+                "subject": {
+                    "type": "string"
+                }
+            }
+        },
+        "emailsequence.Status": {
+            "type": "string",
+            "enum": [
+                "draft",
+                "draft",
+                "active",
+                "paused",
+                "archived"
+            ],
+            "x-enum-varnames": [
+                "DefaultStatus",
+                "StatusDraft",
+                "StatusActive",
+                "StatusPaused",
+                "StatusArchived"
+            ]
+        },
+        "emailsequence.Trigger": {
+            "type": "string",
+            "enum": [
+                "manual",
+                "lead_created",
+                "lead_assigned",
+                "lead_status_changed",
+                "manual"
+            ],
+            "x-enum-varnames": [
+                "DefaultTrigger",
+                "TriggerLeadCreated",
+                "TriggerLeadAssigned",
+                "TriggerLeadStatusChanged",
+                "TriggerManual"
+            ]
+        },
+        "emailsequence.UpdateSequenceRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 200
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "draft",
+                        "active",
+                        "paused",
+                        "archived"
+                    ]
+                }
+            }
+        },
+        "emailsequenceenrollment.Status": {
+            "type": "string",
+            "enum": [
+                "active",
+                "active",
+                "paused",
+                "completed",
+                "stopped"
+            ],
+            "x-enum-varnames": [
+                "DefaultStatus",
+                "StatusActive",
+                "StatusPaused",
+                "StatusCompleted",
+                "StatusStopped"
+            ]
+        },
+        "emailsequencesend.Status": {
+            "type": "string",
+            "enum": [
+                "scheduled",
+                "scheduled",
+                "sent",
+                "opened",
+                "clicked",
+                "bounced",
+                "failed"
+            ],
+            "x-enum-varnames": [
+                "DefaultStatus",
+                "StatusScheduled",
+                "StatusSent",
+                "StatusOpened",
+                "StatusClicked",
+                "StatusBounced",
+                "StatusFailed"
+            ]
+        },
+        "enrichment.BulkEnrichmentResult": {
+            "type": "object",
+            "properties": {
+                "errors": {
+                    "description": "lead_id -\u003e error message",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "failure_count": {
+                    "type": "integer"
+                },
+                "success_count": {
+                    "type": "integer"
+                },
+                "total_leads": {
+                    "type": "integer"
+                }
+            }
+        },
+        "enrichment.EmailValidation": {
+            "type": "object",
+            "properties": {
+                "deliverable": {
+                    "type": "boolean"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "is_disposable": {
+                    "type": "boolean"
+                },
+                "is_free_provider": {
+                    "type": "boolean"
+                },
+                "is_valid": {
+                    "type": "boolean"
+                },
+                "provider": {
+                    "type": "string"
+                }
+            }
+        },
+        "enrichment.EnrichmentStats": {
+            "type": "object",
+            "properties": {
+                "enriched_leads": {
+                    "type": "integer"
+                },
+                "enrichment_rate": {
+                    "description": "Percentage",
+                    "type": "number"
+                },
+                "total_leads": {
+                    "type": "integer"
+                },
+                "unenriched_leads": {
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.APIKey": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the APIKeyQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.APIKeyEdges"
+                        }
+                    ]
+                },
+                "expires_at": {
+                    "description": "Optional expiration timestamp",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "last_used_at": {
+                    "description": "Last usage timestamp",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Friendly name for the key",
+                    "type": "string"
+                },
+                "prefix": {
+                    "description": "First few characters of key (for display)",
+                    "type": "string"
+                },
+                "revoked": {
+                    "description": "Whether the key has been revoked",
+                    "type": "boolean"
+                },
+                "revoked_at": {
+                    "description": "Revocation timestamp",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                },
+                "usage_count": {
+                    "description": "Total number of API calls",
+                    "type": "integer"
+                },
+                "user_id": {
+                    "description": "User ID foreign key",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.APIKeyEdges": {
+            "type": "object",
+            "properties": {
+                "user": {
+                    "description": "API key owner",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.Affiliate": {
+            "type": "object",
+            "properties": {
+                "affiliate_code": {
+                    "description": "Unique affiliate tracking code",
+                    "type": "string"
+                },
+                "approved_at": {
+                    "description": "When affiliate was approved",
+                    "type": "string"
+                },
+                "commission_rate": {
+                    "description": "Commission rate (0.10 = 10%)",
+                    "type": "number"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the AffiliateQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.AffiliateEdges"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "last_payout_at": {
+                    "description": "Last payout date",
+                    "type": "string"
+                },
+                "paid_earnings": {
+                    "description": "Total earnings paid out",
+                    "type": "number"
+                },
+                "payment_method": {
+                    "description": "Payment method (paypal, bank_transfer, etc.)",
+                    "type": "string"
+                },
+                "pending_earnings": {
+                    "description": "Earnings pending payout",
+                    "type": "number"
+                },
+                "status": {
+                    "description": "Affiliate status",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/affiliate.Status"
+                        }
+                    ]
+                },
+                "total_clicks": {
+                    "description": "Total clicks on affiliate links",
+                    "type": "integer"
+                },
+                "total_conversions": {
+                    "description": "Total conversions from affiliate traffic",
+                    "type": "integer"
+                },
+                "total_earnings": {
+                    "description": "Total earnings accumulated",
+                    "type": "number"
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "User associated with this affiliate account",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.AffiliateClick": {
+            "type": "object",
+            "properties": {
+                "affiliate_id": {
+                    "description": "Affiliate who received the click",
+                    "type": "integer"
+                },
+                "converted": {
+                    "description": "Whether this click resulted in a conversion",
+                    "type": "boolean"
+                },
+                "created_at": {
+                    "description": "Click timestamp",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the AffiliateClickQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.AffiliateClickEdges"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "ip_address": {
+                    "description": "IP address of visitor",
+                    "type": "string"
+                },
+                "landing_page": {
+                    "description": "Landing page URL",
+                    "type": "string"
+                },
+                "referrer": {
+                    "description": "Referrer URL",
+                    "type": "string"
+                },
+                "user_agent": {
+                    "description": "Browser user agent",
+                    "type": "string"
+                },
+                "utm_campaign": {
+                    "description": "UTM campaign parameter",
+                    "type": "string"
+                },
+                "utm_medium": {
+                    "description": "UTM medium parameter",
+                    "type": "string"
+                },
+                "utm_source": {
+                    "description": "UTM source parameter",
+                    "type": "string"
+                }
+            }
+        },
+        "ent.AffiliateClickEdges": {
+            "type": "object",
+            "properties": {
+                "affiliate": {
+                    "description": "Affiliate who received this click",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.Affiliate"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.AffiliateConversion": {
+            "type": "object",
+            "properties": {
+                "affiliate_id": {
+                    "description": "Affiliate who earned this conversion",
+                    "type": "integer"
+                },
+                "approved_at": {
+                    "description": "When conversion was approved",
+                    "type": "string"
+                },
+                "commission_amount": {
+                    "description": "Commission earned from this conversion",
+                    "type": "number"
+                },
+                "commission_rate": {
+                    "description": "Commission rate at time of conversion",
+                    "type": "number"
+                },
+                "conversion_type": {
+                    "description": "Type of conversion (registration, subscription, purchase)",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Conversion timestamp",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the AffiliateConversionQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.AffiliateConversionEdges"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "order_value": {
+                    "description": "Value of the order/transaction",
+                    "type": "number"
+                },
+                "paid_at": {
+                    "description": "When commission was paid",
+                    "type": "string"
+                },
+                "rejection_reason": {
+                    "description": "Reason if conversion was rejected",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Payout status",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/affiliateconversion.Status"
+                        }
+                    ]
+                },
+                "user_id": {
+                    "description": "User who converted",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.AffiliateConversionEdges": {
+            "type": "object",
+            "properties": {
+                "affiliate": {
+                    "description": "Affiliate who earned this conversion",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.Affiliate"
+                        }
+                    ]
+                },
+                "user": {
+                    "description": "User who converted",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.AffiliateEdges": {
+            "type": "object",
+            "properties": {
+                "clicks": {
+                    "description": "Clicks on affiliate links",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.AffiliateClick"
+                    }
+                },
+                "conversions": {
+                    "description": "Conversions from affiliate traffic",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.AffiliateConversion"
+                    }
+                },
+                "user": {
+                    "description": "User who owns this affiliate account",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.AuditLog": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "description": "Action performed",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/auditlog.Action"
+                        }
+                    ]
+                },
+                "created_at": {
+                    "description": "Timestamp of event",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Human-readable description",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the AuditLogQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.AuditLogEdges"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "ip_address": {
+                    "description": "IP address of user",
+                    "type": "string"
+                },
+                "metadata": {
+                    "description": "Additional context data",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "resource_id": {
+                    "description": "ID of affected resource",
+                    "type": "string"
+                },
+                "resource_type": {
+                    "description": "Type of resource affected (user, lead, export, etc.)",
+                    "type": "string"
+                },
+                "severity": {
+                    "description": "Event severity level",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/auditlog.Severity"
+                        }
+                    ]
+                },
+                "user_agent": {
+                    "description": "User agent string",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "User ID (null for system actions)",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.AuditLogEdges": {
+            "type": "object",
+            "properties": {
+                "user": {
+                    "description": "User who performed the action",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.CRMIntegration": {
+            "type": "object",
+            "properties": {
+                "auto_sync": {
+                    "description": "Automatically sync leads to CRM",
+                    "type": "boolean"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the CRMIntegrationQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.CRMIntegrationEdges"
+                        }
+                    ]
+                },
+                "enabled": {
+                    "description": "Whether integration is active",
+                    "type": "boolean"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "instance_url": {
+                    "description": "CRM instance URL (for Salesforce)",
+                    "type": "string"
+                },
+                "last_sync_at": {
+                    "description": "Last successful sync timestamp",
+                    "type": "string"
+                },
+                "last_sync_error": {
+                    "description": "Last sync error message",
+                    "type": "string"
+                },
+                "provider": {
+                    "description": "CRM provider",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/crmintegration.Provider"
+                        }
+                    ]
+                },
+                "settings": {
+                    "description": "Provider-specific settings",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "sync_direction": {
+                    "description": "Data sync direction",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/crmintegration.SyncDirection"
+                        }
+                    ]
+                },
+                "sync_interval_minutes": {
+                    "description": "Sync interval in minutes (for auto-sync)",
+                    "type": "integer"
+                },
+                "synced_leads_count": {
+                    "description": "Total leads synced to CRM",
+                    "type": "integer"
+                },
+                "token_expires_at": {
+                    "description": "When access token expires",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "User who owns this integration",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.CRMIntegrationEdges": {
+            "type": "object",
+            "properties": {
+                "synced_leads": {
+                    "description": "Leads synced through this integration",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.CRMLeadSync"
+                    }
+                },
+                "user": {
+                    "description": "Integration owner",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.CRMLeadSync": {
+            "type": "object",
+            "properties": {
+                "auto_update": {
+                    "description": "Automatically update when lead changes",
+                    "type": "boolean"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "crm_data": {
+                    "description": "CRM-specific data (custom fields, etc.)",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "crm_lead_id": {
+                    "description": "Lead ID in external CRM",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the CRMLeadSyncQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.CRMLeadSyncEdges"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "integration_id": {
+                    "description": "CRM integration ID",
+                    "type": "integer"
+                },
+                "lead_id": {
+                    "description": "Lead ID in IndustryDB",
+                    "type": "integer"
+                },
+                "sync_direction": {
+                    "description": "Direction of last sync",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/crmleadsync.SyncDirection"
+                        }
+                    ]
+                },
+                "sync_error": {
+                    "description": "Last sync error message",
+                    "type": "string"
+                },
+                "sync_status": {
+                    "description": "Sync status",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/crmleadsync.SyncStatus"
+                        }
+                    ]
+                },
+                "synced_at": {
+                    "description": "Last successful sync timestamp",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                }
+            }
+        },
+        "ent.CRMLeadSyncEdges": {
+            "type": "object",
+            "properties": {
+                "integration": {
+                    "description": "Parent CRM integration",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.CRMIntegration"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.CallLog": {
+            "type": "object",
+            "properties": {
+                "cost": {
+                    "description": "Call cost in USD",
+                    "type": "number"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "direction": {
+                    "description": "Call direction",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/calllog.Direction"
+                        }
+                    ]
+                },
+                "disposition": {
+                    "description": "Call outcome (interested, not_interested, callback, etc.)",
+                    "type": "string"
+                },
+                "duration": {
+                    "description": "Call duration in seconds",
+                    "type": "integer"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the CallLogQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.CallLogEdges"
+                        }
+                    ]
+                },
+                "ended_at": {
+                    "description": "When call ended",
+                    "type": "string"
+                },
+                "from_number": {
+                    "description": "Caller's phone number",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "is_recorded": {
+                    "description": "Whether call was recorded",
+                    "type": "boolean"
+                },
+                "lead_id": {
+                    "description": "Lead associated with the call",
+                    "type": "integer"
+                },
+                "notes": {
+                    "description": "Call notes added by user",
+                    "type": "string"
+                },
+                "phone_number": {
+                    "description": "Phone number called (E.164 format)",
+                    "type": "string"
+                },
+                "provider_call_id": {
+                    "description": "Provider's call ID (Twilio SID, etc.)",
+                    "type": "string"
+                },
+                "recording_duration": {
+                    "description": "Recording duration in seconds",
+                    "type": "integer"
+                },
+                "recording_url": {
+                    "description": "URL to call recording",
+                    "type": "string"
+                },
+                "started_at": {
+                    "description": "When call started",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Call status",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/calllog.Status"
+                        }
+                    ]
+                },
+                "to_number": {
+                    "description": "Recipient's phone number",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "User who made/received the call",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.CallLogEdges": {
+            "type": "object",
+            "properties": {
+                "lead": {
+                    "description": "Lead associated with this call",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.Lead"
+                        }
+                    ]
+                },
+                "user": {
+                    "description": "User who made/received this call",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.CompetitorMetric": {
+            "type": "object",
+            "properties": {
+                "competitor_id": {
+                    "description": "Competitor this metric belongs to",
+                    "type": "integer"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the CompetitorMetricQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.CompetitorMetricEdges"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "metric_name": {
+                    "description": "Name of the metric",
+                    "type": "string"
+                },
+                "metric_type": {
+                    "description": "Type of metric being tracked",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/competitormetric.MetricType"
+                        }
+                    ]
+                },
+                "metric_value": {
+                    "description": "Value of the metric (stored as text for flexibility)",
+                    "type": "string"
+                },
+                "notes": {
+                    "description": "Additional notes about this metric",
+                    "type": "string"
+                },
+                "numeric_value": {
+                    "description": "Numeric representation if applicable",
+                    "type": "number"
+                },
+                "recorded_at": {
+                    "description": "When this metric was recorded",
+                    "type": "string"
+                },
+                "source": {
+                    "description": "Source of the metric data",
+                    "type": "string"
+                },
+                "unit": {
+                    "description": "Unit of measurement (USD, users, etc.)",
+                    "type": "string"
+                }
+            }
+        },
+        "ent.CompetitorMetricEdges": {
+            "type": "object",
+            "properties": {
+                "competitor": {
+                    "description": "Competitor this metric belongs to",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.CompetitorProfile"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.CompetitorProfile": {
+            "type": "object",
+            "properties": {
+                "country": {
+                    "description": "Competitor's primary country (ISO 3166-1 alpha-2)",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Description of competitor and their offerings",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the CompetitorProfileQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.CompetitorProfileEdges"
+                        }
+                    ]
+                },
+                "estimated_employees": {
+                    "description": "Estimated number of employees",
+                    "type": "integer"
+                },
+                "estimated_revenue": {
+                    "description": "Estimated annual revenue range",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "industry": {
+                    "description": "Competitor's primary industry",
+                    "type": "string"
+                },
+                "is_active": {
+                    "description": "Whether competitor is actively tracked",
+                    "type": "boolean"
+                },
+                "last_analyzed_at": {
+                    "description": "Last time competitor was analyzed",
+                    "type": "string"
+                },
+                "linkedin_url": {
+                    "description": "LinkedIn company page URL",
+                    "type": "string"
+                },
+                "market_position": {
+                    "description": "Competitor's market position",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/competitorprofile.MarketPosition"
+                        }
+                    ]
+                },
+                "name": {
+                    "description": "Competitor company name",
+                    "type": "string"
+                },
+                "pricing_tiers": {
+                    "description": "Competitor pricing tiers",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "products": {
+                    "description": "List of competitor products/services",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "strengths": {
+                    "description": "List of competitor strengths",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "target_markets": {
+                    "description": "Competitor's target markets",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "twitter_handle": {
+                    "description": "Twitter handle",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "User who added this competitor",
+                    "type": "integer"
+                },
+                "weaknesses": {
+                    "description": "List of competitor weaknesses",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "website": {
+                    "description": "Competitor website URL",
+                    "type": "string"
+                }
+            }
+        },
+        "ent.CompetitorProfileEdges": {
+            "type": "object",
+            "properties": {
+                "metrics": {
+                    "description": "Metrics tracked for this competitor",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.CompetitorMetric"
+                    }
+                },
+                "user": {
+                    "description": "User who tracks this competitor",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.EmailCampaign": {
+            "type": "object",
+            "properties": {
+                "clicked_count": {
+                    "description": "Number of links clicked",
+                    "type": "integer"
+                },
+                "content_html": {
+                    "description": "HTML email content",
+                    "type": "string"
+                },
+                "content_text": {
+                    "description": "Plain text email content (fallback)",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the EmailCampaignQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.EmailCampaignEdges"
+                        }
+                    ]
+                },
+                "failed_count": {
+                    "description": "Number of emails that failed",
+                    "type": "integer"
+                },
+                "from_email": {
+                    "description": "Sender email address",
+                    "type": "string"
+                },
+                "from_name": {
+                    "description": "Sender name",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "Campaign name",
+                    "type": "string"
+                },
+                "opened_count": {
+                    "description": "Number of emails opened",
+                    "type": "integer"
+                },
+                "recipients_count": {
+                    "description": "Total number of recipients",
+                    "type": "integer"
+                },
+                "reply_to": {
+                    "description": "Reply-to email address",
+                    "type": "string"
+                },
+                "scheduled_at": {
+                    "description": "When to send campaign (for scheduled campaigns)",
+                    "type": "string"
+                },
+                "sendgrid_batch_id": {
+                    "description": "SendGrid batch ID for tracking",
+                    "type": "string"
+                },
+                "sent_at": {
+                    "description": "When campaign was sent",
+                    "type": "string"
+                },
+                "sent_count": {
+                    "description": "Number of emails successfully sent",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "Campaign status",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/emailcampaign.Status"
+                        }
+                    ]
+                },
+                "subject": {
+                    "description": "Email subject line",
+                    "type": "string"
+                },
+                "tags": {
+                    "description": "Campaign tags for organization",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "unsubscribed_count": {
+                    "description": "Number of unsubscribes from this campaign",
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "User who created the campaign",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.EmailCampaignEdges": {
+            "type": "object",
+            "properties": {
+                "recipients": {
+                    "description": "Campaign recipients",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.EmailCampaignRecipient"
+                    }
+                },
+                "user": {
+                    "description": "Campaign creator",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.EmailCampaignRecipient": {
+            "type": "object",
+            "properties": {
+                "campaign_id": {
+                    "description": "Email campaign ID",
+                    "type": "integer"
+                },
+                "clicked_at": {
+                    "description": "When recipient clicked link",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the EmailCampaignRecipientQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.EmailCampaignRecipientEdges"
+                        }
+                    ]
+                },
+                "email": {
+                    "description": "Recipient email address",
+                    "type": "string"
+                },
+                "failure_reason": {
+                    "description": "Reason for send failure",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "Recipient name",
+                    "type": "string"
+                },
+                "opened_at": {
+                    "description": "When recipient opened email",
+                    "type": "string"
+                },
+                "sendgrid_message_id": {
+                    "description": "SendGrid message ID for tracking",
+                    "type": "string"
+                },
+                "sent_at": {
+                    "description": "When email was sent to this recipient",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Recipient status",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/emailcampaignrecipient.Status"
+                        }
+                    ]
+                },
+                "unsubscribed_at": {
+                    "description": "When recipient unsubscribed",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                }
+            }
+        },
+        "ent.EmailCampaignRecipientEdges": {
+            "type": "object",
+            "properties": {
+                "campaign": {
+                    "description": "Parent campaign",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.EmailCampaign"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.EmailSequence": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "created_by_user_id": {
+                    "description": "User who created this sequence",
+                    "type": "integer"
+                },
+                "description": {
+                    "description": "Description of what this sequence does",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the EmailSequenceQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.EmailSequenceEdges"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "Sequence name (e.g., 'New Lead Follow-up')",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Sequence status",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/emailsequence.Status"
+                        }
+                    ]
+                },
+                "trigger": {
+                    "description": "What triggers enrollment in this sequence",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/emailsequence.Trigger"
+                        }
+                    ]
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                }
+            }
+        },
+        "ent.EmailSequenceEdges": {
+            "type": "object",
+            "properties": {
+                "created_by": {
+                    "description": "CreatedBy holds the value of the created_by edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                },
+                "enrollments": {
+                    "description": "Leads enrolled in this sequence",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.EmailSequenceEnrollment"
+                    }
+                },
+                "steps": {
+                    "description": "Steps in this sequence",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.EmailSequenceStep"
+                    }
+                }
+            }
+        },
+        "ent.EmailSequenceEnrollment": {
+            "type": "object",
+            "properties": {
+                "completed_at": {
+                    "description": "When the sequence was completed",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "current_step": {
+                    "description": "Current step number in the sequence (0 = not started)",
+                    "type": "integer"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the EmailSequenceEnrollmentQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.EmailSequenceEnrollmentEdges"
+                        }
+                    ]
+                },
+                "enrolled_at": {
+                    "description": "When the lead was enrolled",
+                    "type": "string"
+                },
+                "enrolled_by_user_id": {
+                    "description": "User who enrolled this lead",
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "lead_id": {
+                    "description": "Lead enrolled in this sequence",
+                    "type": "integer"
+                },
+                "sequence_id": {
+                    "description": "Sequence the lead is enrolled in",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "Enrollment status",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/emailsequenceenrollment.Status"
+                        }
+                    ]
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                }
+            }
+        },
+        "ent.EmailSequenceEnrollmentEdges": {
+            "type": "object",
+            "properties": {
+                "enrolled_by": {
+                    "description": "EnrolledBy holds the value of the enrolled_by edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                },
+                "lead": {
+                    "description": "Lead holds the value of the lead edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.Lead"
+                        }
+                    ]
+                },
+                "sends": {
+                    "description": "Emails sent for this enrollment",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.EmailSequenceSend"
+                    }
+                },
+                "sequence": {
+                    "description": "Sequence holds the value of the sequence edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.EmailSequence"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.EmailSequenceSend": {
+            "type": "object",
+            "properties": {
+                "bounced": {
+                    "description": "Whether the email bounced",
+                    "type": "boolean"
+                },
+                "clicked_at": {
+                    "description": "When a link in the email was clicked (if tracked)",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the EmailSequenceSendQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.EmailSequenceSendEdges"
+                        }
+                    ]
+                },
+                "enrollment_id": {
+                    "description": "Enrollment this send belongs to",
+                    "type": "integer"
+                },
+                "error_message": {
+                    "description": "Error message if send failed",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "lead_id": {
+                    "description": "Lead receiving this email",
+                    "type": "integer"
+                },
+                "opened_at": {
+                    "description": "When the email was opened (if tracked)",
+                    "type": "string"
+                },
+                "scheduled_for": {
+                    "description": "When this email is scheduled to be sent",
+                    "type": "string"
+                },
+                "sent_at": {
+                    "description": "When the email was actually sent",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Send status",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/emailsequencesend.Status"
+                        }
+                    ]
+                },
+                "step_id": {
+                    "description": "Sequence step this send is for",
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                }
+            }
+        },
+        "ent.EmailSequenceSendEdges": {
+            "type": "object",
+            "properties": {
+                "enrollment": {
+                    "description": "Enrollment holds the value of the enrollment edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.EmailSequenceEnrollment"
+                        }
+                    ]
+                },
+                "lead": {
+                    "description": "Lead holds the value of the lead edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.Lead"
+                        }
+                    ]
+                },
+                "step": {
+                    "description": "Step holds the value of the step edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.EmailSequenceStep"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.EmailSequenceStep": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "description": "Email body (supports variables: {{lead_name}}, {{user_name}}, etc.)",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "delay_days": {
+                    "description": "Days to wait before sending (0 = send immediately)",
+                    "type": "integer"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the EmailSequenceStepQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.EmailSequenceStepEdges"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "sequence_id": {
+                    "description": "Sequence this step belongs to",
+                    "type": "integer"
+                },
+                "step_order": {
+                    "description": "Order of this step in the sequence (1, 2, 3...)",
+                    "type": "integer"
+                },
+                "subject": {
+                    "description": "Email subject line",
+                    "type": "string"
+                }
+            }
+        },
+        "ent.EmailSequenceStepEdges": {
+            "type": "object",
+            "properties": {
+                "sends": {
+                    "description": "Emails sent from this step",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.EmailSequenceSend"
+                    }
+                },
+                "sequence": {
+                    "description": "Sequence holds the value of the sequence edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.EmailSequence"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.Experiment": {
+            "type": "object",
+            "properties": {
+                "confidence_level": {
+                    "description": "Statistical confidence level (default 95%)",
+                    "type": "number"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Experiment description",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the ExperimentQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.ExperimentEdges"
+                        }
+                    ]
+                },
+                "end_date": {
+                    "description": "When experiment ends",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "key": {
+                    "description": "Unique key for referencing experiment in code",
+                    "type": "string"
+                },
+                "min_sample_size": {
+                    "description": "Minimum users per variant before analysis",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "Experiment name",
+                    "type": "string"
+                },
+                "start_date": {
+                    "description": "When experiment starts",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Experiment status",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/experiment.Status"
+                        }
+                    ]
+                },
+                "target_metric": {
+                    "description": "Primary metric to measure (e.g., conversion_rate, revenue)",
+                    "type": "string"
+                },
+                "traffic_split": {
+                    "description": "Traffic allocation per variant (e.g., {control: 50, variant_a: 50})",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                },
+                "variants": {
+                    "description": "List of variant names (e.g., [control, variant_a, variant_b])",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "ent.ExperimentAssignment": {
+            "type": "object",
+            "properties": {
+                "converted": {
+                    "description": "Whether user converted (for conversion tracking)",
+                    "type": "boolean"
+                },
+                "converted_at": {
+                    "description": "When user converted",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Assignment timestamp",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the ExperimentAssignmentQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.ExperimentAssignmentEdges"
+                        }
+                    ]
+                },
+                "experiment_id": {
+                    "description": "Experiment this assignment belongs to",
+                    "type": "integer"
+                },
+                "exposed": {
+                    "description": "Whether user has been exposed to variant",
+                    "type": "boolean"
+                },
+                "exposed_at": {
+                    "description": "When user was first exposed",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "metric_value": {
+                    "description": "Numeric value for target metric (e.g., revenue amount)",
+                    "type": "number"
+                },
+                "user_id": {
+                    "description": "User assigned to variant",
+                    "type": "integer"
+                },
+                "variant": {
+                    "description": "Variant assigned (e.g., control, variant_a)",
+                    "type": "string"
+                }
+            }
+        },
+        "ent.ExperimentAssignmentEdges": {
+            "type": "object",
+            "properties": {
+                "experiment": {
+                    "description": "Experiment this assignment belongs to",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.Experiment"
+                        }
+                    ]
+                },
+                "user": {
+                    "description": "User assigned to variant",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.ExperimentEdges": {
+            "type": "object",
+            "properties": {
+                "assignments": {
+                    "description": "User assignments to this experiment",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.ExperimentAssignment"
+                    }
+                }
+            }
+        },
+        "ent.Export": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the ExportQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.ExportEdges"
+                        }
+                    ]
+                },
+                "error_message": {
+                    "description": "Error message if failed",
+                    "type": "string"
+                },
+                "expires_at": {
+                    "description": "Expiration timestamp (24h after creation)",
+                    "type": "string"
+                },
+                "file_path": {
+                    "description": "Local file path",
+                    "type": "string"
+                },
+                "file_url": {
+                    "description": "URL to download file",
+                    "type": "string"
+                },
+                "filters_applied": {
+                    "description": "Filters used for this export",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "format": {
+                    "description": "Export format",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/export.Format"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "lead_count": {
+                    "description": "Number of leads in export",
+                    "type": "integer"
+                },
+                "organization_id": {
+                    "description": "Organization ID if export belongs to organization",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "Export status",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/export.Status"
+                        }
+                    ]
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "User ID foreign key",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.ExportEdges": {
+            "type": "object",
+            "properties": {
+                "organization": {
+                    "description": "Organization this export belongs to (optional)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.Organization"
+                        }
+                    ]
+                },
+                "user": {
+                    "description": "Export owner",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.Lead": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "description": "Full street address",
+                    "type": "string"
+                },
+                "city": {
+                    "description": "City name",
+                    "type": "string"
+                },
+                "company_description": {
+                    "description": "Enriched company description",
+                    "type": "string"
+                },
+                "company_revenue": {
+                    "description": "Enriched company revenue range",
+                    "type": "string"
+                },
+                "country": {
+                    "description": "ISO 3166-1 alpha-2 country code",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "cuisine_type": {
+                    "description": "For restaurants: cuisine type from OSM cuisine= tag",
+                    "type": "string"
+                },
+                "custom_fields": {
+                    "description": "User-defined custom fields (flexible metadata storage)",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the LeadQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.LeadEdges"
+                        }
+                    ]
+                },
+                "email": {
+                    "description": "Email address",
+                    "type": "string"
+                },
+                "email_validated": {
+                    "description": "Whether the email has been validated",
+                    "type": "boolean"
+                },
+                "employee_count": {
+                    "description": "Enriched employee count",
+                    "type": "integer"
+                },
+                "enriched_at": {
+                    "description": "When the lead was enriched",
+                    "type": "string"
+                },
+                "facebook_url": {
+                    "description": "Enriched Facebook URL",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "industry": {
+                    "description": "Industry type",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/lead.Industry"
+                        }
+                    ]
+                },
+                "is_enriched": {
+                    "description": "Whether the lead has been enriched",
+                    "type": "boolean"
+                },
+                "latitude": {
+                    "description": "GPS latitude",
+                    "type": "number"
+                },
+                "linkedin_url": {
+                    "description": "Enriched LinkedIn URL",
+                    "type": "string"
+                },
+                "longitude": {
+                    "description": "GPS longitude",
+                    "type": "number"
+                },
+                "metadata": {
+                    "description": "Additional metadata from OSM",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "name": {
+                    "description": "Business name",
+                    "type": "string"
+                },
+                "osm_id": {
+                    "description": "OpenStreetMap ID",
+                    "type": "string"
+                },
+                "phone": {
+                    "description": "Phone number",
+                    "type": "string"
+                },
+                "postal_code": {
+                    "description": "Postal/ZIP code",
+                    "type": "string"
+                },
+                "quality_score": {
+                    "description": "Data quality score (0-100)",
+                    "type": "integer"
+                },
+                "social_media": {
+                    "description": "Social media links (facebook, instagram, twitter, etc.)",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "specialties": {
+                    "description": "Additional specialty tags (e.g., [pasta, seafood, fine_dining])",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "sport_type": {
+                    "description": "For gyms: sport/fitness type from OSM sport= tag",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Lead lifecycle status",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/lead.Status"
+                        }
+                    ]
+                },
+                "status_changed_at": {
+                    "description": "When the status was last changed",
+                    "type": "string"
+                },
+                "sub_niche": {
+                    "description": "Sub-category within industry (e.g., italian, crossfit, watercolor)",
+                    "type": "string"
+                },
+                "tattoo_style": {
+                    "description": "For tattoos: style type (traditional, japanese, watercolor)",
+                    "type": "string"
+                },
+                "twitter_url": {
+                    "description": "Enriched Twitter URL",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                },
+                "verified": {
+                    "description": "Whether the lead has been verified",
+                    "type": "boolean"
+                },
+                "website": {
+                    "description": "Website URL",
+                    "type": "string"
+                }
+            }
+        },
+        "ent.LeadAssignment": {
+            "type": "object",
+            "properties": {
+                "assigned_at": {
+                    "description": "When the lead was assigned",
+                    "type": "string"
+                },
+                "assigned_by_user_id": {
+                    "description": "ID of the user who made the assignment (null for automatic assignments)",
+                    "type": "integer"
+                },
+                "assignment_reason": {
+                    "description": "Reason for assignment (e.g., 'round-robin', 'location match', 'manual')",
+                    "type": "string"
+                },
+                "assignment_type": {
+                    "description": "Whether the assignment was automatic or manual",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/leadassignment.AssignmentType"
+                        }
+                    ]
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the LeadAssignmentQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.LeadAssignmentEdges"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "is_active": {
+                    "description": "Whether this is the current assignment (false if reassigned)",
+                    "type": "boolean"
+                },
+                "lead_id": {
+                    "description": "ID of the assigned lead",
+                    "type": "integer"
+                },
+                "user_id": {
+                    "description": "ID of the user who owns this lead",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.LeadAssignmentEdges": {
+            "type": "object",
+            "properties": {
+                "assigned_by": {
+                    "description": "AssignedBy holds the value of the assigned_by edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                },
+                "lead": {
+                    "description": "Lead holds the value of the lead edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.Lead"
+                        }
+                    ]
+                },
+                "user": {
+                    "description": "User holds the value of the user edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.LeadEdges": {
+            "type": "object",
+            "properties": {
+                "assignments": {
+                    "description": "Assignment history for this lead",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.LeadAssignment"
+                    }
+                },
+                "call_logs": {
+                    "description": "Call logs for this lead",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.CallLog"
+                    }
+                },
+                "email_sequence_enrollments": {
+                    "description": "Email sequences this lead is enrolled in",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.EmailSequenceEnrollment"
+                    }
+                },
+                "email_sequence_sends": {
+                    "description": "Emails sent to this lead",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.EmailSequenceSend"
+                    }
+                },
+                "notes": {
+                    "description": "Notes and comments on this lead",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.LeadNote"
+                    }
+                },
+                "recommendations": {
+                    "description": "Recommendations made for this lead",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.LeadRecommendation"
+                    }
+                },
+                "sms_messages": {
+                    "description": "SMS messages sent to this lead",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.SMSMessage"
+                    }
+                },
+                "status_history": {
+                    "description": "History of status changes for this lead",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.LeadStatusHistory"
+                    }
+                },
+                "territory": {
+                    "description": "Territory this lead belongs to",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.Territory"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.LeadNote": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "description": "Note content (max 10,000 characters)",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the LeadNoteQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.LeadNoteEdges"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "is_pinned": {
+                    "description": "Whether this note is pinned to the top",
+                    "type": "boolean"
+                },
+                "lead_id": {
+                    "description": "ID of the lead this note belongs to",
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "ID of the user who created this note",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.LeadNoteEdges": {
+            "type": "object",
+            "properties": {
+                "lead": {
+                    "description": "Lead this note belongs to",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.Lead"
+                        }
+                    ]
+                },
+                "user": {
+                    "description": "User who created this note",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.LeadRecommendation": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the LeadRecommendationQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.LeadRecommendationEdges"
+                        }
+                    ]
+                },
+                "expires_at": {
+                    "description": "When this recommendation expires",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "lead_id": {
+                    "description": "Recommended lead",
+                    "type": "integer"
+                },
+                "metadata": {
+                    "description": "Additional recommendation metadata",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "reason": {
+                    "description": "Why this lead is recommended",
+                    "type": "string"
+                },
+                "score": {
+                    "description": "Recommendation score (0-100)",
+                    "type": "number"
+                },
+                "status": {
+                    "description": "Recommendation status",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/leadrecommendation.Status"
+                        }
+                    ]
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "User receiving this recommendation",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.LeadRecommendationEdges": {
+            "type": "object",
+            "properties": {
+                "lead": {
+                    "description": "Recommended lead",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.Lead"
+                        }
+                    ]
+                },
+                "user": {
+                    "description": "User receiving this recommendation",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.LeadStatusHistory": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "When the status change occurred",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the LeadStatusHistoryQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.LeadStatusHistoryEdges"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "lead_id": {
+                    "description": "ID of the lead whose status changed",
+                    "type": "integer"
+                },
+                "new_status": {
+                    "description": "New status after the change",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/leadstatushistory.NewStatus"
+                        }
+                    ]
+                },
+                "old_status": {
+                    "description": "Previous status (null for initial status)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/leadstatushistory.OldStatus"
+                        }
+                    ]
+                },
+                "reason": {
+                    "description": "Optional reason for status change (e.g., 'Client not interested')",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "ID of the user who changed the status",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.LeadStatusHistoryEdges": {
+            "type": "object",
+            "properties": {
+                "lead": {
+                    "description": "Lead holds the value of the lead edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.Lead"
+                        }
+                    ]
+                },
+                "user": {
+                    "description": "User holds the value of the user edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.MarketReport": {
+            "type": "object",
+            "properties": {
+                "country": {
+                    "description": "Country filter (ISO 3166-1 alpha-2)",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "data": {
+                    "description": "Report data and statistics",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the MarketReportQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.MarketReportEdges"
+                        }
+                    ]
+                },
+                "expires_at": {
+                    "description": "When the report expires (optional)",
+                    "type": "string"
+                },
+                "generated_at": {
+                    "description": "When the report was generated",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "industry": {
+                    "description": "Industry covered by this report",
+                    "type": "string"
+                },
+                "metadata": {
+                    "description": "Additional report metadata (filters used, generation parameters)",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "period_end": {
+                    "description": "End of reporting period",
+                    "type": "string"
+                },
+                "period_start": {
+                    "description": "Start of reporting period",
+                    "type": "string"
+                },
+                "report_type": {
+                    "description": "Type of market intelligence report",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/marketreport.ReportType"
+                        }
+                    ]
+                },
+                "title": {
+                    "description": "Report title",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "User who requested this report",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.MarketReportEdges": {
+            "type": "object",
+            "properties": {
+                "user": {
+                    "description": "User who requested this report",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.Organization": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "description": "Whether organization is active",
+                    "type": "boolean"
+                },
+                "billing_email": {
+                    "description": "Email for billing notifications",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the OrganizationQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.OrganizationEdges"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "last_reset_at": {
+                    "description": "Last time usage was reset",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Organization name",
+                    "type": "string"
+                },
+                "owner_id": {
+                    "description": "User ID of organization owner",
+                    "type": "integer"
+                },
+                "saml_certificate": {
+                    "description": "PEM-encoded X.509 certificate for SAML",
+                    "type": "string"
+                },
+                "saml_enabled": {
+                    "description": "Whether SAML SSO is enabled for this organization",
+                    "type": "boolean"
+                },
+                "saml_idp_entity_id": {
+                    "description": "Identity Provider entity ID",
+                    "type": "string"
+                },
+                "saml_idp_metadata_url": {
+                    "description": "Identity Provider metadata URL for SAML",
+                    "type": "string"
+                },
+                "slug": {
+                    "description": "URL-friendly organization identifier",
+                    "type": "string"
+                },
+                "stripe_customer_id": {
+                    "description": "Stripe customer ID for organization billing",
+                    "type": "string"
+                },
+                "subscription_tier": {
+                    "description": "Organization subscription tier",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/organization.SubscriptionTier"
+                        }
+                    ]
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                },
+                "usage_count": {
+                    "description": "Current month usage count",
+                    "type": "integer"
+                },
+                "usage_limit": {
+                    "description": "Monthly usage limit for organization",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.OrganizationEdges": {
+            "type": "object",
+            "properties": {
+                "exports": {
+                    "description": "Organization exports",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.Export"
+                    }
+                },
+                "members": {
+                    "description": "Organization members",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.OrganizationMember"
+                    }
+                },
+                "owner": {
+                    "description": "Organization owner",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.OrganizationMember": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the OrganizationMemberQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.OrganizationMemberEdges"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "invited_at": {
+                    "description": "When invitation was sent",
+                    "type": "string"
+                },
+                "invited_by_email": {
+                    "description": "Email used for invitation",
+                    "type": "string"
+                },
+                "joined_at": {
+                    "description": "When member joined organization",
+                    "type": "string"
+                },
+                "organization_id": {
+                    "description": "Organization ID",
+                    "type": "integer"
+                },
+                "role": {
+                    "description": "Member role in organization",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/organizationmember.Role"
+                        }
+                    ]
+                },
+                "status": {
+                    "description": "Member status",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/organizationmember.Status"
+                        }
+                    ]
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "User ID",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.OrganizationMemberEdges": {
+            "type": "object",
+            "properties": {
+                "organization": {
+                    "description": "Organization this member belongs to",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.Organization"
+                        }
+                    ]
+                },
+                "user": {
+                    "description": "User who is a member",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.Referral": {
+            "type": "object",
+            "properties": {
+                "completed_at": {
+                    "description": "When the referred user signed up",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "When the referral code was created",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the ReferralQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.ReferralEdges"
+                        }
+                    ]
+                },
+                "expires_at": {
+                    "description": "When the referral code expires",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "referral_code": {
+                    "description": "Unique referral code for sharing",
+                    "type": "string"
+                },
+                "referred_user_id": {
+                    "description": "User who was referred (null until signup)",
+                    "type": "integer"
+                },
+                "referrer_user_id": {
+                    "description": "User who sent the referral",
+                    "type": "integer"
+                },
+                "reward_amount": {
+                    "description": "Monetary reward amount (e.g., $10 credit)",
+                    "type": "number"
+                },
+                "reward_type": {
+                    "description": "Type of reward to grant",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/referral.RewardType"
+                        }
+                    ]
+                },
+                "rewarded_at": {
+                    "description": "When the reward was granted to referrer",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Current status of the referral",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/referral.Status"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.ReferralEdges": {
+            "type": "object",
+            "properties": {
+                "referred": {
+                    "description": "Referred holds the value of the referred edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                },
+                "referrer": {
+                    "description": "Referrer holds the value of the referrer edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.SMSCampaign": {
+            "type": "object",
+            "properties": {
+                "actual_cost": {
+                    "description": "Actual cost in USD",
+                    "type": "number"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "delivered_count": {
+                    "description": "Number of messages delivered",
+                    "type": "integer"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the SMSCampaignQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.SMSCampaignEdges"
+                        }
+                    ]
+                },
+                "estimated_cost": {
+                    "description": "Estimated cost in USD",
+                    "type": "number"
+                },
+                "failed_count": {
+                    "description": "Number of messages failed",
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "message_template": {
+                    "description": "SMS message template with placeholders",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Campaign name",
+                    "type": "string"
+                },
+                "scheduled_at": {
+                    "description": "When campaign is scheduled to send",
+                    "type": "string"
+                },
+                "sent_at": {
+                    "description": "When campaign sending completed",
+                    "type": "string"
+                },
+                "sent_count": {
+                    "description": "Number of messages sent",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "Campaign status",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smscampaign.Status"
+                        }
+                    ]
+                },
+                "target_filters": {
+                    "description": "Filters for targeting leads (industry, country, etc.)",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "total_recipients": {
+                    "description": "Total number of recipients",
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "User who created the campaign",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.SMSCampaignEdges": {
+            "type": "object",
+            "properties": {
+                "messages": {
+                    "description": "SMS messages in this campaign",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.SMSMessage"
+                    }
+                },
+                "user": {
+                    "description": "User who created this campaign",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.SMSMessage": {
+            "type": "object",
+            "properties": {
+                "campaign_id": {
+                    "description": "Campaign this message belongs to",
+                    "type": "integer"
+                },
+                "cost": {
+                    "description": "Cost in USD",
+                    "type": "number"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "delivered_at": {
+                    "description": "When message was delivered",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the SMSMessageQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.SMSMessageEdges"
+                        }
+                    ]
+                },
+                "error_code": {
+                    "description": "Twilio error code if failed",
+                    "type": "integer"
+                },
+                "error_message": {
+                    "description": "Error message if failed",
+                    "type": "string"
+                },
+                "failed_at": {
+                    "description": "When message failed",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "lead_id": {
+                    "description": "Lead this message was sent to",
+                    "type": "integer"
+                },
+                "message_body": {
+                    "description": "Actual message content sent",
+                    "type": "string"
+                },
+                "phone_number": {
+                    "description": "Recipient phone number (E.164 format)",
+                    "type": "string"
+                },
+                "sent_at": {
+                    "description": "When message was sent",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Message delivery status",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/smsmessage.Status"
+                        }
+                    ]
+                },
+                "twilio_sid": {
+                    "description": "Twilio message SID",
+                    "type": "string"
+                }
+            }
+        },
+        "ent.SMSMessageEdges": {
+            "type": "object",
+            "properties": {
+                "campaign": {
+                    "description": "Campaign this message belongs to",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.SMSCampaign"
+                        }
+                    ]
+                },
+                "lead": {
+                    "description": "Lead this message was sent to",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.Lead"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.SavedSearch": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "description": "When this search was saved",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the SavedSearchQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.SavedSearchEdges"
+                        }
+                    ]
+                },
+                "filters": {
+                    "description": "Search filters (industry, country, city, etc.)",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "Name/title for this saved search",
+                    "type": "string"
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "User who created this saved search",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.SavedSearchEdges": {
+            "type": "object",
+            "properties": {
+                "user": {
+                    "description": "User who owns this saved search",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.Subscription": {
+            "type": "object",
+            "properties": {
+                "cancel_at_period_end": {
+                    "description": "Whether to cancel at period end",
+                    "type": "boolean"
+                },
+                "canceled_at": {
+                    "description": "Cancellation timestamp",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "current_period_end": {
+                    "description": "Current billing period end",
+                    "type": "string"
+                },
+                "current_period_start": {
+                    "description": "Current billing period start",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the SubscriptionQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.SubscriptionEdges"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "status": {
+                    "description": "Subscription status",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/subscription.Status"
+                        }
+                    ]
+                },
+                "stripe_price_id": {
+                    "description": "Stripe price ID",
+                    "type": "string"
+                },
+                "stripe_subscription_id": {
+                    "description": "Stripe subscription ID",
+                    "type": "string"
+                },
+                "tier": {
+                    "description": "Subscription tier",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/subscription.Tier"
+                        }
+                    ]
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                },
+                "user_id": {
+                    "description": "User ID foreign key",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.SubscriptionEdges": {
+            "type": "object",
+            "properties": {
+                "user": {
+                    "description": "Subscription owner",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.Territory": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "description": "Whether this territory is currently active",
+                    "type": "boolean"
+                },
+                "cities": {
+                    "description": "Specific cities covered by this territory",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "countries": {
+                    "description": "List of country codes covered by this territory",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "created_at": {
+                    "description": "When the territory was created",
+                    "type": "string"
+                },
+                "created_by_user_id": {
+                    "description": "User who created this territory",
+                    "type": "integer"
+                },
+                "description": {
+                    "description": "Description of the territory coverage",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the TerritoryQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.TerritoryEdges"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "industries": {
+                    "description": "Industries this territory focuses on",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "description": "Territory name (e.g., 'North America', 'EMEA', 'West Coast')",
+                    "type": "string"
+                },
+                "regions": {
+                    "description": "List of regions/states covered (e.g., ['CA', 'OR', 'WA'])",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "updated_at": {
+                    "description": "When the territory was last updated",
+                    "type": "string"
+                }
+            }
+        },
+        "ent.TerritoryEdges": {
+            "type": "object",
+            "properties": {
+                "created_by": {
+                    "description": "CreatedBy holds the value of the created_by edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                },
+                "leads": {
+                    "description": "Leads holds the value of the leads edge.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.Lead"
+                    }
+                },
+                "members": {
+                    "description": "Members holds the value of the members edge.",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.TerritoryMember"
+                    }
+                }
+            }
+        },
+        "ent.TerritoryMember": {
+            "type": "object",
+            "properties": {
+                "added_by_user_id": {
+                    "description": "User who added this member to the territory",
+                    "type": "integer"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the TerritoryMemberQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.TerritoryMemberEdges"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "joined_at": {
+                    "description": "When the user joined this territory",
+                    "type": "string"
+                },
+                "role": {
+                    "description": "Role in the territory (manager can manage territory, member can only view/work leads)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/territorymember.Role"
+                        }
+                    ]
+                },
+                "territory_id": {
+                    "description": "ID of the territory",
+                    "type": "integer"
+                },
+                "user_id": {
+                    "description": "ID of the user who is a member",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.TerritoryMemberEdges": {
+            "type": "object",
+            "properties": {
+                "added_by": {
+                    "description": "AddedBy holds the value of the added_by edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                },
+                "territory": {
+                    "description": "Territory holds the value of the territory edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.Territory"
+                        }
+                    ]
+                },
+                "user": {
+                    "description": "User holds the value of the user edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.UsageLog": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "description": "Type of action performed",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/usagelog.Action"
+                        }
+                    ]
+                },
+                "count": {
+                    "description": "Number of leads accessed/exported",
+                    "type": "integer"
+                },
+                "created_at": {
+                    "description": "Timestamp of action",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the UsageLogQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.UsageLogEdges"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "metadata": {
+                    "description": "Additional context (filters, format, etc.)",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "user_id": {
+                    "description": "User who performed the action",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.UsageLogEdges": {
+            "type": "object",
+            "properties": {
+                "user": {
+                    "description": "User who performed the action",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.User": {
+            "type": "object",
+            "properties": {
+                "accepted_terms_at": {
+                    "description": "When user accepted Terms of Service and Privacy Policy",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "deleted_at": {
+                    "description": "Soft delete timestamp for GDPR compliance",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the UserQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.UserEdges"
+                        }
+                    ]
+                },
+                "email": {
+                    "description": "User email address",
+                    "type": "string"
+                },
+                "email_verification_token_expires_at": {
+                    "description": "Expiration time for verification token",
+                    "type": "string"
+                },
+                "email_verified": {
+                    "description": "Whether email is verified",
+                    "type": "boolean"
+                },
+                "email_verified_at": {
+                    "description": "When email was verified",
+                    "type": "string"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "last_login_at": {
+                    "description": "Last login timestamp",
+                    "type": "string"
+                },
+                "last_reset_at": {
+                    "description": "Last time usage was reset",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "User full name",
+                    "type": "string"
+                },
+                "oauth_id": {
+                    "description": "OAuth provider user ID",
+                    "type": "string"
+                },
+                "oauth_provider": {
+                    "description": "OAuth provider (google, github, etc.)",
+                    "type": "string"
+                },
+                "onboarding_completed": {
+                    "description": "Whether user has completed onboarding wizard",
+                    "type": "boolean"
+                },
+                "onboarding_step": {
+                    "description": "Current onboarding wizard step (0-5, 0=not started)",
+                    "type": "integer"
+                },
+                "role": {
+                    "description": "User role for access control",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/user.Role"
+                        }
+                    ]
+                },
+                "stripe_customer_id": {
+                    "description": "Stripe customer ID",
+                    "type": "string"
+                },
+                "subscription_tier": {
+                    "description": "Current subscription tier",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/user.SubscriptionTier"
+                        }
+                    ]
+                },
+                "totp_enabled": {
+                    "description": "Whether TOTP two-factor authentication is enabled",
+                    "type": "boolean"
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                },
+                "usage_count": {
+                    "description": "Number of leads accessed this month",
+                    "type": "integer"
+                },
+                "usage_limit": {
+                    "description": "Monthly usage limit based on tier",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.UserBehavior": {
+            "type": "object",
+            "properties": {
+                "action_type": {
+                    "description": "Type of action performed",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/userbehavior.ActionType"
+                        }
+                    ]
+                },
+                "city": {
+                    "description": "City filter used (if search/filter)",
+                    "type": "string"
+                },
+                "country": {
+                    "description": "Country filter used (if search/filter)",
+                    "type": "string"
+                },
+                "created_at": {
+                    "description": "When this action occurred",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the UserBehaviorQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.UserBehaviorEdges"
+                        }
+                    ]
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "industry": {
+                    "description": "Industry filter used (if search/filter)",
+                    "type": "string"
+                },
+                "lead_id": {
+                    "description": "Lead associated with this action (if applicable)",
+                    "type": "integer"
+                },
+                "metadata": {
+                    "description": "Additional action metadata (filters, sort options, etc.)",
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "user_id": {
+                    "description": "User performing this action",
+                    "type": "integer"
+                }
+            }
+        },
+        "ent.UserBehaviorEdges": {
+            "type": "object",
+            "properties": {
+                "user": {
+                    "description": "User who performed this action",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "ent.UserEdges": {
+            "type": "object",
+            "properties": {
+                "affiliate": {
+                    "description": "Affiliate account for this user",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.Affiliate"
+                        }
+                    ]
+                },
+                "affiliate_conversions": {
+                    "description": "Conversions attributed to this user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.AffiliateConversion"
+                    }
+                },
+                "api_keys": {
+                    "description": "User's API keys",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.APIKey"
+                    }
+                },
+                "assigned_leads": {
+                    "description": "Leads assigned to this user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.LeadAssignment"
+                    }
+                },
+                "audit_logs": {
+                    "description": "User's audit log entries",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.AuditLog"
+                    }
+                },
+                "behaviors": {
+                    "description": "User behavior tracking for recommendations",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.UserBehavior"
+                    }
+                },
+                "call_logs": {
+                    "description": "Call logs for this user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.CallLog"
+                    }
+                },
+                "competitor_profiles": {
+                    "description": "Competitor profiles tracked by this user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.CompetitorProfile"
+                    }
+                },
+                "crm_integrations": {
+                    "description": "CRM integrations configured by this user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.CRMIntegration"
+                    }
+                },
+                "email_campaigns": {
+                    "description": "Email marketing campaigns created by this user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.EmailCampaign"
+                    }
+                },
+                "email_sequence_enrollments_made": {
+                    "description": "Email sequence enrollments made by this user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.EmailSequenceEnrollment"
+                    }
+                },
+                "email_sequences_created": {
+                    "description": "Email sequences created by this user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.EmailSequence"
+                    }
+                },
+                "experiment_assignments": {
+                    "description": "A/B test variant assignments for this user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.ExperimentAssignment"
+                    }
+                },
+                "exports": {
+                    "description": "User's export history",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.Export"
+                    }
+                },
+                "lead_assignments_made": {
+                    "description": "Lead assignments made by this user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.LeadAssignment"
+                    }
+                },
+                "lead_notes": {
+                    "description": "Notes created by this user on leads",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.LeadNote"
+                    }
+                },
+                "lead_recommendations": {
+                    "description": "Lead recommendations for this user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.LeadRecommendation"
+                    }
+                },
+                "lead_status_changes": {
+                    "description": "Lead status changes made by this user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.LeadStatusHistory"
+                    }
+                },
+                "market_reports": {
+                    "description": "Market intelligence reports generated for this user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.MarketReport"
+                    }
+                },
+                "organization_memberships": {
+                    "description": "Organization memberships",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.OrganizationMember"
+                    }
+                },
+                "owned_organizations": {
+                    "description": "Organizations owned by this user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.Organization"
+                    }
+                },
+                "received_referrals": {
+                    "description": "Referrals received by this user (how they signed up)",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.Referral"
+                    }
+                },
+                "saved_searches": {
+                    "description": "User's saved searches",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.SavedSearch"
+                    }
+                },
+                "sent_referrals": {
+                    "description": "Referrals sent by this user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.Referral"
+                    }
+                },
+                "sms_campaigns": {
+                    "description": "SMS campaigns created by this user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.SMSCampaign"
+                    }
+                },
+                "subscriptions": {
+                    "description": "User's subscription history",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.Subscription"
+                    }
+                },
+                "territories_created": {
+                    "description": "Territories created by this user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.Territory"
+                    }
+                },
+                "territory_members_added": {
+                    "description": "Territory members added by this user",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.TerritoryMember"
+                    }
+                },
+                "territory_memberships": {
+                    "description": "Territories this user is a member of",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.TerritoryMember"
+                    }
+                },
+                "usage_logs": {
+                    "description": "User's usage log entries",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.UsageLog"
+                    }
+                },
+                "webhooks": {
+                    "description": "User's configured webhooks",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ent.Webhook"
+                    }
+                }
+            }
+        },
+        "ent.Webhook": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "description": "Whether webhook is active",
+                    "type": "boolean"
+                },
+                "created_at": {
+                    "description": "Creation timestamp",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "User-provided description of webhook",
+                    "type": "string"
+                },
+                "edges": {
+                    "description": "Edges holds the relations/edges for other nodes in the graph.\nThe values are being populated by the WebhookQuery when eager-loading is set.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.WebhookEdges"
+                        }
+                    ]
+                },
+                "events": {
+                    "description": "List of events to subscribe to (lead.created, export.completed, etc.)",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "failure_count": {
+                    "description": "Number of failed deliveries",
+                    "type": "integer"
+                },
+                "id": {
+                    "description": "ID of the ent.",
+                    "type": "integer"
+                },
+                "last_triggered_at": {
+                    "description": "Last time webhook was triggered",
+                    "type": "string"
+                },
+                "retry_count": {
+                    "description": "Number of retries for failed deliveries",
+                    "type": "integer"
+                },
+                "success_count": {
+                    "description": "Number of successful deliveries",
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "description": "Last update timestamp",
+                    "type": "string"
+                },
+                "url": {
+                    "description": "Webhook endpoint URL",
+                    "type": "string"
+                }
+            }
+        },
+        "ent.WebhookEdges": {
+            "type": "object",
+            "properties": {
+                "user": {
+                    "description": "User holds the value of the user edge.",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ent.User"
+                        }
+                    ]
+                }
+            }
+        },
+        "experiment.Status": {
+            "type": "string",
+            "enum": [
+                "draft",
+                "draft",
+                "running",
+                "paused",
+                "completed"
+            ],
+            "x-enum-varnames": [
+                "DefaultStatus",
+                "StatusDraft",
+                "StatusRunning",
+                "StatusPaused",
+                "StatusCompleted"
+            ]
+        },
+        "export.Format": {
+            "type": "string",
+            "enum": [
+                "csv",
+                "excel"
+            ],
+            "x-enum-varnames": [
+                "FormatCsv",
+                "FormatExcel"
+            ]
+        },
+        "export.Status": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "pending",
+                "processing",
+                "ready",
+                "failed",
+                "expired"
+            ],
+            "x-enum-varnames": [
+                "DefaultStatus",
+                "StatusPending",
+                "StatusProcessing",
+                "StatusReady",
+                "StatusFailed",
+                "StatusExpired"
+            ]
+        },
         "handlers.BatchOperation": {
             "type": "object",
             "properties": {
@@ -1931,6 +12554,126 @@ const docTemplate = `{
                 "resource": {
                     "description": "webhook, lead, etc.",
                     "type": "string"
+                }
+            }
+        },
+        "handlers.BatchValidateRequest": {
+            "type": "object",
+            "required": [
+                "phones"
+            ],
+            "properties": {
+                "country_code": {
+                    "type": "string"
+                },
+                "phones": {
+                    "type": "array",
+                    "maxItems": 100,
+                    "minItems": 1,
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "handlers.BatchValidateResponse": {
+            "type": "object",
+            "properties": {
+                "invalid": {
+                    "type": "integer"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/phone.ValidationResult"
+                    }
+                },
+                "valid": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handlers.CreateSavedSearchRequest": {
+            "type": "object",
+            "required": [
+                "filters",
+                "name"
+            ],
+            "properties": {
+                "filters": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
+                }
+            }
+        },
+        "handlers.NormalizePhoneRequest": {
+            "type": "object",
+            "required": [
+                "phone"
+            ],
+            "properties": {
+                "country_code": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.NormalizePhoneResponse": {
+            "type": "object",
+            "properties": {
+                "is_valid": {
+                    "type": "boolean"
+                },
+                "normalized": {
+                    "type": "string"
+                },
+                "original": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.SavedSearchResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "filters": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handlers.UpdateSavedSearchRequest": {
+            "type": "object",
+            "properties": {
+                "filters": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 1
                 }
             }
         },
@@ -1960,6 +12703,21 @@ const docTemplate = `{
                 "usage_limit": {
                     "type": "integer",
                     "minimum": 0
+                }
+            }
+        },
+        "handlers.ValidatePhoneRequest": {
+            "type": "object",
+            "required": [
+                "phone"
+            ],
+            "properties": {
+                "country_code": {
+                    "description": "Optional, defaults to US",
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
                 }
             }
         },
@@ -2025,6 +12783,558 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
+        },
+        "industries.IndustryResponse": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "category": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "osm_additional_tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "osm_primary_tag": {
+                    "type": "string"
+                },
+                "sort_order": {
+                    "type": "integer"
+                }
+            }
+        },
+        "lead.Industry": {
+            "type": "string",
+            "enum": [
+                "tattoo",
+                "beauty",
+                "barber",
+                "spa",
+                "nail_salon",
+                "hair_salon",
+                "tanning_salon",
+                "cosmetics",
+                "perfumery",
+                "waxing_salon",
+                "gym",
+                "dentist",
+                "pharmacy",
+                "massage",
+                "chiropractor",
+                "optician",
+                "clinic",
+                "hospital",
+                "veterinary",
+                "yoga_studio",
+                "pilates_studio",
+                "physical_therapy",
+                "restaurant",
+                "cafe",
+                "bar",
+                "bakery",
+                "fast_food",
+                "ice_cream",
+                "juice_bar",
+                "pizza",
+                "sushi",
+                "brewery",
+                "winery",
+                "food_truck",
+                "catering",
+                "deli",
+                "car_repair",
+                "car_wash",
+                "car_dealer",
+                "tire_shop",
+                "auto_parts",
+                "gas_station",
+                "motorcycle_dealer",
+                "rv_dealer",
+                "clothing",
+                "convenience",
+                "florist",
+                "bookstore",
+                "electronics",
+                "furniture",
+                "hardware",
+                "jewelry",
+                "gift_shop",
+                "toy_store",
+                "pet_store",
+                "bicycle_shop",
+                "sporting_goods",
+                "music_store",
+                "art_supply",
+                "stationery",
+                "garden_center",
+                "lawyer",
+                "accountant",
+                "real_estate",
+                "insurance",
+                "financial_advisor",
+                "notary",
+                "tax_service",
+                "marketing_agency",
+                "photography",
+                "printing",
+                "event_planning",
+                "travel_agency",
+                "hotel",
+                "motel",
+                "hostel",
+                "bed_breakfast",
+                "vacation_rental",
+                "campground",
+                "rv_park",
+                "resort",
+                "plumber",
+                "electrician",
+                "hvac",
+                "locksmith",
+                "roofing",
+                "painting",
+                "cleaning",
+                "landscaping",
+                "pest_control"
+            ],
+            "x-enum-varnames": [
+                "IndustryTattoo",
+                "IndustryBeauty",
+                "IndustryBarber",
+                "IndustrySpa",
+                "IndustryNailSalon",
+                "IndustryHairSalon",
+                "IndustryTanningSalon",
+                "IndustryCosmetics",
+                "IndustryPerfumery",
+                "IndustryWaxingSalon",
+                "IndustryGym",
+                "IndustryDentist",
+                "IndustryPharmacy",
+                "IndustryMassage",
+                "IndustryChiropractor",
+                "IndustryOptician",
+                "IndustryClinic",
+                "IndustryHospital",
+                "IndustryVeterinary",
+                "IndustryYogaStudio",
+                "IndustryPilatesStudio",
+                "IndustryPhysicalTherapy",
+                "IndustryRestaurant",
+                "IndustryCafe",
+                "IndustryBar",
+                "IndustryBakery",
+                "IndustryFastFood",
+                "IndustryIceCream",
+                "IndustryJuiceBar",
+                "IndustryPizza",
+                "IndustrySushi",
+                "IndustryBrewery",
+                "IndustryWinery",
+                "IndustryFoodTruck",
+                "IndustryCatering",
+                "IndustryDeli",
+                "IndustryCarRepair",
+                "IndustryCarWash",
+                "IndustryCarDealer",
+                "IndustryTireShop",
+                "IndustryAutoParts",
+                "IndustryGasStation",
+                "IndustryMotorcycleDealer",
+                "IndustryRvDealer",
+                "IndustryClothing",
+                "IndustryConvenience",
+                "IndustryFlorist",
+                "IndustryBookstore",
+                "IndustryElectronics",
+                "IndustryFurniture",
+                "IndustryHardware",
+                "IndustryJewelry",
+                "IndustryGiftShop",
+                "IndustryToyStore",
+                "IndustryPetStore",
+                "IndustryBicycleShop",
+                "IndustrySportingGoods",
+                "IndustryMusicStore",
+                "IndustryArtSupply",
+                "IndustryStationery",
+                "IndustryGardenCenter",
+                "IndustryLawyer",
+                "IndustryAccountant",
+                "IndustryRealEstate",
+                "IndustryInsurance",
+                "IndustryFinancialAdvisor",
+                "IndustryNotary",
+                "IndustryTaxService",
+                "IndustryMarketingAgency",
+                "IndustryPhotography",
+                "IndustryPrinting",
+                "IndustryEventPlanning",
+                "IndustryTravelAgency",
+                "IndustryHotel",
+                "IndustryMotel",
+                "IndustryHostel",
+                "IndustryBedBreakfast",
+                "IndustryVacationRental",
+                "IndustryCampground",
+                "IndustryRvPark",
+                "IndustryResort",
+                "IndustryPlumber",
+                "IndustryElectrician",
+                "IndustryHvac",
+                "IndustryLocksmith",
+                "IndustryRoofing",
+                "IndustryPainting",
+                "IndustryCleaning",
+                "IndustryLandscaping",
+                "IndustryPestControl"
+            ]
+        },
+        "lead.Status": {
+            "type": "string",
+            "enum": [
+                "new",
+                "new",
+                "contacted",
+                "qualified",
+                "negotiating",
+                "won",
+                "lost",
+                "archived"
+            ],
+            "x-enum-varnames": [
+                "DefaultStatus",
+                "StatusNew",
+                "StatusContacted",
+                "StatusQualified",
+                "StatusNegotiating",
+                "StatusWon",
+                "StatusLost",
+                "StatusArchived"
+            ]
+        },
+        "leadassignment.AssignLeadRequest": {
+            "type": "object",
+            "required": [
+                "lead_id",
+                "user_id"
+            ],
+            "properties": {
+                "lead_id": {
+                    "type": "integer"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "leadassignment.AssignmentResponse": {
+            "type": "object",
+            "properties": {
+                "assigned_at": {
+                    "type": "string"
+                },
+                "assignment_type": {
+                    "description": "\"auto\" or \"manual\"",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "lead_id": {
+                    "type": "integer"
+                },
+                "lead_name": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "user_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "leadassignment.AssignmentType": {
+            "type": "string",
+            "enum": [
+                "manual",
+                "auto",
+                "manual"
+            ],
+            "x-enum-varnames": [
+                "DefaultAssignmentType",
+                "AssignmentTypeAuto",
+                "AssignmentTypeManual"
+            ]
+        },
+        "leadlifecycle.LeadWithStatusResponse": {
+            "type": "object",
+            "properties": {
+                "city": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "industry": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "status_changed_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "leadlifecycle.StatusHistoryResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "lead_id": {
+                    "type": "integer"
+                },
+                "new_status": {
+                    "type": "string"
+                },
+                "old_status": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "user_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "leadlifecycle.UpdateStatusRequest": {
+            "type": "object",
+            "required": [
+                "status"
+            ],
+            "properties": {
+                "reason": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "new",
+                        "contacted",
+                        "qualified",
+                        "negotiating",
+                        "won",
+                        "lost",
+                        "archived"
+                    ]
+                }
+            }
+        },
+        "leadnote.CreateNoteRequest": {
+            "type": "object",
+            "required": [
+                "content",
+                "lead_id"
+            ],
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "maxLength": 10000,
+                    "minLength": 1
+                },
+                "is_pinned": {
+                    "type": "boolean"
+                },
+                "lead_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "leadnote.NoteResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "is_pinned": {
+                    "type": "boolean"
+                },
+                "lead_id": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "user_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "leadnote.UpdateNoteRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "maxLength": 10000,
+                    "minLength": 1
+                },
+                "is_pinned": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "leadrecommendation.Status": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "pending",
+                "accepted",
+                "rejected",
+                "expired"
+            ],
+            "x-enum-varnames": [
+                "DefaultStatus",
+                "StatusPending",
+                "StatusAccepted",
+                "StatusRejected",
+                "StatusExpired"
+            ]
+        },
+        "leadscoring.ScoreResponse": {
+            "type": "object",
+            "properties": {
+                "breakdown": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "lead_id": {
+                    "type": "integer"
+                },
+                "lead_name": {
+                    "type": "string"
+                },
+                "max_score": {
+                    "type": "integer"
+                },
+                "percentage": {
+                    "type": "number"
+                },
+                "total_score": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "leadstatushistory.NewStatus": {
+            "type": "string",
+            "enum": [
+                "new",
+                "contacted",
+                "qualified",
+                "negotiating",
+                "won",
+                "lost",
+                "archived"
+            ],
+            "x-enum-varnames": [
+                "NewStatusNew",
+                "NewStatusContacted",
+                "NewStatusQualified",
+                "NewStatusNegotiating",
+                "NewStatusWon",
+                "NewStatusLost",
+                "NewStatusArchived"
+            ]
+        },
+        "leadstatushistory.OldStatus": {
+            "type": "string",
+            "enum": [
+                "new",
+                "contacted",
+                "qualified",
+                "negotiating",
+                "won",
+                "lost",
+                "archived"
+            ],
+            "x-enum-varnames": [
+                "OldStatusNew",
+                "OldStatusContacted",
+                "OldStatusQualified",
+                "OldStatusNegotiating",
+                "OldStatusWon",
+                "OldStatusLost",
+                "OldStatusArchived"
+            ]
+        },
+        "marketreport.ReportType": {
+            "type": "string",
+            "enum": [
+                "competitive_analysis",
+                "market_trends",
+                "industry_snapshot",
+                "growth_analysis"
+            ],
+            "x-enum-varnames": [
+                "ReportTypeCompetitiveAnalysis",
+                "ReportTypeMarketTrends",
+                "ReportTypeIndustrySnapshot",
+                "ReportTypeGrowthAnalysis"
+            ]
         },
         "models.AppliedFilters": {
             "type": "object",
@@ -2532,6 +13842,537 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
+        },
+        "organization.CreateOrganizationRequest": {
+            "type": "object",
+            "required": [
+                "name",
+                "slug"
+            ],
+            "properties": {
+                "limit": {
+                    "type": "integer",
+                    "maximum": 100000,
+                    "minimum": 50
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                },
+                "slug": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
+                },
+                "tier": {
+                    "type": "string",
+                    "enum": [
+                        "free",
+                        "starter",
+                        "pro",
+                        "business"
+                    ]
+                }
+            }
+        },
+        "organization.InviteMemberRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "role"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "admin",
+                        "member",
+                        "viewer"
+                    ]
+                }
+            }
+        },
+        "organization.SubscriptionTier": {
+            "type": "string",
+            "enum": [
+                "free",
+                "free",
+                "starter",
+                "pro",
+                "business"
+            ],
+            "x-enum-varnames": [
+                "DefaultSubscriptionTier",
+                "SubscriptionTierFree",
+                "SubscriptionTierStarter",
+                "SubscriptionTierPro",
+                "SubscriptionTierBusiness"
+            ]
+        },
+        "organization.UpdateOrganizationRequest": {
+            "type": "object",
+            "properties": {
+                "billing_email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 2
+                }
+            }
+        },
+        "organizationmember.Role": {
+            "type": "string",
+            "enum": [
+                "member",
+                "owner",
+                "admin",
+                "member",
+                "viewer"
+            ],
+            "x-enum-varnames": [
+                "DefaultRole",
+                "RoleOwner",
+                "RoleAdmin",
+                "RoleMember",
+                "RoleViewer"
+            ]
+        },
+        "organizationmember.Status": {
+            "type": "string",
+            "enum": [
+                "active",
+                "pending",
+                "active",
+                "suspended"
+            ],
+            "x-enum-varnames": [
+                "DefaultStatus",
+                "StatusPending",
+                "StatusActive",
+                "StatusSuspended"
+            ]
+        },
+        "phone.PhoneType": {
+            "type": "string",
+            "enum": [
+                "FIXED_LINE",
+                "MOBILE",
+                "FIXED_LINE_OR_MOBILE",
+                "TOLL_FREE",
+                "PREMIUM_RATE",
+                "SHARED_COST",
+                "VOIP",
+                "PERSONAL_NUMBER",
+                "PAGER",
+                "UAN",
+                "VOICEMAIL",
+                "UNKNOWN"
+            ],
+            "x-enum-varnames": [
+                "TypeFixedLine",
+                "TypeMobile",
+                "TypeFixedLineOrMobile",
+                "TypeTollFree",
+                "TypePremiumRate",
+                "TypeSharedCost",
+                "TypeVoip",
+                "TypePersonalNumber",
+                "TypePager",
+                "TypeUAN",
+                "TypeVoicemail",
+                "TypeUnknown"
+            ]
+        },
+        "phone.ValidationResult": {
+            "type": "object",
+            "properties": {
+                "country_code": {
+                    "type": "string"
+                },
+                "e164_format": {
+                    "type": "string"
+                },
+                "international_format": {
+                    "type": "string"
+                },
+                "is_valid": {
+                    "type": "boolean"
+                },
+                "national_format": {
+                    "type": "string"
+                },
+                "phone_type": {
+                    "$ref": "#/definitions/phone.PhoneType"
+                }
+            }
+        },
+        "referral.ReferralStats": {
+            "type": "object",
+            "properties": {
+                "completed_referrals": {
+                    "type": "integer"
+                },
+                "pending_referrals": {
+                    "type": "integer"
+                },
+                "pending_rewards": {
+                    "type": "number"
+                },
+                "rewarded_referrals": {
+                    "type": "integer"
+                },
+                "total_referrals": {
+                    "type": "integer"
+                },
+                "total_rewards_earned": {
+                    "type": "number"
+                }
+            }
+        },
+        "referral.RewardType": {
+            "type": "string",
+            "enum": [
+                "credit",
+                "credit",
+                "discount",
+                "upgrade",
+                "none"
+            ],
+            "x-enum-varnames": [
+                "DefaultRewardType",
+                "RewardTypeCredit",
+                "RewardTypeDiscount",
+                "RewardTypeUpgrade",
+                "RewardTypeNone"
+            ]
+        },
+        "referral.Status": {
+            "type": "string",
+            "enum": [
+                "pending",
+                "pending",
+                "completed",
+                "rewarded",
+                "expired"
+            ],
+            "x-enum-varnames": [
+                "DefaultStatus",
+                "StatusPending",
+                "StatusCompleted",
+                "StatusRewarded",
+                "StatusExpired"
+            ]
+        },
+        "smscampaign.Status": {
+            "type": "string",
+            "enum": [
+                "draft",
+                "draft",
+                "scheduled",
+                "sending",
+                "sent",
+                "failed"
+            ],
+            "x-enum-varnames": [
+                "DefaultStatus",
+                "StatusDraft",
+                "StatusScheduled",
+                "StatusSending",
+                "StatusSent",
+                "StatusFailed"
+            ]
+        },
+        "smsmessage.Status": {
+            "type": "string",
+            "enum": [
+                "queued",
+                "queued",
+                "sending",
+                "sent",
+                "delivered",
+                "failed",
+                "undelivered"
+            ],
+            "x-enum-varnames": [
+                "DefaultStatus",
+                "StatusQueued",
+                "StatusSending",
+                "StatusSent",
+                "StatusDelivered",
+                "StatusFailed",
+                "StatusUndelivered"
+            ]
+        },
+        "subscription.Status": {
+            "type": "string",
+            "enum": [
+                "active",
+                "active",
+                "canceled",
+                "past_due",
+                "unpaid",
+                "trialing"
+            ],
+            "x-enum-varnames": [
+                "DefaultStatus",
+                "StatusActive",
+                "StatusCanceled",
+                "StatusPastDue",
+                "StatusUnpaid",
+                "StatusTrialing"
+            ]
+        },
+        "subscription.Tier": {
+            "type": "string",
+            "enum": [
+                "free",
+                "starter",
+                "pro",
+                "business"
+            ],
+            "x-enum-varnames": [
+                "TierFree",
+                "TierStarter",
+                "TierPro",
+                "TierBusiness"
+            ]
+        },
+        "territory.CreateTerritoryRequest": {
+            "type": "object",
+            "properties": {
+                "cities": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "countries": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "industries": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "regions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "territory.TerritoryMemberResponse": {
+            "type": "object",
+            "properties": {
+                "added_by_user_id": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "joined_at": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "territory_id": {
+                    "type": "integer"
+                },
+                "user_email": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
+                },
+                "user_name": {
+                    "type": "string"
+                }
+            }
+        },
+        "territory.TerritoryResponse": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "cities": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "countries": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by_user_id": {
+                    "type": "integer"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "industries": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "regions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "territory.UpdateTerritoryRequest": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "cities": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "countries": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "description": {
+                    "type": "string"
+                },
+                "industries": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "regions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "territorymember.Role": {
+            "type": "string",
+            "enum": [
+                "member",
+                "manager",
+                "member"
+            ],
+            "x-enum-varnames": [
+                "DefaultRole",
+                "RoleManager",
+                "RoleMember"
+            ]
+        },
+        "usagelog.Action": {
+            "type": "string",
+            "enum": [
+                "search",
+                "export",
+                "api_call"
+            ],
+            "x-enum-varnames": [
+                "ActionSearch",
+                "ActionExport",
+                "ActionAPICall"
+            ]
+        },
+        "user.Role": {
+            "type": "string",
+            "enum": [
+                "user",
+                "user",
+                "admin",
+                "superadmin"
+            ],
+            "x-enum-varnames": [
+                "DefaultRole",
+                "RoleUser",
+                "RoleAdmin",
+                "RoleSuperadmin"
+            ]
+        },
+        "user.SubscriptionTier": {
+            "type": "string",
+            "enum": [
+                "free",
+                "free",
+                "starter",
+                "pro",
+                "business"
+            ],
+            "x-enum-varnames": [
+                "DefaultSubscriptionTier",
+                "SubscriptionTierFree",
+                "SubscriptionTierStarter",
+                "SubscriptionTierPro",
+                "SubscriptionTierBusiness"
+            ]
+        },
+        "userbehavior.ActionType": {
+            "type": "string",
+            "enum": [
+                "search",
+                "view",
+                "export",
+                "contact",
+                "save",
+                "filter",
+                "sort"
+            ],
+            "x-enum-varnames": [
+                "ActionTypeSearch",
+                "ActionTypeView",
+                "ActionTypeExport",
+                "ActionTypeContact",
+                "ActionTypeSave",
+                "ActionTypeFilter",
+                "ActionTypeSort"
+            ]
         }
     },
     "securityDefinitions": {

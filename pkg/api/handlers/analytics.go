@@ -23,7 +23,18 @@ func NewAnalyticsHandler(analyticsService *analytics.Service) *AnalyticsHandler 
 	}
 }
 
-// GetDailyUsage returns daily usage statistics
+// GetDailyUsage godoc
+// @Summary Get daily usage statistics
+// @Description Returns daily usage statistics for the authenticated user over a configurable number of days
+// @Tags Analytics
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param days query integer false "Number of days to retrieve (1-365)" default(30)
+// @Success 200 {object} map[string]interface{} "Daily usage data with day count"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /user/analytics/daily [get]
 func (h *AnalyticsHandler) GetDailyUsage(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
@@ -58,7 +69,18 @@ func (h *AnalyticsHandler) GetDailyUsage(c echo.Context) error {
 	})
 }
 
-// GetUsageSummary returns aggregated usage statistics
+// GetUsageSummary godoc
+// @Summary Get aggregated usage summary
+// @Description Returns aggregated usage statistics for the authenticated user over a configurable number of days
+// @Tags Analytics
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param days query integer false "Number of days to aggregate (1-365)" default(30)
+// @Success 200 {object} map[string]interface{} "Aggregated usage summary"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /user/analytics/summary [get]
 func (h *AnalyticsHandler) GetUsageSummary(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
@@ -90,7 +112,18 @@ func (h *AnalyticsHandler) GetUsageSummary(c echo.Context) error {
 	return c.JSON(http.StatusOK, summary)
 }
 
-// GetActionBreakdown returns usage breakdown by action type
+// GetActionBreakdown godoc
+// @Summary Get usage breakdown by action type
+// @Description Returns usage breakdown by action type (search, export, view) for the authenticated user
+// @Tags Analytics
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param days query integer false "Number of days to analyze (1-365)" default(30)
+// @Success 200 {object} map[string]interface{} "Usage breakdown by action type"
+// @Failure 401 {object} map[string]string "Unauthorized"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /user/analytics/breakdown [get]
 func (h *AnalyticsHandler) GetActionBreakdown(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)

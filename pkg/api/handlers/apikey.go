@@ -27,7 +27,20 @@ func NewAPIKeyHandler(apiKeyService *apikey.Service) *APIKeyHandler {
 	}
 }
 
-// Create handles creating a new API key
+// Create godoc
+// @Summary Create a new API key
+// @Description Create a new API key for programmatic access. Requires Business tier subscription. The plain key is only shown once on creation.
+// @Tags API Keys
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body apikey.CreateAPIKeyRequest true "API key configuration"
+// @Success 201 {object} map[string]interface{} "API key created with plain key (shown only once)"
+// @Failure 400 {object} models.ErrorResponse "Invalid request"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 403 {object} models.ErrorResponse "Business tier required"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /api-keys [post]
 func (h *APIKeyHandler) Create(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
@@ -72,7 +85,16 @@ func (h *APIKeyHandler) Create(c echo.Context) error {
 	})
 }
 
-// List handles listing all API keys for the current user
+// List godoc
+// @Summary List all API keys
+// @Description List all API keys for the authenticated user. Key hashes are not returned.
+// @Tags API Keys
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{} "List of API keys with total count"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /api-keys [get]
 func (h *APIKeyHandler) List(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
@@ -99,7 +121,19 @@ func (h *APIKeyHandler) List(c echo.Context) error {
 	})
 }
 
-// Get handles retrieving a single API key
+// Get godoc
+// @Summary Get API key details
+// @Description Get details of a specific API key by ID. The key hash is not returned.
+// @Tags API Keys
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "API key ID"
+// @Success 200 {object} map[string]interface{} "API key details"
+// @Failure 400 {object} models.ErrorResponse "Invalid ID"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 404 {object} models.ErrorResponse "API key not found"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /api-keys/{id} [get]
 func (h *APIKeyHandler) Get(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
@@ -136,7 +170,19 @@ func (h *APIKeyHandler) Get(c echo.Context) error {
 	return c.JSON(http.StatusOK, key)
 }
 
-// Revoke handles revoking an API key
+// Revoke godoc
+// @Summary Revoke an API key
+// @Description Revoke an API key (soft delete). The key can no longer be used for authentication but the record is preserved.
+// @Tags API Keys
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "API key ID"
+// @Success 200 {object} map[string]string "API key revoked successfully"
+// @Failure 400 {object} models.ErrorResponse "Invalid ID"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 404 {object} models.ErrorResponse "API key not found"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /api-keys/{id}/revoke [post]
 func (h *APIKeyHandler) Revoke(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
@@ -174,7 +220,19 @@ func (h *APIKeyHandler) Revoke(c echo.Context) error {
 	})
 }
 
-// Delete handles deleting an API key
+// Delete godoc
+// @Summary Delete an API key
+// @Description Permanently delete an API key (hard delete). This action cannot be undone.
+// @Tags API Keys
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "API key ID"
+// @Success 200 {object} map[string]string "API key deleted successfully"
+// @Failure 400 {object} models.ErrorResponse "Invalid ID"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 404 {object} models.ErrorResponse "API key not found"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /api-keys/{id} [delete]
 func (h *APIKeyHandler) Delete(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
@@ -212,7 +270,21 @@ func (h *APIKeyHandler) Delete(c echo.Context) error {
 	})
 }
 
-// UpdateName handles updating an API key's name
+// UpdateName godoc
+// @Summary Update API key name
+// @Description Update the display name of an existing API key
+// @Tags API Keys
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "API key ID"
+// @Param request body object true "New name" SchemaExample({"name": "Production Key"})
+// @Success 200 {object} map[string]string "API key name updated successfully"
+// @Failure 400 {object} models.ErrorResponse "Invalid ID or request"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 404 {object} models.ErrorResponse "API key not found"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /api-keys/{id} [patch]
 func (h *APIKeyHandler) UpdateName(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
@@ -261,7 +333,16 @@ func (h *APIKeyHandler) UpdateName(c echo.Context) error {
 	})
 }
 
-// GetStats handles retrieving API key statistics
+// GetStats godoc
+// @Summary Get API key usage statistics
+// @Description Get aggregated usage statistics across all API keys for the authenticated user
+// @Tags API Keys
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{} "API key usage statistics"
+// @Failure 401 {object} models.ErrorResponse "Unauthorized"
+// @Failure 500 {object} models.ErrorResponse "Internal server error"
+// @Router /api-keys/stats [get]
 func (h *APIKeyHandler) GetStats(c echo.Context) error {
 	// Get user ID from context
 	userID, ok := c.Get("user_id").(int)
