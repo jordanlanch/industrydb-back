@@ -49,6 +49,10 @@ type Config struct {
 	// Rate Limiting
 	RateLimitRequestsPerMinute int
 	RateLimitBurst             int
+	RateLimitRegisterPerMinute int // Registration endpoint rate limit
+	RateLimitRegisterBurst     int
+	RateLimitLoginPerMinute    int // Login endpoint rate limit
+	RateLimitLoginBurst        int
 
 	// Stripe
 	StripeSecretKey      string
@@ -159,6 +163,10 @@ func Load() *Config {
 		// Rate Limiting
 		RateLimitRequestsPerMinute: getEnvAsInt("RATE_LIMIT_REQUESTS_PER_MINUTE", 60),
 		RateLimitBurst:             getEnvAsInt("RATE_LIMIT_BURST", 10),
+		RateLimitRegisterPerMinute: getEnvAsInt("RATE_LIMIT_REGISTER_PER_MINUTE", 3),  // 3 per minute for production
+		RateLimitRegisterBurst:     getEnvAsInt("RATE_LIMIT_REGISTER_BURST", 1),
+		RateLimitLoginPerMinute:    getEnvAsInt("RATE_LIMIT_LOGIN_PER_MINUTE", 5),     // 5 per minute for production
+		RateLimitLoginBurst:        getEnvAsInt("RATE_LIMIT_LOGIN_BURST", 2),
 
 		// Stripe
 		StripeSecretKey:      getEnv("STRIPE_SECRET_KEY", ""),

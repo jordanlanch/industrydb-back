@@ -5,7 +5,7 @@
 # Documentation
 *.md
 README.md
-docs/
+# docs/ - NEED this for Swagger generation!
 
 # Environment
 .env

@@ -140,8 +140,8 @@ func main() {
 	// Initialize rate limiters
 	globalRateLimiter := custommiddleware.NewRateLimiter(cfg.RateLimitRequestsPerMinute, cfg.RateLimitBurst)
 	tierRateLimiter := custommiddleware.NewTierRateLimiter()                 // Tier-based rate limiting for authenticated users
-	authRateLimiter := custommiddleware.NewRateLimiter(5, 2)                 // 5 req/min for login
-	registerRateLimiter := custommiddleware.NewRateLimiter(3, 1)             // 3 req/hour (converted to 0.05 req/min)
+	authRateLimiter := custommiddleware.NewRateLimiter(cfg.RateLimitLoginPerMinute, cfg.RateLimitLoginBurst)                 // Login rate limit (configurable)
+	registerRateLimiter := custommiddleware.NewRateLimiter(cfg.RateLimitRegisterPerMinute, cfg.RateLimitRegisterBurst)       // Register rate limit (configurable)
 	webhookRateLimiter := custommiddleware.NewRateLimiter(100, 20)           // 100 req/min for Stripe webhooks
 
 	// Global middleware
@@ -780,7 +780,7 @@ func main() {
 	log.Printf("🔐 JWT expiration: %d hours", cfg.JWTExpirationHours)
 	log.Printf("🌍 CORS: http://localhost:5678, https://industrydb.io, https://www.industrydb.io")
 	log.Printf("🛡️  Rate limiting: %d req/min (burst: %d)", cfg.RateLimitRequestsPerMinute, cfg.RateLimitBurst)
-	log.Printf("🔒 Auth endpoints: login (5/min), register (3/hour), webhook (100/min)")
+	log.Printf("🔒 Auth endpoints: login (%d/min), register (%d/min), webhook (100/min)", cfg.RateLimitLoginPerMinute, cfg.RateLimitRegisterPerMinute)
 	log.Printf("⏰ Cron jobs: Daily 2AM (populate low-data), Weekly Sunday 3AM (populate missing), Daily 4AM (stats)")
 	log.Printf("📊 Admin endpoints: /api/v1/admin/jobs/* (detect, trigger, stats, auto-populate)")
 
