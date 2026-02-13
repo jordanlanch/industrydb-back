@@ -36,6 +36,12 @@ type OrgMembershipChecker interface {
 	CheckMembership(ctx context.Context, orgID int, userID int) (isMember bool, role string, err error)
 }
 
+// IdempotencyStore checks and marks webhook events as processed.
+type IdempotencyStore interface {
+	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error
+	Get(ctx context.Context, key string) (string, error)
+}
+
 // Service handles Stripe billing operations
 type Service struct {
 	db          *ent.Client
@@ -44,6 +50,7 @@ type Service struct {
 	email       EmailSender
 	audit       AuditLogger
 	orgChecker  OrgMembershipChecker
+	idempotency IdempotencyStore
 }
 
 // StripeConfig holds Stripe configuration
@@ -83,6 +90,11 @@ func (s *Service) SetAuditLogger(a AuditLogger) {
 // SetOrgMembershipChecker sets the organization membership checker.
 func (s *Service) SetOrgMembershipChecker(c OrgMembershipChecker) {
 	s.orgChecker = c
+}
+
+// SetIdempotencyStore sets the idempotency store for webhook deduplication.
+func (s *Service) SetIdempotencyStore(store IdempotencyStore) {
+	s.idempotency = store
 }
 
 // checkOrgBillingAccess verifies a user has owner or admin role for billing management.
@@ -273,7 +285,20 @@ func (s *Service) HandleWebhook(ctx context.Context, payload []byte, signature s
 		return fmt.Errorf("webhook signature verification failed: %w", err)
 	}
 
-	log.Printf("📨 Stripe webhook received: %s", event.Type)
+	log.Printf("📨 Stripe webhook received: %s (id=%s)", event.Type, event.ID)
+
+	// Idempotency check: skip if this event was already processed
+	if s.idempotency != nil {
+		idempotencyKey := fmt.Sprintf("stripe:webhook:%s", event.ID)
+		if _, err := s.idempotency.Get(ctx, idempotencyKey); err == nil {
+			log.Printf("⏭️  Skipping duplicate webhook event: %s", event.ID)
+			return nil
+		}
+		// Mark event as processed with 24h TTL
+		if err := s.idempotency.Set(ctx, idempotencyKey, "1", 24*time.Hour); err != nil {
+			log.Printf("⚠️  Failed to set idempotency key for event %s: %v", event.ID, err)
+		}
+	}
 
 	// Handle different event types
 	switch event.Type {
@@ -500,6 +525,28 @@ func (s *Service) handleSubscriptionDeleted(ctx context.Context, event stripe.Ev
 		Save(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to downgrade user: %w", err)
+	}
+
+	// Also downgrade any organization linked to this Stripe customer
+	if sub.Customer != nil && sub.Customer.ID != "" {
+		orgs, err := s.db.Organization.Query().
+			Where(organization.StripeCustomerIDEQ(sub.Customer.ID)).
+			All(ctx)
+		if err != nil {
+			log.Printf("⚠️  Failed to query organizations for customer %s: %v", sub.Customer.ID, err)
+		} else {
+			for _, org := range orgs {
+				_, err := s.db.Organization.UpdateOneID(org.ID).
+					SetSubscriptionTier(organization.SubscriptionTierFree).
+					SetUsageLimit(50).
+					Save(ctx)
+				if err != nil {
+					log.Printf("⚠️  Failed to downgrade organization %d: %v", org.ID, err)
+				} else {
+					log.Printf("✅ Organization %s downgraded to free tier", org.Name)
+				}
+			}
+		}
 	}
 
 	// Send cancellation email notification

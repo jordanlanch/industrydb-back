@@ -336,6 +336,7 @@ func main() {
 	billingService.SetEmailSender(billing.NewEmailServiceAdapter(emailService))
 	billingService.SetAuditLogger(billing.NewAuditServiceAdapter(auditLogger))
 	billingService.SetOrgMembershipChecker(organizationService)
+	billingService.SetIdempotencyStore(redisClient)
 	apiKeyService := apikey.NewService(db.Ent)
 	industriesService := industries.NewService(db.Ent, redisClient)
 	savedSearchService := savedsearch.NewService(db.Ent)
